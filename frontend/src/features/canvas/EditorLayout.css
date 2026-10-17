@@ -5,7 +5,7 @@
   position: relative;
   height: calc(100dvh - 110px);
   min-height: 0;
-  grid-template-columns: 112px minmax(0, 1fr) 320px;
+  grid-template-columns: 88px minmax(0, 1fr) 296px;
   grid-template-rows: minmax(0, 1fr) 28px;
   grid-template-areas: "tools canvas side" "tools status side";
   gap: var(--space-2);
@@ -215,8 +215,7 @@
   box-sizing: border-box;
   padding-bottom: calc(var(--control-height) + var(--space-3) * 2);
   background: var(--surface-sheet);
-  border-radius: var(--r-0);
-  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+  border-radius: var(--r-2);
 }
 .assembly-tools {
   align-items: stretch;

@@ -10,7 +10,7 @@ export type DialogProps = PropsWithChildren<{
   onClose: () => void;
   /** Optional footer actions (buttons). Enter triggers the first primary action. */
   footer?: React.ReactNode;
-  width?: "s" | "m" | "l";
+  width?: "s" | "m" | "l" | "xl";
   surface?: "dialog" | "drawer" | "palette";
 }>;
 

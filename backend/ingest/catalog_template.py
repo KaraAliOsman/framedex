@@ -18,7 +18,7 @@ from zipfile import ZipFile
 from dekopen_engine.models import BayOpeningType, ProfileRole, SystemFamily
 
 VERSION = "DEKOPEN CATÁLOGO V1"
-MAX_ROWS = 2000
+MAX_ROWS = 10000
 MAX_EXPANDED_BYTES = 30_000_000
 FAMILIES = {"CASEMENT": "Practicable", "SLIDING": "Corredera", "LIFT_SLIDE": "Elevable",
             "DOOR": "Puerta de entrada", "FACADE_FIXED": "Fijo de gran formato"}
@@ -351,7 +351,7 @@ def parse_structured(kind: str, content: bytes) -> list[dict] | None:
             if not any(value for value in raw.values()):
                 continue
             if len(candidates) >= MAX_ROWS:
-                raise ValueError("La importación supera 2 000 filas; divídela en archivos más pequeños.")
+                raise ValueError("La importación supera las 10 000 filas admitidas. No se ha publicado ningún dato.")
             number = int(row["_row"])
             refs = {key: {"ref": f"{name}!{letter}{number}", "quote": row.get(letter, ""), "confidence": "HIGH"}
                     for letter, key in columns.items()}

@@ -171,7 +171,8 @@ it("opens read-only to ESTIMATOR: coverage visible, no write controls", async ()
   expect(
     screen.queryByRole("combobox", { name: t("purchasing.chooseSupplier") }),
   ).not.toBeInTheDocument();
-  expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+  expect(screen.getByRole("checkbox", { name: "Incluir material ya cubierto" })).toBeEnabled();
+  expect(screen.queryByRole("checkbox", { name: /Seleccionar/ })).not.toBeInTheDocument();
 });
 
 it("renders immutable quantities without editable inputs", async () => {

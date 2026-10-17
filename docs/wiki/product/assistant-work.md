@@ -1,10 +1,11 @@
 ---
 type: synthesis
 status: active
-updated: 2026-10-09
+updated: 2026-10-17
 volatility: high
-verified_ref: d5500d69bbc843162a9c189805a00d8904d11264
+verified_ref: codex/v1-experiencia
 sources:
+  - docs/ux/2026-10-17/05-ia-catalogos.md
   - docs/redesign/P17-ACEPTACION.md
   - backend/tests/integration/test_assistant_presence.py
   - backend/tests/test_assistant_tool_continuity.py
@@ -12,6 +13,26 @@ sources:
 ---
 
 # Asistente, trabajos y presencia
+
+**Construcción autorizada · 17-10-2026, rama `codex/v1-experiencia`:** una entrada
+contextual, muestra antes de cambios amplios y detalle/fuentes plegados. La nueva
+herramienta de cotización calcula con preferencias reales; la UI confirma el
+precio y prepara PDF privado desde la conversación, revalidando proyecto,
+posiciones e importes. La presentación de PDF/portal usa campos tipados,
+preview/apply/state/undo, dueño/MFA, firmas e historial inmutable. Historial y dock
+ofrecen los mismos pasos de cotización/presentación. Se conservan presupuesto,
+política del servidor y acciones humanas para consecuencias externas.
+
+[Implementación, campaña final y límites](../../ux/2026-10-17/10-implementacion.md).
+Dos ejercicios reales con proveedor/worker completaron en unos 15 s sin preguntas
+ni cambios/emisiones durante la preparación. No son un nuevo score del harness.
+Un tercer ejercicio sobre `P-000016` aplicó el precio y preparó el PDF desde la
+muestra; el API confirmó borrador, precio vigente, cero versiones y cero correos.
+La revisión recuperada muestra el PDF real mediante un lector local y reserva
+el clic explícito de emisión. Los antecedentes comerciales del caso se prepararon
+por APIs de dominio; el ejercicio no prueba su creación autónoma por la IA.
+No existe una transacción única diseño→precio→PDF ni edición de código arbitrario.
+Los apartados P17 siguientes conservan sus fuentes históricas.
 
 P17 liga el Orb al último trabajo de la persona en su organización y contexto
 exacto. La selección transitoria del editor no cambia la conversación.

@@ -37,11 +37,14 @@
 
 .finish-swatch {
   display: inline-block;
-  width: var(--space-6);
-  height: var(--space-6);
+  width: 44px;
+  height: 38px;
   flex-shrink: 0;
   border: 1px solid var(--theme-border-strong);
   background-size: cover;
+}
+.finish-swatch--illustrative {
+  background-image: var(--mat-grain-swatch);
 }
 
 .finish-equal {

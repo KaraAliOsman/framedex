@@ -48,8 +48,8 @@
 .ui-key-value dt {
   color: var(--text-secondary);
   font-size: var(--type-label);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  text-transform: none;
+  letter-spacing: normal;
 }
 .ui-key-value dd {
   margin: 0;

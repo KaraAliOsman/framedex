@@ -225,7 +225,7 @@ export const messages = {
   "projects.chooseProject": "Selecciona un proyecto",
   /* The list page title differentiates the section from the nav label and
    * crumb that already read "Proyectos" (review m4). */
-  "projects.title": "Todos los proyectos",
+  "projects.title": "Obras",
   "projects.metadata": "Datos del proyecto",
   "projects.name": "Nombre del proyecto",
   "projects.client": "Cliente",
@@ -272,7 +272,7 @@ export const messages = {
   "clients.pick": "Cliente registrado",
   "clients.none": "Sin registrar — completar manualmente",
   "projects.internalNotes": "Notas internas",
-  "projects.create": "Crear proyecto",
+  "projects.create": "Nueva obra",
   "projects.edit": "Editar datos",
   "projects.cancel": "Cancelar",
   "projects.discard": "¿Descartar los cambios del formulario?",
@@ -1201,8 +1201,8 @@ export const messages = {
   "theme.toggle": "Cambiar tema",
   "theme.toDark": "Modo oscuro",
   "theme.toLight": "Modo claro",
-  "nav.dashboard": "Inicio",
-  "nav.projects": "Proyectos",
+  "nav.dashboard": "Hoy",
+  "nav.projects": "Obras",
   "nav.clients": "Clientes",
   "nav.sales": "Ventas",
   "nav.systems": "Sistemas",
@@ -3113,7 +3113,7 @@ export const messages = {
   "agent.hint":
     "Dile qué necesitas lograr — el agente consulta los datos reales, propone pasos y prepara acciones. Tú confirmas lo que cambia.",
   "agent.placeholder": "¿Qué necesitas lograr?",
-  "agent.send": "Ejecutar",
+  "agent.send": "Enviar",
   "agent.thinking": "Trabajando…",
   "agent.error": "No se pudo contactar al agente.",
   "agent.stillRunning": "La tarea sigue en curso — revisa el trabajo en Asistente.",

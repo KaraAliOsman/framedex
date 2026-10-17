@@ -1,10 +1,11 @@
 ---
 type: concept
 status: active
-updated: 2026-10-12
+updated: 2026-10-17
 volatility: medium
-verified_ref: de3e0cba
+verified_ref: codex/v1-experiencia
 sources:
+  - docs/ux/2026-10-17/03-experiencia.md
   - P04 acceptance in docs/redesign/P04-ACEPTACION.md
   - frontend/tests/e2e/editor.spec.ts
   - backend/tests/integration/test_project_operations.py
@@ -12,6 +13,15 @@ sources:
 ---
 
 # Editor centrado en el dibujo
+
+**Construcción autorizada · 17-10-2026:** obra sin cliente obligatorio,
+biblioteca que hereda serie/vidrio/acabado y añade con Deshacer, ficha técnica
+de hoja plegada, mismo asistente contextual y cabecera compacta. La ficha de
+materiales relaciona selección del dibujo y BOM por identidades módulo/paño,
+sin confundir IDs iguales de módulos distintos ni inventar una barra física.
+[Implementación y evidencia](../../ux/2026-10-17/10-implementacion.md).
+Los resultados P04/P20 siguientes son históricos; no una evaluación profesional
+nueva ni validación exhaustiva de tamaños/dispositivos.
 
 La intención del dueño es diseñar desde el lienzo, con cotas editables y
 herramientas reconocibles. P04 convierte esa intención en franja compacta,

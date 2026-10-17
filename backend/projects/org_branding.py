@@ -87,6 +87,7 @@ def branding_for_snapshot(*, org_id: UUID) -> dict:
     result.pop("notification_email", None)
     result.pop("internal_mail_enabled", None)
     result.pop("updated_at", None)
+    result["document_preferences"]["presentation_version"] = 1
     result.update(snapshot_preferences(result))
     return result
 

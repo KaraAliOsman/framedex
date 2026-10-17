@@ -1,9 +1,9 @@
 ---
 type: state
 status: active
-updated: 2026-10-12
+updated: 2026-10-17
 volatility: high
-verified_ref: 2db4e13171884b93a989e68508a55f5590f9b34d
+verified_ref: codex/v1-experiencia
 sources:
   - https://github.com/KaraAliOsman/framedex/pull/157
   - docs/cola/ESTADO.md
@@ -12,6 +12,26 @@ sources:
 ---
 
 # Estado vigente de DEKOPEN v1
+
+## Construcción de experiencia · 17-10-2026
+
+El dueño autorizó construir con «ahora empieza». La rama `codex/v1-experiencia`
+parte de `edcfd2844d2c2fc7cbb0d3b543b50e9089ab9b3f`; su
+[registro de implementación](../../ux/2026-10-17/10-implementacion.md) detalla
+tema claro único, obra/biblioteca, IA de cotización y presentación, PDF por
+bloques, uniones/acabados, documentos/materiales y operación. REVIEW se
+reconstruyó desde la rama conservando datos y sesiones, sin ejecutar fixtures.
+
+Campaña al cierre: 1.064 pruebas del motor, 1.583 backend, 1.147 frontend en la
+corrida completa, 605 integración y 1.483 comprobaciones pgTAP pasan; el registro
+separa verificaciones afectadas posteriores. PostgreSQL 16 pasa y los 19 escenarios
+de navegador tienen resultado verde en su última ejecución: 16 en la corrida
+general y tres en repeticiones afectadas; no es una nueva corrida completa. No es
+una aceptación definitiva ni un score nuevo del harness IA. Quedan límites
+explícitos de corpus fabricante/OCR regional, activos físicos, renderer PDF
+separado y superficies del negocio que solo heredan base/navegación.
+
+## Integración histórica · 12-10-2026
 
 `main` contiene el programa completo mediante
 [PR #157](https://github.com/KaraAliOsman/framedex/pull/157), squash

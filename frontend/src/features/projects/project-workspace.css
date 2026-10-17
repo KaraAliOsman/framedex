@@ -52,6 +52,9 @@
   font-size: var(--type-dense);
   min-width: 0;
 }
+.projects-page .project-positions-toolbar label {
+  margin-block: 0;
+}
 .project-positions-filters {
   border-block: 1px solid var(--theme-border-subtle);
 }
@@ -95,7 +98,7 @@
   padding: var(--space-3);
   background: var(--theme-surface-panel);
   border: 1px solid var(--theme-border-subtle);
-  border-radius: var(--r-1);
+  border-radius: var(--r-2);
   min-width: 0;
 }
 .position-row:hover,
@@ -183,7 +186,7 @@
   grid-column: 2;
 }
 .project-position-row-group[data-view="grid"] .position-row__thumb .position-thumb {
-  height: 12rem;
+  height: 13rem;
 }
 .project-position-row-group[data-view="grid"] .position-row__identity,
 .project-position-row-group[data-view="grid"] .position-row__specs {
@@ -284,5 +287,135 @@
   }
   .project-positions-filters select {
     max-width: 100%;
+  }
+}
+
+.project-head__details {
+  margin-top: var(--space-3);
+}
+.project-head__details > summary,
+.project-more-sections > summary,
+.project-extra-services > summary,
+.project-filter-panel > summary {
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding-block: var(--space-2);
+  font-size: var(--type-dense);
+}
+.project-head__details[open] {
+  padding-bottom: var(--space-3);
+}
+.project-more-sections {
+  margin-block: var(--space-2);
+}
+.project-extra-services {
+  margin-top: var(--space-5);
+  border-top: 1px solid var(--border-subtle);
+}
+.position-row__actions {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  margin-top: var(--space-2);
+}
+.position-row__specs > div:nth-child(4) {
+  display: none;
+}
+.position-row__thumb {
+  padding: var(--space-3);
+  background: var(--surface-sheet);
+}
+.project-position-row-group[data-view="grid"] .position-row__thumb {
+  grid-column: 1 / -1;
+  grid-row: 1;
+}
+.project-position-row-group[data-view="grid"] .project-position-check {
+  grid-column: 1;
+  grid-row: 1;
+  z-index: var(--z-base);
+  justify-self: start;
+  align-self: start;
+  background: var(--surface-panel);
+  padding: var(--space-1);
+  border-radius: var(--r-1);
+}
+.project-position-row-group[data-view="grid"] .position-row__specs {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--space-3);
+}
+.project-position-row-group[data-view="grid"] .position-row {
+  padding: var(--space-4);
+  gap: var(--space-3);
+}
+.project-material-workspace {
+  display: grid;
+  grid-template-columns: minmax(240px, 2fr) minmax(0, 3fr);
+  gap: var(--space-5);
+  align-items: start;
+}
+.project-material-drawing {
+  position: sticky;
+  top: 0;
+  min-width: 0;
+}
+.project-material-drawing .position-thumb {
+  width: 100%;
+  height: min(42vh, 360px);
+  padding: var(--space-3);
+  background: var(--surface-sheet);
+  border: 1px solid var(--border-subtle);
+}
+.project-material-details {
+  min-width: 0;
+}
+.project-material-details h2 {
+  font-size: var(--type-title-m);
+  margin-top: 0;
+}
+.project-material-details caption {
+  text-align: left;
+  font-weight: 600;
+  padding-block: var(--space-3);
+}
+.project-material-details .projects-table-scroll table {
+  min-width: 32rem;
+  table-layout: auto;
+}
+.project-material-details .projects-table-scroll th,
+.project-material-details .projects-table-scroll td {
+  overflow-wrap: normal;
+}
+.project-material-details .projects-table-scroll td:first-child {
+  min-width: 9rem;
+}
+.project-material-pick {
+  border: 0;
+  background: transparent;
+  color: var(--theme-accent-ink);
+  padding: var(--space-1);
+  text-align: left;
+  overflow-wrap: break-word;
+}
+.project-material-details [data-selected="true"] {
+  background: var(--theme-accent-soft);
+}
+.project-material-selection {
+  display: grid;
+  gap: var(--space-2);
+  min-height: 4.5rem;
+  font-size: var(--type-dense);
+  padding: var(--space-3);
+  background: var(--surface-panel);
+  border-left: 2px solid var(--theme-accent);
+}
+.project-material-selection button {
+  justify-self: start;
+}
+@media (max-width: 760px) {
+  .project-material-workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .project-material-drawing {
+    position: static;
   }
 }

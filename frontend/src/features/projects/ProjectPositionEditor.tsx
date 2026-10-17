@@ -1182,29 +1182,55 @@ function PositionWorkspace({
 export function ProjectBom({
   result,
   floating = false,
+  expanded = false,
+  highlighted,
+  onSelectMaterial,
 }: {
   result: EngineCalculateResponse;
   floating?: boolean;
+  expanded?: boolean;
+  highlighted?: ReadonlySet<string>;
+  onSelectMaterial?(key: string): void;
 }): JSX.Element {
   const longestCut = Math.max(0, ...result.profile_cuts.map((cut) => Number(cut.length_mm)));
+  const materialLabel = (label: string, key: string) =>
+    onSelectMaterial ? (
+      <button
+        type="button"
+        className="project-material-pick"
+        aria-pressed={highlighted?.has(key) ?? false}
+        onClick={() => onSelectMaterial(key)}
+      >
+        {label}
+      </button>
+    ) : (
+      label
+    );
   const content = (
     <div className="project-bom-content">
       <div className="projects-table-scroll">
         <table>
+          <caption>Perfiles · cortes en mm</caption>
           <thead>
             <tr>
               <th>{t("pricing.profile")}</th>
+              <th>Uso</th>
               <th>{t("projects.length")}</th>
+              <th>Ángulos</th>
               <th>{t("pricing.quantity")}</th>
             </tr>
           </thead>
           <tbody>
             {result.profile_cuts.map((cut, index) => (
-              <tr key={index}>
-                <td>{cut.sku}</td>
+              <tr key={index} data-selected={highlighted?.has(`profile:${index}`) || undefined}>
+                <td>{materialLabel(cut.sku, `profile:${index}`)}</td>
+                <td>{domainLabel(cut.role)}</td>
                 <td>
                   {fmtMm(cut.length_mm)}
                   <CutBar lengthMm={Number(cut.length_mm)} maxMm={longestCut} />
+                </td>
+                <td>
+                  {fmtMm(cut.angle_left)}° / {fmtMm(cut.angle_right)}°
                 </td>
                 <td>{cut.qty}</td>
               </tr>
@@ -1214,6 +1240,7 @@ export function ProjectBom({
       </div>
       <div className="projects-table-scroll">
         <table>
+          <caption>Vidrios · medidas de corte en mm</caption>
           <thead>
             <tr>
               <th>{t("pricing.glass")}</th>
@@ -1223,8 +1250,13 @@ export function ProjectBom({
           </thead>
           <tbody>
             {result.glasses.map((glass, index) => (
-              <tr key={index}>
-                <td>{index + 1}</td>
+              <tr key={index} data-selected={highlighted?.has(`glass:${index}`) || undefined}>
+                <td>
+                  {materialLabel(
+                    glass.glass_spec || glass.article_sku || `Vidrio ${index + 1}`,
+                    `glass:${index}`,
+                  )}
+                </td>
                 <td>{fmtMm(glass.width_mm)}</td>
                 <td>{fmtMm(glass.height_mm)}</td>
               </tr>
@@ -1233,8 +1265,8 @@ export function ProjectBom({
         </table>
       </div>
       {result.hardware_items.map((kit, index) => (
-        <p key={index}>
-          {kit.name} × {kit.qty}
+        <p key={index} data-selected={highlighted?.has(`hardware:${index}`) || undefined}>
+          {materialLabel(kit.name, `hardware:${index}`)} × {kit.qty}
         </p>
       ))}
       {(result.fittings ?? []).length > 0 && (
@@ -1250,8 +1282,8 @@ export function ProjectBom({
             </thead>
             <tbody>
               {(result.fittings ?? []).map((item, index) => (
-                <tr key={index}>
-                  <td>{item.sku}</td>
+                <tr key={index} data-selected={highlighted?.has(`fitting:${index}`) || undefined}>
+                  <td>{materialLabel(item.sku, `fitting:${index}`)}</td>
                   <td>
                     {tOptional(`assembly.fittingKind.${item.kind}`) ?? domainLabel(item.kind)}
                   </td>
@@ -1275,8 +1307,16 @@ export function ProjectBom({
             </thead>
             <tbody>
               {result.reinforcements.map((item, index) => (
-                <tr key={index}>
-                  <td>{item.reinforcement_sku || item.parent_profile_sku}</td>
+                <tr
+                  key={index}
+                  data-selected={highlighted?.has(`reinforcement:${index}`) || undefined}
+                >
+                  <td>
+                    {materialLabel(
+                      item.reinforcement_sku || item.parent_profile_sku,
+                      `reinforcement:${index}`,
+                    )}
+                  </td>
                   <td>
                     {fmtMm(item.length_mm)}
                     <CutBar lengthMm={Number(item.length_mm)} maxMm={longestCut} />
@@ -1301,8 +1341,8 @@ export function ProjectBom({
             </thead>
             <tbody>
               {result.panels.map((item, index) => (
-                <tr key={index}>
-                  <td>{item.name}</td>
+                <tr key={index} data-selected={highlighted?.has(`panel:${index}`) || undefined}>
+                  <td>{materialLabel(item.name, `panel:${index}`)}</td>
                   <td>{fmtMm(item.width_mm)}</td>
                   <td>{fmtMm(item.height_mm)}</td>
                 </tr>
@@ -1315,6 +1355,11 @@ export function ProjectBom({
   );
   return floating ? (
     <EditorBottomPanel title={t("projects.bom")}>{content}</EditorBottomPanel>
+  ) : expanded ? (
+    <section className="project-bom">
+      <h2>Materiales de esta ventana</h2>
+      {content}
+    </section>
   ) : (
     <details className="project-bom">
       <summary>{t("projects.bom")}</summary>

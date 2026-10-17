@@ -1,5 +1,5 @@
 import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 import { projectsList } from "../../api/generated/dekopen";
 import type { PriceResponse, ProjectResponse } from "../../api/generated/models";
@@ -880,9 +880,28 @@ export function ProjectPrices({
   const auth = useAuthSession();
   const orgId = auth.me?.active_organization?.id;
   const userId = auth.me?.user?.id;
+  const location = useLocation();
+  const prepared = (
+    location.state as {
+      quotation?: { organizationId?: string; projectId?: string; request?: Partial<Controls> };
+    } | null
+  )?.quotation;
+  const preparedControls =
+    prepared && prepared.organizationId === orgId && prepared.projectId === boundProjectId
+      ? prepared.request
+      : undefined;
   const [projects, setProjects] = useState<ProjectResponse[]>([]);
   const [projectId, setProjectId] = useState(boundProjectId ?? "");
-  const [controls, setControls] = useState<Controls>(defaultControls);
+  const [controls, setControls] = useState<Controls>(() => {
+    const defaults = defaultControls();
+    if (!preparedControls) return defaults;
+    return Object.fromEntries(
+      Object.entries(defaults).map(([key, fallback]) => [
+        key,
+        String(preparedControls[key as keyof Controls] ?? fallback),
+      ]),
+    ) as Controls;
+  });
   const [options, setOptions] = useState<Options | null>(null);
   const [history, setHistory] = useState<Operation[]>([]);
   const [projection, setProjection] = useState<Operation | null>(null);
@@ -900,7 +919,7 @@ export function ProjectPrices({
   const [reload, setReload] = useState(0);
   const generation = useRef(0);
   const actionGeneration = useRef(0);
-  const touched = useRef(false);
+  const touched = useRef(!!preparedControls);
   const reasonEdited = useRef(false);
 
   const chooseOperation = useCallback((item: Operation): void => {

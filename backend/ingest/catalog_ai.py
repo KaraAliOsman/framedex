@@ -21,7 +21,59 @@ Un sistema puede producir filas en las hojas declaradas en schema. No omitas las
 de corte, secciones ni límites explícitos. No completes una serie con conocimientos externos.
 Los códigos, SKU y versiones deben estar en la fuente. Para source usa el archivo y página.
 Omite de values y evidence las columnas ausentes; el servidor las marcará UNKNOWN.
+Relaciona perfiles, reglas y colores usando los códigos de sistema explícitos de la fuente.
+Incluye todas las filas útiles de cada sección; no resumas el catálogo en ejemplos.
 """
+
+
+def merge_sections(candidates):
+    """Join complementary evidence for the same declared entity, never settle a conflict."""
+    keys = {
+        "Sistemas": ("system_code", "version"),
+        "Perfiles": ("system_code", "sku"),
+        "Roles y reglas de corte": ("system_code", "sku", "role"),
+        "Refuerzos": ("system_code", "sku", "reinforcement_sku"),
+        "Límites": ("system_code", "opening_type"),
+        "Colores y SKU por color": ("system_code", "sku", "finish", "binding_version"),
+        "Vidrios": ("system_code", "sku"),
+        "Reglas de vidrio": ("code",),
+        "Herrajes": ("system_code", "sku", "opening_type", "min_leaf_width_mm", "max_leaf_width_mm", "min_leaf_height_mm", "max_leaf_height_mm"),
+        "Precios de costo": ("system_code", "sku", "list_code", "supplier_name", "currency", "valid_from", "unit"),
+    }
+    merged = []
+    for entry in candidates:
+        values = entry["values"]
+        fields = keys.get(entry["sheet"], ())
+        identity = tuple(values.get(key) for key in fields)
+        target = None
+        if identity and all(value is not None and value != "" for value in identity):
+            for previous in merged:
+                current = previous["values"]
+                if previous["sheet"] != entry["sheet"] or identity != tuple(current.get(key) for key in fields):
+                    continue
+                # Never choose a winner for contradictory values or revisions.
+                if any(current.get(key) is not None and value is not None and current[key] != value
+                       for key, value in values.items() if key != "source"):
+                    continue
+                if any(old.get("proposed") is not None and entry["fields"].get(key, {}).get("proposed") is not None
+                       and old["proposed"] != entry["fields"][key]["proposed"]
+                       for key, old in previous["fields"].items() if key != "source"):
+                    continue
+                target = previous
+                break
+        if target is None:
+            merged.append(entry)
+            continue
+        refs = dict(target["fields"])
+        for key, reference in entry["fields"].items():
+            old = refs.get(key, {})
+            if reference.get("confidence") == "HIGH" and old.get("confidence") != "HIGH" or old.get("confidence") == "UNKNOWN":
+                refs[key] = reference
+        raw = {key: values.get(key) if values.get(key) is not None and key != "source" else target["values"].get(key)
+               for key in target["values"]}
+        refreshed = candidate(entry["sheet"], raw, key=target["key"], row=target["row"], method="AI", refs=refs)
+        target.update(refreshed)
+    return merged
 
 
 def parse_response(output: object, *, tagged: list[tuple[str, str]], file_name: str) -> list[dict]:
@@ -72,14 +124,51 @@ def parse_response(output: object, *, tagged: list[tuple[str, str]], file_name: 
     return candidates
 
 
-def compile_catalog(*, org_id, actor_id, import_id, kind, file_name, tagged):
+def compile_catalog(*, org_id, actor_id, import_id, kind, file_name, tagged, content=None, on_progress=None):
+    """Process a whole source in bounded, replayable sections; never ask for manual splitting."""
     from ai_gateway.service import invoke
-    source_lines = [{"text": text, "ref": ref} for text, ref in tagged]
-    if sum(len(line["text"]) for line in source_lines) > 100_000:
-        raise ValueError("El documento supera el límite de texto. Divídelo para conservar todas las fuentes.")
-    result = invoke(org_id=org_id, user_id=actor_id, capability="catalog_import",
-        operation_key=f"catalog:{import_id}:typed-v1", input_payload={
-            "file_name": file_name, "kind": kind, "source": {"kind": "catalog_import", "id": str(import_id)},
-            "schema": public_schema(), "source_lines": source_lines,
-        }, provider_options={"system": SYSTEM, "json_output": True})
-    return parse_response(result["output"], tagged=tagged, file_name=file_name), result["audit_id"]
+    from io import BytesIO
+    batches = []
+    if kind == "PDF" and content is not None:
+        from pypdf import PdfReader
+        pages = len(PdfReader(BytesIO(content)).pages)
+        if not pages or pages > 1000:
+            raise ValueError("El catálogo no tiene páginas legibles o supera las mil páginas admitidas.")
+        for first in range(1, pages + 1, 4):
+            last = min(first + 3, pages)
+            selected = [(text, ref) for text, ref in tagged if ref in {f"página {page}" for page in range(first, last + 1)}]
+            batches.append((selected, [first, last]))
+    else:
+        selected, size = [], 0
+        for text, ref in tagged:
+            if selected and size + len(text) > 70000:
+                batches.append((selected, None))
+                selected, size = [], 0
+            selected.append((text, ref))
+            size += len(text)
+        if selected or not batches:
+            batches.append((selected, None))
+    candidates, audit_id, seen = [], None, set()
+    for index, (section, page_range) in enumerate(batches):
+        source_lines = [{"text": text, "ref": ref} for text, ref in section]
+        payload = {"file_name": file_name, "kind": kind,
+                   "source": {"kind": "catalog_import", "id": str(import_id)},
+                   "schema": public_schema(), "source_lines": source_lines}
+        if page_range:
+            payload["page_range"] = page_range
+        result = invoke(org_id=org_id, user_id=actor_id, capability="catalog_import",
+            operation_key=f"catalog:{import_id}:typed-v2:section:{index}", input_payload=payload,
+            provider_options={"system": SYSTEM, "json_output": True})
+        audit_id = result["audit_id"]
+        for proposed in parse_response(result["output"], tagged=section, file_name=file_name):
+            identity = json.dumps({"sheet": proposed["sheet"], "values": proposed["values"]}, sort_keys=True, default=str)
+            if identity in seen:
+                continue
+            seen.add(identity)
+            proposed["key"] = f"part{index}:{proposed['key']}"
+            candidates.append(proposed)
+        if on_progress:
+            on_progress(index + 1, len(batches), len(candidates), page_range)
+        if len(candidates) > MAX_ROWS:
+            raise ValueError("El catálogo supera la capacidad de revisión. Se conserva el trabajo de lectura para continuar sin repetirlo.")
+    return merge_sections(candidates), audit_id

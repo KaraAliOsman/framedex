@@ -83,7 +83,7 @@ function useConnection(): boolean {
 
 export function FieldPage({ office = false }: { office?: boolean }): JSX.Element {
   const Surface = office ? "section" : "main";
-  const { theme, toggleTheme } = useTheme(office ? "light" : "dark");
+  const { theme } = useTheme();
   const auth = useAuthSession();
   const current = useRef(auth);
   current.current = auth;
@@ -237,14 +237,13 @@ export function FieldPage({ office = false }: { office?: boolean }): JSX.Element
           <p>
             {selected
               ? `${selected.code} · ${selected.context.project_name}`
-              : "Tu ruta, tus posiciones y sus comprobantes"}
+              : office
+                ? "Organiza las entregas, instalaciones y visitas"
+                : "Tu ruta, tus ventanas y sus comprobantes"}
           </p>
         </div>
         <div className="field-tools">
           <Link to="/dashboard">Hoy</Link>
-          <button type="button" className="secondary-action" onClick={toggleTheme}>
-            Cambiar tema
-          </button>
         </div>
       </header>
       <nav className="field-nav" aria-label="Trabajo en obra">
@@ -419,7 +418,9 @@ function Agenda({
           body={
             office
               ? "Agenda una obra con unidades reales y un responsable."
-              : "El encargado aún no te ha asignado visitas. Pide tu ruta de obra."
+              : data.role === "INSTALLER"
+                ? "El encargado aún no te ha asignado visitas. Pide tu ruta de obra."
+                : "No hay visitas asignadas para esta selección. Revisa la agenda o los despachos de la obra."
           }
           action={
             <button

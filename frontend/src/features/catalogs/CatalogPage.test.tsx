@@ -299,6 +299,8 @@ async function declareSection() {
 beforeEach(() => {
   vi.resetAllMocks();
   vi.mocked(client.catalogEvidenceList).mockResolvedValue(ok({ items: [] }));
+  vi.mocked(client.catalogImportsList).mockResolvedValue(ok({ imports: [] }));
+  vi.mocked(client.catalogTemplateSchema).mockResolvedValue(ok({ version: "1", sheets: [] }));
   identity.role = "OWNER";
 
   vi.mocked(client.catalogSystemList).mockResolvedValue(ok({ items: [system()] }));

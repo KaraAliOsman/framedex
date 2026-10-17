@@ -58,7 +58,19 @@ it.each(Object.keys(expected) as MembershipRoleEnum[])(
   "reflects the read capabilities and workflow for %s",
   (role) => {
     const groups = navigationFor(role);
-    expect(groups.flatMap((group) => group.items.map((item) => item.to))).toEqual(expected[role]);
+    const paths = groups.flatMap((group) => group.items.map((item) => item.to));
+    expect([...paths].sort()).toEqual([...expected[role]].sort());
+    expect(new Set(paths).size).toBe(paths.length);
+    if (["OWNER", "ESTIMATOR"].includes(role))
+      expect(
+        groups
+          .filter((group) => !group.secondary)
+          .flatMap((group) => group.items.map((item) => item.to)),
+      ).toEqual(
+        role === "OWNER"
+          ? ["/dashboard", "/projects", "/clients", "/purchasing", "/production", "/assistant"]
+          : ["/dashboard", "/projects", "/clients", "/production", "/assistant"],
+      );
     expect(groups.every((group) => group.items.length > 0)).toBe(true);
     expect(homeFor(role)).toBe(role === "OPERATOR" ? "/production" : "/dashboard");
   },

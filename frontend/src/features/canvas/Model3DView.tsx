@@ -102,7 +102,7 @@ export default function Model3DView({
     finishes.some(
       (finish) =>
         finish.approximate ||
-        (finish.kind === "FOIL" &&
+        ((finish.kind === "FOIL" || finish.kind === "WOOD_EFFECT") &&
           (!finish.texture_path || !finishTextureAvailable(finish.texture_path))),
     );
   const onError = useCallback(() => setError(true), []);
@@ -302,7 +302,7 @@ export default function Model3DView({
         <p className="model3d-illustrative" role="note">
           {[
             approximate ? "Sección aproximada" : null,
-            approximateColor ? "Color plano aproximado" : null,
+            approximateColor ? "Acabado ilustrativo · comprueba la muestra del proveedor" : null,
             schematicHardware ? "Herrajes esquemáticos · altura del modelo" : null,
             wall ? "Muro de referencia" : null,
             explode ? "Despiece axial · marco, hojas, junquillos y vidrio" : null,

@@ -92,8 +92,8 @@ button:disabled {
   font-size: var(--type-label);
   font-weight: 500;
   line-height: var(--line-label);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: normal;
+  text-transform: none;
 }
 .ui-field__input,
 .ui-code__fallback input {

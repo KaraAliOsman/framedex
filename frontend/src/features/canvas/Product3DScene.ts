@@ -89,6 +89,8 @@ export interface ShapeSolid {
  * posts); the run spans a0..a1 and the (u,v) origin sits at (u0, v0).
  * Never approximate — the polygon IS the manufacturer declaration. */
 export interface ProfileSolid {
+  /** 45° corner declared by the evaluated engine cuts. */
+  miter?: boolean;
   hardwareColor?: FinishColor;
   finish?: ResolvedFinish;
   kind: "profile";
@@ -420,8 +422,8 @@ export function normalizedSection(
 }
 
 /** One member run: a declared catalog section extrudes the real profile —
- * straight-cut ends meet at corners (the miter is a fabrication detail,
- * not a visual one). Without a section the member stays an explicitly
+ * ends meet using the joint declared by the sealed cuts. Missing cuts use
+ * the neutral straight convention. Without a section the member stays an explicitly
  * approximate box, never a fabricated declaration. `mirrorU` flips the
  * section across its own u-extent so an asymmetric profile faces the
  * aperture on the right post / top rail the same way it does on the
@@ -439,6 +441,7 @@ function memberBar(
   z0: number,
   depth: number,
   mirrorU = false,
+  miter = false,
 ): void {
   if (a1 - a0 <= 0) return;
   const section = normalizedSection(spec);
@@ -454,7 +457,32 @@ function memberBar(
       a1,
       u0: uCenter - section.width / 2,
       v0: z0,
+      ...(miter ? { miter: true } : {}),
       ...(mirrorU ? { mirrorU: true } : {}),
+    });
+    return;
+  }
+  if (miter) {
+    const low = uCenter - uSize / 2,
+      high = uCenter + uSize / 2;
+    const near = mirrorU ? high : low,
+      far = mirrorU ? low : high;
+    const points: Pt2[] = [
+      [a0, near],
+      [a1, near],
+      [a1 - uSize, far],
+      [a0 + uSize, far],
+    ];
+    solids.push({
+      kind: "shape",
+      owner,
+      surface,
+      material: spec.material,
+      outline: points.map(([a, u]) => (axis === "x" ? [a, u] : [u, a])),
+      holes: [],
+      z0,
+      depth,
+      approximate: true,
     });
     return;
   }
@@ -487,6 +515,7 @@ function memberBarRing(
 ): void {
   const w = Math.min(barW, region.w / 2);
   const h = Math.min(barW, region.h / 2);
+  const miter = spec.cornerJoint === "MITER";
   memberBar(
     solids,
     owner,
@@ -499,6 +528,8 @@ function memberBarRing(
     w,
     z0,
     depth,
+    false,
+    miter,
   );
   memberBar(
     solids,
@@ -513,6 +544,7 @@ function memberBarRing(
     z0,
     depth,
     true,
+    miter,
   );
   memberBar(
     solids,
@@ -520,12 +552,14 @@ function memberBarRing(
     surface,
     spec,
     "x",
-    region.x + w,
-    region.x + region.w - w,
+    region.x + (miter ? 0 : w),
+    region.x + region.w - (miter ? 0 : w),
     region.y + h / 2,
     h,
     z0,
     depth,
+    false,
+    miter,
   );
   memberBar(
     solids,
@@ -533,13 +567,14 @@ function memberBarRing(
     surface,
     spec,
     "x",
-    region.x + w,
-    region.x + region.w - w,
+    region.x + (miter ? 0 : w),
+    region.x + region.w - (miter ? 0 : w),
     region.y + region.h - h / 2,
     h,
     z0,
     depth,
     true,
+    miter,
   );
 }
 

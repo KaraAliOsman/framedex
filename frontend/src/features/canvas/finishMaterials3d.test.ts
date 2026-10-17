@@ -28,12 +28,14 @@ describe("declared finishes in commercial render", () => {
     disposeFinishMaterials(materials);
     geometry.dispose();
   });
-  it("uses the same swatch as the emitted face and never fabricates grain", () => {
+  it("keeps the declared face color and identifies fallback grain as illustrative", () => {
     expect(finishColorCss(finish.exterior)).toBe(
       "color(srgb 0.3803921568627451 0.23921568627450981 0.11764705882352941)",
     );
     const materials = finishGeometryMaterials(new THREE.BoxGeometry(1, 1, 1), finish);
-    expect(materials.every((material) => material.map === null)).toBe(true);
+    expect(materials[1]!.map).toBeNull();
+    expect(materials[2]!.map?.name).toContain("Veta ilustrativa");
+    expect(materials[2]!.color.toArray()).toEqual(finish.exterior.linear_rgb.map(Number));
     disposeFinishMaterials(materials);
     const interior = withFinishMembers(resolveMembers(undefined), finish, "interior");
     const exterior = withFinishMembers(resolveMembers(undefined), finish, "exterior");

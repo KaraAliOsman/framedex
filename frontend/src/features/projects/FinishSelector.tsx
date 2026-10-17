@@ -24,7 +24,7 @@ const processNames: Record<string, string> = {
 function Swatch({ color }: { color: FinishColor }): JSX.Element {
   return (
     <span
-      className="finish-swatch"
+      className={`finish-swatch${!color.texture_path && ["FOIL", "WOOD_EFFECT"].includes(color.kind) ? " finish-swatch--illustrative" : ""}`}
       style={{
         backgroundColor: finishColorCss(color),
         backgroundImage: color.texture_path ? `url(${color.texture_path})` : undefined,
@@ -169,6 +169,14 @@ export function FinishSelector({
           )}
         </div>
       </div>
+      {selected &&
+      [selected.interior, selected.exterior].some(
+        (color) => !color.texture_path && ["FOIL", "WOOD_EFFECT"].includes(color.kind),
+      ) ? (
+        <p className="finish-selector__notice">
+          Veta ilustrativa. Comprueba el acabado con la muestra del proveedor.
+        </p>
+      ) : null}
       {!selected ? (
         <p role="alert">
           Bloqueado · el acabado guardado no está en esta carta. Elige una combinación vigente en

@@ -42,32 +42,28 @@
   src: url("/fonts/ibm-plex-mono-latin-600-normal.woff2") format("woff2");
 }
 :root {
-  --g-950: #161c1f;
-  --g-900: #252d31;
-  --g-700: #465158;
-  --g-500: #727d82;
+  --g-950: #202723;
+  --g-900: #303a34;
+  --g-700: #505c54;
+  --g-500: #748076;
   --g-400: #9aa6a9;
-  --g-300: #cdd5d6;
-  --g-200: #e0e6e5;
-  --g-100: #eef2f1;
-  --g-50: #f5f7f6;
-  --g-25: #fcfdfc;
-  --teal-950: #042e2c;
-  --teal-900: #064440;
-  --teal-800: #075f5a;
-  --teal-700: #0b7770;
-  --teal-600: #0f8f85;
+  --g-300: #d5dbd4;
+  --g-200: #e5e9e2;
+  --g-100: #f0f3ed;
+  --g-50: #f6f7f2;
+  --g-25: #fdfefa;
+  --teal-950: #15392b;
+  --teal-900: #214b38;
+  --teal-800: #2b5943;
+  --teal-700: #346b50;
+  --teal-600: #508362;
   --teal-500: #20a79a;
   --teal-400: #48bcaf;
-  --teal-300: #7fd4c8;
-  --teal-200: #b0e4dc;
   --teal-100: #d4efea;
-  --teal-50: #e6f4f2;
+  --teal-50: #edf4e9;
   --orange-700: #a84418;
   --orange-600: #c24e1e;
   --orange-500: #e56a32;
-  --orange-400: #ed8653;
-  --orange-300: #f3ac84;
   --orange-100: #fbebe2;
   --paper: #ffffff;
   --scrim: rgb(22 28 31 / 42%);
@@ -84,24 +80,24 @@
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
   --type-display: 2rem;
   --line-display: 2.25rem;
-  --type-title-l: 1.25rem;
-  --line-title-l: 1.625rem;
-  --type-title-m: 0.875rem;
-  --line-title-m: 1.125rem;
-  --type-label: 0.6875rem;
+  --type-title-l: 1.5rem;
+  --line-title-l: 2rem;
+  --type-title-m: 1rem;
+  --line-title-m: 1.375rem;
+  --type-label: 0.75rem;
   --line-label: 0.875rem;
-  --type-body: 0.8125rem;
-  --line-body: 1.125rem;
-  --type-dense: 0.75rem;
-  --line-dense: 1rem;
+  --type-body: 0.875rem;
+  --line-body: 1.375rem;
+  --type-dense: 0.8125rem;
+  --line-dense: 1.125rem;
   --type-dim: 0.8125rem;
   --line-dim: 1rem;
   --type-micro: 0.6875rem;
   --type-workshop: 1rem;
   --line-micro: 0.875rem;
   --r-0: 0;
-  --r-1: 2px;
-  --r-2: 4px;
+  --r-1: 6px;
+  --r-2: 12px;
   --r-pill: 999px;
   --e1: none;
   --focus-ring: none;
@@ -121,13 +117,13 @@
   --t-spatial: 220ms;
   --t-max: 280ms;
   --t-exit: 120ms;
-  --ease-in: cubic-bezier(0.2, 0, 0.38, 1);
-  --ease-out: cubic-bezier(0.4, 0.14, 1, 1);
+  --ease-in: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --density-compact: 28px;
-  --density-default: 32px;
+  --density-default: 38px;
   --density-loose: 44px;
   --control-height: var(--density-default);
-  --table-row-height: 32px;
+  --table-row-height: 40px;
   --inspector-width: 320px;
   --tree-width: 260px;
   --tool-strip: 48px;
@@ -162,6 +158,14 @@
   --mat-foil-fill: #7b5a3b;
   --mat-foil-edge: #523d26;
   --mat-foil-highlight: #96714c;
+  --mat-grain-swatch: repeating-linear-gradient(
+    92deg,
+    transparent 0 3px,
+    rgb(10 5 0 / 15%) 4px,
+    transparent 6px 11px,
+    rgb(255 255 255 / 12%) 12px,
+    transparent 14px 21px
+  );
   --mat-aluminium-fill: #dce3e5;
   --mat-aluminium-edge: #a3b0b4;
   --mat-aluminium-highlight: #f2f6f7;
@@ -214,8 +218,8 @@
   --surface-panel: var(--g-25);
   --surface-card: var(--g-100);
   --surface-sheet: var(--paper);
-  --surface-hover: #e2e8e7;
-  --surface-active: #d4dedd;
+  --surface-hover: #edf0e9;
+  --surface-active: #e2e9dc;
   --surface-selected: var(--teal-50);
   --border-subtle: var(--g-200);
   --border-default: var(--g-300);
@@ -266,65 +270,6 @@
   --canvas-invalid: var(--state-danger);
   --viewport-stage: #e0e6e5;
   --viewport-ground: #cdd5d6;
-}
-[data-theme="dark"],
-[data-density="workshop"]:not([data-theme]) {
-  --bg-app: #0f1416;
-  --surface-panel: #151b1e;
-  --surface-card: #1b2326;
-  --surface-sheet: #182024;
-  --surface-hover: #243033;
-  --surface-active: #2f3c3f;
-  --surface-selected: #123b36;
-  --border-subtle: #243033;
-  --border-default: #2f3c3f;
-  --border-strong: #607074;
-  --border-focus: var(--teal-500);
-  --text-primary: #e7edec;
-  --text-secondary: #aeb9bb;
-  --text-muted: #86928f;
-  --text-small-muted: #aeb9bb;
-  --text-on-fill: var(--g-950);
-  --text-disabled: #86928f;
-  --interactive: var(--teal-400);
-  --interactive-fill: var(--teal-500);
-  --interactive-hover: var(--teal-400);
-  --interactive-pressed: var(--teal-300);
-  --mark: var(--orange-400);
-  --state-success: #4caf7f;
-  --state-success-soft: #16291f;
-  --state-success-ink: #86d0a7;
-  --state-warning: #e09543;
-  --state-warning-soft: #33231a;
-  --state-warning-ink: #f3bc7b;
-  --state-danger: #e06154;
-  --state-danger-soft: #331d1a;
-  --state-danger-ink: #f3a49b;
-  --text-on-danger: var(--g-950);
-  --state-info: var(--teal-400);
-  --state-info-soft: #123b36;
-  --state-info-ink: var(--teal-200);
-  --state-person: var(--orange-400);
-  --state-person-soft: #39251b;
-  --state-person-ink: var(--orange-300);
-  --canvas-sheet: var(--surface-sheet);
-  --canvas-grid: #2f3c3f;
-  --canvas-grid-lines: #243033;
-  --canvas-member: var(--text-primary);
-  --canvas-dim: var(--text-secondary);
-  --canvas-dim-line: var(--text-muted);
-  --canvas-glazing: rgba(72, 188, 175, 0.07);
-  --canvas-glazing-stroke: var(--teal-500);
-  --canvas-opening-symbol: var(--text-secondary);
-  --canvas-selection: var(--teal-500);
-  --canvas-selection-fill: rgba(15, 143, 133, 0.08);
-  --canvas-handle: var(--mark);
-  --canvas-handle-stroke: var(--paper);
-  --canvas-snap: var(--success-base);
-  --canvas-preview: var(--mark);
-  --canvas-invalid: var(--state-danger);
-  --viewport-stage: #262c2f;
-  --viewport-ground: #1c2225;
 }
 :root,
 [data-theme],
@@ -422,10 +367,10 @@
   --theme-text: var(--text-primary);
 }
 [data-density="office"] {
-  --type-body: 0.8125rem;
-  --line-body: 1.125rem;
+  --type-body: 0.875rem;
+  --line-body: 1.375rem;
   --control-height: 32px;
-  --table-row-height: 32px;
+  --table-row-height: 40px;
 }
 [data-density="workshop"] {
   --type-body: 1rem;

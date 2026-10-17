@@ -325,6 +325,7 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
       )}
 
       <CatalogImportsPanel
+        initiallyExpanded={data.systems.length === 0}
         onExpandedChange={setImportExpanded}
         orgId={orgId}
         canWrite={canEdit}

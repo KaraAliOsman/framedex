@@ -1,0 +1,64 @@
+{
+  "phase": "implementation",
+  "date": "2026-10-17",
+  "verified_ref": "codex/v1-experiencia",
+  "base_ref": "edcfd2844d2c2fc7cbb0d3b543b50e9089ab9b3f",
+  "provenance": "Owned REVIEW rebuilt from this checkout without fixture/reset; captures selected across final integration builds",
+  "data": "Synthetic DEMO; no industrial certification or production services asserted",
+  "captures": [
+    {
+      "file": "catalogo-pdf.jpg",
+      "source": "CUA screenshot; original bytes, extension corrected without recompression",
+      "format": "JPEG",
+      "width": 1280,
+      "height": 720,
+      "bytes": 68983,
+      "sha256": "5c21de9fabf0cb5a76208e108b04c5e6e9ddd696f3e6c4c90a0dd506c657e982"
+    },
+    {
+      "file": "editor-2d.jpg",
+      "source": "CUA screenshot; original bytes, extension corrected without recompression",
+      "format": "JPEG",
+      "width": 1280,
+      "height": 720,
+      "bytes": 91419,
+      "sha256": "2e0766b9f13347dc7890a1b66ed11c4f4e0e820d85ddc07eb034fc2511726f0f"
+    },
+    {
+      "file": "editor-3d.jpg",
+      "source": "CUA screenshot; original bytes, extension corrected without recompression",
+      "format": "JPEG",
+      "width": 1280,
+      "height": 720,
+      "bytes": 99533,
+      "sha256": "42aa8cdcc9c4027a6e7c8ad18c90e2849291ce076cb8e8a619437f368a5b1dd7"
+    },
+    {
+      "file": "ia-propuesta.jpg",
+      "source": "CUA screenshot; original bytes, extension corrected without recompression",
+      "format": "JPEG",
+      "width": 1265,
+      "height": 712,
+      "bytes": 76625,
+      "sha256": "3e3980bdfde2a109ec2a09eb873965e687ccf325ec3a1c156a937c0a836e9af6"
+    },
+    {
+      "file": "materiales.jpg",
+      "source": "CUA screenshot; original bytes, extension corrected without recompression",
+      "format": "JPEG",
+      "width": 1265,
+      "height": 712,
+      "bytes": 75343,
+      "sha256": "cad3978c39ae8dd8769dc7c5c95ccec8d350a587297c0faf29a1f1192fbb73d9"
+    },
+    {
+      "file": "pdf-revision.jpg",
+      "source": "CUA screenshot; original bytes, extension corrected without recompression",
+      "format": "JPEG",
+      "width": 1265,
+      "height": 712,
+      "bytes": 72865,
+      "sha256": "ce3f8c3d86b40dd426084b7b26eaeed063af195fb2143ccef514f8038c98c52a"
+    }
+  ]
+}

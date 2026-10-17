@@ -3,6 +3,7 @@ import type {
   HandlePolicy,
   KitChoice,
   ProfileSection,
+  ProfileCut,
   FinishColor,
   ResolvedFinish,
 } from "../../api/generated/models";
@@ -14,6 +15,8 @@ import { chartFinish, type FinishFace } from "./finishColors";
  * reads as a real window. */
 
 export interface MemberSpec {
+  /** Resolved from this product's actual engine cuts, never inferred from material. */
+  cornerJoint?: "MITER" | "BUTT";
   finish?: ResolvedFinish;
   faceFinish?: FinishColor;
   sku: string | null;
@@ -25,6 +28,32 @@ export interface MemberSpec {
   /** Declared catalog cross-section; absent means the renderer must stay
    * approximate — never a fabricated declaration. */
   section?: ProfileSection | null;
+}
+
+export function withCutJoints(base: MemberGeometry, cuts: ProfileCut[]): MemberGeometry {
+  const spec = (member: MemberSpec | null): MemberSpec | null => {
+    if (!member) return null;
+    const found = cuts.filter((cut) => cut.sku === member.sku);
+    const angles = found.flatMap((cut) => [Number(cut.angle_left), Number(cut.angle_right)]);
+    const cornerJoint =
+      angles.length && angles.every((angle) => angle === 45)
+        ? "MITER"
+        : angles.length && angles.every((angle) => angle === 90)
+          ? "BUTT"
+          : undefined;
+    return { ...member, cornerJoint };
+  };
+  return {
+    ...base,
+    frame: spec(base.frame)!,
+    sash: spec(base.sash)!,
+    mullionV: spec(base.mullionV),
+    mullionH: spec(base.mullionH),
+    signature: JSON.stringify([
+      base.signature,
+      cuts.map((cut) => [cut.sku, cut.angle_left, cut.angle_right]),
+    ]),
+  };
 }
 
 export interface MemberGeometry {
@@ -74,7 +103,7 @@ function member(
   role: string,
   fallbackWidth: number,
 ): MemberSpec {
-  const profile = options?.profiles.find((item) => item.role === role);
+  const profile = options?.profiles?.find((item) => item.role === role);
   const faceWidth = profile ? Number(profile.face_width_mm) : NaN;
   return {
     sku: profile?.sku ?? null,
@@ -131,27 +160,27 @@ export function resolveMembers(
   const sashOverlap = Number(options?.sash_overlap_mm);
   const base: MemberGeometry = {
     profileFor(role) {
-      return options?.profiles.some((profile) => profile.role === role)
+      return options?.profiles?.some((profile) => profile.role === role)
         ? member(options, role, FALLBACK.sash)
         : null;
     },
     frame: member(options, "FRAME", FALLBACK.frame),
     sash: member(
       options,
-      options?.profiles.some((profile) => profile.role === "SLIDING_SASH")
+      options?.profiles?.some((profile) => profile.role === "SLIDING_SASH")
         ? "SLIDING_SASH"
-        : options?.profiles.some((profile) => profile.role === "DOOR_SASH")
+        : options?.profiles?.some((profile) => profile.role === "DOOR_SASH")
           ? "DOOR_SASH"
           : "SASH",
       FALLBACK.sash,
     ),
-    mullionV: options?.profiles.some((item) => item.role === "MULLION_V")
+    mullionV: options?.profiles?.some((item) => item.role === "MULLION_V")
       ? member(options, "MULLION_V", FALLBACK.mullion)
       : null,
-    mullionH: options?.profiles.some((item) => item.role === "MULLION_H")
+    mullionH: options?.profiles?.some((item) => item.role === "MULLION_H")
       ? member(options, "MULLION_H", FALLBACK.mullion)
       : null,
-    threshold: options?.profiles.some((item) => item.role === "THRESHOLD")
+    threshold: options?.profiles?.some((item) => item.role === "THRESHOLD")
       ? member(options, "THRESHOLD", FALLBACK.threshold)
       : null,
     beadFor(glassThicknessMm) {

@@ -143,6 +143,7 @@ REST_FRAMEWORK = {
 SPECTACULAR_SETTINGS = {
     "ENUM_NAME_OVERRIDES": {
         "CurrencyEnum": ["CLP", "USD"],
+        "PresentationOperationStateEnum": ["PROPOSED", "APPLIED", "UNDONE"],
         "PricingOperationStateEnum": ["PREVIEW","PENDING","APPLIED","REJECTED","WITHDRAWN"],
         "SlidingTravelEnum": ["LEFT", "RIGHT"],
         "DivisionReferenceEnum": ["START", "END", "CENTER"],

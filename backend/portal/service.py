@@ -373,6 +373,8 @@ def _sealed_organization(version: dict[str, object]) -> dict[str, object]:
         except Exception:
             logo_url = None
     result = {
+        "portal_heading": (org.get("document_preferences") or {}).get("portal_heading", ""),
+        "portal_intro": (org.get("document_preferences") or {}).get("portal_intro", ""),
         "name": org.get("name"),
         "tax_id": org.get("tax_id"),
         "commercial_name": org.get("commercial_name"),

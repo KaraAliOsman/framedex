@@ -5,6 +5,7 @@ import {
   catalogImportReview,
   catalogImportTimeline,
   catalogImportUndo,
+  catalogImportRetry,
   catalogImportsCreate,
   catalogImportsList,
   catalogTemplateSchema,
@@ -28,6 +29,7 @@ import type { FinishAuthority } from "../../api/generated/models";
 import { physicalLabel, type Capability } from "../canvas/physicalOpenings";
 import { SourceHighlight } from "./CatalogProvenance";
 import { ImportedSectionFields } from "./ImportedSectionFields";
+import { DocumentViewer } from "../../ui/DocumentViewer";
 
 type Evidence = {
   ref?: string;
@@ -61,7 +63,7 @@ const WARNINGS: Record<string, string> = {
   "catalog.source_parse_failed":
     "No se pudo leer el texto. Sube una fuente legible para verificar sus valores.",
   "catalog.candidates_capped":
-    "La fuente excede 2 000 filas. Divide el archivo para revisar el resto.",
+    "La lectura alcanzó la capacidad admitida. No se publicó información fuera de la revisión.",
 };
 function inputText(value: unknown): string {
   if (value == null) return "";
@@ -153,18 +155,23 @@ function typedRow(raw: Record<string, unknown>): ReviewRow | null {
 export function CatalogImportsPanel({
   orgId,
   canWrite,
+  systems,
+  initiallyExpanded,
   onConfirmed,
   onExpandedChange,
 }: {
   orgId: string;
   canWrite: boolean;
   systems: Array<{ id: string; name: string; code: string }>;
+  initiallyExpanded?: boolean;
   onConfirmed?: () => void;
   onExpandedChange?: (expanded: boolean) => void;
 }): JSX.Element {
   const confirm = useConfirm();
   const requestedImport = useRef(new URLSearchParams(window.location.search).get("import"));
-  const [expanded, setExpanded] = useState(!!requestedImport.current);
+  const [expanded, setExpanded] = useState(
+    () => (initiallyExpanded ?? systems.length === 0) || !!requestedImport.current,
+  );
   useEffect(() => onExpandedChange?.(expanded), [expanded, onExpandedChange]);
   const [imports, setImports] = useState<CatalogImportResponse[]>([]);
   const [sheets, setSheets] = useState<CatalogTemplateSheet[]>([]);
@@ -180,6 +187,13 @@ export function CatalogImportsPanel({
   const [reviewed, setReviewed] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [dragging, setDragging] = useState(false);
+  const [onlyPending, setOnlyPending] = useState(true);
+  const [allFields, setAllFields] = useState(false);
+  const [sourceView, setSourceView] = useState<{
+    blob: Blob;
+    filename: string;
+    page?: number;
+  } | null>(null);
   const [timeline, setTimeline] = useState<CatalogImportTimeline | null>(null);
   const [timelineError, setTimelineError] = useState("");
   const [timelineReload, setTimelineReload] = useState(0);
@@ -271,6 +285,37 @@ export function CatalogImportsPanel({
       anchor.download = result.filename ?? "catalogo.csv";
       anchor.click();
       window.setTimeout(() => URL.revokeObjectURL(local), 1000);
+    } catch (error) {
+      setMessage(errorText(error));
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function viewSource(id: string, ref?: string): Promise<void> {
+    setBusy(true);
+    setMessage("");
+    try {
+      const result = await apiFetchBlob(`/api/v1/catalog-imports/${id}/source/`);
+      const page = ref?.match(/p[aá]gina\s+(\d+)/i)?.[1];
+      setSourceView({
+        blob: result.blob,
+        filename: result.filename ?? "catalogo.pdf",
+        page: page ? Number(page) : undefined,
+      });
+    } catch (error) {
+      setMessage(errorText(error));
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function resume(id: string): Promise<void> {
+    setBusy(true);
+    setMessage("");
+    try {
+      const result = await catalogImportRetry(id, options);
+      if (result.status !== 200) throw new ApiError(result.status, result.data);
+      await load();
+      setMessage("Lectura reanudada. Se recuperan las secciones terminadas.");
     } catch (error) {
       setMessage(errorText(error));
     } finally {
@@ -426,7 +471,12 @@ export function CatalogImportsPanel({
     setDiff(null);
   }
   const entry = imports.find((item) => item.id === reviewId);
-  const selected = rows.find((row) => row.key === rowKey);
+  const visibleRows = rows.filter(
+    (row) =>
+      row.sheet === sheetName &&
+      (!onlyPending || row.confidence !== "HIGH_CANDIDATE" || row.errors.length > 0),
+  );
+  const selected = visibleRows.find((row) => row.key === rowKey) ?? visibleRows[0];
   const sheet = sheets.find((item) => item.name === sheetName);
   const canReview = canWrite && entry?.status === "REVIEW_READY";
 
@@ -440,6 +490,13 @@ export function CatalogImportsPanel({
     );
   return (
     <section className="catalog-ingest" aria-label="Importar catálogo" aria-busy={busy}>
+      {sourceView ? (
+        <DocumentViewer
+          {...sourceView}
+          title="Documento del proveedor"
+          onClose={() => setSourceView(null)}
+        />
+      ) : null}
       <UnsavedChangesGuard
         dirty={dirty || paste.trim().length > 0}
         message="Hay cambios de catálogo sin publicar."
@@ -455,8 +512,8 @@ export function CatalogImportsPanel({
         </button>
       </header>
       <p>
-        Sube los datos del proveedor. La plantilla y la IA llegan a la misma revisión: compara la
-        fuente, corrige lo dudoso y publica con tu visto bueno.
+        Tu PDF, convertido en catálogo. La IA organiza las series, perfiles y reglas; tú revisas las
+        dudas antes de activarlo.
       </p>
       {!canWrite && (
         <p role="status">
@@ -466,8 +523,8 @@ export function CatalogImportsPanel({
       )}
       {canWrite && (
         <div className="catalog-ingest-methods">
-          <div>
-            <h4>Con plantilla</h4>
+          <details className="catalog-template-option">
+            <summary>También puedes usar una plantilla</summary>
             <p>
               Hojas para sistemas, perfiles, corte, refuerzos, límites, colores, vidrios, herrajes y
               costos. Una celda vacía queda como Sin dato.
@@ -500,13 +557,10 @@ export function CatalogImportsPanel({
                 Descargar CSV
               </button>
             </div>
-          </div>
-          <div>
-            <h4>Con tus archivos e IA</h4>
-            <p>
-              PDF, planilla, correo, texto o foto. La IA propone lecturas con su fuente. Una foto o
-              un escaneo sin texto verificable requiere tu revisión y queda desmarcado.
-            </p>
+          </details>
+          <div className="catalog-upload-primary">
+            <h4>Arrastra el catálogo de tu proveedor</h4>
+            <p>PDF completo, planilla o fotos. No necesitas preparar ni transcribir los datos.</p>
             <div
               className={`catalog-dropzone${dragging ? " is-dragging" : ""}`}
               onDragOver={(event) => {
@@ -533,7 +587,7 @@ export function CatalogImportsPanel({
                 }}
               />
               <button type="button" disabled={busy} onClick={() => fileInput.current?.click()}>
-                {busy ? "Procesando archivo…" : "Elegir o arrastrar archivo"}
+                {busy ? "Recibiendo archivo…" : "Elegir catálogo"}
               </button>
               <span>Hasta 15 MB</span>
             </div>
@@ -581,8 +635,19 @@ export function CatalogImportsPanel({
                 {STATUS[item.status] ?? "Estado pendiente"} · {item.candidates.length} filas
               </span>
               <time>{formatDateTime(item.created_at)}</time>
+              {item.status === "EXTRACTING" && item.result[0]?.total ? (
+                <p role="status">
+                  Sección {String(item.result[0].completed)} de {String(item.result[0].total)} ·{" "}
+                  {String(item.result[0].candidates ?? 0)} registros encontrados
+                </p>
+              ) : null}
             </div>
             <div className="catalog-toolbar">
+              {canWrite && item.status === "FAILED" ? (
+                <button type="button" disabled={busy} onClick={() => void resume(item.id)}>
+                  Reanudar lectura
+                </button>
+              ) : null}
               {["REVIEW_READY", "CONFIRMED", "UNDONE"].includes(item.status) && (
                 <button type="button" disabled={busy} onClick={() => void openReview(item)}>
                   {item.status === "REVIEW_READY" ? "Revisar fuente y cambios" : "Ver fuente"}
@@ -613,9 +678,9 @@ export function CatalogImportsPanel({
             <button
               type="button"
               disabled={busy}
-              onClick={() => void download(`/api/v1/catalog-imports/${entry.id}/source/`)}
+              onClick={() => void viewSource(entry.id, selected?.fields?.source?.ref)}
             >
-              Descargar original para contrastar
+              Ver documento original
             </button>
           ) : null}
           {entry.warnings.map((warning) => (
@@ -640,10 +705,47 @@ export function CatalogImportsPanel({
                 </button>
               ))}
           </div>
+          <div className="catalog-review-summary">
+            <span>
+              {
+                rows.filter((row) => row.confidence === "HIGH_CANDIDATE" && !row.errors.length)
+                  .length
+              }{" "}
+              registros con fuente ·{" "}
+              {
+                rows.filter((row) => row.confidence !== "HIGH_CANDIDATE" || row.errors.length)
+                  .length
+              }{" "}
+              por revisar
+            </span>
+            <label>
+              <input
+                type="checkbox"
+                checked={onlyPending}
+                onChange={(event) => setOnlyPending(event.target.checked)}
+              />{" "}
+              Solo pendientes
+            </label>
+          </div>
           <div className="catalog-review-layout">
             <div className="catalog-review-rows">
+              {onlyPending &&
+              !rows.some(
+                (row) =>
+                  row.sheet === sheetName &&
+                  (row.confidence !== "HIGH_CANDIDATE" || row.errors.length),
+              ) ? (
+                <p>
+                  Esta hoja no tiene dudas de lectura. Puedes ver todos los registros o continuar
+                  con otra hoja.
+                </p>
+              ) : null}
               {rows
-                .filter((row) => row.sheet === sheetName)
+                .filter(
+                  (row) =>
+                    row.sheet === sheetName &&
+                    (!onlyPending || row.confidence !== "HIGH_CANDIDATE" || row.errors.length > 0),
+                )
                 .map((row) => (
                   <div key={row.key} className={rowKey === row.key ? "is-selected" : ""}>
                     {canReview && (
@@ -690,144 +792,192 @@ export function CatalogImportsPanel({
                 ))}
             </div>
             {selected && sheet && (
-              <fieldset className="catalog-review-fields" disabled={busy || !canReview}>
-                <legend>
-                  {sheet.name} · fila {selected.row}
-                </legend>
-                <div className="catalog-review-heading">
-                  <span>Campo</span>
-                  <span>Valor revisado</span>
-                  <span>Fuente del proveedor</span>
+              <div className="catalog-review-detail">
+                <div className="catalog-toolbar">
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => setAllFields((value) => !value)}
+                  >
+                    {allFields ? "Mostrar solo dudas" : "Ver todos los campos"}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() =>
+                      void viewSource(
+                        entry.id,
+                        Object.values(selected.fields).find((field) =>
+                          /p[aá]gina/.test(field.ref ?? ""),
+                        )?.ref,
+                      )
+                    }
+                  >
+                    Ver página de origen
+                  </button>
                 </div>
-                {sheet.columns.map((column) => {
-                  if (column.key === "paired_leaf_rule") return null;
-                  if (column.key === "finishes" && selected.values.finish_authority) return null;
-                  const evidence = selected.fields[column.key] ?? {};
-                  const value = selected.values[column.key];
-                  const errors = diff
-                    ? diff.errors.filter(
+                <fieldset className="catalog-review-fields" disabled={busy || !canReview}>
+                  <legend>
+                    {sheet.name} · fila {selected.row}
+                  </legend>
+                  <div className="catalog-review-heading">
+                    <span>Campo</span>
+                    <span>Valor revisado</span>
+                    <span>Fuente del proveedor</span>
+                  </div>
+                  {sheet.columns.map((column) => {
+                    if (
+                      !allFields &&
+                      selected.fields[column.key]?.confidence === "HIGH" &&
+                      !selected.errors.some((error) => error.field === column.key) &&
+                      !diff?.errors.some(
                         (error) => error.key === selected.key && error.field === column.key,
                       )
-                    : selected.errors.filter((error) => error.field === column.key);
-                  const id = `review-${selected.key}-${column.key}`;
-                  return (
-                    <div className="catalog-review-field" key={column.key}>
-                      <label htmlFor={id}>
-                        {column.label}
-                        {column.required && <small>Requerido</small>}
-                      </label>
-                      <div>
-                        {column.key === "section" ? (
-                          <ImportedSectionFields
-                            value={value}
-                            onChange={(next) => patch(selected.key, column.key, next)}
-                          />
-                        ) : column.key === "extra_authority" ? (
-                          <ExtraAuthorityEditor
-                            value={(value as ExtraAuthority | null) ?? null}
-                            onChange={(next) => patch(selected.key, column.key, next)}
-                          />
-                        ) : column.key === "finish_authority" ? (
-                          <FinishAuthorityEditor
-                            value={(value as FinishAuthority | null) ?? null}
-                            material={String(selected.values.material ?? "PVC")}
-                            onChange={(next) => patch(selected.key, column.key, next)}
-                          />
-                        ) : column.key === "opening_capabilities" ? (
-                          <OpeningCapabilitiesEditor
-                            capabilities={Array.isArray(value) ? (value as Capability[]) : []}
-                            paired={(selected.values.paired_leaf_rule as PairedRule | null) ?? null}
-                            family={String(selected.values.system_family ?? "CASEMENT")}
-                            kits={rows
-                              .filter(
-                                (row) =>
-                                  row.sheet === "Herrajes" &&
-                                  row.values.system_code === selected.values.system_code,
-                              )
-                              .map((row) => ({
-                                id: row.key,
-                                sku: String(row.values.sku ?? ""),
-                                name: String(
-                                  row.values.name ?? "Sin dato: falta el nombre del herraje",
+                    )
+                      return null;
+                    if (
+                      !allFields &&
+                      !column.required &&
+                      selected.values[column.key] == null &&
+                      selected.fields[column.key]?.proposed == null
+                    )
+                      return null;
+                    if (column.key === "paired_leaf_rule") return null;
+                    if (column.key === "finishes" && selected.values.finish_authority) return null;
+                    const evidence = selected.fields[column.key] ?? {};
+                    const value = selected.values[column.key];
+                    const errors = diff
+                      ? diff.errors.filter(
+                          (error) => error.key === selected.key && error.field === column.key,
+                        )
+                      : selected.errors.filter((error) => error.field === column.key);
+                    const id = `review-${selected.key}-${column.key}`;
+                    return (
+                      <div className="catalog-review-field" key={column.key}>
+                        <label htmlFor={id}>
+                          {column.label}
+                          {column.required && <small>Requerido</small>}
+                        </label>
+                        <div>
+                          {column.key === "section" ? (
+                            <ImportedSectionFields
+                              value={value}
+                              onChange={(next) => patch(selected.key, column.key, next)}
+                            />
+                          ) : column.key === "extra_authority" ? (
+                            <ExtraAuthorityEditor
+                              value={(value as ExtraAuthority | null) ?? null}
+                              onChange={(next) => patch(selected.key, column.key, next)}
+                            />
+                          ) : column.key === "finish_authority" ? (
+                            <FinishAuthorityEditor
+                              value={(value as FinishAuthority | null) ?? null}
+                              material={String(selected.values.material ?? "PVC")}
+                              onChange={(next) => patch(selected.key, column.key, next)}
+                            />
+                          ) : column.key === "opening_capabilities" ? (
+                            <OpeningCapabilitiesEditor
+                              capabilities={Array.isArray(value) ? (value as Capability[]) : []}
+                              paired={
+                                (selected.values.paired_leaf_rule as PairedRule | null) ?? null
+                              }
+                              family={String(selected.values.system_family ?? "CASEMENT")}
+                              kits={rows
+                                .filter(
+                                  (row) =>
+                                    row.sheet === "Herrajes" &&
+                                    row.values.system_code === selected.values.system_code,
+                                )
+                                .map((row) => ({
+                                  id: row.key,
+                                  sku: String(row.values.sku ?? ""),
+                                  name: String(
+                                    row.values.name ?? "Sin dato: falta el nombre del herraje",
+                                  ),
+                                }))}
+                              onChange={(next) => patch(selected.key, column.key, next)}
+                              onPair={(next) => patch(selected.key, "paired_leaf_rule", next)}
+                            />
+                          ) : column.kind === "json" ? (
+                            <ComponentFields
+                              id={id}
+                              value={value}
+                              onChange={(next) => patch(selected.key, column.key, next)}
+                            />
+                          ) : column.choices || column.kind === "boolean" ? (
+                            <select
+                              id={id}
+                              value={inputText(value)}
+                              onChange={(event) =>
+                                patch(selected.key, column.key, event.target.value || null)
+                              }
+                            >
+                              <option value="">Sin dato</option>
+                              {Object.entries(column.choices ?? { Sí: "Sí", No: "No" }).map(
+                                ([key, label]) => (
+                                  <option key={key} value={key}>
+                                    {String(label)}
+                                  </option>
                                 ),
-                              }))}
-                            onChange={(next) => patch(selected.key, column.key, next)}
-                            onPair={(next) => patch(selected.key, "paired_leaf_rule", next)}
-                          />
-                        ) : column.kind === "json" ? (
-                          <ComponentFields
-                            id={id}
-                            value={value}
-                            onChange={(next) => patch(selected.key, column.key, next)}
-                          />
-                        ) : column.choices || column.kind === "boolean" ? (
-                          <select
-                            id={id}
-                            value={inputText(value)}
-                            onChange={(event) =>
-                              patch(selected.key, column.key, event.target.value || null)
-                            }
-                          >
-                            <option value="">Sin dato</option>
-                            {Object.entries(column.choices ?? { Sí: "Sí", No: "No" }).map(
-                              ([key, label]) => (
-                                <option key={key} value={key}>
-                                  {String(label)}
-                                </option>
-                              ),
-                            )}
-                          </select>
-                        ) : (
-                          <input
-                            id={id}
-                            value={inputText(value)}
-                            placeholder="Sin dato"
-                            inputMode={
-                              ["decimal", "positive"].includes(column.kind) ? "decimal" : undefined
-                            }
-                            onChange={(event) =>
-                              patch(selected.key, column.key, event.target.value || null)
-                            }
-                          />
-                        )}
-                        {errors.map((error) => (
-                          <p key={error.message} className="catalog-field-error" role="alert">
-                            {error.message}
-                          </p>
-                        ))}
+                              )}
+                            </select>
+                          ) : (
+                            <input
+                              id={id}
+                              value={inputText(value)}
+                              placeholder="Sin dato"
+                              inputMode={
+                                ["decimal", "positive"].includes(column.kind)
+                                  ? "decimal"
+                                  : undefined
+                              }
+                              onChange={(event) =>
+                                patch(selected.key, column.key, event.target.value || null)
+                              }
+                            />
+                          )}
+                          {errors.map((error) => (
+                            <p key={error.message} className="catalog-field-error" role="alert">
+                              {error.message}
+                            </p>
+                          ))}
+                        </div>
+                        <div className="catalog-source">
+                          <span>
+                            {evidence.ref?.replace(/^(.+)!([A-Z]+[0-9]+)$/u, "$1 · celda $2") ||
+                              "Sin referencia"}
+                          </span>
+                          {column.kind === "json" ||
+                          column.key === "finishes" ||
+                          /\d+[.,]\d{4,}/u.test(evidence.quote ?? "") ? (
+                            <details>
+                              <summary>Ver texto original de la fuente</summary>
+                              <div>
+                                <SourceHighlight
+                                  quote={evidence.quote}
+                                  literal={evidence.literal}
+                                />
+                              </div>
+                            </details>
+                          ) : (
+                            <SourceHighlight quote={evidence.quote} literal={evidence.literal} />
+                          )}
+                          {evidence.confidence !== "HIGH" && (
+                            <strong>
+                              {evidence.confidence === "LOW"
+                                ? "Lectura dudosa · revisa la fuente"
+                                : "Sin dato · la fuente no lo declara"}
+                            </strong>
+                          )}
+                          {evidence.proposed != null && value == null && (
+                            <small>Lectura dudosa: {display(evidence.proposed, column)}</small>
+                          )}
+                        </div>
                       </div>
-                      <div className="catalog-source">
-                        <span>
-                          {evidence.ref?.replace(/^(.+)!([A-Z]+[0-9]+)$/u, "$1 · celda $2") ||
-                            "Sin referencia"}
-                        </span>
-                        {column.kind === "json" ||
-                        column.key === "finishes" ||
-                        /\d+[.,]\d{4,}/u.test(evidence.quote ?? "") ? (
-                          <details>
-                            <summary>Ver texto original de la fuente</summary>
-                            <div>
-                              <SourceHighlight quote={evidence.quote} literal={evidence.literal} />
-                            </div>
-                          </details>
-                        ) : (
-                          <SourceHighlight quote={evidence.quote} literal={evidence.literal} />
-                        )}
-                        {evidence.confidence !== "HIGH" && (
-                          <strong>
-                            {evidence.confidence === "LOW"
-                              ? "Lectura dudosa · revisa la fuente"
-                              : "Sin dato · la fuente no lo declara"}
-                          </strong>
-                        )}
-                        {evidence.proposed != null && value == null && (
-                          <small>Lectura dudosa: {display(evidence.proposed, column)}</small>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </fieldset>
+                    );
+                  })}
+                </fieldset>
+              </div>
             )}
           </div>
           <div className="catalog-toolbar">

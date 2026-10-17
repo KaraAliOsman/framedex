@@ -1,6 +1,6 @@
 import { ValidatedForm } from "../../ui/FormValidation";
 import { fmtMm, isValidRut, isValidEmail } from "../../format";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { decimalInputValue } from "../../decimal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, type FormEvent } from "react";
@@ -9,6 +9,7 @@ import { ApiError } from "../../api/apiMutator";
 import {
   documentaryArtifactAccess,
   quotationPreparePreview,
+  quotationPreviewAccess,
   quotationIssue,
   quotationSaveCustomer,
   documentaryListArtifacts,
@@ -68,6 +69,7 @@ import { QuotationLinkLedger } from "./QuotationLinkLedger";
 import { QuotationGlobalChanges } from "./QuotationGlobalChanges";
 import { MailHistory } from "../notifications/MailPanels";
 import { DimLoader } from "../../ui/Signature";
+import { DocumentViewer } from "../../ui/DocumentViewer";
 
 function requirementsFor(position: DocumentaryPreparationPosition): HandleRequirement[] {
   const group = position.handle_requirements.find(
@@ -676,6 +678,7 @@ export function ProjectQuotationPanel({
   const confirm = useConfirm();
   const prompt = usePrompt();
   const queryClient = useQueryClient();
+  const location = useLocation();
   const [preparation, setPreparation] = useState<DocumentaryPreparationResponse | null>(null);
   const [dirty, setDirty] = useState(false);
   const [customerDirty, setCustomerDirty] = useState(false);
@@ -685,6 +688,7 @@ export function ProjectQuotationPanel({
   const shareField = useRef<HTMLInputElement>(null);
   const [manualCopy, setManualCopy] = useState(false);
   const [pdf, setPdf] = useState<QuotationPreview | null>(null);
+  const [documentView, setDocumentView] = useState<{ blob: Blob; filename: string } | null>(null);
   const [pdfReady, setPdfReady] = useState(false);
   const [customer, setCustomer] = useState({
     client_name: project.client_name,
@@ -724,6 +728,44 @@ export function ProjectQuotationPanel({
   // placement/policy changes recompute only the seeded ones.
   const seededIntentKeys = useRef(new Map<string, Set<string>>());
   const requestOptions = { headers: { "X-Organization-ID": orgId } };
+  const routedPreview = location.state?.quotationPreview as
+    { organizationId?: string; projectId?: string; previewId?: string } | undefined;
+  const previewId = routedPreview?.previewId;
+  const previewOrganization = routedPreview?.organizationId;
+  const previewProject = routedPreview?.projectId;
+  useEffect(() => {
+    if (
+      typeof previewId !== "string" ||
+      previewOrganization !== orgId ||
+      previewProject !== project.id
+    )
+      return;
+    let active = true;
+    void quotationPreviewAccess(project.id, previewId, {
+      headers: { "X-Organization-ID": orgId },
+    })
+      .then((response) => {
+        if (!active) return;
+        if (response.status !== 200) throw new ApiError(response.status, response.data);
+        setPdf(response.data);
+        setConfirmed(false);
+        setMessage(
+          "Continúa con el PDF preparado por el asistente. Revisa el documento antes de emitir.",
+        );
+      })
+      .catch((error) => {
+        if (active)
+          setMessage(
+            error instanceof ApiError
+              ? (apiDetail(error.payload) ??
+                  "La vista previa venció. Prepara una nueva desde esta cotización.")
+              : "No pudimos recuperar el PDF. Vuelve a preparar la vista previa.",
+          );
+      });
+    return () => {
+      active = false;
+    };
+  }, [orgId, project.id, previewId, previewOrganization, previewProject]);
   // Emitted document index: opening an existing artifact is one access call,
   // not a generation job — the emit path only runs when the slot is empty.
   const artifactIndex = useQuery({
@@ -976,7 +1018,8 @@ export function ProjectQuotationPanel({
     try {
       if (
         Object.entries(customer).some(
-          ([key, value]) => value.trim() !== String(project[key as keyof typeof customer] ?? ""),
+          ([key, value]) =>
+            (value ?? "").trim() !== String(project[key as keyof typeof customer] ?? ""),
         )
       ) {
         const response = await quotationSaveCustomer(
@@ -1157,12 +1200,7 @@ export function ProjectQuotationPanel({
         const response = await fetch(access.data.signed_url);
         if (!response.ok) throw new ApiError(response.status, {});
         const blob = await response.blob();
-        const objectUrl = URL.createObjectURL(blob);
-        const anchor = document.createElement("a");
-        anchor.href = objectUrl;
-        anchor.download = `COT-${project.code}-${revisionCode}.pdf`;
-        anchor.click();
-        URL.revokeObjectURL(objectUrl);
+        setDocumentView({ blob, filename: `COT-${project.code}-${revisionCode}.pdf` });
       }
     } catch {
       if (generation.current === current) setMessage(t("quotation.documentError"));
@@ -1475,7 +1513,7 @@ export function ProjectQuotationPanel({
   }
 
   const terms = preparation?.commercial_terms;
-  const clientComplete = Boolean(customer.client_name.trim());
+  const clientComplete = Boolean(customer.client_name?.trim());
   const rutComplete = Boolean(customer.client_rut.trim()) && isValidRut(customer.client_rut);
   const emailComplete =
     Boolean(customer.client_email.trim()) && isValidEmail(customer.client_email);
@@ -1582,12 +1620,17 @@ export function ProjectQuotationPanel({
             {t("quotation.current")}: <strong>{formatRevision(project.current_revision)}</strong>
           </p>
         </div>
-        {canWrite && project.status === "DRAFT" && !preparation && (
+        {canWrite && project.status === "DRAFT" && (!preparation || pdf) && (
           <button
             disabled={busy || project.position_count === 0 || Boolean(pendingIssue)}
-            onClick={() => void loadPreparation()}
+            onClick={() => {
+              setPdf(null);
+              setPdfReady(false);
+              setConfirmed(false);
+              void loadPreparation();
+            }}
           >
-            {t("quotation.prepare")}
+            {pdf ? "Ajustar datos y preparar de nuevo" : t("quotation.prepare")}
           </button>
         )}
         {canEmit && (
@@ -1634,855 +1677,886 @@ export function ProjectQuotationPanel({
         </div>
       )}
       {project.status === "DRAFT" && (
-        <div className="quotation-workbench">
-          <QuotationChecklist items={checks} onTarget={checklistTarget} />
-          <div className="quotation-fields">
-            <fieldset className="quotation-customer" disabled={!canWrite || busy}>
-              <legend>Cliente y obra</legend>
-              {(
-                [
-                  ["client_name", "Cliente"],
-                  ["client_rut", "RUT del cliente"],
-                  ["client_email", "Correo del cliente"],
-                  ["delivery_address", "Dirección de obra"],
-                ] as const
-              ).map(([field, label]) => (
-                <label key={field}>
-                  {label}
-                  <input
-                    id={`quotation-${field}`}
-                    value={customer[field]}
-                    type={field === "client_email" ? "email" : "text"}
-                    maxLength={
-                      field === "delivery_address" ? 2000 : field === "client_rut" ? 50 : 255
-                    }
-                    aria-invalid={
-                      field === "client_rut"
-                        ? Boolean(customer[field] && !rutComplete)
-                        : field === "client_email"
-                          ? Boolean(customer[field] && !emailComplete)
-                          : undefined
-                    }
-                    onChange={(event) => {
-                      markDirty(true);
-                      setCustomer({ ...customer, [field]: event.target.value });
-                    }}
-                  />
-                  {field === "client_rut" && customer[field] && !rutComplete ? (
-                    <small>
-                      El dígito verificador no coincide. Revisa el RUT; se valida con módulo 11.
-                    </small>
-                  ) : null}
-                  {field === "client_email" && customer[field] && !emailComplete ? (
-                    <small>Ingresa un correo válido para entregar el documento.</small>
-                  ) : null}
-                </label>
-              ))}
-              <button
-                type="button"
-                disabled={busy || !customerComplete}
-                onClick={() => void saveCustomer()}
-              >
-                Guardar cliente y obra
-              </button>
-            </fieldset>
-            <div id="quotation-positions" tabIndex={-1}>
-              <p>
-                {project.position_count === 0
-                  ? "La obra aún no tiene posiciones."
-                  : canEmit
-                    ? "Los precios están aplicados. Revisa la preparación de las posiciones antes del PDF."
-                    : "Falta revisar y aplicar el precio de las posiciones."}
-              </p>
-              {project.position_count === 0 ? (
-                <Link to={`/projects/${project.id}/positions/new`}>Agregar primera posición</Link>
-              ) : canEmit === false ? (
-                <Link to={`/projects/${project.id}/pricing`}>
-                  Revisar precios de las posiciones
-                </Link>
-              ) : null}
-            </div>
-            <QuotationGlobalChanges
-              project={project}
-              orgId={orgId}
-              canWrite={canWrite}
-              onChanged={async () => {
-                setPreparation(null);
-                setPdf(null);
-                setConfirmed(false);
-                setPdfReady(false);
-                setDirty(false);
-                return onChanged();
-              }}
-            />
-            {inspectorFailures.length > 0 && (
-              <ul className="quotation-inspector-failures" role="alert">
-                {inspectorFailures.map((failure, index) => (
-                  <li key={`${failure.rule}-${failure.bay_id ?? ""}-${index}`}>
-                    <strong>{failure.rule}</strong> · {failure.title}
-                    {failure.bay_id ? (
-                      <>
-                        {" · "}
-                        {t("quotation.inspectorAffected")} {failure.bay_id}
-                        {failure.leaf_id ? `/${failure.leaf_id}` : ""}
-                      </>
-                    ) : null}
-                    {failure.recommendation ? <p>{failure.recommendation}</p> : null}
-                  </li>
-                ))}
-              </ul>
-            )}
-            {canWrite && project.status === "DRAFT" && !project.pricing_current && (
-              <p>{t("quotation.priceFirst")}</p>
-            )}
-            {preparation && (
-              <ValidatedForm
-                className="quotation-form"
-                onSubmit={(event) => void prepareDocument(event)}
-              >
-                <label htmlFor="quotation-payment-terms">{t("quotation.paymentTerms")}</label>
-                <textarea
-                  id="quotation-payment-terms"
-                  required
-                  maxLength={2000}
-                  disabled={busy}
-                  value={preparation.payment_terms}
-                  onChange={(event) => {
-                    markDirty();
-                    setPreparation({ ...preparation, payment_terms: event.target.value });
-                  }}
-                />
-                <label htmlFor="quotation-valid-until">{t("quotation.validUntil")}</label>
-                <input
-                  id="quotation-valid-until"
-                  required
-                  type="date"
-                  disabled={busy}
-                  value={preparation.quotation_valid_until ?? ""}
-                  onChange={(event) => {
-                    markDirty();
-                    setPreparation({ ...preparation, quotation_valid_until: event.target.value });
-                  }}
-                />
-                <CommercialTermsEditor
-                  idPrefix="quotation-terms"
-                  required
-                  value={preparation.commercial_terms ?? {}}
-                  disabled={busy}
-                  onChange={(commercial_terms) => {
-                    markDirty();
-                    setPreparation({ ...preparation, commercial_terms });
-                  }}
-                />
-                {(project.versions?.length ?? 0) > 0 && (
-                  <details>
-                    <summary>Comparar revisiones anteriores como alternativas</summary>
-                    <p>
-                      Se imprimen completas con su precio sellado y no se incluyen en el total.
-                      Puedes elegir hasta tres.
-                    </p>
-                    {project.versions?.map((version) => (
-                      <label key={version.id}>
-                        <input
-                          type="checkbox"
-                          checked={(preparation.alternative_version_ids ?? []).includes(version.id)}
-                          disabled={
-                            busy ||
-                            (!preparation.alternative_version_ids?.includes(version.id) &&
-                              (preparation.alternative_version_ids?.length ?? 0) >= 3)
-                          }
-                          onChange={(event) => {
-                            markDirty();
-                            setPreparation({
-                              ...preparation,
-                              alternative_version_ids: event.target.checked
-                                ? [...(preparation.alternative_version_ids ?? []), version.id]
-                                : (preparation.alternative_version_ids ?? []).filter(
-                                    (id) => id !== version.id,
-                                  ),
-                            });
-                          }}
-                        />
-                        Revisión {version.revision_code.replace("REV-", "")}
-                      </label>
-                    ))}
-                  </details>
-                )}
-                {preparation.positions.map((position, index) => (
-                  <details className="quotation-position" key={position.position_id}>
-                    <summary>
-                      Posición {index + 1} · {position.location_tag || "Sin ubicación"} ·{" "}
-                      {positionFormComplete(position) ? "Preparada" : "Qué falta"}
-                    </summary>
-                    <fieldset disabled={busy}>
-                      <legend>
-                        {t("quotation.position")} {index + 1} · {position.system_name}
-                        {!position.production_ready && (
-                          <span className="handle-pending">{t("quotation.quoteOnlyChip")}</span>
-                        )}
-                      </legend>
-                      <label htmlFor={`position-location-${position.position_id}`}>
-                        {t("projects.location")}
-                      </label>
+        <div className={`quotation-workbench${pdf ? " quotation-workbench--review" : ""}`}>
+          {!pdf && (
+            <>
+              <QuotationChecklist items={checks} onTarget={checklistTarget} />
+              <div className="quotation-fields">
+                <fieldset className="quotation-customer" disabled={!canWrite || busy}>
+                  <legend>Cliente y obra</legend>
+                  {(
+                    [
+                      ["client_name", "Cliente"],
+                      ["client_rut", "RUT del cliente"],
+                      ["client_email", "Correo del cliente"],
+                      ["delivery_address", "Dirección de obra"],
+                    ] as const
+                  ).map(([field, label]) => (
+                    <label key={field}>
+                      {label}
                       <input
-                        id={`position-location-${position.position_id}`}
-                        required
-                        maxLength={120}
-                        value={position.location_tag}
-                        onChange={(event) =>
-                          updatePosition(index, { location_tag: event.target.value })
+                        id={`quotation-${field}`}
+                        value={customer[field]}
+                        type={field === "client_email" ? "email" : "text"}
+                        maxLength={
+                          field === "delivery_address" ? 2000 : field === "client_rut" ? 50 : 255
                         }
+                        aria-invalid={
+                          field === "client_rut"
+                            ? Boolean(customer[field] && !rutComplete)
+                            : field === "client_email"
+                              ? Boolean(customer[field] && !emailComplete)
+                              : undefined
+                        }
+                        onChange={(event) => {
+                          markDirty(true);
+                          setCustomer({ ...customer, [field]: event.target.value });
+                        }}
                       />
-                      {selectedPolicy(
-                        position.placement_options,
-                        position.manufacturing_placement_policy_id,
-                        (value) => {
-                          // Bounds move under the new placement: auto-seeded
-                          // midpoints recompute, manual heights stay as typed.
-                          const reseeded = reseedHandleIntents(
-                            {
-                              ...position,
-                              manufacturing_placement_policy_id: value,
+                      {field === "client_rut" && customer[field] && !rutComplete ? (
+                        <small>
+                          El dígito verificador no coincide. Revisa el RUT; se valida con módulo 11.
+                        </small>
+                      ) : null}
+                      {field === "client_email" && customer[field] && !emailComplete ? (
+                        <small>Ingresa un correo válido para entregar el documento.</small>
+                      ) : null}
+                    </label>
+                  ))}
+                  <button
+                    type="button"
+                    disabled={busy || !customerComplete}
+                    onClick={() => void saveCustomer()}
+                  >
+                    Guardar cliente y obra
+                  </button>
+                </fieldset>
+                <div id="quotation-positions" tabIndex={-1}>
+                  <p>
+                    {project.position_count === 0
+                      ? "La obra aún no tiene posiciones."
+                      : canEmit
+                        ? "Los precios están aplicados. Revisa la preparación de las posiciones antes del PDF."
+                        : "Falta revisar y aplicar el precio de las posiciones."}
+                  </p>
+                  {project.position_count === 0 ? (
+                    <Link to={`/projects/${project.id}/positions/new`}>
+                      Agregar primera posición
+                    </Link>
+                  ) : canEmit === false ? (
+                    <Link to={`/projects/${project.id}/pricing`}>
+                      Revisar precios de las posiciones
+                    </Link>
+                  ) : null}
+                </div>
+                <QuotationGlobalChanges
+                  project={project}
+                  orgId={orgId}
+                  canWrite={canWrite}
+                  onChanged={async () => {
+                    setPreparation(null);
+                    setPdf(null);
+                    setConfirmed(false);
+                    setPdfReady(false);
+                    setDirty(false);
+                    return onChanged();
+                  }}
+                />
+                {inspectorFailures.length > 0 && (
+                  <ul className="quotation-inspector-failures" role="alert">
+                    {inspectorFailures.map((failure, index) => (
+                      <li key={`${failure.rule}-${failure.bay_id ?? ""}-${index}`}>
+                        <strong>{failure.rule}</strong> · {failure.title}
+                        {failure.bay_id ? (
+                          <>
+                            {" · "}
+                            {t("quotation.inspectorAffected")} {failure.bay_id}
+                            {failure.leaf_id ? `/${failure.leaf_id}` : ""}
+                          </>
+                        ) : null}
+                        {failure.recommendation ? <p>{failure.recommendation}</p> : null}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {canWrite && project.status === "DRAFT" && !project.pricing_current && (
+                  <p>{t("quotation.priceFirst")}</p>
+                )}
+                {preparation && (
+                  <ValidatedForm
+                    className="quotation-form"
+                    onSubmit={(event) => void prepareDocument(event)}
+                  >
+                    <label htmlFor="quotation-payment-terms">{t("quotation.paymentTerms")}</label>
+                    <textarea
+                      id="quotation-payment-terms"
+                      required
+                      maxLength={2000}
+                      disabled={busy}
+                      value={preparation.payment_terms}
+                      onChange={(event) => {
+                        markDirty();
+                        setPreparation({ ...preparation, payment_terms: event.target.value });
+                      }}
+                    />
+                    <label htmlFor="quotation-valid-until">{t("quotation.validUntil")}</label>
+                    <input
+                      id="quotation-valid-until"
+                      required
+                      type="date"
+                      disabled={busy}
+                      value={preparation.quotation_valid_until ?? ""}
+                      onChange={(event) => {
+                        markDirty();
+                        setPreparation({
+                          ...preparation,
+                          quotation_valid_until: event.target.value,
+                        });
+                      }}
+                    />
+                    <CommercialTermsEditor
+                      idPrefix="quotation-terms"
+                      required
+                      value={preparation.commercial_terms ?? {}}
+                      disabled={busy}
+                      onChange={(commercial_terms) => {
+                        markDirty();
+                        setPreparation({ ...preparation, commercial_terms });
+                      }}
+                    />
+                    {(project.versions?.length ?? 0) > 0 && (
+                      <details>
+                        <summary>Comparar revisiones anteriores como alternativas</summary>
+                        <p>
+                          Se imprimen completas con su precio sellado y no se incluyen en el total.
+                          Puedes elegir hasta tres.
+                        </p>
+                        {project.versions?.map((version) => (
+                          <label key={version.id}>
+                            <input
+                              type="checkbox"
+                              checked={(preparation.alternative_version_ids ?? []).includes(
+                                version.id,
+                              )}
+                              disabled={
+                                busy ||
+                                (!preparation.alternative_version_ids?.includes(version.id) &&
+                                  (preparation.alternative_version_ids?.length ?? 0) >= 3)
+                              }
+                              onChange={(event) => {
+                                markDirty();
+                                setPreparation({
+                                  ...preparation,
+                                  alternative_version_ids: event.target.checked
+                                    ? [...(preparation.alternative_version_ids ?? []), version.id]
+                                    : (preparation.alternative_version_ids ?? []).filter(
+                                        (id) => id !== version.id,
+                                      ),
+                                });
+                              }}
+                            />
+                            Revisión {version.revision_code.replace("REV-", "")}
+                          </label>
+                        ))}
+                      </details>
+                    )}
+                    {preparation.positions.map((position, index) => (
+                      <details className="quotation-position" key={position.position_id}>
+                        <summary>
+                          Posición {index + 1} · {position.location_tag || "Sin ubicación"} ·{" "}
+                          {positionFormComplete(position) ? "Preparada" : "Qué falta"}
+                        </summary>
+                        <fieldset disabled={busy}>
+                          <legend>
+                            {t("quotation.position")} {index + 1} · {position.system_name}
+                            {!position.production_ready && (
+                              <span className="handle-pending">{t("quotation.quoteOnlyChip")}</span>
+                            )}
+                          </legend>
+                          <label htmlFor={`position-location-${position.position_id}`}>
+                            {t("projects.location")}
+                          </label>
+                          <input
+                            id={`position-location-${position.position_id}`}
+                            required
+                            maxLength={120}
+                            value={position.location_tag}
+                            onChange={(event) =>
+                              updatePosition(index, { location_tag: event.target.value })
+                            }
+                          />
+                          {selectedPolicy(
+                            position.placement_options,
+                            position.manufacturing_placement_policy_id,
+                            (value) => {
+                              // Bounds move under the new placement: auto-seeded
+                              // midpoints recompute, manual heights stay as typed.
+                              const reseeded = reseedHandleIntents(
+                                {
+                                  ...position,
+                                  manufacturing_placement_policy_id: value,
+                                },
+                                seededIntentKeys.current.get(String(position.position_id)) ??
+                                  new Set(),
+                              );
+                              seededIntentKeys.current.set(
+                                String(position.position_id),
+                                new Set(reseeded.seededKeys),
+                              );
+                              updatePosition(index, reseeded.position);
                             },
-                            seededIntentKeys.current.get(String(position.position_id)) ?? new Set(),
-                          );
-                          seededIntentKeys.current.set(
-                            String(position.position_id),
-                            new Set(reseeded.seededKeys),
-                          );
-                          updatePosition(index, reseeded.position);
-                        },
-                        t("quotation.placementPolicy"),
-                        busy,
-                        `placement-policy-${position.position_id}`,
-                      )}
-                      {selectedPolicy(
-                        position.handle_options,
-                        position.handle_requirement_policy_id,
-                        (value) => {
-                          const reconciled = reconciledHandlePolicy(
-                            position,
-                            value,
-                            seededIntentKeys.current.get(String(position.position_id)) ?? new Set(),
-                          );
-                          seededIntentKeys.current.set(
-                            String(position.position_id),
-                            new Set(reconciled.seededKeys),
-                          );
-                          updatePosition(index, reconciled.update);
-                        },
-                        t("quotation.handlePolicy"),
-                        busy,
-                        `handle-policy-${position.position_id}`,
-                      )}
-                      {selectedPolicy(
-                        position.reinforcement_options,
-                        position.reinforcement_cut_policy_id,
-                        (value) => updatePosition(index, { reinforcement_cut_policy_id: value }),
-                        t("quotation.reinforcementPolicy"),
-                        busy,
-                        `reinforcement-policy-${position.position_id}`,
-                      )}
-                      {requirementsFor(position).length > 0 && (
-                        <div className="handle-inputs">
-                          <h4>{t("quotation.handleInputs")}</h4>
-                          {(seededIntentKeys.current.get(String(position.position_id))?.size ?? 0) >
-                            0 && (
-                            <div className="handle-suggested-bar">
-                              <span>{t("quotation.seedsNotice")}</span>
-                              <button
-                                type="button"
-                                className="handle-suggested-confirm"
-                                disabled={busy}
-                                onClick={() => {
-                                  // Adopt every generated midpoint on this position as
-                                  // the estimator's choice — they stop being suggested
-                                  // values and can seal.
-                                  seededIntentKeys.current
-                                    .get(String(position.position_id))
-                                    ?.clear();
-                                  updatePosition(index, {});
-                                }}
-                              >
-                                {t("quotation.confirmSuggested")}
-                              </button>
-                            </div>
+                            t("quotation.placementPolicy"),
+                            busy,
+                            `placement-policy-${position.position_id}`,
                           )}
-                          {requirementsFor(position).map((requirement) => {
-                            const intent = intentFor(position, requirement);
-                            const reference =
-                              intent?.vertical_reference ??
-                              requirement.permitted_vertical_references[0];
-                            const bounds = reference
-                              ? heightBounds(position, requirement, reference)
-                              : null;
-                            const height =
-                              intent?.requested_height_mm !== undefined &&
-                              intent.requested_height_mm !== ""
-                                ? parseDecimal(intent.requested_height_mm)
-                                : null;
-                            const boundMin = bounds?.[0] ? parseDecimal(bounds[0]) : null;
-                            const boundMax = bounds?.[1] ? parseDecimal(bounds[1]) : null;
-                            const outOfBounds =
-                              bounds !== null &&
-                              height !== null &&
-                              boundMin !== null &&
-                              boundMax !== null &&
-                              (compareDecimal(height, boundMin) < 0 ||
-                                compareDecimal(height, boundMax) > 0);
-                            // The policy's permitted span midpoint is the sane
-                            // default — visible, editable, still the estimator's
-                            // call; true authority stays the sealed intent.
-                            const defaultHeight = reference
-                              ? defaultHandleHeight(requirement, reference, bounds)
-                              : "";
-                            return (
-                              <div className="handle-row" key={intentKey(requirement)}>
-                                <div className="handle-leaf">
-                                  <strong>{requirement.leaf_label}</strong>
-                                  <span>
-                                    {requirement.requires_handedness
-                                      ? t("quotation.handednessRequired")
-                                      : requirement.host_member_side === "LEFT"
-                                        ? t("quotation.sideLeft")
-                                        : requirement.host_member_side === "TOP"
-                                          ? "Borde superior"
-                                          : requirement.host_member_side === "BOTTOM"
-                                            ? "Borde inferior"
-                                            : t("quotation.sideRight")}
-                                    {requirement.handle_domain_slot !== "PRIMARY" &&
-                                      ` · ${requirement.handle_domain_slot}`}
-                                  </span>
-                                </div>
-                                <div className="handle-field">
-                                  <label
-                                    htmlFor={`handle-height-${position.position_id}-${intentKey(requirement)}`}
-                                  >
-                                    {t("quotation.handleHeight")}
-                                  </label>
-                                  <input
-                                    id={`handle-height-${position.position_id}-${intentKey(requirement)}`}
-                                    type="text"
-                                    inputMode="decimal"
-                                    disabled={busy}
-                                    aria-invalid={outOfBounds || undefined}
-                                    placeholder={bounds ? `${bounds[0]}–${bounds[1]}` : undefined}
-                                    value={intent?.requested_height_mm ?? defaultHeight}
-                                    onChange={(event) =>
-                                      updateIntent(index, requirement, {
-                                        requested_height_mm: event.target.value,
-                                      })
-                                    }
-                                  />
-                                  {bounds && (
-                                    <span className="handle-bounds">
-                                      {t("quotation.handleBounds")} {bounds[0]}–{bounds[1]} mm
-                                    </span>
-                                  )}
-                                  {requirement.source && (
-                                    <span className="handle-bounds">
-                                      Fuente: {requirement.source}
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="handle-field">
-                                  <label
-                                    htmlFor={`handle-ref-${position.position_id}-${intentKey(requirement)}`}
-                                  >
-                                    {t("quotation.handleReference")}
-                                  </label>
-                                  <select
-                                    id={`handle-ref-${position.position_id}-${intentKey(requirement)}`}
-                                    disabled={
-                                      busy || requirement.permitted_vertical_references.length === 1
-                                    }
-                                    value={
-                                      intent?.vertical_reference ??
-                                      requirement.permitted_vertical_references[0]
-                                    }
-                                    onChange={(event) =>
-                                      updateIntent(index, requirement, {
-                                        requested_height_mm: intent?.requested_height_mm ?? "",
-                                        vertical_reference: event.target
-                                          .value as HandleIntent["vertical_reference"],
-                                      })
-                                    }
-                                  >
-                                    {requirement.permitted_vertical_references.map((reference) => (
-                                      <option key={reference} value={reference}>
-                                        {t(REFERENCE_KEYS[reference])}
-                                      </option>
-                                    ))}
-                                  </select>
-                                </div>
-                                {!intent?.requested_height_mm && (
-                                  <span className="handle-pending">
-                                    {t("quotation.handlePending")}
-                                  </span>
-                                )}
-                                {intent?.requested_height_mm &&
-                                  (seededIntentKeys.current
-                                    .get(String(position.position_id))
-                                    ?.has(seedKeyForIntent(intent)) ??
-                                    false) && (
-                                    <span className="handle-suggested">
-                                      {t("quotation.handleSuggested")}
-                                    </span>
-                                  )}
-                                {outOfBounds && (
-                                  <span className="handle-pending" role="alert">
-                                    {t("quotation.handleOutOfBounds")}
-                                  </span>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                      {position.workshop_targets && (
-                        <details
-                          className="workshop-inputs"
-                          /* Inspector failures name the exact bay/leaf that needs
-                     workshop data — auto-open the editor that fixes it
-                     (hostile H1: the <details> hid the required fields). */
-                          open={inspectorFailures.some(
-                            (failure) =>
-                              (failure.bay_id != null &&
-                                position.workshop_targets.bays.some(
-                                  (bay) => bay.bay_id === failure.bay_id,
-                                )) ||
-                              (failure.leaf_id != null &&
-                                position.workshop_targets.leaves.some(
-                                  (leaf) => leaf.leaf_id === failure.leaf_id,
-                                )),
+                          {selectedPolicy(
+                            position.handle_options,
+                            position.handle_requirement_policy_id,
+                            (value) => {
+                              const reconciled = reconciledHandlePolicy(
+                                position,
+                                value,
+                                seededIntentKeys.current.get(String(position.position_id)) ??
+                                  new Set(),
+                              );
+                              seededIntentKeys.current.set(
+                                String(position.position_id),
+                                new Set(reconciled.seededKeys),
+                              );
+                              updatePosition(index, reconciled.update);
+                            },
+                            t("quotation.handlePolicy"),
+                            busy,
+                            `handle-policy-${position.position_id}`,
                           )}
-                        >
-                          <summary>{t("quotation.workshopData")}</summary>
-                          {position.workshop_targets.bays.map((bay) => {
-                            const annotation = position.workshop_annotations.find(
-                              (item) =>
-                                item.bay_id === bay.bay_id && (item.leaf_id ?? null) === null,
-                            );
-                            return (
-                              <div className="workshop-target" key={bay.bay_id}>
-                                <strong>{bay.label}</strong>
-                                <div className="workshop-row">
-                                  <CsvMmField
-                                    id={`drains-${position.position_id}-${bay.bay_id}`}
-                                    label={t("quotation.drains")}
-                                    values={annotation?.bottom_drain_holes_mm}
+                          {selectedPolicy(
+                            position.reinforcement_options,
+                            position.reinforcement_cut_policy_id,
+                            (value) =>
+                              updatePosition(index, { reinforcement_cut_policy_id: value }),
+                            t("quotation.reinforcementPolicy"),
+                            busy,
+                            `reinforcement-policy-${position.position_id}`,
+                          )}
+                          {requirementsFor(position).length > 0 && (
+                            <div className="handle-inputs">
+                              <h4>{t("quotation.handleInputs")}</h4>
+                              {(seededIntentKeys.current.get(String(position.position_id))?.size ??
+                                0) > 0 && (
+                                <div className="handle-suggested-bar">
+                                  <span>{t("quotation.seedsNotice")}</span>
+                                  <button
+                                    type="button"
+                                    className="handle-suggested-confirm"
                                     disabled={busy}
-                                    onCommit={(value) =>
-                                      updateAnnotation(index, bay.bay_id, null, {
-                                        bottom_drain_holes_mm: value,
-                                      })
-                                    }
-                                  />
-                                  <label className="workshop-field">
-                                    <span>{t("quotation.continuousWidth")}</span>
-                                    <input
-                                      type="text"
-                                      inputMode="decimal"
-                                      disabled={busy}
-                                      value={annotation?.continuous_width_mm ?? ""}
-                                      onChange={(event) =>
-                                        updateAnnotation(index, bay.bay_id, null, {
-                                          continuous_width_mm: event.target.value || null,
-                                        })
-                                      }
-                                    />
-                                    <span className="workshop-unit">mm</span>
-                                  </label>
-                                  <label className="workshop-field">
-                                    <span>{t("quotation.expansionCoupler")}</span>
-                                    <select
-                                      disabled={busy}
-                                      value={
-                                        annotation?.has_coupler === true
-                                          ? "YES"
-                                          : annotation?.has_coupler === false
-                                            ? "NO"
-                                            : ""
-                                      }
-                                      onChange={(event) => {
-                                        const value = event.target.value;
-                                        if (value !== "YES" && value !== "NO") return;
-                                        updateAnnotation(index, bay.bay_id, null, {
-                                          has_coupler: value === "YES",
-                                        });
-                                      }}
-                                    >
-                                      <option value="">{t("quotation.chooseCoverage")}</option>
-                                      <option value="NO">{t("quotation.answerNo")}</option>
-                                      <option value="YES">{t("quotation.answerYes")}</option>
-                                    </select>
-                                  </label>
-                                  {annotation?.has_coupler == null && (
-                                    <span className="handle-pending">
-                                      {t("quotation.handlePending")}
-                                    </span>
-                                  )}
+                                    onClick={() => {
+                                      // Adopt every generated midpoint on this position as
+                                      // the estimator's choice — they stop being suggested
+                                      // values and can seal.
+                                      seededIntentKeys.current
+                                        .get(String(position.position_id))
+                                        ?.clear();
+                                      updatePosition(index, {});
+                                    }}
+                                  >
+                                    {t("quotation.confirmSuggested")}
+                                  </button>
                                 </div>
-                              </div>
-                            );
-                          })}
-                          {position.workshop_targets.leaves.length > 0 && (
-                            <div className="workshop-group">
-                              <h5>{t("quotation.closingPoints")}</h5>
-                              {position.workshop_targets.leaves.map((leaf) => {
-                                const annotation = position.workshop_annotations.find(
-                                  (item) =>
-                                    item.bay_id === leaf.bay_id &&
-                                    (item.leaf_id ?? null) === leaf.leaf_id,
-                                );
+                              )}
+                              {requirementsFor(position).map((requirement) => {
+                                const intent = intentFor(position, requirement);
+                                const reference =
+                                  intent?.vertical_reference ??
+                                  requirement.permitted_vertical_references[0];
+                                const bounds = reference
+                                  ? heightBounds(position, requirement, reference)
+                                  : null;
+                                const height =
+                                  intent?.requested_height_mm !== undefined &&
+                                  intent.requested_height_mm !== ""
+                                    ? parseDecimal(intent.requested_height_mm)
+                                    : null;
+                                const boundMin = bounds?.[0] ? parseDecimal(bounds[0]) : null;
+                                const boundMax = bounds?.[1] ? parseDecimal(bounds[1]) : null;
+                                const outOfBounds =
+                                  bounds !== null &&
+                                  height !== null &&
+                                  boundMin !== null &&
+                                  boundMax !== null &&
+                                  (compareDecimal(height, boundMin) < 0 ||
+                                    compareDecimal(height, boundMax) > 0);
+                                // The policy's permitted span midpoint is the sane
+                                // default — visible, editable, still the estimator's
+                                // call; true authority stays the sealed intent.
+                                const defaultHeight = reference
+                                  ? defaultHandleHeight(requirement, reference, bounds)
+                                  : "";
                                 return (
-                                  <CsvMmField
-                                    key={`${leaf.bay_id}|${leaf.leaf_id ?? ""}`}
-                                    id={`closing-${position.position_id}-${leaf.bay_id}-${leaf.leaf_id ?? ""}`}
-                                    label={leaf.leaf_label}
-                                    values={annotation?.closing_points_perimeter_mm}
-                                    disabled={busy}
-                                    onCommit={(value) =>
-                                      updateAnnotation(index, leaf.bay_id, leaf.leaf_id ?? null, {
-                                        closing_points_perimeter_mm: value,
-                                      })
-                                    }
-                                  />
+                                  <div className="handle-row" key={intentKey(requirement)}>
+                                    <div className="handle-leaf">
+                                      <strong>{requirement.leaf_label}</strong>
+                                      <span>
+                                        {requirement.requires_handedness
+                                          ? t("quotation.handednessRequired")
+                                          : requirement.host_member_side === "LEFT"
+                                            ? t("quotation.sideLeft")
+                                            : requirement.host_member_side === "TOP"
+                                              ? "Borde superior"
+                                              : requirement.host_member_side === "BOTTOM"
+                                                ? "Borde inferior"
+                                                : t("quotation.sideRight")}
+                                        {requirement.handle_domain_slot !== "PRIMARY" &&
+                                          ` · ${requirement.handle_domain_slot}`}
+                                      </span>
+                                    </div>
+                                    <div className="handle-field">
+                                      <label
+                                        htmlFor={`handle-height-${position.position_id}-${intentKey(requirement)}`}
+                                      >
+                                        {t("quotation.handleHeight")}
+                                      </label>
+                                      <input
+                                        id={`handle-height-${position.position_id}-${intentKey(requirement)}`}
+                                        type="text"
+                                        inputMode="decimal"
+                                        disabled={busy}
+                                        aria-invalid={outOfBounds || undefined}
+                                        placeholder={
+                                          bounds ? `${bounds[0]}–${bounds[1]}` : undefined
+                                        }
+                                        value={intent?.requested_height_mm ?? defaultHeight}
+                                        onChange={(event) =>
+                                          updateIntent(index, requirement, {
+                                            requested_height_mm: event.target.value,
+                                          })
+                                        }
+                                      />
+                                      {bounds && (
+                                        <span className="handle-bounds">
+                                          {t("quotation.handleBounds")} {bounds[0]}–{bounds[1]} mm
+                                        </span>
+                                      )}
+                                      {requirement.source && (
+                                        <span className="handle-bounds">
+                                          Fuente: {requirement.source}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="handle-field">
+                                      <label
+                                        htmlFor={`handle-ref-${position.position_id}-${intentKey(requirement)}`}
+                                      >
+                                        {t("quotation.handleReference")}
+                                      </label>
+                                      <select
+                                        id={`handle-ref-${position.position_id}-${intentKey(requirement)}`}
+                                        disabled={
+                                          busy ||
+                                          requirement.permitted_vertical_references.length === 1
+                                        }
+                                        value={
+                                          intent?.vertical_reference ??
+                                          requirement.permitted_vertical_references[0]
+                                        }
+                                        onChange={(event) =>
+                                          updateIntent(index, requirement, {
+                                            requested_height_mm: intent?.requested_height_mm ?? "",
+                                            vertical_reference: event.target
+                                              .value as HandleIntent["vertical_reference"],
+                                          })
+                                        }
+                                      >
+                                        {requirement.permitted_vertical_references.map(
+                                          (reference) => (
+                                            <option key={reference} value={reference}>
+                                              {t(REFERENCE_KEYS[reference])}
+                                            </option>
+                                          ),
+                                        )}
+                                      </select>
+                                    </div>
+                                    {!intent?.requested_height_mm && (
+                                      <span className="handle-pending">
+                                        {t("quotation.handlePending")}
+                                      </span>
+                                    )}
+                                    {intent?.requested_height_mm &&
+                                      (seededIntentKeys.current
+                                        .get(String(position.position_id))
+                                        ?.has(seedKeyForIntent(intent)) ??
+                                        false) && (
+                                        <span className="handle-suggested">
+                                          {t("quotation.handleSuggested")}
+                                        </span>
+                                      )}
+                                    {outOfBounds && (
+                                      <span className="handle-pending" role="alert">
+                                        {t("quotation.handleOutOfBounds")}
+                                      </span>
+                                    )}
+                                  </div>
                                 );
                               })}
                             </div>
                           )}
-                          {position.workshop_targets.spans.length > 0 && (
-                            <div className="workshop-group">
-                              <h5>{t("quotation.structuralInputs")}</h5>
-                              {position.workshop_targets.spans.map((span) => {
-                                const structural = position.structural_inputs.find(
-                                  (item) => item.target_id === span.target_id,
+                          {position.workshop_targets && (
+                            <details
+                              className="workshop-inputs"
+                              /* Inspector failures name the exact bay/leaf that needs
+                     workshop data — auto-open the editor that fixes it
+                     (hostile H1: the <details> hid the required fields). */
+                              open={inspectorFailures.some(
+                                (failure) =>
+                                  (failure.bay_id != null &&
+                                    position.workshop_targets.bays.some(
+                                      (bay) => bay.bay_id === failure.bay_id,
+                                    )) ||
+                                  (failure.leaf_id != null &&
+                                    position.workshop_targets.leaves.some(
+                                      (leaf) => leaf.leaf_id === failure.leaf_id,
+                                    )),
+                              )}
+                            >
+                              <summary>{t("quotation.workshopData")}</summary>
+                              {position.workshop_targets.bays.map((bay) => {
+                                const annotation = position.workshop_annotations.find(
+                                  (item) =>
+                                    item.bay_id === bay.bay_id && (item.leaf_id ?? null) === null,
                                 );
                                 return (
-                                  <div className="workshop-target" key={span.target_id}>
-                                    <strong>
-                                      {span.label} · {fmtMm(span.span_mm)} mm
-                                    </strong>
+                                  <div className="workshop-target" key={bay.bay_id}>
+                                    <strong>{bay.label}</strong>
                                     <div className="workshop-row">
+                                      <CsvMmField
+                                        id={`drains-${position.position_id}-${bay.bay_id}`}
+                                        label={t("quotation.drains")}
+                                        values={annotation?.bottom_drain_holes_mm}
+                                        disabled={busy}
+                                        onCommit={(value) =>
+                                          updateAnnotation(index, bay.bay_id, null, {
+                                            bottom_drain_holes_mm: value,
+                                          })
+                                        }
+                                      />
                                       <label className="workshop-field">
-                                        <span>{t("quotation.requiredIx")}</span>
+                                        <span>{t("quotation.continuousWidth")}</span>
                                         <input
                                           type="text"
                                           inputMode="decimal"
                                           disabled={busy}
-                                          value={structural?.required_ix_cm4 ?? ""}
+                                          value={annotation?.continuous_width_mm ?? ""}
                                           onChange={(event) =>
-                                            updateStructural(index, span.target_id, {
-                                              required_ix_cm4: event.target.value || null,
+                                            updateAnnotation(index, bay.bay_id, null, {
+                                              continuous_width_mm: event.target.value || null,
                                             })
                                           }
                                         />
-                                        <span className="workshop-unit">cm⁴</span>
+                                        <span className="workshop-unit">mm</span>
                                       </label>
-                                      <label className="workshop-field workshop-field--wide">
-                                        <span>{t("quotation.structuralBasis")}</span>
-                                        <input
-                                          type="text"
-                                          maxLength={1000}
+                                      <label className="workshop-field">
+                                        <span>{t("quotation.expansionCoupler")}</span>
+                                        <select
                                           disabled={busy}
-                                          value={structural?.structural_basis ?? ""}
-                                          placeholder={t("quotation.structuralBasisHint")}
-                                          onChange={(event) =>
-                                            updateStructural(index, span.target_id, {
-                                              structural_basis: event.target.value || null,
-                                            })
+                                          value={
+                                            annotation?.has_coupler === true
+                                              ? "YES"
+                                              : annotation?.has_coupler === false
+                                                ? "NO"
+                                                : ""
                                           }
-                                        />
+                                          onChange={(event) => {
+                                            const value = event.target.value;
+                                            if (value !== "YES" && value !== "NO") return;
+                                            updateAnnotation(index, bay.bay_id, null, {
+                                              has_coupler: value === "YES",
+                                            });
+                                          }}
+                                        >
+                                          <option value="">{t("quotation.chooseCoverage")}</option>
+                                          <option value="NO">{t("quotation.answerNo")}</option>
+                                          <option value="YES">{t("quotation.answerYes")}</option>
+                                        </select>
                                       </label>
+                                      {annotation?.has_coupler == null && (
+                                        <span className="handle-pending">
+                                          {t("quotation.handlePending")}
+                                        </span>
+                                      )}
                                     </div>
                                   </div>
                                 );
                               })}
-                            </div>
-                          )}
-                          {position.workshop_targets.glass.length > 0 && (
-                            <div className="workshop-group">
-                              <h5>{t("quotation.glassPolishing")}</h5>
-                              {position.workshop_targets.glass.map((target) => (
-                                <GlassPolishingRow
-                                  key={`${target.bay_id}|${target.leaf_id ?? ""}`}
-                                  target={target}
-                                  record={position.glass_polishing.find(
-                                    (item) =>
-                                      item.bay_id === target.bay_id &&
-                                      (item.leaf_id ?? null) === target.leaf_id,
-                                  )}
-                                  disabled={busy}
-                                  onEdges={(edges) =>
-                                    setPolishingEdges(
-                                      index,
-                                      target.bay_id,
-                                      target.leaf_id ?? null,
-                                      edges,
-                                    )
-                                  }
-                                />
-                              ))}
-                            </div>
-                          )}
-                          <div className="workshop-group">
-                            <h5>{t("quotation.accessories")}</h5>
-                            <label className="workshop-field">
-                              <span>{t("quotation.coverage")}</span>
-                              <select
-                                disabled={busy}
-                                value={position.accessory_schedule?.coverage ?? ""}
-                                onChange={(event) => {
-                                  const coverage = event.target.value as CoverageEnum | "";
-                                  if (!coverage) return;
-                                  updateAccessories(index, {
-                                    coverage,
-                                    items:
-                                      coverage === "DECLARED"
-                                        ? (position.accessory_schedule?.items ?? [])
-                                        : [],
-                                  });
-                                }}
-                              >
-                                <option value="">{t("quotation.chooseCoverage")}</option>
-                                <option value="NONE_REQUIRED">{t("quotation.coverageNone")}</option>
-                                <option value="DECLARED">{t("quotation.coverageDeclared")}</option>
-                              </select>
-                            </label>
-                            {position.accessory_schedule?.coverage === "DECLARED" && (
-                              <div className="workshop-accessories">
-                                {position.accessory_schedule.items.map((item, itemIndex) => (
-                                  <div className="workshop-accessory" key={itemIndex}>
-                                    <input
-                                      type="text"
+                              {position.workshop_targets.leaves.length > 0 && (
+                                <div className="workshop-group">
+                                  <h5>{t("quotation.closingPoints")}</h5>
+                                  {position.workshop_targets.leaves.map((leaf) => {
+                                    const annotation = position.workshop_annotations.find(
+                                      (item) =>
+                                        item.bay_id === leaf.bay_id &&
+                                        (item.leaf_id ?? null) === leaf.leaf_id,
+                                    );
+                                    return (
+                                      <CsvMmField
+                                        key={`${leaf.bay_id}|${leaf.leaf_id ?? ""}`}
+                                        id={`closing-${position.position_id}-${leaf.bay_id}-${leaf.leaf_id ?? ""}`}
+                                        label={leaf.leaf_label}
+                                        values={annotation?.closing_points_perimeter_mm}
+                                        disabled={busy}
+                                        onCommit={(value) =>
+                                          updateAnnotation(
+                                            index,
+                                            leaf.bay_id,
+                                            leaf.leaf_id ?? null,
+                                            {
+                                              closing_points_perimeter_mm: value,
+                                            },
+                                          )
+                                        }
+                                      />
+                                    );
+                                  })}
+                                </div>
+                              )}
+                              {position.workshop_targets.spans.length > 0 && (
+                                <div className="workshop-group">
+                                  <h5>{t("quotation.structuralInputs")}</h5>
+                                  {position.workshop_targets.spans.map((span) => {
+                                    const structural = position.structural_inputs.find(
+                                      (item) => item.target_id === span.target_id,
+                                    );
+                                    return (
+                                      <div className="workshop-target" key={span.target_id}>
+                                        <strong>
+                                          {span.label} · {fmtMm(span.span_mm)} mm
+                                        </strong>
+                                        <div className="workshop-row">
+                                          <label className="workshop-field">
+                                            <span>{t("quotation.requiredIx")}</span>
+                                            <input
+                                              type="text"
+                                              inputMode="decimal"
+                                              disabled={busy}
+                                              value={structural?.required_ix_cm4 ?? ""}
+                                              onChange={(event) =>
+                                                updateStructural(index, span.target_id, {
+                                                  required_ix_cm4: event.target.value || null,
+                                                })
+                                              }
+                                            />
+                                            <span className="workshop-unit">cm⁴</span>
+                                          </label>
+                                          <label className="workshop-field workshop-field--wide">
+                                            <span>{t("quotation.structuralBasis")}</span>
+                                            <input
+                                              type="text"
+                                              maxLength={1000}
+                                              disabled={busy}
+                                              value={structural?.structural_basis ?? ""}
+                                              placeholder={t("quotation.structuralBasisHint")}
+                                              onChange={(event) =>
+                                                updateStructural(index, span.target_id, {
+                                                  structural_basis: event.target.value || null,
+                                                })
+                                              }
+                                            />
+                                          </label>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                              {position.workshop_targets.glass.length > 0 && (
+                                <div className="workshop-group">
+                                  <h5>{t("quotation.glassPolishing")}</h5>
+                                  {position.workshop_targets.glass.map((target) => (
+                                    <GlassPolishingRow
+                                      key={`${target.bay_id}|${target.leaf_id ?? ""}`}
+                                      target={target}
+                                      record={position.glass_polishing.find(
+                                        (item) =>
+                                          item.bay_id === target.bay_id &&
+                                          (item.leaf_id ?? null) === target.leaf_id,
+                                      )}
                                       disabled={busy}
-                                      maxLength={200}
-                                      placeholder={t("quotation.obligationId")}
-                                      value={item.obligation_id}
-                                      onChange={(event) =>
-                                        updateAccessoryItem(index, itemIndex, {
-                                          obligation_id: event.target.value,
-                                        })
+                                      onEdges={(edges) =>
+                                        setPolishingEdges(
+                                          index,
+                                          target.bay_id,
+                                          target.leaf_id ?? null,
+                                          edges,
+                                        )
                                       }
                                     />
-                                    <select
-                                      disabled={busy}
-                                      value={item.obligation_kind}
-                                      onChange={(event) =>
-                                        updateAccessoryItem(index, itemIndex, {
-                                          obligation_kind: event.target.value as ObligationKindEnum,
-                                        })
-                                      }
-                                    >
-                                      {OBLIGATION_KINDS.map((kind) => (
-                                        <option key={kind} value={kind}>
-                                          {t(OBLIGATION_KIND_KEYS[kind])}
-                                        </option>
-                                      ))}
-                                    </select>
-                                    <input
-                                      type="text"
-                                      disabled={busy}
-                                      maxLength={200}
-                                      placeholder={t("quotation.technicalSku")}
-                                      value={item.technical_sku}
-                                      onChange={(event) =>
-                                        updateAccessoryItem(index, itemIndex, {
-                                          technical_sku: event.target.value,
-                                        })
-                                      }
-                                    />
-                                    <input
-                                      type="text"
-                                      disabled={busy}
-                                      maxLength={200}
-                                      placeholder={t("quotation.purchasingSku")}
-                                      value={item.purchasing_sku}
-                                      onChange={(event) =>
-                                        updateAccessoryItem(index, itemIndex, {
-                                          purchasing_sku: event.target.value,
-                                        })
-                                      }
-                                    />
-                                    <input
-                                      type="text"
-                                      disabled={busy}
-                                      maxLength={300}
-                                      placeholder={t("quotation.manufacturer")}
-                                      value={item.manufacturer_name}
-                                      onChange={(event) =>
-                                        updateAccessoryItem(index, itemIndex, {
-                                          manufacturer_name: event.target.value,
-                                        })
-                                      }
-                                    />
-                                    <select
-                                      disabled={busy}
-                                      value={item.order_type}
-                                      onChange={(event) =>
-                                        updateAccessoryItem(index, itemIndex, {
-                                          order_type: event.target.value as OrderTypeEnum,
-                                        })
-                                      }
-                                    >
-                                      {ORDER_TYPES.map((order) => (
-                                        <option key={order} value={order}>
-                                          {t(ORDER_TYPE_KEYS[order])}
-                                        </option>
-                                      ))}
-                                    </select>
-                                    <input
-                                      type="number"
-                                      disabled={busy}
-                                      min="1"
-                                      step="1"
-                                      placeholder={t("quotation.quantityPerUnit")}
-                                      value={item.quantity_per_position_unit}
-                                      onChange={(event) =>
-                                        updateAccessoryItem(index, itemIndex, {
-                                          quantity_per_position_unit: Math.max(
-                                            1,
-                                            Number(event.target.value) || 1,
-                                          ),
-                                        })
-                                      }
-                                    />
-                                    <input
-                                      type="text"
-                                      disabled={busy}
-                                      maxLength={1000}
-                                      placeholder={t("quotation.description")}
-                                      value={item.description}
-                                      onChange={(event) =>
-                                        updateAccessoryItem(index, itemIndex, {
-                                          description: event.target.value,
-                                        })
-                                      }
-                                    />
+                                  ))}
+                                </div>
+                              )}
+                              <div className="workshop-group">
+                                <h5>{t("quotation.accessories")}</h5>
+                                <label className="workshop-field">
+                                  <span>{t("quotation.coverage")}</span>
+                                  <select
+                                    disabled={busy}
+                                    value={position.accessory_schedule?.coverage ?? ""}
+                                    onChange={(event) => {
+                                      const coverage = event.target.value as CoverageEnum | "";
+                                      if (!coverage) return;
+                                      updateAccessories(index, {
+                                        coverage,
+                                        items:
+                                          coverage === "DECLARED"
+                                            ? (position.accessory_schedule?.items ?? [])
+                                            : [],
+                                      });
+                                    }}
+                                  >
+                                    <option value="">{t("quotation.chooseCoverage")}</option>
+                                    <option value="NONE_REQUIRED">
+                                      {t("quotation.coverageNone")}
+                                    </option>
+                                    <option value="DECLARED">
+                                      {t("quotation.coverageDeclared")}
+                                    </option>
+                                  </select>
+                                </label>
+                                {position.accessory_schedule?.coverage === "DECLARED" && (
+                                  <div className="workshop-accessories">
+                                    {position.accessory_schedule.items.map((item, itemIndex) => (
+                                      <div className="workshop-accessory" key={itemIndex}>
+                                        <input
+                                          type="text"
+                                          disabled={busy}
+                                          maxLength={200}
+                                          placeholder={t("quotation.obligationId")}
+                                          value={item.obligation_id}
+                                          onChange={(event) =>
+                                            updateAccessoryItem(index, itemIndex, {
+                                              obligation_id: event.target.value,
+                                            })
+                                          }
+                                        />
+                                        <select
+                                          disabled={busy}
+                                          value={item.obligation_kind}
+                                          onChange={(event) =>
+                                            updateAccessoryItem(index, itemIndex, {
+                                              obligation_kind: event.target
+                                                .value as ObligationKindEnum,
+                                            })
+                                          }
+                                        >
+                                          {OBLIGATION_KINDS.map((kind) => (
+                                            <option key={kind} value={kind}>
+                                              {t(OBLIGATION_KIND_KEYS[kind])}
+                                            </option>
+                                          ))}
+                                        </select>
+                                        <input
+                                          type="text"
+                                          disabled={busy}
+                                          maxLength={200}
+                                          placeholder={t("quotation.technicalSku")}
+                                          value={item.technical_sku}
+                                          onChange={(event) =>
+                                            updateAccessoryItem(index, itemIndex, {
+                                              technical_sku: event.target.value,
+                                            })
+                                          }
+                                        />
+                                        <input
+                                          type="text"
+                                          disabled={busy}
+                                          maxLength={200}
+                                          placeholder={t("quotation.purchasingSku")}
+                                          value={item.purchasing_sku}
+                                          onChange={(event) =>
+                                            updateAccessoryItem(index, itemIndex, {
+                                              purchasing_sku: event.target.value,
+                                            })
+                                          }
+                                        />
+                                        <input
+                                          type="text"
+                                          disabled={busy}
+                                          maxLength={300}
+                                          placeholder={t("quotation.manufacturer")}
+                                          value={item.manufacturer_name}
+                                          onChange={(event) =>
+                                            updateAccessoryItem(index, itemIndex, {
+                                              manufacturer_name: event.target.value,
+                                            })
+                                          }
+                                        />
+                                        <select
+                                          disabled={busy}
+                                          value={item.order_type}
+                                          onChange={(event) =>
+                                            updateAccessoryItem(index, itemIndex, {
+                                              order_type: event.target.value as OrderTypeEnum,
+                                            })
+                                          }
+                                        >
+                                          {ORDER_TYPES.map((order) => (
+                                            <option key={order} value={order}>
+                                              {t(ORDER_TYPE_KEYS[order])}
+                                            </option>
+                                          ))}
+                                        </select>
+                                        <input
+                                          type="number"
+                                          disabled={busy}
+                                          min="1"
+                                          step="1"
+                                          placeholder={t("quotation.quantityPerUnit")}
+                                          value={item.quantity_per_position_unit}
+                                          onChange={(event) =>
+                                            updateAccessoryItem(index, itemIndex, {
+                                              quantity_per_position_unit: Math.max(
+                                                1,
+                                                Number(event.target.value) || 1,
+                                              ),
+                                            })
+                                          }
+                                        />
+                                        <input
+                                          type="text"
+                                          disabled={busy}
+                                          maxLength={1000}
+                                          placeholder={t("quotation.description")}
+                                          value={item.description}
+                                          onChange={(event) =>
+                                            updateAccessoryItem(index, itemIndex, {
+                                              description: event.target.value,
+                                            })
+                                          }
+                                        />
+                                        <button
+                                          type="button"
+                                          className="ghost-button is-danger"
+                                          disabled={busy}
+                                          aria-label={t("quotation.removeAccessory")}
+                                          onClick={() =>
+                                            updateAccessoryItem(index, itemIndex, null)
+                                          }
+                                        >
+                                          ×
+                                        </button>
+                                      </div>
+                                    ))}
                                     <button
                                       type="button"
-                                      className="ghost-button is-danger"
+                                      className="ghost-button"
                                       disabled={busy}
-                                      aria-label={t("quotation.removeAccessory")}
-                                      onClick={() => updateAccessoryItem(index, itemIndex, null)}
+                                      onClick={() =>
+                                        updateAccessories(index, {
+                                          items: [
+                                            ...position.accessory_schedule!.items,
+                                            {
+                                              obligation_id: nextObligationId(
+                                                position.accessory_schedule!.items,
+                                              ),
+                                              obligation_kind: "INSTALLATION_ACCESSORY",
+                                              technical_sku: "",
+                                              purchasing_sku: "",
+                                              manufacturer_name: "",
+                                              order_type: "SUPPLIER_HARDWARE_PO",
+                                              unit: "EA",
+                                              quantity_per_position_unit: 1,
+                                              description: "",
+                                            },
+                                          ],
+                                        })
+                                      }
                                     >
-                                      ×
+                                      {t("quotation.addAccessory")}
                                     </button>
                                   </div>
-                                ))}
+                                )}
+                              </div>
+                            </details>
+                          )}
+                        </fieldset>
+                      </details>
+                    ))}
+                    {preparation.positions.length > 0 &&
+                      (preparation.positions.every(
+                        (position) => position.production_ready || positionFormComplete(position),
+                      ) ? (
+                        <p className="emit-outcome">
+                          El motor verificará la evidencia al preparar el PDF. La confirmación
+                          mostrará si permite fabricar o si quedan antecedentes pendientes.
+                        </p>
+                      ) : (
+                        <p className="emit-outcome emit-outcome--warn" role="note">
+                          {t("quotation.emitOutcomeQuoteOnly")}{" "}
+                          {preparation.positions
+                            .map((position, index) => ({ position, index }))
+                            .filter(
+                              ({ position }) =>
+                                !position.production_ready && !positionFormComplete(position),
+                            )
+                            .map(({ index }) => `${t("quotation.position")} ${index + 1}`)
+                            .join(" · ")}
+                        </p>
+                      ))}
+                    {emitMissing.length > 0 && (
+                      <div className="quotation-technical-missing">
+                        <h4>Preparación de las posiciones</h4>
+                        <ul>
+                          {emitMissing.map((item) => (
+                            <li key={item.key}>
+                              {item.targetId ? (
                                 <button
                                   type="button"
-                                  className="ghost-button"
-                                  disabled={busy}
-                                  onClick={() =>
-                                    updateAccessories(index, {
-                                      items: [
-                                        ...position.accessory_schedule!.items,
-                                        {
-                                          obligation_id: nextObligationId(
-                                            position.accessory_schedule!.items,
-                                          ),
-                                          obligation_kind: "INSTALLATION_ACCESSORY",
-                                          technical_sku: "",
-                                          purchasing_sku: "",
-                                          manufacturer_name: "",
-                                          order_type: "SUPPLIER_HARDWARE_PO",
-                                          unit: "EA",
-                                          quantity_per_position_unit: 1,
-                                          description: "",
-                                        },
-                                      ],
-                                    })
-                                  }
+                                  className="link-button"
+                                  onClick={() => focusQuotationField(item.targetId!)}
                                 >
-                                  {t("quotation.addAccessory")}
+                                  {item.label}
                                 </button>
-                              </div>
-                            )}
-                          </div>
-                        </details>
-                      )}
-                    </fieldset>
-                  </details>
-                ))}
-                {preparation.positions.length > 0 &&
-                  (preparation.positions.every(
-                    (position) => position.production_ready || positionFormComplete(position),
-                  ) ? (
-                    <p className="emit-outcome">
-                      El motor verificará la evidencia al preparar el PDF. La confirmación mostrará
-                      si permite fabricar o si quedan antecedentes pendientes.
-                    </p>
-                  ) : (
-                    <p className="emit-outcome emit-outcome--warn" role="note">
-                      {t("quotation.emitOutcomeQuoteOnly")}{" "}
-                      {preparation.positions
-                        .map((position, index) => ({ position, index }))
-                        .filter(
-                          ({ position }) =>
-                            !position.production_ready && !positionFormComplete(position),
-                        )
-                        .map(({ index }) => `${t("quotation.position")} ${index + 1}`)
-                        .join(" · ")}
-                    </p>
-                  ))}
-                {emitMissing.length > 0 && (
-                  <div className="quotation-technical-missing">
-                    <h4>Preparación de las posiciones</h4>
-                    <ul>
-                      {emitMissing.map((item) => (
-                        <li key={item.key}>
-                          {item.targetId ? (
-                            <button
-                              type="button"
-                              className="link-button"
-                              onClick={() => focusQuotationField(item.targetId!)}
-                            >
-                              {item.label}
-                            </button>
-                          ) : (
-                            item.label
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                              ) : (
+                                item.label
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    <div className="projects-actions">
+                      <button
+                        type="submit"
+                        className="primary-action"
+                        disabled={busy || !canEmit || Boolean(pendingIssue)}
+                      >
+                        Preparar PDF para revisar
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => {
+                          if (!dirty) {
+                            setPreparation(null);
+                            setPdf(null);
+                            setConfirmed(false);
+                            return;
+                          }
+                          void confirm({ title: t("projects.discard") }).then((ok) => {
+                            if (ok) {
+                              setPreparation(null);
+                              setPdf(null);
+                              setConfirmed(false);
+                              setDirty(false);
+                            }
+                          });
+                        }}
+                      >
+                        {t("projects.cancel")}
+                      </button>
+                    </div>
+                  </ValidatedForm>
                 )}
-                <div className="projects-actions">
-                  <button
-                    type="submit"
-                    className="primary-action"
-                    disabled={busy || !canEmit || Boolean(pendingIssue)}
-                  >
-                    Preparar PDF para revisar
-                  </button>
-                  <button
-                    type="button"
-                    disabled={busy}
-                    onClick={() => {
-                      if (!dirty) {
-                        setPreparation(null);
-                        setPdf(null);
-                        setConfirmed(false);
-                        return;
-                      }
-                      void confirm({ title: t("projects.discard") }).then((ok) => {
-                        if (ok) {
-                          setPreparation(null);
-                          setPdf(null);
-                          setConfirmed(false);
-                          setDirty(false);
-                        }
-                      });
-                    }}
-                  >
-                    {t("projects.cancel")}
-                  </button>
-                </div>
-              </ValidatedForm>
-            )}
-          </div>
+              </div>
+            </>
+          )}
           <QuotationReview
             preview={pdf}
             previousRevision={project.versions?.[0]?.revision_code}
@@ -2495,6 +2569,13 @@ export function ProjectQuotationPanel({
           />
         </div>
       )}
+      {documentView ? (
+        <DocumentViewer
+          {...documentView}
+          title="Cotización"
+          onClose={() => setDocumentView(null)}
+        />
+      ) : null}
       {busy ? (
         <p>
           <DimLoader label="Preparando la cotización" /> Preparando la cotización…

@@ -31,6 +31,8 @@ import { ArtifactDetail, type Artifact } from "./ArtifactDetail";
 import { RejectedOperations } from "./RejectedOperations";
 import { BatchOpsStep } from "./BatchOpsStep";
 import { ProjectOpsStep } from "./ProjectOpsStep";
+import { QuotationStep } from "./QuotationStep";
+import { PresentationStep } from "./PresentationStep";
 import { SimulationPreview } from "./SimulationPreview";
 import { BotFigure } from "./BotFigure";
 import { publishAssistantJob, presenceState } from "./useAssistantPresence";
@@ -313,6 +315,35 @@ function StepView({
   const navigate = useNavigate();
   const decided = outcomeFor(outcomes, turnIndex, stepIndex);
 
+  if (step.kind === "quotation") {
+    return (
+      <QuotationStep
+        step={step as AiAgentStep}
+        organizationId={organizationId}
+        onOpen={(path, state) => navigate(path, { state })}
+      />
+    );
+  }
+
+  if (step.kind === "presentation") {
+    return (
+      <PresentationStep
+        step={step as AiAgentStep}
+        organizationId={organizationId}
+        operationKey={`ai:${job.id}:${turnIndex}:${stepIndex}`}
+        declined={decided?.action === "declined"}
+        onSettled={(action, ops) =>
+          onOutcome({
+            turn_index: turnIndex,
+            step_index: stepIndex,
+            action,
+            ops: ops.map((op) => op.op ?? "unknown"),
+          })
+        }
+      />
+    );
+  }
+
   if (step.kind === "ops") {
     const ops = (step.ops ?? []).filter((item): item is DesignOp => typeof item.op === "string");
     if (!ops.length) return null;
@@ -439,7 +470,15 @@ function AgentTurnView({
   // and the deep-link carries the apply to where the product lives.
   const product: { [key: string]: unknown } | null = null;
   const actionable = (turn.steps ?? []).filter((step) =>
-    ["ops", "batch_ops", "project_ops", "prepare", "navigate"].includes(step.kind ?? ""),
+    [
+      "ops",
+      "batch_ops",
+      "project_ops",
+      "quotation",
+      "presentation",
+      "prepare",
+      "navigate",
+    ].includes(step.kind ?? ""),
   );
   const workCount = (turn.queries?.length ?? 0) + (turn.claims?.length ?? 0);
   return (

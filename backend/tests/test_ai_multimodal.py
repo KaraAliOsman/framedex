@@ -28,14 +28,14 @@ def pdf(pages):
     return output.getvalue()
 
 
-def test_mixed_pdf_preserves_literal_pages_and_renders_only_scans():
+def test_mixed_pdf_preserves_literal_evidence_and_all_diagrams():
     parts = multimodal.pdf_page_parts(pdf(["MARCO A: 60 mm", None, "JUNQUILLO B", None]))
-    assert [part["ref"] for part in parts] == [f"página {index}" for index in range(1, 5)]
+    assert [part["ref"] for part in parts] == ["página 1", "página 1", "página 2", "página 3", "página 3", "página 4"]
     assert [part["text"] for part in parts if "text" in part] == ["MARCO A: 60 mm", "JUNQUILLO B"]
     images = [part for part in parts if "data" in part]
-    assert [image["ref"] for image in images] == ["página 2", "página 4"]
-    assert all(image["mime"] == "image/png" and base64.b64decode(image["data"]).startswith(b"\x89PNG") for image in images)
-    assert multimodal.pdf_page_parts(pdf(["Literal catalog"])) == [{"ref": "página 1", "text": "Literal catalog"}]
+    assert [image["ref"] for image in images] == [f"página {index}" for index in range(1, 5)]
+    assert all(image["mime"] == "image/jpeg" and base64.b64decode(image["data"]).startswith(b"\xff\xd8") for image in images)
+    assert multimodal.pdf_page_parts(pdf(["Literal catalog"]))[0] == {"ref": "página 1", "text": "Literal catalog"}
 
 
 @pytest.mark.parametrize("content", [b"invalid file", b"%PDF-1.7\ninvalid"])
@@ -50,8 +50,7 @@ def test_pdf_page_pixel_and_total_byte_limits(monkeypatch):
         multimodal.pdf_page_parts(pdf([None] * 21))
     assert error.value.code == "ai_source_page_limit"
     monkeypatch.setattr(multimodal, "MAX_PIXELS", 100)
-    with pytest.raises(ProviderError, match="ai_source_page_limit"):
-        multimodal.pdf_page_parts(pdf([None]))
+    assert len(multimodal.pdf_page_parts(pdf([None]))) == 1
     monkeypatch.setattr(multimodal, "MAX_PIXELS", 8_000_000)
     monkeypatch.setattr(multimodal, "MAX_IMAGE_BYTES", 20)
     with pytest.raises(ProviderError, match="ai_source_page_limit"):
@@ -79,12 +78,10 @@ def test_vision_transport_receives_text_layer_pdf_and_mixed_pages(monkeypatch, p
             input_payload={"kind": "PDF", "source": {"kind": "document_import", "id": "synthetic-source"}},
             document_path="tenant/private.pdf", operation_key="pdf-fallback", client=client)
     parts = bodies[0]["messages"][-1]["content"]
-    if len(pages) == 1:
-        assert isinstance(parts, str)
-        sent = json.loads(parts)
-    else:
-        assert [part["type"] for part in parts] == ["image_url", "text"]
-        sent = json.loads(parts[-1]["text"])
-        assert sent["document_pages"][1] == {"ref": "página 2", "image_number": 1}
+    assert [part["type"] for part in parts] == [*["image_url"] * len(pages), "text"]
+    sent = json.loads(parts[-1]["text"])
+    assert sent["document_pages"][1] == {"ref": "página 1", "image_number": 1}
+    if len(pages) > 1:
+        assert sent["document_pages"][2] == {"ref": "página 2", "image_number": 2}
     assert sent["document_pages"][0] == {"ref": "página 1", "text": "Technical table A: 7135"}
     assert "storage.example" not in json.dumps(bodies) and "synthetic-source" in json.dumps(bodies)

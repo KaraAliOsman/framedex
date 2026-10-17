@@ -43,6 +43,11 @@ class CommercialTermsSerializer(StrictSerializer):
 
 
 class DocumentPreferencesSerializer(StrictSerializer):
+    quotation_layout = serializers.ChoiceField(choices=["EDITORIAL", "COMPACT"], required=False)
+    presentation_title = serializers.CharField(max_length=120, allow_blank=True, required=False)
+    presentation_intro = serializers.CharField(max_length=1200, allow_blank=True, required=False)
+    portal_heading = serializers.CharField(max_length=120, allow_blank=True, required=False)
+    portal_intro = serializers.CharField(max_length=1200, allow_blank=True, required=False)
     portal_successor_link = serializers.BooleanField(required=False)
     piece_label_paper = serializers.ChoiceField(choices=["LETTER", "A4", "ROLL_100_50"], required=False)
     remnant_destination = serializers.CharField(max_length=80, allow_blank=False, required=False)

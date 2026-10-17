@@ -120,10 +120,10 @@ def _limit(name, default, maximum):
     return value
 
 
-MAX_STEPS = _limit("MAX_STEPS", 20, 50)
-MAX_QUERIES = _limit("MAX_QUERIES", 6, 12)
-MAX_ROUNDS = _limit("MAX_ROUNDS", 6, 12)
-TOTAL_TIMEOUT_S = _limit("TOTAL_TIMEOUT_S", 180, 600)
+MAX_STEPS = _limit("MAX_STEPS", 32, 50)
+MAX_QUERIES = _limit("MAX_QUERIES", 10, 12)
+MAX_ROUNDS = _limit("MAX_ROUNDS", 10, 12)
+TOTAL_TIMEOUT_S = _limit("TOTAL_TIMEOUT_S", 360, 600)
 # A reply that fails numeric grounding gets one corrective provider round
 # before the job fails — conversational enumerations are fixable, invented
 # figures are not.
@@ -136,8 +136,8 @@ MAX_WARNING = 240
 # same project; every matched position is validated independently through the
 # design-assist validator and the human still confirms per project (the price
 # diff the client shows comes from the design-batch preview endpoint).
-MAX_BATCH_POSITIONS = 15
-MAX_BATCH_ITEMS = 15
+MAX_BATCH_POSITIONS = 100
+MAX_BATCH_ITEMS = 100
 # Ops that may repeat across positions. Structural edits (add/remove units
 # and couplings) never batch — a per-position operation repeated blindly
 # across different geometries is a hallucination vector, not a shortcut.
@@ -273,7 +273,7 @@ El contexto lleva el estado REAL de la cotización:
 - "project": id, código, nombre y status.
 - "current_revision": la revisión vigente.
 - "positions.total": vanos del proyecto (0 = falta el diseño).
-- "priced": {currency} si la revisión actual tiene precio APLICADO — null si falta precisar.
+- "priced": {currency} si la revisión actual tiene precio aplicado; null si todavía no se aplicó.
 - "approval": {status, live} del vínculo de aprobación del cliente en la revisión actual — null si nunca se emitió enlace.
 - "versions": revisiones recientes con documentary_complete, production_allowed, frozen.
 - "totals" y "payments": totales y cobranza ya registrada.
@@ -289,7 +289,8 @@ Respondes SOLO un JSON:
 }
 
 Pasos:
-- UN paso {"kind":"artifact","artifact":{"kind":"quote_draft","title":"Cotización <código>","payload":{"checklist":[{"item":"posiciones|precio|documental|aprobación","state":"ready|missing|blocked","detail":"dato del contexto"}],"totals":{"net":"...","tax":"...","gross":"..."}},"references":["project_id y revisiones del contexto"]} — el estado de la cotización como borrador inspeccionable.
+- Para preparar el trabajo completo, usa preview_quotation y devuelve {"kind":"quotation","project_id":"id observado"}; el servidor calcula con las preferencias de la empresa y muestra el resultado con sus impedimentos. No pidas los controles que la empresa ya configuró.
+- Si hay posiciones, entrega el paso quotation como resultado principal. Evita duplicar el mismo resultado con un checklist o navegación redundante. Si falta diseño, explica la única decisión necesaria para empezar y ofrece abrir la obra.
 - {"kind":"prepare","action":"emit_revision","path":"/projects/{project_id}/pricing","label":"Preparar emisión"} SOLO si falta emitir la revisión y priced ya existe — el humano confirma ahí; NUNCA apruebes precios tú.
 - {"kind":"navigate","path":"/projects/{project_id}","label":"Abrir proyecto"} para seguir el flujo real.
 - {"kind":"query","surface":"project|quotation","refs":{"project_id":"<id del contexto>"}} para profundizar — máximo 2 por ronda.
@@ -1130,6 +1131,28 @@ def _act(
         kind = item.get("kind")
         if kind == "query":
             continue  # executed above — `queries` reports them as provenance
+        if kind == "quotation":
+            try:
+                simulation, _ = engine_tools.call("preview_quotation", {"project_id": item.get("project_id") or refs.get("project_id")})
+            except OperationError as error:
+                simulation = {"valid": False, "error": error.code}
+            if simulation.get("valid"):
+                steps.append({"kind": "quotation", "tool": "preview_quotation", "simulation": simulation,
+                              "label": "Cotización preparada"})
+            else:
+                rejected.append({"op": "quotation", "reason": simulation.get("error", "quotation_invalid")})
+            continue
+        if kind == "presentation":
+            try:
+                simulation, _ = engine_tools.call("preview_presentation", {"patch": item.get("patch")})
+            except OperationError as error:
+                simulation = {"valid": False, "error": error.code}
+            if simulation.get("valid"):
+                steps.append({"kind": "presentation", "tool": "preview_presentation", "simulation": simulation,
+                              "label": "Presentación preparada"})
+            else:
+                rejected.append({"op": "presentation", "reason": simulation.get("error", "presentation_invalid")})
+            continue
         if kind == "project_ops":
             try:
                 simulation, _ = engine_tools.call("preview_project_operations", {"ops": item.get("ops")})
@@ -1418,12 +1441,12 @@ def act(
         if isinstance(o, dict) and o.get("action") in ("applied", "declined", "undone")
     }
     pending_approvals = any(
-        step.get("kind") in ("prepare", "ops", "batch_ops", "project_ops")
+        step.get("kind") in ("prepare", "ops", "batch_ops", "project_ops", "presentation")
         and (turn_index, step_index) not in resolved
         for turn_index, turn_row in enumerate(transcript)
         for step_index, step in enumerate(turn_row.get("steps") or [])
     ) or any(
-        step.get("kind") in ("prepare", "ops", "batch_ops", "project_ops")
+        step.get("kind") in ("prepare", "ops", "batch_ops", "project_ops", "presentation")
         for step in result["steps"]
     ) or any(
         artifact.get("kind") == "quote_draft" and artifact.get("payload", {}).get("confirmed") is False

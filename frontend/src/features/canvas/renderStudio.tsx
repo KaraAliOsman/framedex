@@ -4,7 +4,7 @@ import * as THREE from "three";
 import type { PlanGeometry } from "../../api/generated/models";
 import type { ProductJson } from "./productEditing";
 import { buildScene3D, type Scene3D, type Solid3D } from "./Product3DScene";
-import { solidToGeometry } from "./scene3dGeometry";
+import { solidToGeometry, mapFinishUvs } from "./scene3dGeometry";
 import { finishGeometryMaterials, prepareFinishTextures } from "./finishMaterials3d";
 import { solidMaterial } from "./materials3d";
 import type { OpeningLeafFact } from "./physicalOpenings";
@@ -90,6 +90,7 @@ function solidMesh(solid: Solid3D): THREE.Mesh | null {
       solid.kind === "box" ? new THREE.BoxGeometry(...solid.size) : solidToGeometry(solid);
     if (!geometry) return null;
     if (solid.kind === "box") geometry.translate(...solid.center);
+    mapFinishUvs(geometry, solid);
     return withSchematicEdges(
       new THREE.Mesh(geometry, finishGeometryMaterials(geometry, solid.finish)),
       solid,
@@ -118,7 +119,10 @@ function solidMesh(solid: Solid3D): THREE.Mesh | null {
 }
 
 function withSchematicEdges(mesh: THREE.Mesh, solid: Solid3D): THREE.Mesh {
-  if (solid.approximate && ["box", "profile"].includes(solid.kind)) {
+  if (
+    (solid.approximate && ["box", "profile", "shape"].includes(solid.kind)) ||
+    (solid.kind === "profile" && solid.miter)
+  ) {
     mesh.geometry.computeBoundingBox();
     const center = mesh.geometry.boundingBox!.getCenter(new THREE.Vector3());
     const edges = new THREE.LineSegments(

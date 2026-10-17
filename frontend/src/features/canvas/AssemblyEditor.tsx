@@ -23,7 +23,6 @@ import type { CommandContext, EditorTool } from "../commands/types";
 import { useCanvasStore } from "./canvasStore";
 import { assemblyCommands } from "./assemblyCommands";
 import { AlternativesPanel } from "./AlternativesPanel";
-import { AssistantPanel } from "./AssistantPanel";
 import { applyOperationEffects } from "./designOps";
 import { bayOperations, slidingOperation } from "./operationIntents";
 import { designOperationsSimulate } from "../../api/generated/dekopen";
@@ -41,7 +40,7 @@ import { EditorPriceChip } from "./EditorPriceChip";
 import { CanvasViewport } from "./CanvasViewport";
 import { ObjectTree } from "./ObjectTreeView";
 import { buildObjectTree } from "./objectTree";
-import { resolveMembers, type MemberGeometry } from "./members";
+import { resolveMembers, withCutJoints, type MemberGeometry } from "./members";
 import { EditorFlyout } from "./EditorFlyout";
 import { useEditorMedia } from "./useEditorLayout";
 import { dividerNudge } from "./dividerNudge";
@@ -959,76 +958,79 @@ function LeafFacts({
           onCommit={onHandleHeight}
         />
       )}
-      <dl className="editor-leaf-facts">
-        <div>
-          <dt>Composición</dt>
-          <dd>{glass?.spec ?? bay.glass_spec ?? "Sin dato · elige vidrio"}</dd>
-        </div>
-        <div>
-          <dt>Espesor</dt>
-          <dd>
-            {bay.glass_thickness_mm
-              ? `${fmtMm(bay.glass_thickness_mm)} mm`
-              : "Sin dato · elige vidrio"}
-          </dd>
-        </div>
-        <div>
-          <dt>Hoja · ancho</dt>
-          <dd>
-            {leaf || resolved
-              ? `${fmtMm(quantize(leaf?.width_mm ?? resolved?.width_mm, 2))} mm`
-              : visualOpening(bay) === "FIXED"
-                ? "No requiere · paño fijo"
-                : "Sin dato · calcula el marco"}
-          </dd>
-        </div>
-        <div>
-          <dt>Hoja · alto</dt>
-          <dd>
-            {leaf || resolved
-              ? `${fmtMm(quantize(leaf?.height_mm ?? resolved?.height_mm, 2))} mm`
-              : visualOpening(bay) === "FIXED"
-                ? "No requiere · paño fijo"
-                : "Sin dato · calcula el marco"}
-          </dd>
-        </div>
-        <div>
-          <dt>Kit derivado</dt>
-          <dd>
-            {kit?.name ??
-              (visualOpening(bay) === "FIXED"
-                ? "No requiere · paño fijo"
-                : "Sin dato · revisa herrajes")}
-          </dd>
-        </div>
-        <div>
-          <dt>Manilla · lado</dt>
-          <dd>
-            {leaf?.handle
-              ? leaf.handle.side === "LEFT"
-                ? "Izquierda"
-                : leaf.handle.side === "RIGHT"
-                  ? "Derecha"
-                  : "Cierre superior/inferior"
-              : visualOpening(bay) === "FIXED"
-                ? "No requiere · paño fijo"
-                : "Sin dato · revisa apertura"}
-          </dd>
-        </div>
-        <div>
-          <dt>Fuente</dt>
-          <dd>
-            <details className="editor-leaf-facts__source">
-              <summary>¿De dónde sale?</summary>
-              <p>
-                {leaf?.source ??
-                  resolved?.source ??
-                  "Evaluación del motor sobre la apertura declarada; composición y kit del catálogo de la serie."}
-              </p>
-            </details>
-          </dd>
-        </div>
-      </dl>
+      <details className="inspector-section editor-advanced">
+        <summary>Medidas de hoja y herrajes</summary>
+        <dl className="editor-leaf-facts">
+          <div>
+            <dt>Composición</dt>
+            <dd>{glass?.spec ?? bay.glass_spec ?? "Sin dato · elige vidrio"}</dd>
+          </div>
+          <div>
+            <dt>Espesor</dt>
+            <dd>
+              {bay.glass_thickness_mm
+                ? `${fmtMm(bay.glass_thickness_mm)} mm`
+                : "Sin dato · elige vidrio"}
+            </dd>
+          </div>
+          <div>
+            <dt>Hoja · ancho</dt>
+            <dd>
+              {leaf || resolved
+                ? `${fmtMm(quantize(leaf?.width_mm ?? resolved?.width_mm, 2))} mm`
+                : visualOpening(bay) === "FIXED"
+                  ? "No requiere · paño fijo"
+                  : "Sin dato · calcula el marco"}
+            </dd>
+          </div>
+          <div>
+            <dt>Hoja · alto</dt>
+            <dd>
+              {leaf || resolved
+                ? `${fmtMm(quantize(leaf?.height_mm ?? resolved?.height_mm, 2))} mm`
+                : visualOpening(bay) === "FIXED"
+                  ? "No requiere · paño fijo"
+                  : "Sin dato · calcula el marco"}
+            </dd>
+          </div>
+          <div>
+            <dt>Kit derivado</dt>
+            <dd>
+              {kit?.name ??
+                (visualOpening(bay) === "FIXED"
+                  ? "No requiere · paño fijo"
+                  : "Sin dato · revisa herrajes")}
+            </dd>
+          </div>
+          <div>
+            <dt>Manilla · lado</dt>
+            <dd>
+              {leaf?.handle
+                ? leaf.handle.side === "LEFT"
+                  ? "Izquierda"
+                  : leaf.handle.side === "RIGHT"
+                    ? "Derecha"
+                    : "Cierre superior/inferior"
+                : visualOpening(bay) === "FIXED"
+                  ? "No requiere · paño fijo"
+                  : "Sin dato · revisa apertura"}
+            </dd>
+          </div>
+          <div>
+            <dt>Fuente</dt>
+            <dd>
+              <details className="editor-leaf-facts__source">
+                <summary>¿De dónde sale?</summary>
+                <p>
+                  {leaf?.source ??
+                    resolved?.source ??
+                    "Evaluación del motor sobre la apertura declarada; composición y kit del catálogo de la serie."}
+                </p>
+              </details>
+            </dd>
+          </div>
+        </dl>
+      </details>
     </>
   );
 }
@@ -2136,8 +2138,12 @@ export function AssemblyEditor({
   const glassChecks = useGlassChecks(organizationId, product, options, evaluation);
   const [viewFace, setViewFace] = useState<"interior" | "exterior">("interior");
   const members = useMemo(
-    () => resolveMembers(options, inputs.color, viewFace),
-    [options, inputs.color, viewFace],
+    () =>
+      withCutJoints(
+        resolveMembers(options, inputs.color, viewFace),
+        drawingEvaluation?.bom?.profile_cuts ?? [],
+      ),
+    [options, inputs.color, viewFace, drawingEvaluation],
   );
   const [tool, setTool] = useState<EditorTool>("select");
   const [treeOpen, setTreeOpen] = useState(false);
@@ -2145,7 +2151,6 @@ export function AssemblyEditor({
   const readOnly = useEditorMedia("(max-width: 1023px)");
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
-  const [assistantOpen, setAssistantOpen] = useState(false);
   const inspectorRef = useRef<HTMLDivElement>(null);
   const [proposal, setProposal] = useState<{
     simulation: Simulation;
@@ -2193,10 +2198,6 @@ export function AssemblyEditor({
   const [operationMessage, setOperationMessage] = useState("");
   /** Queued prompt for the assistant — "" means focus only. Every "…with
    * DEKOPEN" affordance funnels here; the human always confirms. */
-  const [assistantDraft, setAssistantDraft] = useState<{
-    text: string;
-    submit?: boolean;
-  } | null>(null);
 
   const issuesListRef = useRef<HTMLUListElement>(null);
   /** Canvas context menu — cursor position, closed on action/outside/Escape. */
@@ -2234,10 +2235,8 @@ export function AssemblyEditor({
 
   /** Every "…with DEKOPEN" affordance: scroll the assistant into view and
    * hand it a prompt draft — "" focuses the field untouched. */
-  function askAssistant(prompt: string, submit = false): void {
-    setAssistantOpen(true);
-    setInspectorOpen(true);
-    setAssistantDraft({ text: prompt, submit });
+  function askAssistant(prompt: string, _submit = false): void {
+    window.dispatchEvent(new CustomEvent("dekopen:assistant", { detail: { prompt } }));
   }
 
   useEffect(() => {
@@ -3731,23 +3730,8 @@ export function AssemblyEditor({
           </section>
         )}
         {product && (
-          <details
-            open={assistantOpen}
-            onToggle={(event) => setAssistantOpen(event.currentTarget.open)}
-            className="editor-assistant"
-          >
-            <summary>Asistente y alternativas</summary>
-            <AssistantPanel
-              organizationId={organizationId}
-              positionId={positionId}
-              systemId={inputs.systemId}
-              color={inputs.color}
-              product={product}
-              disabled={disabled}
-              draft={assistantDraft}
-              onDraftHandled={() => setAssistantDraft(null)}
-              onApply={applyRegisteredOps}
-            />
+          <details className="editor-assistant">
+            <summary>Explorar alternativas</summary>
             <AlternativesPanel
               organizationId={organizationId}
               positionId={positionId}

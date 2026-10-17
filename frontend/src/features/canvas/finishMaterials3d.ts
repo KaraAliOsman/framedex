@@ -3,6 +3,32 @@ import type { FinishColor, ResolvedFinish } from "../../api/generated/models";
 
 const textures = new Map<string, THREE.Texture>();
 const pending = new Map<string, Promise<void>>();
+let illustrativeGrain: THREE.DataTexture | undefined;
+
+/** Neutral luminance only: the declared swatch remains the material color.
+ * This visual fallback is explicitly identified as illustrative in the view. */
+function grainTexture(): THREE.DataTexture {
+  if (illustrativeGrain) return illustrativeGrain;
+  const width = 64,
+    height = 512,
+    pixels = new Uint8Array(width * height * 4);
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const wave =
+        x + 2.4 * Math.sin((y * Math.PI * 2) / height) + 0.8 * Math.sin((y * Math.PI * 8) / height);
+      const shade = Math.round(
+        244 + 9 * Math.sin((wave * Math.PI) / 4) + 2 * Math.sin(wave * Math.PI),
+      );
+      const at = (y * width + x) * 4;
+      pixels.set([shade, shade, shade, 255], at);
+    }
+  }
+  illustrativeGrain = new THREE.DataTexture(pixels, width, height);
+  illustrativeGrain.name = "Veta ilustrativa; no es una muestra del fabricante";
+  illustrativeGrain.wrapS = illustrativeGrain.wrapT = THREE.RepeatWrapping;
+  illustrativeGrain.needsUpdate = true;
+  return illustrativeGrain;
+}
 
 export function finishTextureAvailable(path: string): boolean {
   return textures.has(path);
@@ -41,14 +67,17 @@ export async function prepareFinishTextures(finish?: ResolvedFinish): Promise<vo
 /** Mesh color uses linear channels directly. CSS/theme colors never tint it. */
 export function finishFaceMaterial(color: FinishColor): THREE.MeshStandardMaterial {
   const rgb = color.linear_rgb.map(Number);
-  const map = color.texture_path ? textures.get(color.texture_path)?.clone() : undefined;
+  const declared = color.texture_path ? textures.get(color.texture_path) : undefined;
+  const map = (
+    declared ?? (["FOIL", "WOOD_EFFECT"].includes(color.kind) ? grainTexture() : undefined)
+  )?.clone();
   return new THREE.MeshStandardMaterial({
-    color: map
+    color: declared
       ? new THREE.Color(1, 1, 1)
       : new THREE.Color().setRGB(rgb[0]!, rgb[1]!, rgb[2]!, THREE.LinearSRGBColorSpace),
     roughness: color.gloss === null ? 0.6 : 1 - Number(color.gloss),
     metalness: color.kind === "ANODIZED" ? 0.65 : color.kind === "RAL" ? 0.12 : 0.04,
-    map,
+    map: map ?? null,
   });
 }
 

@@ -787,13 +787,37 @@
 }
 .catalog-ingest-methods {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-4);
   margin-block: var(--space-4);
 }
 .catalog-ingest-methods > div {
-  border-top: 2px solid var(--border-strong);
-  padding-top: var(--space-3);
+  padding: var(--space-4);
+  background: var(--surface-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-2);
+}
+.catalog-template-option {
+  order: 2;
+  color: var(--text-secondary);
+}
+.catalog-template-option summary {
+  cursor: pointer;
+  padding-block: var(--space-2);
+}
+.catalog-upload-primary h4 {
+  font-size: var(--type-title-m);
+}
+.catalog-review-summary {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding-block: var(--space-3);
+}
+.catalog-review-summary label {
+  display: flex;
+  align-items: center;
 }
 .catalog-ingest label {
   display: grid;
@@ -811,7 +835,9 @@
   flex-wrap: wrap;
   gap: var(--space-3);
   border: 1px dashed var(--border-strong);
-  padding: var(--space-3);
+  padding: var(--space-6);
+  border-radius: var(--r-2);
+  background: var(--surface-selected);
 }
 .catalog-dropzone.is-dragging {
   border-color: var(--interactive);

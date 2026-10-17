@@ -14,6 +14,14 @@
   align-items: start;
 }
 
+.quotation-workbench.quotation-workbench--review {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.quotation-workbench--review .quotation-review {
+  position: static;
+}
+
 .quotation-checklist,
 .quotation-review {
   position: sticky;
@@ -139,9 +147,8 @@
   border-color: var(--interactive-fill);
 }
 
-.quotation-review iframe {
+.quotation-review .pdf-preview {
   display: block;
-  height: 390px;
   width: 100%;
   border: 1px solid var(--theme-border-subtle);
   margin: 12px 0;

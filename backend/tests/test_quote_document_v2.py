@@ -21,12 +21,16 @@ from documents.quote_serializers import CommercialTermsSerializer
 from documents.renderers import _doc01, _money, render_pdf_document
 
 
-@pytest.mark.parametrize("count,currency,long_names", [
-    (1, "CLP", False), (12, "CLP", False), (24, "CLP", False),
-    (100, "CLP", False), (12, "USD", False), (100, "CLP", True),
+@pytest.mark.parametrize("count,currency,long_names,modern", [
+    (1, "CLP", False, False), (12, "CLP", False, False), (24, "CLP", False, False),
+    (100, "CLP", False, False), (12, "USD", False, False), (100, "CLP", True, False),
+    (1, "CLP", False, True), (12, "CLP", True, True),
 ])
-def test_pdf_pages_have_content_exact_totals_and_no_text_collisions(count, currency, long_names):
+def test_pdf_pages_have_content_exact_totals_and_no_text_collisions(count, currency, long_names, modern):
     snapshot = proposal_case(count, currency, long_names=long_names)
+    if modern:
+        snapshot["organization"]["document_preferences"]["presentation_version"] = 1
+        snapshot["bom"] = [{"position_id": position["id"], "engine_result": position["bom"]} for position in snapshot["positions"]]
     content, _ = render_pdf_document("DOC-01", snapshot, pdf_identifier="quote-layout-test",
         portal_url="https://example.test/cotizacion/revision-bound-token")
     with fitz.open(stream=content, filetype="pdf") as document:
@@ -184,3 +188,25 @@ def test_doc01_reads_exact_sealed_measures_with_nonzero_coupling_gap():
         assert '2 448' in text
     assert product.model_dump(mode='json') == before
     assert developed_layout(product.assembly, evaluation.measures).members[1].x_mm == Decimal('624')
+
+
+def test_v1_faces_use_sealed_angles_and_keep_illustrative_grain_out_of_legacy():
+    from documents.renderers import _position_svg
+
+    position = proposal_case(1)["positions"][0]
+    position["resolved_finish"] = {
+        face: {"kind": "FOIL", "linear_rgb": ["0.22", "0.09", "0.03"]}
+        for face in ("interior", "exterior")
+    }
+    original = deepcopy(position)
+    assert "data-profile-joint" not in _position_svg(position, commercial=True)
+    position["_visual_cuts"] = [{"role": "FRAME", "angle_left": "45.00", "angle_right": "45.00"}]
+    html = _position_svg(position, commercial=True, material_details=True)
+    assert 'data-profile-joint="MITER"' in html
+    assert 'patternTransform="rotate(0)"' in html and 'patternTransform="rotate(90)"' in html
+    position["_visual_cuts"] = [{"role": "FRAME", "angle_left": "90.00", "angle_right": "90.00"}]
+    assert 'data-profile-joint="BUTT"' in _position_svg(position, commercial=True, material_details=True)
+    position["_visual_cuts"] = []
+    assert "data-profile-joint" not in _position_svg(position, commercial=True, material_details=True)
+    position.pop("_visual_cuts")
+    assert position == original

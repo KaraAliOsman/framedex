@@ -32,6 +32,7 @@ import type {
   AiMode,
   AiPresence,
   AiPresenceGetParams,
+  AiPresentationStateParams,
   AiSettings,
   AiSettingsSaveRequest,
   AiUsageListParams,
@@ -282,6 +283,11 @@ import type {
   PositionUpdateRequest,
   PositionWriteRequest,
   PositionsDestroyParams,
+  PresentationApplied,
+  PresentationApplyRequest,
+  PresentationPreviewRequest,
+  PresentationPreviewResponse,
+  PresentationState,
   PriceRequestRequest,
   PriceResponse,
   PricingOptions,
@@ -1544,6 +1550,326 @@ export const aiPresenceGet = async (
   options?: Parameters<typeof apiMutator>[1],
 ): Promise<aiPresenceGetResponse> => {
   return apiMutator<aiPresenceGetResponse>(getAiPresenceGetUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type aiPresentationUndoResponse200 = {
+  data: PresentationApplied;
+  status: 200;
+};
+
+export type aiPresentationUndoResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type aiPresentationUndoResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type aiPresentationUndoResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type aiPresentationUndoResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type aiPresentationUndoResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type aiPresentationUndoResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type aiPresentationUndoResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type aiPresentationUndoResponseSuccess = aiPresentationUndoResponse200 & {
+  headers: Headers;
+};
+export type aiPresentationUndoResponseError = (
+  | aiPresentationUndoResponse400
+  | aiPresentationUndoResponse401
+  | aiPresentationUndoResponse403
+  | aiPresentationUndoResponse404
+  | aiPresentationUndoResponse409
+  | aiPresentationUndoResponse422
+  | aiPresentationUndoResponse503
+) & {
+  headers: Headers;
+};
+
+export type aiPresentationUndoResponse =
+  aiPresentationUndoResponseSuccess | aiPresentationUndoResponseError;
+
+export const getAiPresentationUndoUrl = (operationId: string) => {
+  return `/api/v1/ai/presentation/${operationId}/undo/`;
+};
+
+export const aiPresentationUndo = async (
+  operationId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<aiPresentationUndoResponse> => {
+  return apiMutator<aiPresentationUndoResponse>(getAiPresentationUndoUrl(operationId), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export type aiPresentationApplyResponse200 = {
+  data: PresentationApplied;
+  status: 200;
+};
+
+export type aiPresentationApplyResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type aiPresentationApplyResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type aiPresentationApplyResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type aiPresentationApplyResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type aiPresentationApplyResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type aiPresentationApplyResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type aiPresentationApplyResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type aiPresentationApplyResponseSuccess = aiPresentationApplyResponse200 & {
+  headers: Headers;
+};
+export type aiPresentationApplyResponseError = (
+  | aiPresentationApplyResponse400
+  | aiPresentationApplyResponse401
+  | aiPresentationApplyResponse403
+  | aiPresentationApplyResponse404
+  | aiPresentationApplyResponse409
+  | aiPresentationApplyResponse422
+  | aiPresentationApplyResponse503
+) & {
+  headers: Headers;
+};
+
+export type aiPresentationApplyResponse =
+  aiPresentationApplyResponseSuccess | aiPresentationApplyResponseError;
+
+export const getAiPresentationApplyUrl = () => {
+  return `/api/v1/ai/presentation/apply/`;
+};
+
+export const aiPresentationApply = async (
+  presentationApplyRequest: PresentationApplyRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<aiPresentationApplyResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<aiPresentationApplyResponse>(getAiPresentationApplyUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(presentationApplyRequest),
+  });
+};
+
+export type aiPresentationPreviewResponse200 = {
+  data: PresentationPreviewResponse;
+  status: 200;
+};
+
+export type aiPresentationPreviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type aiPresentationPreviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type aiPresentationPreviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type aiPresentationPreviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type aiPresentationPreviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type aiPresentationPreviewResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type aiPresentationPreviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type aiPresentationPreviewResponseSuccess = aiPresentationPreviewResponse200 & {
+  headers: Headers;
+};
+export type aiPresentationPreviewResponseError = (
+  | aiPresentationPreviewResponse400
+  | aiPresentationPreviewResponse401
+  | aiPresentationPreviewResponse403
+  | aiPresentationPreviewResponse404
+  | aiPresentationPreviewResponse409
+  | aiPresentationPreviewResponse422
+  | aiPresentationPreviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type aiPresentationPreviewResponse =
+  aiPresentationPreviewResponseSuccess | aiPresentationPreviewResponseError;
+
+export const getAiPresentationPreviewUrl = () => {
+  return `/api/v1/ai/presentation/preview/`;
+};
+
+export const aiPresentationPreview = async (
+  presentationPreviewRequest: PresentationPreviewRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<aiPresentationPreviewResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<aiPresentationPreviewResponse>(getAiPresentationPreviewUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(presentationPreviewRequest),
+  });
+};
+
+export type aiPresentationStateResponse200 = {
+  data: PresentationState;
+  status: 200;
+};
+
+export type aiPresentationStateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type aiPresentationStateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type aiPresentationStateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type aiPresentationStateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type aiPresentationStateResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type aiPresentationStateResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type aiPresentationStateResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type aiPresentationStateResponseSuccess = aiPresentationStateResponse200 & {
+  headers: Headers;
+};
+export type aiPresentationStateResponseError = (
+  | aiPresentationStateResponse400
+  | aiPresentationStateResponse401
+  | aiPresentationStateResponse403
+  | aiPresentationStateResponse404
+  | aiPresentationStateResponse409
+  | aiPresentationStateResponse422
+  | aiPresentationStateResponse503
+) & {
+  headers: Headers;
+};
+
+export type aiPresentationStateResponse =
+  aiPresentationStateResponseSuccess | aiPresentationStateResponseError;
+
+export const getAiPresentationStateUrl = (params: AiPresentationStateParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/ai/presentation/state/?${stringifiedParams}`
+    : `/api/v1/ai/presentation/state/`;
+};
+
+export const aiPresentationState = async (
+  params: AiPresentationStateParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<aiPresentationStateResponse> => {
+  return apiMutator<aiPresentationStateResponse>(getAiPresentationStateUrl(params), {
     ...options,
     method: "GET",
   });
@@ -4301,6 +4627,78 @@ export const catalogImportPublish = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(catalogPublishRequestRequest),
+  });
+};
+
+export type catalogImportRetryResponse200 = {
+  data: CatalogImportDetailResponse;
+  status: 200;
+};
+
+export type catalogImportRetryResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogImportRetryResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogImportRetryResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogImportRetryResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogImportRetryResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogImportRetryResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type catalogImportRetryResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogImportRetryResponseSuccess = catalogImportRetryResponse200 & {
+  headers: Headers;
+};
+export type catalogImportRetryResponseError = (
+  | catalogImportRetryResponse400
+  | catalogImportRetryResponse401
+  | catalogImportRetryResponse403
+  | catalogImportRetryResponse404
+  | catalogImportRetryResponse409
+  | catalogImportRetryResponse422
+  | catalogImportRetryResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogImportRetryResponse =
+  catalogImportRetryResponseSuccess | catalogImportRetryResponseError;
+
+export const getCatalogImportRetryUrl = (importId: string) => {
+  return `/api/v1/catalog-imports/${importId}/retry/`;
+};
+
+export const catalogImportRetry = async (
+  importId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogImportRetryResponse> => {
+  return apiMutator<catalogImportRetryResponse>(getCatalogImportRetryUrl(importId), {
+    ...options,
+    method: "POST",
   });
 };
 

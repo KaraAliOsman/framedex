@@ -8,7 +8,10 @@ export default defineConfig({
     rolldownOptions: {
       output: {
         codeSplitting: {
-          groups: [{ name: "telemetry-vendor", test: /node_modules[\\/]posthog-js/ }],
+          groups: [
+            { name: "telemetry-vendor", test: /node_modules[\\/]posthog-js/ },
+            { name: "pdfjs-vendor", test: /node_modules[\\/]pdfjs-dist/ },
+          ],
         },
       },
     },
@@ -18,7 +21,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       "/api": {
-        target: "http://127.0.0.1:8000",
+        target: process.env.DEKOPEN_DEV_API ?? "http://127.0.0.1:8000",
         // The Django dev server closes idle keep-alive sockets without notice;
         // reusing one leaves the proxied request hanging forever. Fresh socket
         // per request + bounded socket timeouts eliminate that stall class.

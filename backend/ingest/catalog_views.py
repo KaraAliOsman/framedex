@@ -15,7 +15,7 @@ from authentication.errors import contract_error
 from authentication.serializers import ACTIVE_ORGANIZATION_HEADER
 from documents.views import ERRORS, documentary_scope, validate
 from ingest import catalog_review, catalog_sources
-from ingest.catalog_service import _get
+from ingest.catalog_service import _get, retry_catalog_import
 from ingest.catalog_template import SCHEMAS, export_csv, public_schema
 from ingest.serializers import (
     CatalogImportConfirmResponseSerializer, CatalogImportDetailResponseSerializer,
@@ -114,6 +114,14 @@ class CatalogImportTimelineView(APIView):
     def get(self, request, import_id):
         with documentary_scope(request, _READERS) as (_, _, org_id):
             return _payload(catalog_sources.timeline(org_id, import_id))
+
+
+class CatalogImportRetryView(APIView):
+    @extend_schema(operation_id="catalog_import_retry", request=None,
+                   responses={200: CatalogImportDetailResponseSerializer, **ERRORS}, **SCHEMA)
+    def post(self, request, import_id):
+        with documentary_scope(request, _CATALOG_WRITERS) as (token, _, org_id):
+            return Response(retry_catalog_import(org_id=org_id, actor_id=token.user_id, import_id=import_id))
 
 
 class CatalogImportSourceView(APIView):

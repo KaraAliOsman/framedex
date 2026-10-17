@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { engineSystems, projectDesignOptions } from "../../api/generated/dekopen";
 import { ApiError } from "../../api/apiMutator";
@@ -16,6 +16,8 @@ import "../canvas/EditorLayout.css";
 export function ProjectPositionLibrary({
   orgId,
   initialSystem,
+  initialGlass,
+  initialColor,
   busy,
   error,
   onClose,
@@ -23,17 +25,20 @@ export function ProjectPositionLibrary({
 }: {
   orgId: string;
   initialSystem?: string;
+  initialGlass?: string;
+  initialColor?: string;
   busy: boolean;
   error?: string;
   onClose(): void;
   onPropose(ops: DesignOperationRequest[], title: string): Promise<boolean>;
 }): JSX.Element {
   const [systemId, setSystemId] = useState(initialSystem ?? "");
-  const [glass, setGlass] = useState("");
-  const [color, setColor] = useState("");
+  const [glass, setGlass] = useState(initialGlass ?? "");
+  const [color, setColor] = useState(initialColor ?? "");
   const [location, setLocation] = useState("");
   const [width, setWidth] = useState("");
   const [height, setHeight] = useState("");
+  const [quantity, setQuantity] = useState(1);
   const [definition, setDefinition] = useState<StarterDefinition | null>(null);
   const options = { headers: { "X-Organization-ID": orgId } };
   const systems = useQuery({
@@ -45,7 +50,7 @@ export function ProjectPositionLibrary({
     },
   });
   const catalog = useQuery({
-    queryKey: ["project-design-options", orgId, systemId],
+    queryKey: ["design-options", orgId, systemId],
     enabled: Boolean(systemId),
     queryFn: async () => {
       const response = await projectDesignOptions(systemId, options);
@@ -53,6 +58,27 @@ export function ProjectPositionLibrary({
       return response.data;
     },
   });
+  useEffect(() => {
+    if (systemId || !systems.data) return;
+    let previous = "";
+    try {
+      previous = localStorage.getItem(`dekopen:last-system:${orgId}`) ?? "";
+    } catch {
+      /* Storage is optional. */
+    }
+    if (previous && systems.data.some((system) => system.id === previous)) setSystemId(previous);
+    else if (systems.data.length === 1) setSystemId(systems.data[0]!.id);
+  }, [systemId, systems.data, orgId]);
+  useEffect(() => {
+    if (!catalog.data) return;
+    const compatible = catalog.data.glass_specs.filter((item) => item.compatible !== false);
+    setGlass((current) =>
+      compatible.some((item) => item.sku === current) ? current : (compatible[0]?.sku ?? ""),
+    );
+    setColor((current) =>
+      catalog.data.colors.includes(current) ? current : (catalog.data.colors[0] ?? ""),
+    );
+  }, [catalog.data]);
   const w = parseDecimalInput(width, 2),
     h = parseDecimalInput(height, 2);
   async function propose(): Promise<void> {
@@ -67,15 +93,22 @@ export function ProjectPositionLibrary({
           glass_sku: glass,
           color,
           location,
-          quantity: 1,
+          quantity,
         },
       ],
-      "Agregar posición desde la biblioteca",
+      "Agregar ventana",
     );
-    if (prepared) onClose();
+    if (prepared) {
+      try {
+        localStorage.setItem(`dekopen:last-system:${orgId}`, systemId);
+      } catch {
+        /* Storage is optional. */
+      }
+      onClose();
+    }
   }
   return (
-    <EditorFlyout title="Biblioteca de posiciones" onClose={onClose} className="project-library">
+    <EditorFlyout title="Agregar ventana o puerta" onClose={onClose} className="project-library">
       <fieldset disabled={busy} className="project-library-fields">
         <label>
           Serie
@@ -84,8 +117,6 @@ export function ProjectPositionLibrary({
             value={systemId}
             onChange={(event) => {
               setSystemId(event.target.value);
-              setGlass("");
-              setColor("");
               setDefinition(null);
             }}
           >
@@ -132,10 +163,7 @@ export function ProjectPositionLibrary({
             />
             {definition && (
               <>
-                <p>
-                  La receta propone estas medidas. Revísalas antes de agregar; el motor comprobará
-                  la serie y sus límites.
-                </p>
+                <p>Ajusta las medidas. Vidrio y acabado se heredan cuando son compatibles.</p>
                 <label>
                   Ancho de fabricación (mm)
                   <input
@@ -185,6 +213,18 @@ export function ProjectPositionLibrary({
                   </select>
                 </label>
                 <label>
+                  Cantidad
+                  <input
+                    type="number"
+                    min={1}
+                    max={9999}
+                    value={quantity}
+                    onChange={(event) =>
+                      setQuantity(Math.max(1, Math.min(9999, Number(event.target.value) || 1)))
+                    }
+                  />
+                </label>
+                <label>
                   Ubicación
                   <input
                     maxLength={120}
@@ -197,7 +237,7 @@ export function ProjectPositionLibrary({
                   disabled={!w || !h || !glass || !color || busy}
                   onClick={() => void propose()}
                 >
-                  Revisar posición con el motor
+                  Agregar a la obra
                 </button>
               </>
             )}

@@ -316,6 +316,8 @@ def test_portal_quote_carries_positions_issuer_and_payment_state(monkeypatch) ->
     assert out["organization"] == {
         "name": "Vidriería Sur",
         "tax_id": "76.123.456-7",
+        "portal_heading": "",
+        "portal_intro": "",
         "commercial_name": None,
         "brand_address": None,
         "brand_phone": None,

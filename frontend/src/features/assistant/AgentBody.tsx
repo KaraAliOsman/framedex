@@ -23,7 +23,8 @@ import { describeDesignOp, designAssistProduct, productFingerprint } from "../ca
 import type { ProductJson } from "../canvas/productEditing";
 import { stableRefs, useDesignOpsBridge } from "./assistantContext";
 import { BatchOpsStep } from "./BatchOpsStep";
-import { BotFigure } from "./BotFigure";
+import { PresentationStep } from "./PresentationStep";
+import { QuotationStep } from "./QuotationStep";
 import { ProjectOpsStep } from "./ProjectOpsStep";
 import { SimulationPreview } from "./SimulationPreview";
 import { RejectedOperations } from "./RejectedOperations";
@@ -176,8 +177,8 @@ export { SURFACE_LABELS };
  * sending, and the answer stays evidence-bound either way. */
 const GOAL_CHIPS: Record<string, string[]> = {
   project: [
-    "Cambia todo el 2º piso a termopanel Low-E. Muestra el cambio de precio y la autoridad térmica disponible.",
-    "Convierte todas las fijas del proyecto en abatibles.",
+    "Prepara toda la cotización con las preferencias de mi empresa y muéstrame el resultado para revisarlo.",
+    "Revisa las ventanas de esta obra y resuelve lo que puedas preparar con los datos disponibles.",
     "Copia el vidrio del primer vano a todos los demás.",
     "Redacta el correo para enviar la cotización al cliente.",
     "Resume los cambios de la última revisión para el cliente.",
@@ -190,6 +191,7 @@ const GOAL_CHIPS: Record<string, string[]> = {
     "Revisa la compatibilidad de herrajes de esta posición.",
   ],
   quotation: [
+    "Prepara toda la cotización con las preferencias de mi empresa y muéstrame el resultado para revisarlo.",
     "Explica por qué subió el total de esta revisión.",
     "Redacta el correo para enviar la cotización al cliente.",
     "Resume los cambios de la última revisión para el cliente.",
@@ -209,6 +211,7 @@ export function AgentBody({
   refs,
   onJobState,
   onComposing,
+  draft,
 }: {
   organizationId: string;
   userId?: string | null;
@@ -218,6 +221,7 @@ export function AgentBody({
   onJobState?: (state: string | null) => void;
   /** Lifts composition state — while a goal is typed the orb reads INPUT. */
   onComposing?: (composing: boolean) => void;
+  draft?: { text: string; request: number } | null;
 }): JSX.Element {
   const navigate = useNavigate();
   const bridge = useDesignOpsBridge();
@@ -243,6 +247,11 @@ export function AgentBody({
   const [pending, setPending] = useState<string[]>([]);
   const pendingRef = useRef<string[]>([]);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    if (!draft) return;
+    if (draft.text) setGoal(draft.text);
+    inputRef.current?.focus();
+  }, [draft]);
   /** One operation key per goal — a retried submit replays the audited loop
    * (each round is suffixed server-side) instead of debiting twice. */
   const operationKey = useRef<{ key: string; goal: string } | null>(null);
@@ -682,8 +691,11 @@ export function AgentBody({
         ) : null}
         {thread.length === 0 && !live ? (
           <div className="ask-dock__welcome">
-            <BotFigure state={presenceState(job)} size={160} welcome />
-            <p className="ask-dock__hint">{t("agent.hint")}</p>
+            <Orb state={presenceState(job)} size={48} />
+            <h2>¿Qué resolvemos?</h2>
+            <p className="ask-dock__hint">
+              Pídeme el resultado completo. Prepararé el trabajo y una muestra para que lo revises.
+            </p>
           </div>
         ) : (
           thread
@@ -724,7 +736,14 @@ export function AgentBody({
                       ) : null}
                       {turn.result.reply &&
                       !turn.result.steps?.some((step) =>
-                        ["ops", "batch_ops", "project_ops", "prepare"].includes(step.kind),
+                        [
+                          "ops",
+                          "batch_ops",
+                          "project_ops",
+                          "prepare",
+                          "presentation",
+                          "quotation",
+                        ].includes(step.kind),
                       ) ? (
                         <p className="ask-dock__answer">{assistantText(turn.result.reply)}</p>
                       ) : null}
@@ -773,6 +792,40 @@ export function AgentBody({
                       {turn.result.steps?.length ? (
                         <div className="ask-dock__actions">
                           {turn.result.steps.map((step, stepIndex) => {
+                            if (step.kind === "quotation")
+                              return (
+                                <QuotationStep
+                                  key={stepIndex}
+                                  step={step}
+                                  organizationId={organizationId}
+                                  onOpen={(path, state) => navigate(path, { state })}
+                                />
+                              );
+                            if (step.kind === "presentation" && job) {
+                              return (
+                                <PresentationStep
+                                  key={stepIndex}
+                                  step={step}
+                                  organizationId={organizationId}
+                                  operationKey={`ai:${job.id}:${turn.transcriptIndex}:${stepIndex}`}
+                                  declined={(job.outcomes ?? []).some((value) => {
+                                    const outcome = value as {
+                                      turn_index?: number;
+                                      step_index?: number;
+                                      action?: string;
+                                    };
+                                    return (
+                                      outcome.turn_index === turn.transcriptIndex &&
+                                      outcome.step_index === stepIndex &&
+                                      outcome.action === "declined"
+                                    );
+                                  })}
+                                  onSettled={(action, ops) =>
+                                    reportOutcome(turn.transcriptIndex, stepIndex, action, ops)
+                                  }
+                                />
+                              );
+                            }
                             if (step.kind === "navigate" && step.path) {
                               return (
                                 <button
@@ -1098,7 +1151,7 @@ export function AgentBody({
       ) : null}
       {thread.length === 0 && !goal.trim() && !terminal && (GOAL_CHIPS[surface] ?? []).length ? (
         <div className="ask-dock__chips">
-          {(GOAL_CHIPS[surface] ?? []).map((preset) => (
+          {(GOAL_CHIPS[surface] ?? []).slice(0, 3).map((preset) => (
             <button
               key={preset}
               type="button"

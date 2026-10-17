@@ -31,43 +31,88 @@ export function useProjectOperations(
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [uncertain, setUncertain] = useState(false);
   const lock = useRef(false);
   const lifetime = useRef<AbortController | null>(null);
   useEffect(() => {
     const controller = new AbortController();
     lifetime.current = controller;
+    lock.current = false;
+    setProposal(null);
+    setUndoId("");
+    setError("");
+    setNotice("");
+    setUncertain(false);
+    setBusy(false);
     return () => controller.abort();
   }, [project.id, orgId]);
   const options = () => ({
     signal: lifetime.current?.signal,
     headers: { "X-Organization-ID": orgId },
   });
-  async function propose(ops: DesignOperationRequest[], title: string): Promise<boolean> {
-    if (lock.current || !lifetime.current || lifetime.current.signal.aborted) return false;
+  async function refresh(controller: AbortController): Promise<void> {
+    try {
+      await onChanged();
+    } catch {
+      if (!controller.signal.aborted)
+        setError("El cambio está guardado. Recarga la obra para ver la versión actual.");
+    }
+  }
+  async function propose(
+    ops: DesignOperationRequest[],
+    title: string,
+    commit = false,
+  ): Promise<boolean> {
+    if (lock.current || proposal || !lifetime.current || lifetime.current.signal.aborted)
+      return false;
     const controller = lifetime.current;
     lock.current = true;
     setBusy(true);
     setError("");
     setNotice("");
+    setUncertain(false);
     setProposal(null);
     try {
       const result = await projectOperationsPreview(project.id, { ops }, options());
       if (result.status !== 200) throw new ApiError(result.status, result.data);
       if (controller.signal.aborted) return false;
-      setProposal({ ops, title, preview: result.data, key: crypto.randomUUID() });
+      const key = crypto.randomUUID();
+      const prepared = { ops, title, preview: result.data, key };
+      // Keep the same request until its result is known. A lost apply response
+      // can then be retried without adding a second window.
+      setProposal(prepared);
+      if (commit) {
+        setUncertain(true);
+        const applied = await projectOperationsApply(
+          project.id,
+          { ops, before_sig: result.data.before_sig, operation_key: key },
+          options(),
+        );
+        if (applied.status !== 200) throw new ApiError(applied.status, applied.data);
+        if (controller.signal.aborted) return false;
+        setUndoId(applied.data.operation_id);
+        setProposal(null);
+        setUncertain(false);
+        setNotice("Ventana agregada a la obra.");
+        await refresh(controller);
+      }
       return true;
     } catch (cause) {
-      if (!controller.signal.aborted)
+      if (!controller.signal.aborted) {
+        setUncertain(commit && (!(cause instanceof ApiError) || cause.status >= 500));
         setError(
           actionErrorDetail(
             cause,
             "El motor no pudo preparar el cambio. Revisa las posiciones y vuelve a intentar.",
           ),
         );
+      }
       return false;
     } finally {
-      lock.current = false;
-      if (!controller.signal.aborted) setBusy(false);
+      if (!controller.signal.aborted) {
+        lock.current = false;
+        setBusy(false);
+      }
     }
   }
   async function apply(): Promise<void> {
@@ -86,21 +131,24 @@ export function useProjectOperations(
       if (controller.signal.aborted) return;
       setUndoId(result.data.operation_id);
       setProposal(null);
-      setNotice(
-        "Cambio aplicado. El precio de la propuesta es indicativo; calcula y aplica el precio antes de emitir.",
-      );
-      await onChanged();
+      setUncertain(false);
+      setNotice("Cambios aplicados.");
+      await refresh(controller);
     } catch (cause) {
-      if (!controller.signal.aborted)
+      if (!controller.signal.aborted) {
+        setUncertain(!(cause instanceof ApiError) || cause.status >= 500);
         setError(
           actionErrorDetail(
             cause,
             "No se pudo confirmar el cambio. Puedes reintentar la misma propuesta sin duplicarla.",
           ),
         );
+      }
     } finally {
-      lock.current = false;
-      if (!controller.signal.aborted) setBusy(false);
+      if (!controller.signal.aborted) {
+        lock.current = false;
+        setBusy(false);
+      }
     }
   }
   async function undo(): Promise<void> {
@@ -115,7 +163,7 @@ export function useProjectOperations(
       if (controller.signal.aborted) return;
       setUndoId("");
       setNotice("Cambio deshecho. Se restauraron posiciones, orden y preparación anteriores.");
-      await onChanged();
+      await refresh(controller);
     } catch (cause) {
       if (!controller.signal.aborted)
         setError(
@@ -125,8 +173,10 @@ export function useProjectOperations(
           ),
         );
     } finally {
-      lock.current = false;
-      if (!controller.signal.aborted) setBusy(false);
+      if (!controller.signal.aborted) {
+        lock.current = false;
+        setBusy(false);
+      }
     }
   }
   return {
@@ -134,6 +184,7 @@ export function useProjectOperations(
     busy,
     error,
     notice,
+    uncertain,
     undoId,
     propose,
     apply,
@@ -191,7 +242,9 @@ export function ProjectOpsReview({
           <h3>{proposal.title}</h3>
           <p>
             {proposal.preview.diff.length} posiciones afectadas. Revisa el antes y después; la
-            propuesta todavía no se ha aplicado.
+            {operations.uncertain
+              ? "estamos comprobando el resultado del último intento."
+              : "propuesta todavía no se ha aplicado."}
           </p>
           <ol className="project-ops-diff">
             {proposal.preview.diff.map((raw, index) => {
@@ -240,9 +293,15 @@ export function ProjectOpsReview({
               disabled={operations.busy || !proposal.preview.diff.length}
               onClick={() => void operations.apply()}
             >
-              Aplicar cambios revisados
+              {operations.uncertain
+                ? "Comprobar y completar el cambio"
+                : "Aplicar cambios revisados"}
             </button>
-            <button type="button" disabled={operations.busy} onClick={operations.cancel}>
+            <button
+              type="button"
+              disabled={operations.busy || operations.uncertain}
+              onClick={operations.cancel}
+            >
               Descartar propuesta
             </button>
           </div>

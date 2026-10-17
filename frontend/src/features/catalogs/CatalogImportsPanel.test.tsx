@@ -46,7 +46,6 @@ async function openReview() {
       <CatalogImportsPanel orgId="org" systems={[]} canWrite onConfirmed={() => {}} />
     </ConfirmProvider>,
   );
-  fireEvent.click(screen.getByRole("button", { name: "Importar catálogo" }));
   fireEvent.click(await screen.findByRole("button", { name: "Revisar fuente y cambios" }));
   await screen.findByText("Fuente del proveedor");
 }

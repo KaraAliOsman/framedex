@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 
 import { projectDesignOptions } from "../../api/generated/dekopen";
-import type { DesignOptions, Simulation } from "../../api/generated/models";
+import type { DesignOptions, ProfileCut, Simulation } from "../../api/generated/models";
 import { fmtMm } from "../../format";
 import { DimLoader } from "../../ui/Signature";
 import { ProductFrontSvg } from "../canvas/ProductFrontSvg";
-import { resolveMembers } from "../canvas/members";
+import { resolveMembers, withCutJoints } from "../canvas/members";
 import { isProductModel, type ProductJson } from "../canvas/productEditing";
 import type { OpeningLeafFact } from "../canvas/physicalOpenings";
 import { formatMoney } from "../money";
@@ -20,7 +20,10 @@ type Price = {
   source?: string;
 };
 type DrawingCalculation = {
-  modules?: { module_id: string; result?: { opening_leaves?: OpeningLeafFact[] } }[];
+  modules?: {
+    module_id: string;
+    result?: { opening_leaves?: OpeningLeafFact[]; profile_cuts?: ProfileCut[] };
+  }[];
 };
 
 function Drawing({
@@ -43,7 +46,10 @@ function Drawing({
           module.result?.opening_leaves ?? [],
         ]),
       )}
-      members={resolveMembers(options, color)}
+      members={withCutJoints(
+        resolveMembers(options, color),
+        (engine?.modules ?? []).flatMap((module) => module.result?.profile_cuts ?? []),
+      )}
       selectedId={null}
       issues={[]}
       disabled
@@ -131,7 +137,7 @@ export function SimulationPreview({
   return (
     <section className="operation-preview" aria-label="Comparación de la propuesta">
       <p className="operation-preview__view">
-        Vista interior · Simulación del motor
+        Vista interior
         {systemIds.some((id) => options[id]?.is_demo) ? " · DEMO" : ""}
       </p>
       <div className="operation-preview__drawings">
@@ -166,26 +172,28 @@ export function SimulationPreview({
           </figure>
         ))}
       </div>
-      <dl className="operation-preview__prices">
-        <dt>Venta neta antes</dt>
-        <dd>
-          {before.price?.net != null
-            ? formatMoney(before.price.net, before.price.currency)
-            : "Sin dato"}
-        </dd>
-        <dt>Venta neta propuesta</dt>
-        <dd>{price.net != null ? formatMoney(price.net, price.currency) : "Sin dato"}</dd>
-        <dt>Diferencia neta</dt>
-        <dd>
-          {price.delta_net != null ? formatMoney(price.delta_net, price.currency) : "Sin dato"}
-        </dd>
-        <dt>Diferencia de Uw</dt>
-        <dd>Sin dato</dd>
-      </dl>
-      <p>
-        Uw pendiente: esta simulación no cuenta con autoridad térmica completa del marco, el vidrio
-        y el borde. Revisa las fichas del sistema en Catálogo antes de declarar un valor.
-      </p>
+      {before.price?.net != null || price.net != null ? (
+        <dl className="operation-preview__prices">
+          {before.price?.net != null ? (
+            <>
+              <dt>Neto anterior</dt>
+              <dd>{formatMoney(before.price.net, before.price.currency)}</dd>
+            </>
+          ) : null}
+          {price.net != null ? (
+            <>
+              <dt>Neto propuesto</dt>
+              <dd>{formatMoney(price.net, price.currency)}</dd>
+            </>
+          ) : null}
+          {price.delta_net != null ? (
+            <>
+              <dt>Diferencia</dt>
+              <dd>{formatMoney(price.delta_net, price.currency)}</dd>
+            </>
+          ) : null}
+        </dl>
+      ) : null}
       {price.reason ? (
         <p>{price.reason}</p>
       ) : (
@@ -222,6 +230,10 @@ export function SimulationPreview({
       </details>
       <details>
         <summary>Detalles técnicos de los cambios</summary>
+        <p>
+          Uw sin dato: falta autoridad térmica completa del marco, vidrio y borde. Las fichas del
+          sistema se revisan en Catálogo.
+        </p>
         <pre>{JSON.stringify(value.diff, null, 2)}</pre>
       </details>
     </section>

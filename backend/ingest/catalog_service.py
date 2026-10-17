@@ -19,9 +19,9 @@ from authentication.rls import catalog_backend
 from documents.repository import documentary_backend
 from documents.storage import SupabaseDocumentStorage
 from catalogs import evidence as catalog_evidence
-from ingest.catalog_parser import ROLES, parse_catalog_lines
-from ingest.catalog_template import parse_structured, candidate as make_candidate, MAX_ROWS
+from ingest.catalog_template import parse_structured, MAX_ROWS
 from ingest.catalog_ai import compile_catalog
+from ingest.catalog_parser import ROLES
 from ingest.extract import extract_tagged, kind_for, safe_file_name, sniffed_kind
 from jobs import service as jobs_service
 from pricing.repository import rows, write
@@ -161,6 +161,26 @@ def create_catalog_import(
     return {"import": _public(row), "job": job}
 
 
+def retry_catalog_import(*, org_id: UUID, actor_id: UUID, import_id: UUID) -> dict:
+    """Resume the same source and audited chunks. No second upload or debit for completed chunks."""
+    with transaction.atomic():
+        with documentary_backend():
+            found = rows("SELECT * FROM public.catalog_imports WHERE org_id=%s AND id=%s FOR UPDATE",
+                         [str(org_id), str(import_id)])
+            if not found:
+                raise contract_error(404, "catalog_import_not_found", "No se encontró la importación.")
+            row = found[0]
+            if row["status"] not in ("FAILED", "UPLOADED", "EXTRACTING"):
+                raise contract_error(409, "catalog_import_status_invalid", "La lectura ya está lista. Abre su revisión.")
+            if row["status"] == "FAILED":
+                row = rows("UPDATE public.catalog_imports SET status='UPLOADED',error_code=NULL,updated_at=clock_timestamp() "
+                           "WHERE id=%s AND org_id=%s RETURNING *", [str(import_id), str(org_id)])[0]
+        with jobs_service.job_backend():
+            jobs_service.enqueue(org_id=org_id, job_type=JOB_TYPE, payload={"import_id": str(import_id)},
+                                 idempotency_key=f"catalog-extract:{import_id}", created_by=actor_id)
+        return {"import": _public(row)}
+
+
 def list_catalog_imports(*, org_id: UUID) -> dict:
     found = rows(
         "SELECT * FROM public.catalog_imports WHERE org_id=%s ORDER BY created_at DESC, id DESC",
@@ -235,7 +255,7 @@ def _series_gaps(candidates: list[dict]) -> str | None:
     return ",".join(missing) if missing and candidates else None
 
 
-def extract_catalog_import(*, org_id: UUID, import_id: UUID, actor_id: UUID) -> dict:
+def extract_catalog_import(*, org_id: UUID, import_id: UUID, actor_id: UUID, on_progress=None) -> dict:
     """The worker body: bytes → article candidates. Deterministic first; a
     text-less source goes through the catalog_compile capability — debited
     under the org wallet, audited, idempotent on the import id."""
@@ -282,19 +302,17 @@ def extract_catalog_import(*, org_id: UUID, import_id: UUID, actor_id: UUID) -> 
         warnings.append(str(error) if isinstance(error, ValueError) else
                         "No se pudo leer la estructura del archivo. Descarga la plantilla oficial e intenta de nuevo.")
     if candidates is None:
-        try:
-            candidates, audit_id = compile_catalog(org_id=org_id, actor_id=actor_id,
-                import_id=import_id, kind=row["kind"], file_name=row["file_name"], tagged=tagged or [])
-            if not tagged:
-                warnings.append("La fuente no tiene texto verificable. Revisa cada valor en la imagen o sube un PDF con texto.")
-        except Exception as error:
-            code = getattr(error, "contract_code", None) or getattr(error, "code", "ai_gateway_error")
-            warnings.append(f"No se pudo analizar con IA ({code}). Puedes usar la plantilla manual.")
-            candidates = []
-            for index, legacy in enumerate(parse_catalog_lines(tagged or [])):
-                raw = {**legacy, "system_code": None, "material": None,
-                       "source": f"{row['file_name']} · {legacy.get('source_ref','')}"}
-                candidates.append(make_candidate("Perfiles", raw, key=f"text{index}", row=index + 1, method="MANUAL"))
+        def progress(completed, total, count, page_range):
+            with transaction.atomic(), documentary_backend():
+                write("UPDATE public.catalog_imports SET result=%s::jsonb,updated_at=clock_timestamp() WHERE id=%s AND org_id=%s AND status='EXTRACTING'",
+                      [json.dumps([{"phase": "READING", "completed": completed, "total": total, "candidates": count, "pages": page_range}]), str(import_id), str(org_id)])
+            if on_progress:
+                on_progress(10 + int(80 * completed / total))
+        candidates, audit_id = compile_catalog(org_id=org_id, actor_id=actor_id,
+            import_id=import_id, kind=row["kind"], file_name=row["file_name"], tagged=tagged or [],
+            content=content, on_progress=progress)
+        if not tagged:
+            warnings.append("Lectura visual preparada. Revisa las dudas sobre las páginas originales antes de activar.")
     for candidate in candidates:
         # Evidence's document id = the import row — review can trace every
         # field back to the exact document it was extracted from.
@@ -302,13 +320,12 @@ def extract_catalog_import(*, org_id: UUID, import_id: UUID, actor_id: UUID) -> 
     if not candidates:
         warnings.append("catalog.no_candidates")
     if len(candidates) > MAX_CANDIDATES:
-        candidates = candidates[:MAX_CANDIDATES]
-        warnings.append("catalog.candidates_capped")
+        raise CatalogImportError("catalog_candidates_limit")
     with transaction.atomic():
         with documentary_backend():
             updated = rows(
                 "UPDATE public.catalog_imports SET status='REVIEW_READY', "
-                "candidates=%s::jsonb, warnings=%s::jsonb, audit_id=%s,contains_costs=%s, updated_at=now() "
+                "candidates=%s::jsonb, warnings=%s::jsonb, audit_id=%s,contains_costs=%s, result='[]'::jsonb, updated_at=now() "
                 "WHERE id=%s AND status='EXTRACTING' RETURNING *",
                 [
                     json.dumps(candidates, default=str),

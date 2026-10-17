@@ -111,12 +111,40 @@ CSS = """
 .q-drawing-measures p { margin: 1mm 0; }
 """
 
+# Opted into by new snapshots only. A reprint of an issued legacy revision
+# keeps its sealed composition instead of silently acquiring today's layout.
+PRESENTATION_CSS = """
+.q-v1 { color: #202A27; font-size: 10pt; line-height: 1.45; }
+.q-v1 .q-head { padding-bottom: 5mm; }
+.q-v1 h1 { font-size: 28pt; letter-spacing: -0.5pt; }
+.q-v1 h2 { font-size: 15pt; padding-bottom: 2mm; margin-top: 7mm; }
+.q-v1 .q-cover { break-after: auto; }
+.q-v1 .q-issuer { margin-bottom: 5mm; font-size: 8.25pt; }
+.q-v1 .q-client { margin: 5mm 0; }
+.q-v1 .q-intro { white-space: pre-line; max-width: 165mm; margin: 3mm 0 5mm; }
+.q-v1 .q-project-name { color: #465158; font-size: 12pt; }
+.q-v1 .q-cover-total { padding: 4mm 5mm; background: #F0F5F2; border: 0; }
+.q-v1 .q-cover-total .q-total { font-size: 24pt; }
+.q-v1 .q-overview th { background: #F0F5F2; padding: 3mm 1mm; }
+.q-v1 .q-overview td { vertical-align: middle; padding: 3mm 1mm; }
+.q-v1 .q-overview .q-thumb svg { width: 22mm; height: 21mm; }
+.q-editorial .q-figure { width: 92mm; flex-basis: 92mm; }
+.q-editorial .q-figure svg { max-height: 103mm; }
+.q-editorial .q-position { padding: 5mm 0; }
+.q-v1 .q-position-price { padding: 3mm; background: #F0F5F2; }
+.q-v1 .q-close { break-before: auto; margin-top: 6mm; }
+.q-v1 .q-close { break-inside: avoid; }
+.q-v1 .q-commercial { break-inside: avoid; }
+.q-v1 .q-terms { white-space: pre-line; }
+"""
+
 
 def stylesheet(snapshot: dict) -> str:
     org = snapshot.get("organization") or {}
     prefs = document_preferences(org.get("document_preferences"))
     width = {"LETTER": "191.9mm", "OFICIO": "192mm", "A4": "186mm"}[prefs["paper"]]
-    return CSS.replace("191.9mm", width).replace("letter portrait", PAPERS[prefs["paper"]]).replace("#075F5A", ACCENTS[prefs["accent"]])
+    css = CSS + (PRESENTATION_CSS if prefs.get("presentation_version") == 1 else "")
+    return css.replace("191.9mm", width).replace("letter portrait", PAPERS[prefs["paper"]]).replace("#075F5A", ACCENTS[prefs["accent"]])
 
 
 def known(value: object) -> str:
@@ -276,29 +304,44 @@ def render(snapshot: dict, *, portal_url: str | None = None) -> str:
     legal = " · ".join(value for value in [known(org.get("name")), "RUT " + known(org["tax_id"]) if known(org.get("tax_id")) else "", known(prefs.get("legal_footer"))] if value)
     fingerprint = str(snapshot.get("bom_hash") or "")[:12]
     footer = f'<footer class="q-footer"><div class="q-footer-line"><span class="q-num">{escape(folio)} · Rev. {escape(_rev_display(revision))}</span><span class="q-num">Página <span class="pg"></span></span></div><div class="q-footer-line q-legal"><span>{escape(legal)}</span><span class="q-num">Huella {escape(fingerprint)}</span></div></footer>'
-    density = "q-dense q-compact" if len(positions) > 24 else "q-compact" if len(positions) > 3 else ""
+    modern = prefs.get("presentation_version") == 1
+    def drawing(position, **options):
+        bom = next((item.get("engine_result") or {} for item in snapshot.get("bom") or []
+                    if str(item.get("position_id")) == str(position.get("id"))), {})
+        return _position_svg({**position, "_visual_cuts": bom.get("profile_cuts") or []},
+                             material_details=modern, **options)
+    density = ("q-v1 q-compact" if prefs["quotation_layout"] == "COMPACT" else "q-v1 q-editorial") if modern else (
+        "q-dense q-compact" if len(positions) > 24 else "q-compact" if len(positions) > 3 else "")
     body = f'<main class="quote {density}">{footer}'
     mast = '<svg class="q-miter" viewBox="0 0 24 24"><path d="M0 0H24V24" fill="none" stroke="#075F5A" stroke-width="1.5"/><path d="M0 0L24 24" fill="none" stroke="#075F5A" stroke-width="1.5"/></svg>'
     cover_density = " q-cover-long" if len(known(project.get("client_name"))) > 70 else ""
     body += f'<section class="q-cover{cover_density}">' if len(positions) > 1 else '<section>'
     body += '<header class="q-head">' + _brand_block({**org, "brand_schema": 1}) + f'<div class="q-folio"><strong>Cotización</strong><br><span class="q-num">{escape(folio)}<br>Revisión {escape(_rev_display(revision))} · {escape(date)}</span></div>{mast}</header>'
     issuer = " · ".join(known(org.get(field)) for field in ("name", "tax_id", "giro", "brand_address", "brand_phone", "brand_email") if known(org.get(field)))
-    body += f'<p class="q-issuer">{escape(issuer)}</p><h1>{escape(known(project.get("name")) or "Solución para su obra")}</h1>'
+    project_name = known(project.get("name")) or "Solución para su obra"
+    title = known(prefs.get("presentation_title")) if modern else ""
+    body += f'<p class="q-issuer">{escape(issuer)}</p><h1>{escape(title or project_name)}</h1>'
+    if title:
+        body += f'<p class="q-project-name">{escape(project_name)}</p>'
+    if modern and prefs.get("presentation_intro"):
+        body += f'<p class="q-intro">{escape(prefs["presentation_intro"])}</p>'
     client = ''.join(spec_row(label, known(project.get(field))) for label, field in [("RUT", "client_rut"), ("Giro", "client_giro"), ("Comuna", "client_comuna"), ("Dirección", "client_address"), ("Contacto", "client_email"), ("Teléfono", "client_phone"), ("Entrega", "delivery_address")])
     conditions = ''.join(spec_row(label, known(terms.get(field))) for label, field in [("Plazo", "delivery_text"), ("Instalación", "installation_text")])
     conditions += spec_row("Pago", known(project.get("payment_terms"))) + spec_row("Vigente hasta", valid)
     body += f'<div class="q-client"><div><p class="q-label">Preparado para</p><p class="q-client-name">{escape(known(project.get("client_name")))}</p><dl>{client}</dl></div><div><p class="q-label">Condiciones de la propuesta</p><dl>{conditions}</dl></div></div>'
-    if len(positions) > 1:
+    if len(positions) > 1 and not modern:
         hero = positions[representative_index([(_num(item["width_mm"]), _num(item["height_mm"])) for item in positions])]
         body += f'<div class="q-cover-drawing">{_position_svg(hero, commercial=True, dimensions=True, dimension_font_divisor=Decimal("16"), include_sliding_plan=False)}</div>'
     if project.get("total_price_gross") is not None:
         body += f'<div class="q-cover-total"><div><span class="q-label">Total con impuesto · {escape(currency)}</span><p class="q-total">{escape(_money(project["total_price_gross"], currency))}</p></div><div><span class="q-label">Revisión emitida</span><p>Las especificaciones y los precios corresponden<br>a esta revisión de su cotización.</p></div></div>'
     body += '</section>'
     if positions:
-        body += '<h2>Resumen de posiciones</h2><table class="q-overview"><colgroup>' + ''.join(f'<col style="width:{width}%">' for width in (4, 27, 16, 18, 5, 15, 15)) + '</colgroup><thead><tr><th>Pos.</th><th>Ubicación</th><th>Tipología</th><th>Ancho × Alto</th><th>Cant.</th><th>P. unit. neto</th><th>Total neto</th></tr></thead><tbody>'
+        columns = (4, 14, 20, 14, 16, 4, 14, 14) if modern else (4, 27, 16, 18, 5, 15, 15)
+        body += ('<h2>Sus ventanas y puertas</h2>' if modern else '<h2>Resumen de posiciones</h2>') + '<table class="q-overview"><colgroup>' + ''.join(f'<col style="width:{width}%">' for width in columns) + '</colgroup><thead><tr><th>Pos.</th>' + ('<th>Diseño</th>' if modern else '') + '<th>Ubicación</th><th>Tipología</th><th>Ancho × Alto</th><th>Cant.</th><th>P. unit. neto</th><th>Total neto</th></tr></thead><tbody>'
         for position in positions:
             value = line_values.get(str(position["position_index"]))
-            body += f'<tr><td class="q-num">{escape(str(position["position_index"]))}</td><td>{escape(known(position.get("location_tag")))}</td><td>{escape(_product_caption(position))}</td><td class="q-num q-dims">{escape(_survey_dim(position.get("width_mm")))} × {escape(_survey_dim(position.get("height_mm")))} mm</td><td class="q-num">{escape(str(position["quantity"]))}</td><td class="q-num">{escape(_money(value.unit_net, currency)) if value else ""}</td><td class="q-num">{escape(_money(value.net, currency)) if value else ""}</td></tr>'
+            thumb = f'<td class="q-thumb">{drawing(position, commercial=True, dimensions=False, include_sliding_plan=False)}</td>' if modern else ''
+            body += f'<tr><td class="q-num">{escape(str(position["position_index"]))}</td>{thumb}<td>{escape(known(position.get("location_tag")))}</td><td>{escape(_product_caption(position))}</td><td class="q-num q-dims">{escape(_survey_dim(position.get("width_mm")))} × {escape(_survey_dim(position.get("height_mm")))} mm</td><td class="q-num">{escape(str(position["quantity"]))}</td><td class="q-num">{escape(_money(value.unit_net, currency)) if value else ""}</td><td class="q-num">{escape(_money(value.net, currency)) if value else ""}</td></tr>'
         body += '</tbody></table>'
     body += '<section class="q-details"><h2>Detalle de la solución</h2>' if len(positions) > 1 else '<section><h2>Detalle de la solución</h2>'
     itemized = result.get("document_extra_prices", "ITEMIZED") == "ITEMIZED"
@@ -314,6 +357,8 @@ def render(snapshot: dict, *, portal_url: str | None = None) -> str:
         if finish:
             approximate = any((finish.get(face) or {}).get("approximate") for face in ("interior", "exterior"))
             specs += spec_row("Acabado", finish_label(position.get("color_interior"), position.get("color_exterior"), finish) + (" · tono aproximado" if approximate else ""))
+            if modern and any((finish.get(face) or {}).get("kind") in {"FOIL", "WOOD_EFFECT"} for face in ("interior", "exterior")):
+                specs += spec_row("Muestra", "Veta ilustrativa. Confirme el acabado con la muestra del proveedor.")
         else:
             for face, label in [("interior", "Color interior"), ("exterior", "Color exterior")]:
                 raw = position.get("color_" + face)
@@ -328,7 +373,7 @@ def render(snapshot: dict, *, portal_url: str | None = None) -> str:
             if width.get("opening_mm") is not None and height.get("opening_mm") is not None:
                 specs += spec_row(f"Vano · marco {index}", f'{_survey_dim(width["opening_mm"])} × {_survey_dim(height["opening_mm"])} mm', numeric=True)
         specs += spec_row("Cantidad", str(position["quantity"]) + " un.", numeric=True)
-        body += f'<article class="q-position"><h3>{escape(title)}</h3><div class="q-position-body"><div class="q-figure">{_position_svg(position, commercial=True, dimensions=True, dimension_font_divisor=Decimal("12"), include_sliding_plan=False)}{plan_figure(position)}{sliding_specs(position)}</div><div class="q-spec"><dl>{specs}</dl></div></div>'
+        body += f'<article class="q-position"><h3>{escape(title)}</h3><div class="q-position-body"><div class="q-figure">{drawing(position, commercial=True, dimensions=True, dimension_font_divisor=Decimal("12"), include_sliding_plan=False)}{plan_figure(position)}{sliding_specs(position)}</div><div class="q-spec"><dl>{specs}</dl></div></div>'
         body += extras_table(detail.get("sublines") or [], currency, prices=itemized, base=detail.get("base_net"))
         if value:
             discount = _num(position.get("discount_pct") or "0")

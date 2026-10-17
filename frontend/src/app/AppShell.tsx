@@ -1,5 +1,4 @@
 import { type PropsWithChildren, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AiModeBadge } from "../features/assistant/AiModeBadge";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 
 import { t } from "../i18n/es-CL";
@@ -32,10 +31,7 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
   const role = org?.role;
   const workshop =
     location.pathname.startsWith("/production") || role === "OPERATOR" || role === "INSTALLER";
-  const officeDefault = window.matchMedia("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
-  const { theme, toggleTheme } = useTheme(workshop ? "dark" : officeDefault);
+  const { theme } = useTheme();
   const navigate = useNavigate();
   const [leaf, setLeafState] = useState<string | null>(null);
   const setLeaf = useCallback((label: string | null) => setLeafState(label), []);
@@ -167,10 +163,53 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
               </span>
             </div>
             <nav className="app-rail__nav" aria-label={t("shell.navigation")}>
-              {domainGroups.map((group) => (
-                <div key={group.id} className="rail-group">
-                  {group.title && <p className="rail-group__title">{t(group.title)}</p>}
-                  {group.items.map((item) => (
+              {domainGroups
+                .filter((group) => !group.secondary)
+                .map((group) => (
+                  <div key={group.id} className="rail-group">
+                    {group.title && <p className="rail-group__title">{t(group.title)}</p>}
+                    {group.items.map((item) => (
+                      <NavLink
+                        className="rail-item"
+                        key={item.to}
+                        to={item.to}
+                        title={t(item.label)}
+                        aria-label={t(item.label)}
+                      >
+                        <RailIcon to={item.to} />
+                        <span>{t(item.label)}</span>
+                      </NavLink>
+                    ))}
+                  </div>
+                ))}
+              <details
+                className="rail-more"
+                open={
+                  domainGroups.some(
+                    (group) =>
+                      group.secondary &&
+                      group.items.some((item) => location.pathname.startsWith(item.to)),
+                  ) || undefined
+                }
+              >
+                <summary aria-label="Más herramientas" title="Más herramientas">
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                    fill="currentColor"
+                  >
+                    <circle cx="5" cy="12" r="1.8" />
+                    <circle cx="12" cy="12" r="1.8" />
+                    <circle cx="19" cy="12" r="1.8" />
+                  </svg>
+                  <span>Más herramientas</span>
+                </summary>
+                {domainGroups
+                  .filter((group) => group.secondary)
+                  .flatMap((group) => group.items)
+                  .map((item) => (
                     <NavLink
                       className="rail-item"
                       key={item.to}
@@ -182,8 +221,7 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
                       <span>{t(item.label)}</span>
                     </NavLink>
                   ))}
-                </div>
-              ))}
+              </details>
             </nav>
             <button
               type="button"
@@ -222,32 +260,6 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
                 {role && <span className="app-rail__role">{t(roleLabel[role])}</span>}
               </div>
               <div className="app-rail__user-actions">
-                <button
-                  type="button"
-                  className="rail-icon-button"
-                  onClick={toggleTheme}
-                  aria-label={t("theme.toggle")}
-                  title={t(theme === "light" ? "theme.toDark" : "theme.toLight")}
-                >
-                  <svg
-                    aria-hidden="true"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                  >
-                    {theme === "light" ? (
-                      <path d="M19 15a8 8 0 0 1-10-10A8 8 0 1 0 19 15Z" />
-                    ) : (
-                      <>
-                        <circle cx="12" cy="12" r="4" />
-                        <path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2" />
-                      </>
-                    )}
-                  </svg>
-                </button>
                 <button
                   type="button"
                   className="rail-icon-button"
@@ -296,7 +308,7 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
               <div className="app-topbar__actions">
                 <OrgSwitcher />
                 <ProjectSwitcher />
-                {canUseAssistant && <AiModeBadge />}
+
                 <button
                   type="button"
                   className="topbar-search"

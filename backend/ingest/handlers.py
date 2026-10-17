@@ -117,6 +117,7 @@ def extract_catalog_job(
                 org_id=context.org_id,
                 import_id=payload["import_id"],
                 actor_id=context.created_by,
+                on_progress=report,
             )
     except Exception as error:
         permanent = isinstance(error, CatalogImportError)

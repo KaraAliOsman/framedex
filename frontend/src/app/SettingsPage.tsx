@@ -842,7 +842,7 @@ export function SettingsPage(): JSX.Element {
     (value: DocumentPreferences) => setDraft({ scope, value: { document_preferences: value } }),
     [scope],
   );
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
   if (!org) return <DeniedState reason="Elige tu organización antes de configurar." />;
   return (
     <section
@@ -886,9 +886,6 @@ export function SettingsPage(): JSX.Element {
                     <dd>{t(ROLE_KEYS[org.role])}</dd>
                   </div>
                 </dl>
-                <Button onClick={toggleTheme}>
-                  Cambiar a tema {theme === "light" ? "oscuro" : "claro"}
-                </Button>
                 <p>
                   Buscar: <kbd>{MOD_K_HINT}</kbd> · Deshacer: <kbd>{MOD_KEY_HINT}Z</kbd>
                 </p>

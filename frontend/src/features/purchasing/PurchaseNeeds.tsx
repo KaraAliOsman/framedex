@@ -58,6 +58,7 @@ export function PurchaseNeeds({
   const [busy, setBusy] = useState(false);
   const [reload, setReload] = useState(0);
   const [filter, setFilter] = useState("");
+  const [showCovered, setShowCovered] = useState(false);
   const [offset, setOffset] = useState(0);
   const [key, setKey] = useState(() => crypto.randomUUID());
   const [choices, setChoices] = useState<Record<string, { quantity: string; price: string }>>({});
@@ -88,11 +89,13 @@ export function PurchaseNeeds({
     };
   }, [request, revision, reload]);
   const groups = new Map<string, Need[]>();
-  const visible = (proposal?.lines ?? []).filter((line) =>
-    [line.sku, line.project_code, line.supplier_name ?? "", ...line.orders.map((o) => o.code)]
-      .join(" ")
-      .toLowerCase()
-      .includes(filter.toLowerCase()),
+  const visible = (proposal?.lines ?? []).filter(
+    (line) =>
+      (showCovered || Number(line.purchase) > 0 || Number(line.uncovered) > 0) &&
+      [line.sku, line.project_code, line.supplier_name ?? "", ...line.orders.map((o) => o.code)]
+        .join(" ")
+        .toLowerCase()
+        .includes(filter.toLowerCase()),
   );
   for (const line of visible.slice(offset, offset + 50)) {
     if (Number(line.required) <= 0 && !line.cause) continue;
@@ -154,9 +157,25 @@ export function PurchaseNeeds({
     <section className="purchase-needs" aria-label="Necesidades de las OT">
       <h2>Comprar lo que falta</h2>
       <p>
-        El motor compara las OT liberadas con retazos compatibles, reservas, stock útil y material
-        en tránsito.
+        Material pendiente para las órdenes liberadas, descontando existencias, reservas y compras
+        en camino.
       </p>
+      <label>
+        <input
+          type="checkbox"
+          checked={showCovered}
+          onChange={(event) => {
+            setShowCovered(event.target.checked);
+            setOffset(0);
+          }}
+        />{" "}
+        Incluir material ya cubierto
+      </label>
+      {proposal && visible.length === 0 && proposal.lines.length > 0 && filter === "" ? (
+        <p>
+          El material de estas órdenes ya está cubierto. Puedes revisar el detalle de existencias.
+        </p>
+      ) : null}
       {error && (
         <ErrorState
           title="Revisa las necesidades"
@@ -428,7 +447,7 @@ export function PurchaseMail({
       </summary>
       {preview && (
         <>
-          <p>Para: {preview.recipient || "Sin dato · falta correo en la elegibilidad sellada"}</p>
+          <p>Para: {preview.recipient || "Falta el correo del proveedor para esta orden"}</p>
           <p>{preview.subject}</p>
           <p>{preview.text}</p>
           <button

@@ -16,6 +16,7 @@ import {
   projectsCreate,
   projectsUpdate,
   projectsClone,
+  projectsResetPricing,
 } from "../../api/generated/dekopen";
 import type {
   ApprovalRecord,
@@ -44,7 +45,7 @@ import "./projects.css";
 import "./project-workspace.css";
 import { PositionThumb } from "./PositionThumb";
 import { PositionCollection, positionReadiness } from "./PositionCollection";
-import { ProjectBom } from "./ProjectPositionEditor";
+import { PositionMaterials } from "./PositionMaterials";
 import { ProjectQuotationPanel } from "./ProjectQuotationPanel";
 import { ProjectImportsPanel } from "./ProjectImportsPanel";
 import { ProjectPaymentsPanel } from "./ProjectPaymentsPanel";
@@ -59,7 +60,7 @@ import {
   EmptyState,
   PageHeader,
   Tabs,
-  Drawer,
+  Dialog,
   useConfirm,
 } from "../../ui";
 
@@ -243,7 +244,7 @@ function ProjectMetadataForm({
           const props = {
             name,
             value: draft.value[name] ?? "",
-            required: true,
+            required: name === "name",
             maxLength,
             "aria-label": t(label),
             onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
@@ -256,10 +257,14 @@ function ProjectMetadataForm({
             <label key={name}>
               <span>
                 {t(label)}
-                <span className="form-required" aria-hidden="true">
-                  {" "}
-                  *
-                </span>
+                {name === "name" ? (
+                  <span className="form-required" aria-hidden="true">
+                    {" "}
+                    *
+                  </span>
+                ) : (
+                  <small> · puedes completarlo después</small>
+                )}
               </span>
               {type === "textarea" ? <textarea {...props} /> : <input {...props} type={type} />}
             </label>
@@ -720,67 +725,71 @@ function ProjectHeader({
           </div>
         )}
       </div>
-      <dl className="project-head__facts">
-        <div>
-          <dt>Obra · dirección de entrega</dt>
-          <dd>
-            {project.delivery_address || "Sin dato · declara la dirección en Editar proyecto"}
-          </dd>
-        </div>
-        <div>
-          <dt>
-            Total con IVA · {formatRevision(project.accepted_revision || project.current_revision)}
-          </dt>
-          <dd className="project-number">
-            {project.pricing_current
-              ? formatMoney(project.total_price_gross, project.currency)
-              : "Sin dato · calcula y aplica el precio"}
-          </dd>
-          <dd>
-            {project.pricing_current
-              ? project.accepted_source || "Fuente: precio aplicado del motor comercial"
-              : "El borrador aún no tiene precio aplicado"}
-          </dd>
-        </div>
-        <div>
-          <dt>Vigencia</dt>
-          <dd>
-            {project.quotation_valid_until
-              ? formatDate(project.quotation_valid_until)
-              : "Sin dato · declárala en Cotización"}
-          </dd>
-          <dd>{project.quotation_validity_source || "La fecha se revisa antes de emitir"}</dd>
-        </div>
-      </dl>
-      {(project.client_email ||
-        project.client_phone ||
-        project.notes_commercial ||
-        project.notes_internal) && (
-        <details className="project-head__contact">
-          <summary>Contacto y notas de la obra</summary>
-          {project.client_email && <p>{project.client_email}</p>}
-          {project.client_phone && <p>{project.client_phone}</p>}
-          {project.notes_commercial && (
-            <p>
-              Condiciones comerciales: <span>{project.notes_commercial}</span>
-            </p>
-          )}
-          {project.notes_internal && (
-            <p>
-              Nota interna: <span>{project.notes_internal}</span>
-            </p>
-          )}
-        </details>
-      )}
-      <ol aria-label={t("projects.lifecycle")} className="commercial-track">
-        {steps.map((step) => (
-          <li className="commercial-step" data-state={step.state} key={step.key}>
-            <span className="commercial-step__marker" aria-hidden="true" />
-            <span className="commercial-step__label">{t(step.labelKey)}</span>
-            {step.detail && <span className="commercial-step__detail">{step.detail}</span>}
-          </li>
-        ))}
-      </ol>
+      <details className="project-head__details">
+        <summary>Datos y avance de la obra</summary>
+        <dl className="project-head__facts">
+          <div>
+            <dt>Obra · dirección de entrega</dt>
+            <dd>
+              {project.delivery_address || "Sin dato · declara la dirección en Editar proyecto"}
+            </dd>
+          </div>
+          <div>
+            <dt>
+              Total con IVA ·{" "}
+              {formatRevision(project.accepted_revision || project.current_revision)}
+            </dt>
+            <dd className="project-number">
+              {project.pricing_current
+                ? formatMoney(project.total_price_gross, project.currency)
+                : "Precio por preparar"}
+            </dd>
+            <dd>
+              {project.pricing_current
+                ? project.accepted_source || "Fuente: precio aplicado del motor comercial"
+                : "El borrador aún no tiene precio aplicado"}
+            </dd>
+          </div>
+          <div>
+            <dt>Vigencia</dt>
+            <dd>
+              {project.quotation_valid_until
+                ? formatDate(project.quotation_valid_until)
+                : "Sin dato · declárala en Cotización"}
+            </dd>
+            <dd>{project.quotation_validity_source || "La fecha se revisa antes de emitir"}</dd>
+          </div>
+        </dl>
+        {(project.client_email ||
+          project.client_phone ||
+          project.notes_commercial ||
+          project.notes_internal) && (
+          <details className="project-head__contact">
+            <summary>Contacto y notas de la obra</summary>
+            {project.client_email && <p>{project.client_email}</p>}
+            {project.client_phone && <p>{project.client_phone}</p>}
+            {project.notes_commercial && (
+              <p>
+                Condiciones comerciales: <span>{project.notes_commercial}</span>
+              </p>
+            )}
+            {project.notes_internal && (
+              <p>
+                Nota interna: <span>{project.notes_internal}</span>
+              </p>
+            )}
+          </details>
+        )}
+        <ol aria-label={t("projects.lifecycle")} className="commercial-track">
+          {steps.map((step) => (
+            <li className="commercial-step" data-state={step.state} key={step.key}>
+              <span className="commercial-step__marker" aria-hidden="true" />
+              <span className="commercial-step__label">{t(step.labelKey)}</span>
+              {step.detail && <span className="commercial-step__detail">{step.detail}</span>}
+            </li>
+          ))}
+        </ol>
+      </details>
     </div>
   );
 }
@@ -1359,14 +1368,22 @@ function ProjectWorkspace({
       );
   }, [clientsQuery.data, id, canWrite]);
 
-  async function save(): Promise<void> {
+  async function save(newDraft?: Draft): Promise<void> {
     const controller = lifetime.current;
-    if (!draft || !controller || controller.signal.aborted || locked.current || mustReload) return;
+    const submitted = newDraft ?? draft;
+    if (
+      !canWrite ||
+      !submitted ||
+      !controller ||
+      controller.signal.aborted ||
+      locked.current ||
+      mustReload
+    )
+      return;
 
     locked.current = true;
     setBusy(true);
     setError("");
-    const submitted = draft;
     const options = {
       signal: controller.signal,
       headers: { "X-Organization-ID": orgId },
@@ -1422,6 +1439,47 @@ function ProjectWorkspace({
         locked.current = false;
         setBusy(false);
       }
+    }
+  }
+
+  async function resumeDesign(project: ProjectResponse): Promise<void> {
+    if (
+      !canWrite ||
+      !project.current_pricing_operation_id ||
+      locked.current ||
+      mustReload ||
+      !lifetime.current ||
+      lifetime.current.signal.aborted
+    )
+      return;
+    const controller = lifetime.current;
+    locked.current = true;
+    setBusy(true);
+    setError("");
+    try {
+      const result = await projectsResetPricing(
+        project.id,
+        {
+          expected_operation_id: project.current_pricing_operation_id,
+          confirmed: true,
+          reason: "Volver al diseño y recalcular el precio del borrador",
+        },
+        { signal: controller.signal, headers: { "X-Organization-ID": orgId } },
+      );
+      if (result.status !== 200) throw new ApiError(result.status, result.data);
+      if (controller.signal.aborted) return;
+      await query.refetch();
+      setNotice("Puedes editar las ventanas. Calcula el nuevo precio cuando termines.");
+    } catch {
+      if (!controller.signal.aborted) {
+        setError(
+          "No se pudo volver al diseño. Actualiza la obra para comprobar el precio vigente.",
+        );
+        setMustReload(true);
+      }
+    } finally {
+      locked.current = false;
+      if (!controller.signal.aborted) setBusy(false);
     }
   }
 
@@ -1554,7 +1612,7 @@ function ProjectWorkspace({
             canWrite ? (
               <Button
                 disabled={disabled || draft !== null}
-                onClick={() => setDraft({ value: metadata() })}
+                onClick={() => void save({ value: { ...metadata(), name: "Nueva obra" } })}
                 variant="primary"
               >
                 {t("projects.create")}
@@ -1617,6 +1675,11 @@ function ProjectWorkspace({
               {t("projects.edit")}
             </button>
           )}
+          {canWrite && project.status === "DRAFT" && project.pricing_current ? (
+            <button type="button" disabled={disabled} onClick={() => void resumeDesign(project)}>
+              Editar ventanas y recalcular precio
+            </button>
+          ) : null}
           {canWrite && (
             <button disabled={disabled} onClick={() => void clone(project)}>
               {t("projects.cloneDraft")}
@@ -1634,16 +1697,34 @@ function ProjectWorkspace({
               setOpenSection(value === "positions" ? null : (value as FactsSection))
             }
             items={[
-              { id: "positions", label: "Posiciones" },
-              { id: "thermal", label: "Térmica" },
+              { id: "positions", label: "Ventanas y puertas" },
               { id: "quote", label: "Cotización" },
-              { id: "pricing", label: "Precio" },
-              { id: "payments", label: "Cobranza" },
-              { id: "production", label: "Producción" },
+              { id: "production", label: "Taller" },
               { id: "documents", label: "Documentos" },
-              { id: "activity", label: "Actividad" },
             ]}
           />
+          <details className="project-more-sections">
+            <summary>Más opciones de la obra</summary>
+            <div className="projects-actions">
+              {(
+                [
+                  ["pricing", "Precio y margen"],
+                  ["payments", "Cobranza"],
+                  ["thermal", "Prestaciones térmicas"],
+                  ["activity", "Actividad"],
+                ] as const
+              ).map(([key, label]) => (
+                <button
+                  type="button"
+                  key={key}
+                  aria-pressed={openSection === key}
+                  onClick={() => setOpenSection(key)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </details>
           <div hidden={openSection !== null}>
             {canWrite && !editable && (
               <p className="project-locked" role="status">
@@ -1664,12 +1745,15 @@ function ProjectWorkspace({
               onImport={() => setOpenSection("imports")}
               onDetails={() => setShowPosition(true)}
             />
-            <ProjectServicesPanel
-              key={`${orgId}:${project.id}:${project.current_revision}`}
-              projectId={project.id}
-              orgId={orgId}
-              canWrite={canWrite}
-            />
+            <details className="project-extra-services">
+              <summary>Instalación, transporte y otros servicios</summary>
+              <ProjectServicesPanel
+                key={`${orgId}:${project.id}:${project.current_revision}`}
+                projectId={project.id}
+                orgId={orgId}
+                canWrite={canWrite}
+              />
+            </details>
           </div>
           {visited.has("quote") && (
             <div className="project-quotation-workspace" hidden={openSection !== "quote"}>
@@ -1751,39 +1835,47 @@ function ProjectWorkspace({
               const selected = project.positions?.find((position) => position.id === selectedId);
               if (!selected) return null;
               return (
-                <Drawer
+                <Dialog
+                  width="xl"
                   title={`Posición ${selected.position_index} · ${selected.location_tag || "Sin ubicación"}`}
                   onClose={() => setShowPosition(false)}
                 >
-                  <PositionThumb design={selected.design} />
-                  <p className="project-number">
-                    {fmtMm(selected.design.nominal_width_mm)} ×{" "}
-                    {fmtMm(selected.design.nominal_height_mm)} mm · cantidad {selected.quantity}
-                  </p>
-                  <p>Vista interior · fabricación guardada del motor.</p>
-                  <PositionThermal projectId={project.id} orgId={orgId} positionId={selected.id} />
-                  {editable && (
-                    <Link to={`/projects/${project.id}/positions/${selected.id}/edit`}>
-                      {t("projects.openPosition")}
-                    </Link>
-                  )}
-                  <ProjectBom result={selected.bom} />
-                  <MeasurementPanel
+                  <PositionMaterials
+                    key={selected.id}
                     position={selected}
                     orgId={orgId}
-                    canConfirm={canWrite}
-                    closed={project.status !== "DRAFT"}
-                    onSaved={() => void query.refetch()}
-                  />
-                  {["DRAFT", "QUOTED", "APPROVED"].includes(project.status) && (
-                    <RectificationPanel
+                    drawingDetails={
+                      <>
+                        <PositionThermal
+                          projectId={project.id}
+                          orgId={orgId}
+                          positionId={selected.id}
+                        />
+                        {editable && (
+                          <Link to={`/projects/${project.id}/positions/${selected.id}/edit`}>
+                            {t("projects.openPosition")}
+                          </Link>
+                        )}
+                      </>
+                    }
+                  >
+                    <MeasurementPanel
                       position={selected}
-                      project={project}
                       orgId={orgId}
+                      canConfirm={canWrite}
+                      closed={project.status !== "DRAFT"}
                       onSaved={() => void query.refetch()}
                     />
-                  )}
-                </Drawer>
+                    {["DRAFT", "QUOTED", "APPROVED"].includes(project.status) && (
+                      <RectificationPanel
+                        position={selected}
+                        project={project}
+                        orgId={orgId}
+                        onSaved={() => void query.refetch()}
+                      />
+                    )}
+                  </PositionMaterials>
+                </Dialog>
               );
             })()}
         </>

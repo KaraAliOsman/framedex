@@ -1641,3 +1641,83 @@ La proyección HTML autónoma con índice, búsqueda, temas e impresión queda
 local en `.run/reports/`, con recibo de construcción/validación. El snapshot
 versionado se enlaza bajo demanda y se excluye en `.rgignore` para no volver
 a introducir carga documental en el arranque de los agentes.
+
+## 2026-10-17 · Investigación de experiencia y prompts preparados
+
+Por petición del dueño se prepara
+[el plan de experiencia](../ux/2026-10-17/README.md): auditoría con 35 hallazgos,
+competencia/fuentes, flujos, dirección visual, renderer, IA/catálogos,
+documentos/operación, método y doce encargos más prompt maestro. Incluye tres
+láminas conceptuales HTML y doce imágenes propias seleccionadas con manifiesto.
+La implementación espera «inicia»; no se modifica código del producto.
+
+Se inspecciona código en `edcfd2844d2c2fc7cbb0d3b543b50e9089ab9b3f` y se reutiliza
+REVIEW sin rebuild/fixture/reset, con roles de estimación y taller. El SHA del
+build de los contenedores no se verificó. Se observa un cambio IA de ancho que
+produce propuesta correcta y se descarta; no se aplica. Se leen documentos
+existentes y se renderiza un plan de taller existente bajo RLS/transacción de
+solo lectura, sin emisión nueva. La escena omite ingletes 3D; el plano de
+ensamblaje observado corta/solapa códigos. Las filas de stock parecidas no se
+atribuyen a duplicación de BD.
+
+La cadena completa de catálogo ya tiene transporte multimodal por pasarela:
+imágenes/páginas sin texto. El helper limita PDF a 20 páginas y envía texto en
+vez de imagen si la página tiene texto; falta representación integral de
+layout/regiones/relaciones. Se corrige el diagnóstico inicial que confundía el
+payload textual del compilador con el transporte completo. No se registra una
+ausencia de visión inexistente.
+
+Se observan tramos de vídeos de NuveraPRO, Winart/Haustek, Moxisys y Logikal,
+con fuentes primarias y distinción entre observado/documentado/comercial/histórico.
+No se operan licencias comerciales ni se afirma un inventario privado exhaustivo.
+La nueva fuente del dueño conserva tema único, IA práctica, PDF como entrada,
+calidad de uso y pruebas al final. La propuesta clara/neutra no se convierte en
+preferencia detallada ya confirmada. Constitución y aceptaciones anteriores se
+conservan; se enlaza la futura reconciliación.
+
+Sin suites del producto ni nueva aceptación funcional. Validación documental de
+enlaces/estructura/manifiesto/diff al cierre. El navegador de la sesión rechazó
+el protocolo local file:// para las láminas; su renderizado no se da por verificado
+ni se intenta eludir esa restricción. Stack y sesiones del dueño se conservan.
+
+## 2026-10-17 · Implementación autorizada de la experiencia y cierre local
+
+La instrucción posterior «ahora empieza» autoriza construir. En
+`codex/v1-experiencia`, sobre `edcfd2844d2c2fc7cbb0d3b543b50e9089ab9b3f`, se
+integra tema claro único, navegación por rol, obra directa sin cliente obligatorio,
+biblioteca con decisiones heredadas e inspector progresivo. La IA contextual
+prepara precio con preferencias reales y continúa al PDF privado desde la muestra;
+la presentación de PDF/portal usa operaciones tipadas, firma de concurrencia,
+MFA/dueño, idempotencia e historial/deshacer. El dueño confirma usar preferencias
+guardadas y preguntar solo por datos imprescindibles.
+
+El catálogo entra por PDF con lectura multimodal por bloques recuperables. Se
+añaden uniones 45/90 y veta por eje, documentos comerciales/taller revisados,
+visor local PDF.js, relación materiales/dibujo y agrupación de causas/faltantes.
+Se preservan motor/Decimal, RLS/org, emitidos y clic humano para consecuencias.
+REVIEW se reconstruye sin fixture/reset y conserva datos; la campaña DB usa
+proyectos aislados que se detienen al finalizar.
+
+Campaña local posterior a la construcción: motor 1.064 + dos xfail esperados,
+backend 1.583, frontend completo 1.147 antes de los últimos ajustes (con corridas
+afectadas posteriores), integración 605 y pgTAP 1.483/97 archivos pasan. PG16
+limpio/poblado pasa. Los 19 escenarios de navegador quedan verdes en su última
+ejecución: 16 generales, editor afectado y dos recorridos finales de emisión/obra;
+no es una nueva corrida completa de 19. El cierre verifica render PDF, revisión
+a ancho completo y bytes del adjunto recibido en Mailpit. Lint/TypeScript/formato,
+build, guardas y generación API pasan. Se conserva el aviso de tamaño del chunk
+3D y siete avisos npm preexistentes; PDF.js no introduce los avisos reportados.
+
+Tres encargos con proveedor/worker reales en DEMO no son un nuevo resultado del
+harness IA. El tercero, `P-000016`, aplica el precio del motor y prepara un PDF de
+tres páginas desde la muestra. API confirma borrador, cero emitidos y cero correos;
+los antecedentes del fixture se prepararon mediante APIs de dominio. Seis
+[capturas seleccionadas](../ux/2026-10-17/evidencia/README.md) y
+el [registro de construcción](../ux/2026-10-17/10-implementacion.md)
+conservan procedencia y límites. El cambio ajeno de `golden_analytics.json` queda
+fuera de la entrega; `golden_extras.json` solo normaliza finales de línea.
+
+No se declara aceptación definitiva: faltan corpus fabricante/OCR regional,
+activos físicos aprobados y aceptación profesional independiente. El PDF usa un
+renderer separado; no existe una transacción única diseño/precio/PDF y varias
+superficies del negocio conservan su composición anterior.

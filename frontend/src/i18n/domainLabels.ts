@@ -1,5 +1,7 @@
 /** One glossary for API enums. Unknown additions must fail the exhaustiveness gate. */
 export const domainLabels: Readonly<Record<string, string>> = {
+  EDITORIAL: "Editorial",
+  COMPACT: "Compacto",
   RESIDENTIAL: "Residencial",
   EDUCATION: "Educación",
   HEALTH: "Salud",

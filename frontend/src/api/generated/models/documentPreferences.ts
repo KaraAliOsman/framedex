@@ -9,8 +9,18 @@ import type { AccentEnum } from "./accentEnum";
 import type { CommercialTerms } from "./commercialTerms";
 import type { PaperEnum } from "./paperEnum";
 import type { PieceLabelPaperEnum } from "./pieceLabelPaperEnum";
+import type { QuotationLayoutEnum } from "./quotationLayoutEnum";
 
 export interface DocumentPreferences {
+  quotation_layout?: QuotationLayoutEnum;
+  /** @maxLength 120 */
+  presentation_title?: string;
+  /** @maxLength 1200 */
+  presentation_intro?: string;
+  /** @maxLength 120 */
+  portal_heading?: string;
+  /** @maxLength 1200 */
+  portal_intro?: string;
   portal_successor_link?: boolean;
   piece_label_paper?: PieceLabelPaperEnum;
   /** @maxLength 80 */

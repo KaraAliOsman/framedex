@@ -5,10 +5,10 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
-import type { ProjectOpsStateStateEnum } from "./projectOpsStateStateEnum";
+import type { PresentationOperationStateEnum } from "./presentationOperationStateEnum";
 
 export interface ProjectOpsState {
   /** @nullable */
   operation_id: string | null;
-  state: ProjectOpsStateStateEnum;
+  state: PresentationOperationStateEnum;
 }

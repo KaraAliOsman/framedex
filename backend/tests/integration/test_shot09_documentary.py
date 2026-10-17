@@ -3,7 +3,7 @@
 from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager, suppress
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 import logging
 from threading import Event, local
@@ -209,7 +209,7 @@ def _seed_project(
             project_id=project_id,
             data={
                 "payment_terms": "50% anticipo, 50% contra entrega",
-                "quotation_valid_until": date(2026, 10, 14),
+                "quotation_valid_until": date.today() + timedelta(days=30),
                 "positions": [{
                     "position_id": position_id,
                     "calculation_hash": calculation_response({"system_id": str(system_id),

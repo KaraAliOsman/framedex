@@ -12,10 +12,7 @@ export interface PatchedProjectUpdateRequest {
    * @maxLength 255
    */
   name?: string;
-  /**
-   * @minLength 1
-   * @maxLength 255
-   */
+  /** @maxLength 255 */
   client_name?: string;
   /** @maxLength 50 */
   client_rut?: string;

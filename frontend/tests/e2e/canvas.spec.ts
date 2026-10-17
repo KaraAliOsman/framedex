@@ -248,14 +248,13 @@ test("G1 canvas uses runtime discovery, transactional dimensions, snapping and <
   const snappedRequest = await snappedRequestPromise;
   expect(snappedRequest.postDataJSON().nominal_width_mm).toBe("1050.00");
 
-  const lightStroke = await page
+  const stroke = await page
     .getByTestId("fixed-glass")
     .evaluate((element) => getComputedStyle(element).stroke);
-  await page.getByRole("button", { name: "Cambiar tema" }).click();
-  const darkStroke = await page
-    .getByTestId("fixed-glass")
-    .evaluate((element) => getComputedStyle(element).stroke);
-  expect(darkStroke).not.toBe(lightStroke);
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  expect(stroke).not.toBe("none");
+  expect(stroke).not.toBe("rgba(0, 0, 0, 0)");
+  await expect(page.getByTestId("fixed-glass")).toHaveCSS("stroke-opacity", "1");
 
   await commitDimension(page, "Ancho nominal (mm)", "1060");
   const durations: number[] = [];
@@ -272,13 +271,14 @@ test("G1 canvas uses runtime discovery, transactional dimensions, snapping and <
 });
 
 for (const theme of ["light", "dark"] as const) {
-  test(`SHOT-07 ${theme}: real modal, BFD, preview, rollback and recomputed semaphore`, async ({
+  test(`SHOT-07 historical ${theme} preference: light modal, BFD, preview, rollback and recomputed semaphore`, async ({
     page,
   }) => {
     await authenticate(page, await setupEstimator());
+    await page.evaluate((preference) => localStorage.setItem("dekopen.theme", preference), theme);
     await page.goto("/projects/demo/positions/g1/edit");
     await expect(page.getByTestId("technical-frame")).toHaveText("1\u2009006 mm");
-    if (theme === "dark") await page.getByRole("button", { name: "Cambiar tema" }).click();
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
     const optimization = page.waitForResponse(
       (response) =>
         response.url().endsWith("/api/v1/engine/optimize-cut/") && response.status() === 200,

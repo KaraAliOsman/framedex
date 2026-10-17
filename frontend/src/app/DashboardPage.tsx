@@ -22,11 +22,74 @@ function TodayWorkspace(): JSX.Element {
   const [tier, setTier] = useState("");
   const [page, setPage] = useState(0);
   const actions = (query.data?.actions ?? []).filter((item) => !tier || item.consequence === tier);
-  const currentPage = Math.min(page, Math.max(0, Math.ceil(actions.length / 50) - 1));
-  const visible = actions.slice(currentPage * 50, (currentPage + 1) * 50);
+  const grouped = new Map<string, TodayAction[]>();
+  for (const action of actions) {
+    const key = `${action.consequence}:${action.title}`;
+    grouped.set(key, [...(grouped.get(key) ?? []), action]);
+  }
+  const groups = [...grouped.entries()];
+  const currentPage = Math.min(page, Math.max(0, Math.ceil(groups.length / 8) - 1));
+  const visible = groups.slice(currentPage * 8, (currentPage + 1) * 8);
   const tiers = [...new Set(query.data?.actions.map((item) => item.consequence) ?? [])];
   const workshop =
     org.role === "INSTALLER" || org.role === "OPERATOR" || org.role === "WORKSHOP_MANAGER";
+  const renderAction = (item: TodayAction) => (
+    <li key={item.key} className="today-action" data-consequence={item.consequence}>
+      <div className="today-action__context">
+        <span className="today-tier">{consequenceLabels[item.consequence] ?? "Por revisar"}</span>
+        <span className="ui-value today-code">{item.entity_code}</span>
+        {item.due_on && <DateOnly value={item.due_on} />}
+      </div>
+      <div className="today-action__body">
+        <h2>{item.title}</h2>
+        <p>{item.entity_name}</p>
+        <p>{item.reason}</p>
+        {item.key.startsWith("receivable_overdue:") && org.role === "OWNER" && (
+          <CollectionReminder
+            orgId={org.id}
+            projectId={item.key.slice("receivable_overdue:".length)}
+          />
+        )}
+        {item.amount !== null && item.currency && (
+          <p className="today-amount">
+            <Money value={item.amount} currency={item.currency} />
+          </p>
+        )}
+        {item.source && (
+          <details className="today-source">
+            <summary>¿De dónde sale?</summary>
+            <p>{item.source}</p>
+            {item.balance_total !== null && item.currency && (
+              <dl>
+                <dt>Total sellado</dt>
+                <dd>
+                  <Money value={item.balance_total} currency={item.currency} />
+                </dd>
+                <dt>Pagos vigentes</dt>
+                <dd>
+                  <Money value={item.balance_collected} currency={item.currency} />
+                </dd>
+              </dl>
+            )}
+          </details>
+        )}
+      </div>
+      {item.operation_id ? (
+        <button
+          type="button"
+          className="ui-button today-verb"
+          onClick={() => setDecision(item)}
+          aria-expanded={decision?.key === item.key}
+        >
+          {item.verb}
+        </button>
+      ) : (
+        <Link className="ui-button today-verb" to={item.href}>
+          {item.verb}
+        </Link>
+      )}
+    </li>
+  );
   return (
     <section className="today-page" aria-labelledby="page-title">
       <PageHeader
@@ -34,16 +97,34 @@ function TodayWorkspace(): JSX.Element {
         headingId="page-title"
         context={org.name}
         actions={
-          <Link
-            className="ui-button"
-            to={org.role === "INSTALLER" ? "/field" : workshop ? "/production" : "/projects"}
-          >
-            {org.role === "INSTALLER"
-              ? "Abrir despachos e instalaciones"
-              : workshop
-                ? "Abrir taller"
-                : "Abrir proyectos"}
-          </Link>
+          <>
+            <button
+              type="button"
+              className="ui-button ui-button--primary"
+              onClick={() =>
+                window.dispatchEvent(
+                  new CustomEvent("dekopen:assistant", {
+                    detail: {
+                      prompt:
+                        "Ayúdame a resolver mis pendientes de hoy. Empieza por lo que bloquea a otros.",
+                    },
+                  }),
+                )
+              }
+            >
+              Resolver con IA
+            </button>
+            <Link
+              className="ui-button"
+              to={org.role === "INSTALLER" ? "/field" : workshop ? "/production" : "/projects"}
+            >
+              {org.role === "INSTALLER"
+                ? "Abrir despachos e instalaciones"
+                : workshop
+                  ? "Abrir taller"
+                  : "Abrir obras"}
+            </Link>
+          </>
         }
       />
       {query.isPending ? (
@@ -120,68 +201,31 @@ function TodayWorkspace(): JSX.Element {
                 </p>
               ) : (
                 <ol className="today-queue" aria-label="Acciones pendientes">
-                  {visible.map((item) => (
-                    <li key={item.key} className="today-action" data-consequence={item.consequence}>
-                      <div className="today-action__context">
-                        <span className="today-tier">
-                          {consequenceLabels[item.consequence] ?? "Por revisar"}
-                        </span>
-                        <span className="ui-value today-code">{item.entity_code}</span>
-                        {item.due_on && <DateOnly value={item.due_on} />}
-                      </div>
-                      <div className="today-action__body">
-                        <h2>{item.title}</h2>
-                        <p>{item.entity_name}</p>
-                        <p>{item.reason}</p>
-                        {item.key.startsWith("receivable_overdue:") && org.role === "OWNER" && (
-                          <CollectionReminder
-                            orgId={org.id}
-                            projectId={item.key.slice("receivable_overdue:".length)}
-                          />
-                        )}
-                        {item.amount !== null && item.currency && (
-                          <p className="today-amount">
-                            <Money value={item.amount} currency={item.currency} />
-                          </p>
-                        )}
-                        {item.source && (
-                          <details className="today-source">
-                            <summary>¿De dónde sale?</summary>
-                            <p>{item.source}</p>
-                            {item.balance_total !== null && item.currency && (
-                              <dl>
-                                <dt>Total sellado</dt>
-                                <dd>
-                                  <Money value={item.balance_total} currency={item.currency} />
-                                </dd>
-                                <dt>Pagos vigentes</dt>
-                                <dd>
-                                  <Money value={item.balance_collected} currency={item.currency} />
-                                </dd>
-                              </dl>
-                            )}
-                          </details>
-                        )}
-                      </div>
-                      {item.operation_id ? (
-                        <button
-                          type="button"
-                          className="ui-button today-verb"
-                          onClick={() => setDecision(item)}
-                          aria-expanded={decision?.key === item.key}
-                        >
-                          {item.verb}
-                        </button>
-                      ) : (
-                        <Link className="ui-button today-verb" to={item.href}>
-                          {item.verb}
-                        </Link>
-                      )}
-                    </li>
-                  ))}
+                  {visible.map(([key, items]) =>
+                    items.length === 1 ? (
+                      renderAction(items[0]!)
+                    ) : (
+                      <li
+                        key={key}
+                        className="today-group"
+                        data-consequence={items[0]!.consequence}
+                      >
+                        <details>
+                          <summary>
+                            <span className="today-tier">
+                              {consequenceLabels[items[0]!.consequence] ?? "Por revisar"}
+                            </span>
+                            <strong>{items[0]!.title}</strong>
+                            <span className="today-group__count">{items.length} pendientes</span>
+                          </summary>
+                          <ol>{items.map(renderAction)}</ol>
+                        </details>
+                      </li>
+                    ),
+                  )}
                 </ol>
               )}
-              {actions.length > 50 && (
+              {groups.length > 8 && (
                 <nav className="today-pagination" aria-label="Páginas de acciones">
                   <button
                     type="button"
@@ -191,12 +235,12 @@ function TodayWorkspace(): JSX.Element {
                     Anterior
                   </button>
                   <span className="ui-value">
-                    {currentPage * 50 + 1}–{Math.min((currentPage + 1) * 50, actions.length)} de{" "}
-                    {actions.length} acciones
+                    {currentPage * 8 + 1}–{Math.min((currentPage + 1) * 8, groups.length)} de{" "}
+                    {groups.length} grupos · {actions.length} pendientes
                   </span>
                   <button
                     type="button"
-                    disabled={(currentPage + 1) * 50 >= actions.length}
+                    disabled={(currentPage + 1) * 8 >= groups.length}
                     onClick={() => setPage(currentPage + 1)}
                   >
                     Siguiente
