@@ -249,6 +249,7 @@ export function QuotationStep({
       <strong>
         {value.project_code} · {value.project_name}
       </strong>
+      <p>Alcance: obra completa</p>
       <p>
         {value.price_applied
           ? "Precio aplicado de la revisión actual"
@@ -291,7 +292,7 @@ export function QuotationStep({
       {message ? <p role="status">{message}</p> : null}
       <button
         type="button"
-        className="ask-dock__action"
+        className="ask-dock__action ask-dock__action--prepare"
         disabled={busy}
         onClick={() => void (pdf ? viewPdf() : prepare())}
       >

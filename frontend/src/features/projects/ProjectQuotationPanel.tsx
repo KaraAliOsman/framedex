@@ -70,6 +70,7 @@ import { QuotationGlobalChanges } from "./QuotationGlobalChanges";
 import { MailHistory } from "../notifications/MailPanels";
 import { DimLoader } from "../../ui/Signature";
 import { DocumentViewer } from "../../ui/DocumentViewer";
+import { Icon } from "../../ui/Icon";
 
 function requirementsFor(position: DocumentaryPreparationPosition): HandleRequirement[] {
   const group = position.handle_requirements.find(
@@ -1649,6 +1650,36 @@ export function ProjectQuotationPanel({
           </button>
         )}
       </header>
+      {canWrite ? (
+        <div className="quotation-assistant-entry">
+          <span>
+            <Icon name="assistant" size={22} />
+            <span>
+              <strong>Una propuesta que se entiende de un vistazo</strong>
+              <small>
+                Encarga la cotización completa o ajusta la presentación y los textos del PDF.
+              </small>
+            </span>
+          </span>
+          <button
+            type="button"
+            className="ui-button"
+            onClick={() =>
+              window.dispatchEvent(
+                new CustomEvent("dekopen:assistant", {
+                  detail: {
+                    prompt:
+                      "Prepara la cotización completa de esta obra con las preferencias guardadas. Mejora la presentación del PDF con dibujos grandes y textos breves y muéstrame una muestra para revisar antes de aplicarla.",
+                  },
+                }),
+              )
+            }
+          >
+            Preparar con IA
+            <Icon name="arrow" size={17} />
+          </button>
+        </div>
+      ) : null}
       {message && <p role="status">{message}</p>}
       {pendingIssue && (
         <div className="quotation-pending">

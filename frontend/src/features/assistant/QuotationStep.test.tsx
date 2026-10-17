@@ -120,6 +120,7 @@ beforeEach(() => {
 
 it("confirms the reviewed price and prepares a private PDF without routing through pricing", async () => {
   const onOpen = show();
+  expect(screen.getByText("Alcance: obra completa")).toBeVisible();
   fireEvent.click(screen.getByRole("button", { name: "Usar este precio y preparar PDF" }));
   await screen.findByRole("button", { name: "Ver el PDF preparado" });
   expect(pricingApply).toHaveBeenCalledWith("price", expect.objectContaining({ confirmed: true }), {

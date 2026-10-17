@@ -45,7 +45,7 @@ TOOLS.append({"name": "preview_presentation", "description": "Prepara una muestr
                       "portal_heading": {"type": "string", "maxLength": 120}, "portal_intro": {"type": "string", "maxLength": 1200},
                       "paper": {"type": "string", "enum": ["LETTER", "A4", "OFICIO"]},
                       "accent": {"type": "string", "enum": ["TEAL", "TEAL_DARK", "GRAPHITE"]}}}}}})
-TOOLS.append({"name": "preview_quotation", "description": "Prepara la cotización completa: calcula venta con preferencias reales y lista lo que falta para emitir. Sin aplicar precio ni emitir.",
+TOOLS.append({"name": "preview_quotation", "description": "Prepara la cotización de TODA la obra, nunca una sola ventana: calcula venta con preferencias reales y lista lo que falta para emitir. Sin aplicar precio ni emitir.",
               "parameters": {"type": "object", "additionalProperties": False, "properties": {"project_id": {"type": "string"}}}})
 BY_NAME = {item["name"]: item for item in TOOLS}
 

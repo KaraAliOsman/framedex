@@ -3069,7 +3069,7 @@ export const messages = {
   "assistant.error": "No se pudo contactar al asistente.",
   "assistant.empty": "El asistente no propuso operaciones.",
   "assistant.stale": "El producto cambió — genera de nuevo para aplicar.",
-  "assistant.apply": "Aplicar {count} operaciones",
+  "assistant.apply": "Aplicar cambios",
   "assistant.credits": "créditos",
   "assistant.reason_formato_invalido": "formato inválido",
   "assistant.reason_cantidad_invalida": "cantidad inválida",

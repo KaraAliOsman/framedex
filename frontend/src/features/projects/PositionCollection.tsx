@@ -8,6 +8,7 @@ import type {
 import { fmtMm, formatMoney, parseDecimalInput } from "../../format";
 import { domainLabel } from "../../i18n/domainLabels";
 import { StatusBadge, EmptyState, useConfirm } from "../../ui";
+import { Icon } from "../../ui/Icon";
 import { PositionThumb } from "./PositionThumb";
 import { VirtualPositionRows, type PositionRowEntry } from "./VirtualPositionRows";
 import { ProjectOpsReview, useProjectOperations } from "./ProjectOpsReview";
@@ -546,10 +547,34 @@ export function PositionCollection({
           </select>
         </label>
         {editable && (
-          <button type="button" disabled={busy} onClick={() => setLibrary(true)}>
-            + Agregar ventana
+          <button
+            type="button"
+            className="ui-button ui-button--primary"
+            disabled={busy}
+            onClick={() => setLibrary(true)}
+          >
+            <Icon name="plus" size={17} /> Agregar ventana
           </button>
         )}
+        {editable ? (
+          <button
+            type="button"
+            className="ui-button"
+            onClick={() =>
+              window.dispatchEvent(
+                new CustomEvent("dekopen:assistant", {
+                  detail: {
+                    prompt:
+                      "Ayúdame a diseñar las ventanas de esta obra. Usa sus preferencias y prepara una muestra antes de aplicar el conjunto.",
+                  },
+                }),
+              )
+            }
+          >
+            <Icon name="assistant" size={17} />
+            Diseñar con IA
+          </button>
+        ) : null}
         <button type="button" onClick={onImport}>
           Importar documento o plano
         </button>

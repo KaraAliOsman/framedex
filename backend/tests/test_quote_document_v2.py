@@ -25,11 +25,12 @@ from documents.renderers import _doc01, _money, render_pdf_document
     (1, "CLP", False, False), (12, "CLP", False, False), (24, "CLP", False, False),
     (100, "CLP", False, False), (12, "USD", False, False), (100, "CLP", True, False),
     (1, "CLP", False, True), (12, "CLP", True, True),
+    (1, "CLP", False, 2), (12, "CLP", True, 2), (24, "USD", False, 2),
 ])
 def test_pdf_pages_have_content_exact_totals_and_no_text_collisions(count, currency, long_names, modern):
     snapshot = proposal_case(count, currency, long_names=long_names)
     if modern:
-        snapshot["organization"]["document_preferences"]["presentation_version"] = 1
+        snapshot["organization"]["document_preferences"]["presentation_version"] = int(modern)
         snapshot["bom"] = [{"position_id": position["id"], "engine_result": position["bom"]} for position in snapshot["positions"]]
     content, _ = render_pdf_document("DOC-01", snapshot, pdf_identifier="quote-layout-test",
         portal_url="https://example.test/cotizacion/revision-bound-token")

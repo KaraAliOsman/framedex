@@ -7,6 +7,7 @@ import { PriceDecision } from "../features/pricing/PriceDecision";
 import { CollectionReminder } from "../features/projects/CollectionReminder";
 import { useToday } from "./useToday";
 import { consequenceLabels, phaseLabels } from "./todayLabels";
+import { WorkStart } from "./WorkStart";
 
 export function DashboardPage(): JSX.Element {
   const auth = useAuthSession();
@@ -92,6 +93,7 @@ function TodayWorkspace(): JSX.Element {
   );
   return (
     <section className="today-page" aria-labelledby="page-title">
+      {!workshop ? <WorkStart /> : null}
       <PageHeader
         title="Hoy"
         headingId="page-title"

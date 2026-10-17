@@ -44,7 +44,7 @@ function family(product: ProductJson): string {
 const NO_ISSUES: ProductIssue[] = [];
 const NOOP = () => {};
 
-function StarterThumb({
+export function StarterThumb({
   product,
   members,
   leaves = [],

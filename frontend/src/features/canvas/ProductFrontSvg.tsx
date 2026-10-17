@@ -300,7 +300,7 @@ function Member({
                   preserveAspectRatio="none"
                 />
               ) : (
-                <g opacity={0.19} fill="none" stroke={surface.edge} strokeWidth={1.5}>
+                <g opacity={0.34} fill="none" stroke={surface.edge} strokeWidth={2.4}>
                   {Array.from({ length: 13 }, (_, index) => (
                     <path
                       key={index}

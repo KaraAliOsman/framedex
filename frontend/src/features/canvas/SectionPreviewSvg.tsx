@@ -2,12 +2,11 @@ import type { ProfileSection } from "../../api/generated/models";
 import { fmtMm } from "../../format";
 import { t } from "../../i18n/es-CL";
 import { memberSurface } from "./materials";
+import { ProfileIllustration } from "../catalogs/ProfileIllustration";
+import { useProfileSample } from "../catalogs/catalogVisuals";
 import "./SectionPreviewSvg.css";
 
-/** True-scale profile cross-section preview (mandate §15).
- * A declared polygon renders filled with its axes; when the catalog carries no
- * section the fallback is a dashed box labeled approximate — visibly different
- * from a declared shape, never mistaken for one. */
+/** Declared sections retain scale. Family illustrations and sample photos have no measurement authority. */
 
 const PAD_MM = 10;
 const AXIS_LABELS: Record<string, string> = {
@@ -36,13 +35,54 @@ export function SectionPreviewSvg({
   faceWidthMm,
   depthMm,
   material,
+  profileRole,
+  profileSku,
+  sampleUrl,
+  recognition = false,
 }: {
   section: ProfileSection | null | undefined;
   faceWidthMm: number;
   depthMm?: number;
   material?: string;
+  profileRole?: string;
+  profileSku?: string | null;
+  sampleUrl?: string | null;
+  recognition?: boolean;
 }) {
+  const sample = useProfileSample(profileSku);
+  const photo = sampleUrl ?? sample?.image_url;
   const declared = section?.polygon?.length ? section : null;
+  if (recognition) {
+    return (
+      <div className="section-preview section-preview--recognition">
+        <figure className="section-preview__recognition">
+          {photo ? (
+            <img
+              className="section-preview__photo"
+              src={photo}
+              alt="Foto de referencia del perfil"
+            />
+          ) : (
+            <ProfileIllustration role={profileRole} material={material} depthMm={depthMm} />
+          )}
+          <figcaption>{photo ? "Foto de referencia" : "Ilustración de familia"}</figcaption>
+        </figure>
+        {declared ? (
+          <details className="section-preview__detail">
+            <summary>Ver sección declarada</summary>
+            <SectionPreviewSvg
+              section={declared}
+              faceWidthMm={faceWidthMm}
+              depthMm={depthMm}
+              material={material}
+            />
+          </details>
+        ) : (
+          <span className="section-preview__pending">Sección por confirmar</span>
+        )}
+      </div>
+    );
+  }
   const widthMm = declared ? polygonBounds(declared).width : Math.max(faceWidthMm, 1);
   const heightMm = declared ? polygonBounds(declared).height : Math.max(depthMm ?? faceWidthMm, 1);
   const bounds = declared
@@ -64,12 +104,19 @@ export function SectionPreviewSvg({
       className="section-preview"
       data-provenance={declared ? declared.source : "APPROXIMATE"}
     >
-      <svg
-        viewBox={`${viewX} ${viewY} ${viewW} ${viewH}`}
-        role="img"
-        aria-label={`${t("assembly.sectionTitle")} · ${provenance}`}
-      >
-        {declared ? (
+      {photo ? (
+        <img className="section-preview__photo" src={photo} alt="Foto de referencia del perfil" />
+      ) : null}
+      {!declared ? (
+        !photo ? (
+          <ProfileIllustration role={profileRole} material={material} depthMm={depthMm} />
+        ) : null
+      ) : (
+        <svg
+          viewBox={`${viewX} ${viewY} ${viewW} ${viewH}`}
+          role="img"
+          aria-label={`${t("assembly.sectionTitle")} · ${provenance}`}
+        >
           <polygon
             className="section-preview__shape"
             style={{ fill: surface.fill, stroke: surface.edge }}
@@ -77,31 +124,30 @@ export function SectionPreviewSvg({
               .map((point) => `${Number(point.x_mm)},${Number(point.y_mm)}`)
               .join(" ")}
           />
-        ) : (
-          <rect
-            className="section-preview__shape section-preview__shape--approx"
-            style={{ stroke: surface.edge }}
-            x={bounds.minX}
-            y={bounds.minY}
-            width={widthMm}
-            height={heightMm}
-          />
-        )}
-        {(declared?.axes ?? []).map((axis) => (
-          <g key={axis.name}>
-            <line
-              className="section-preview__axis"
-              x1={bounds.minX}
-              y1={Number(axis.y_mm)}
-              x2={bounds.minX + widthMm}
-              y2={Number(axis.y_mm)}
-            />
-          </g>
-        ))}
-      </svg>
+          {(declared?.axes ?? []).map((axis) => (
+            <g key={axis.name}>
+              <line
+                className="section-preview__axis"
+                x1={bounds.minX}
+                y1={Number(axis.y_mm)}
+                x2={bounds.minX + widthMm}
+                y2={Number(axis.y_mm)}
+              />
+            </g>
+          ))}
+        </svg>
+      )}
       <figcaption>
-        <span className="section-preview__dims">{`${fmtMm(widthMm)} × ${fmtMm(heightMm)} mm`}</span>
-        <span>{provenance}</span>
+        {declared ? (
+          <span className="section-preview__dims">{`${fmtMm(widthMm)} × ${fmtMm(heightMm)} mm`}</span>
+        ) : null}
+        <span>
+          {declared
+            ? provenance
+            : photo
+              ? "Foto de referencia · sección por confirmar"
+              : "Ilustración de familia · sección por confirmar"}
+        </span>
         {declared?.axes?.length ? (
           <dl className="section-preview__axes" aria-label="Ejes de la sección">
             {declared.axes.map((axis) => (

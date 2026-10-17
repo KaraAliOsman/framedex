@@ -17,14 +17,17 @@ una decisión. Quitar ruido no significa quitar capacidades profesionales.
 
 ## 2. Una dirección visual
 
-Un único tema claro: mesa cálida y neutra, papel blanco, tinta oscura y verde
-profundo discreto. El taller cambia densidad y contraste, no cambia de tema.
+Un único tema claro: mesa luminosa, papel blanco, tinta azul profunda y azul de
+acción. Acentos cálidos discretos acompañan el trabajo del usuario. Esta segunda
+dirección sustituye el verde anterior, rechazado por el dueño el 17-10-2026;
+[criterio y encargos](../ux/2026-10-17/11-reconstruccion.md). El taller cambia
+densidad y contraste, no cambia de tema.
 Materiales y acabados físicos tienen sus colores propios, independientes del cromo.
 
 IBM Plex Sans para leer; IBM Plex Mono para medidas, códigos y columnas numéricas.
-Cuerpo 14/22 px en oficina, 16/22 en taller; títulos 24/32 y 16/22. Etiquetas en
+Cuerpo 15/23 px en oficina, 16/24 en taller; títulos 28/34 y 18/24. Etiquetas en
 frase normal, sin gritar con mayúsculas. Información técnica secundaria ≥12 px.
-Controles habituales 38 px; táctiles ≥44 px. Radios 6 px en controles y 12 px en
+Controles habituales 40 px; táctiles ≥44 px. Radios 8 px en controles y 16 px en
 paneles/diálogos. Geometría, dibujos y papel conservan esquinas reales.
 
 Los roles en `frontend/src/styles/tokens.css` son la fuente ejecutable del sistema.

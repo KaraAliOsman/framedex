@@ -4,7 +4,7 @@
   max-width: 120rem;
   margin-inline: auto;
   color: var(--theme-text-primary);
-  font-size: var(--type-title-m);
+  font-size: var(--type-body);
 }
 .projects-page h1 {
   font-size: var(--text-display);
@@ -40,7 +40,8 @@
 }
 .projects-page input,
 .projects-page textarea,
-.projects-page button:where(:not(.tool-button, .tree-label, .tree-disclosure)) {
+.projects-page
+  button:where(:not(.ui-button, .ui-icon-button, .tool-button, .tree-label, .tree-disclosure)) {
   padding: 0.625rem;
   font: inherit;
   color: var(--theme-text-primary);

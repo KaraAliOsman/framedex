@@ -12,6 +12,7 @@
   min-width: 0;
 }
 .assembly-canvas {
+  position: relative;
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -462,6 +463,13 @@
   font-size: var(--type-title-m);
   margin: 0;
 }
+.assembly-elevation:not(:has(.model3d-inset)) > .assembly-view-choices {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: var(--z-sticky);
+  max-width: calc(100% - 24px);
+}
 .editor-flyout > header button {
   min-width: 32px;
   height: 32px;
@@ -660,5 +668,181 @@
   }
   .assembly-canvas .model3d-toggle {
     display: none;
+  }
+}
+
+/* Studio composition: a clear tool strip, a quiet drawing stage, one inspector. */
+.assembly-editor {
+  gap: 0;
+  background: var(--bg-app);
+}
+.assembly-tools {
+  background: var(--surface-sheet);
+  border-right: 1px solid var(--border-subtle);
+  padding: 14px 6px;
+  gap: 6px;
+}
+.assembly-tools__caption {
+  color: var(--text-muted);
+  font-size: var(--type-micro);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: center;
+  padding: 2px 0 10px;
+}
+.assembly-tools .tool-button {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  padding: 9px 4px;
+  min-height: 62px;
+  font-size: var(--type-label);
+  line-height: 1.25;
+  text-align: center;
+  border: 1px solid transparent;
+  border-radius: var(--r-1);
+  box-shadow: none;
+  background: transparent;
+  color: var(--text-secondary);
+}
+.assembly-tools .tool-button:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+  border-color: var(--border-subtle);
+}
+.assembly-tools .tool-button[aria-pressed="true"],
+.assembly-tools .tool-button.is-active {
+  background: var(--assistant-soft);
+  color: var(--assistant-blue);
+  border-color: transparent;
+}
+.assembly-tools .tool-icon {
+  width: 23px;
+  height: 23px;
+  flex: 0 0 23px;
+  stroke-width: 1.65;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.assembly-tools .tool-button kbd {
+  display: none;
+}
+.assembly-canvas {
+  padding: 12px;
+  gap: 10px;
+  background: var(--bg-app);
+}
+.assembly-editor .assembly-view-choices {
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  margin: 0;
+}
+.assembly-view-choices button {
+  border: 1px solid transparent;
+  box-shadow: none;
+  background: transparent;
+  border-radius: var(--r-1);
+  min-height: 34px;
+  padding: 5px 12px;
+  font-size: var(--type-dense);
+}
+.assembly-view-choices button[aria-pressed="true"] {
+  border-color: var(--border-default);
+  background: var(--surface-sheet);
+  color: var(--text-primary);
+  box-shadow: var(--e1);
+}
+.assembly-elevation {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-2);
+  background: var(--surface-sheet);
+  overflow: hidden;
+  box-shadow: var(--sheet);
+}
+.assembly-side {
+  background: var(--surface-sheet);
+  border-left: 1px solid var(--border-subtle);
+  padding: 0;
+}
+.assembly-inspector {
+  padding: 18px 18px 24px;
+}
+.assembly-inspector__header {
+  margin-bottom: 20px;
+}
+.assembly-inspector__header h2 {
+  font-size: var(--type-title-m);
+  letter-spacing: -0.3px;
+}
+.inspector-section {
+  padding-block: 16px;
+}
+.inspector-section > summary {
+  font-size: var(--type-label);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  padding-block: 4px;
+}
+.assembly-field {
+  gap: 6px;
+}
+.assembly-field input,
+.assembly-select,
+.inspector-field select {
+  min-height: 36px;
+  background: var(--surface-sheet);
+  border-radius: var(--r-1);
+  border: 1px solid var(--border-default);
+}
+.assembly-field input:hover,
+.assembly-select:hover {
+  border-color: var(--border-strong);
+}
+.assembly-field input:focus-visible {
+  outline-color: var(--assistant-blue);
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+.assembly-status {
+  font-size: var(--type-label);
+  background: var(--bg-app);
+  padding-inline: 16px;
+  border: 0;
+  border-radius: 0;
+}
+.section-preview .profile-illustration {
+  max-width: 240px;
+  border: 0;
+  background: var(--bg-app);
+  border-radius: var(--r-2);
+}
+.section-preview figcaption {
+  font-size: var(--type-label);
+  padding: 8px 0;
+}
+@media (max-height: 820px) and (min-width: 721px) {
+  .assembly-tools {
+    overflow-y: auto;
+  }
+  .assembly-tools .tool-button {
+    min-height: 50px;
+    padding: 6px 4px;
+  }
+}
+@media (max-width: 1100px) {
+  .assembly-tools__caption {
+    display: none;
+  }
+  .assembly-tools .tool-button {
+    min-height: 44px;
+  }
+  .assembly-canvas {
+    padding: 8px;
   }
 }

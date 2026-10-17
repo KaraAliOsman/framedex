@@ -1609,7 +1609,7 @@ it("explicitly retires current draft pricing with an audit reason before editing
     ),
   );
   fireEvent.click(screen.getByRole("tab", { name: "Ventanas y puertas" }));
-  expect(await screen.findByRole("button", { name: "+ Agregar ventana" })).toBeInTheDocument();
+  expect(await screen.findByRole("button", { name: "Agregar ventana" })).toBeInTheDocument();
 });
 
 it("persists list search/status/sort in the URL across back navigation", async () => {

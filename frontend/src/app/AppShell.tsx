@@ -346,7 +346,13 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
                       className="topbar-button topbar-ai"
                       aria-label={t("shell.aiEntry")}
                       title={t("shell.aiEntry")}
-                      onClick={() => setAssistantRequest((value) => value + 1)}
+                      onClick={() => {
+                        if (location.pathname.startsWith("/assistant"))
+                          document
+                            .querySelector<HTMLTextAreaElement>(".assistant-conversation textarea")
+                            ?.focus();
+                        else setAssistantRequest((value) => value + 1);
+                      }}
                     >
                       <AiPresence
                         userId={auth.me?.user.id ?? null}
@@ -354,7 +360,7 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
                         size={22}
                         onActiveJob={onActiveJob}
                       />
-                      <span className="topbar-ai-label">{t("shell.aiEntry")}</span>
+                      <span className="topbar-ai-label">Asistente</span>
                     </button>
                     {presenceJob ? (
                       <button

@@ -34,14 +34,15 @@ describe("SectionPreviewSvg", () => {
     expect(screen.getByText("60 × 60 mm")).toBeTruthy();
   });
 
-  it("falls back to a dashed box labeled approximate when no section exists", () => {
+  it("shows a family illustration without invented dimensions when no section exists", () => {
     const { container } = render(
       <SectionPreviewSvg section={null} faceWidthMm={60} material="ALUMINIUM" />,
     );
     expect(container.querySelector("polygon")).toBeNull();
-    expect(container.querySelector(".section-preview__shape--approx")).not.toBeNull();
+    expect(screen.getByRole("img", { name: "Ilustración de familia · marco" })).toBeInTheDocument();
     expect(container.querySelector("figure")?.getAttribute("data-provenance")).toBe("APPROXIMATE");
-    expect(screen.getByText(t("assembly.sectionApproximate"))).toBeTruthy();
+    expect(screen.getByText("Ilustración de familia · sección por confirmar")).toBeInTheDocument();
+    expect(container.querySelector(".section-preview__dims")).toBeNull();
   });
 
   it("marks a manufacturer-drawing reference as exact", () => {
@@ -53,5 +54,17 @@ describe("SectionPreviewSvg", () => {
       />,
     );
     expect(screen.getByText(t("assembly.sectionExact"))).toBeTruthy();
+  });
+
+  it("keeps the declared section behind the catalogue recognition aid", () => {
+    const { container } = render(
+      <SectionPreviewSvg recognition section={SECTION} faceWidthMm={60} profileRole="SASH" />,
+    );
+    expect(screen.getByRole("img", { name: "Ilustración de familia · hoja" })).toBeVisible();
+    expect(screen.getByText("Ilustración de familia")).toBeVisible();
+    const detail = container.querySelector("details");
+    expect(detail).not.toHaveAttribute("open");
+    expect(detail?.querySelector(".section-preview__shape")).not.toBeNull();
+    expect(screen.getByText("60 × 60 mm")).toBeInTheDocument();
   });
 });

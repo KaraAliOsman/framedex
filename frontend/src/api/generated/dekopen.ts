@@ -79,6 +79,8 @@ import type {
   CatalogThermalDeclare201,
   CatalogThermalReview200,
   CatalogUndoRequestRequest,
+  CatalogVisual,
+  CatalogVisualsListParams,
   ChangeInputRequest,
   ChangeResult,
   CheckoutInputRequest,
@@ -389,6 +391,7 @@ import type {
   ThermalWriteRequest,
   TodayResponse,
   VersionHardwarePicking,
+  VisualUploadRequest,
   Wallet,
   WithdrawRequest,
   WorkCenter,
@@ -7869,6 +7872,162 @@ export const catalogThermalReview = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(thermalReviewRequest),
+  });
+};
+
+export type catalogVisualsListResponse200 = {
+  data: CatalogVisual[];
+  status: 200;
+};
+
+export type catalogVisualsListResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogVisualsListResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogVisualsListResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogVisualsListResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogVisualsListResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogVisualsListResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogVisualsListResponseSuccess = catalogVisualsListResponse200 & {
+  headers: Headers;
+};
+export type catalogVisualsListResponseError = (
+  | catalogVisualsListResponse400
+  | catalogVisualsListResponse401
+  | catalogVisualsListResponse403
+  | catalogVisualsListResponse404
+  | catalogVisualsListResponse409
+  | catalogVisualsListResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogVisualsListResponse =
+  catalogVisualsListResponseSuccess | catalogVisualsListResponseError;
+
+export const getCatalogVisualsListUrl = (params: CatalogVisualsListParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/catalogs/visuals/?${stringifiedParams}`
+    : `/api/v1/catalogs/visuals/`;
+};
+
+export const catalogVisualsList = async (
+  params: CatalogVisualsListParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogVisualsListResponse> => {
+  return apiMutator<catalogVisualsListResponse>(getCatalogVisualsListUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type catalogVisualsCreateResponse201 = {
+  data: CatalogVisual;
+  status: 201;
+};
+
+export type catalogVisualsCreateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogVisualsCreateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogVisualsCreateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogVisualsCreateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogVisualsCreateResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogVisualsCreateResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogVisualsCreateResponseSuccess = catalogVisualsCreateResponse201 & {
+  headers: Headers;
+};
+export type catalogVisualsCreateResponseError = (
+  | catalogVisualsCreateResponse400
+  | catalogVisualsCreateResponse401
+  | catalogVisualsCreateResponse403
+  | catalogVisualsCreateResponse404
+  | catalogVisualsCreateResponse409
+  | catalogVisualsCreateResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogVisualsCreateResponse =
+  catalogVisualsCreateResponseSuccess | catalogVisualsCreateResponseError;
+
+export const getCatalogVisualsCreateUrl = () => {
+  return `/api/v1/catalogs/visuals/`;
+};
+
+export const catalogVisualsCreate = async (
+  visualUploadRequest: VisualUploadRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogVisualsCreateResponse> => {
+  const formData = new FormData();
+  formData.append(`system_id`, visualUploadRequest.system_id);
+  formData.append(`kind`, visualUploadRequest.kind);
+  formData.append(`target_key`, visualUploadRequest.target_key);
+  if (visualUploadRequest.file !== undefined) {
+    formData.append(`file`, visualUploadRequest.file);
+  }
+  if (visualUploadRequest.cleared !== undefined) {
+    formData.append(`cleared`, visualUploadRequest.cleared.toString());
+  }
+
+  return apiMutator<catalogVisualsCreateResponse>(getCatalogVisualsCreateUrl(), {
+    ...options,
+    method: "POST",
+    body: formData,
   });
 };
 

@@ -44,6 +44,8 @@ import { useProjectView } from "./useProject";
 import "./projects.css";
 import "./project-workspace.css";
 import { PositionThumb } from "./PositionThumb";
+import { ProjectBoard } from "./ProjectBoard";
+import { Icon } from "../../ui/Icon";
 import { PositionCollection, positionReadiness } from "./PositionCollection";
 import { PositionMaterials } from "./PositionMaterials";
 import { ProjectQuotationPanel } from "./ProjectQuotationPanel";
@@ -1615,6 +1617,7 @@ function ProjectWorkspace({
                 onClick={() => void save({ value: { ...metadata(), name: "Nueva obra" } })}
                 variant="primary"
               >
+                <Icon name="plus" size={18} />
                 {t("projects.create")}
               </Button>
             ) : undefined
@@ -1622,6 +1625,11 @@ function ProjectWorkspace({
           title={t("projects.title")}
         />
       )}
+      {!project && !draft ? (
+        <p className="projects-intro">
+          Cada obra empieza con una ventana. Aquí retomas el diseño y sigues hasta la entrega.
+        </p>
+      ) : null}
       {project ? (
         <ProjectHeader
           canWrite={canWrite}
@@ -1946,69 +1954,101 @@ function ProjectWorkspace({
                 <option value="code">{t("projects.sortCode")}</option>
               </select>
             </div>
+            <div className="project-layout-switch" role="group" aria-label="Vista de obras">
+              {(
+                [
+                  ["cards", "Ventanas de obra", "window"],
+                  ["table", "Tabla de obras", "layers"],
+                ] as const
+              ).map(([value, label, icon]) => (
+                <button
+                  type="button"
+                  key={value}
+                  aria-label={label}
+                  aria-pressed={(params.get("layout") === "table" ? "table" : "cards") === value}
+                  onClick={() =>
+                    setParams(
+                      (current) => {
+                        const next = new URLSearchParams(current);
+                        if (value === "cards") next.delete("layout");
+                        else next.set("layout", value);
+                        return next;
+                      },
+                      { replace: true },
+                    )
+                  }
+                >
+                  <Icon name={icon} size={18} />
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="ui-table-wrap projects-table">
-            <table className="ui-table">
-              <caption>{t("projects.title")}</caption>
-              <thead>
-                <tr>
-                  <th scope="col">{t("projects.name")}</th>
-                  <th scope="col">{t("projects.client")}</th>
-                  <th scope="col">{t("projects.status")}</th>
-                  <th scope="col">{t("projects.revision")}</th>
-                  <th scope="col">{t("projects.positions")}</th>
-                  <th scope="col">{t("projects.updated")}</th>
-                  <th scope="col">{t("projects.total")}</th>
-                  <th scope="col">{t("projects.nextStep")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visible.map((item) => (
-                  <tr key={item.id}>
-                    <td>
-                      {draft ? (
-                        `${item.name || item.code}`
-                      ) : (
-                        <Link to={`/projects/${encodeURIComponent(item.id)}`}>
-                          {item.name || item.code}
-                        </Link>
-                      )}
-                      {item.name ? <span className="projects-row__code">{item.code}</span> : null}
-                    </td>
-                    <td>{item.client_name}</td>
-                    <td>
-                      <StatusBadge
-                        showIcon={false}
-                        className="status-chip"
-                        data-status={item.status.toLowerCase()}
-                      >
-                        {t(statuses[item.status])}
-                      </StatusBadge>
-                    </td>
-                    <td>
-                      {item.current_revision ? (
-                        <span className="projects-row__rev">
-                          {formatRevision(item.current_revision)}
-                        </span>
-                      ) : (
-                        "—"
-                      )}
-                    </td>
-                    <td className="ui-table__num">{item.position_count}</td>
-                    <td>
-                      <time dateTime={item.updated_at}>{formatDateTime(item.updated_at)}</time>
-                    </td>
-                    <td className="ui-table__num">
-                      {item.pricing_current
-                        ? formatMoney(item.total_price_gross, item.currency)
-                        : t("projects.unpriced")}
-                    </td>
-                    <td className="projects-row__next">{t(listNextKeys[item.status])}</td>
+          {params.get("layout") !== "table" ? (
+            <ProjectBoard projects={visible} disabled={Boolean(draft)} />
+          ) : (
+            <div className="ui-table-wrap projects-table">
+              <table className="ui-table">
+                <caption>{t("projects.title")}</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">{t("projects.name")}</th>
+                    <th scope="col">{t("projects.client")}</th>
+                    <th scope="col">{t("projects.status")}</th>
+                    <th scope="col">{t("projects.revision")}</th>
+                    <th scope="col">{t("projects.positions")}</th>
+                    <th scope="col">{t("projects.updated")}</th>
+                    <th scope="col">{t("projects.total")}</th>
+                    <th scope="col">{t("projects.nextStep")}</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {visible.map((item) => (
+                    <tr key={item.id}>
+                      <td>
+                        {draft ? (
+                          `${item.name || item.code}`
+                        ) : (
+                          <Link to={`/projects/${encodeURIComponent(item.id)}`}>
+                            {item.name || item.code}
+                          </Link>
+                        )}
+                        {item.name ? <span className="projects-row__code">{item.code}</span> : null}
+                      </td>
+                      <td>{item.client_name}</td>
+                      <td>
+                        <StatusBadge
+                          showIcon={false}
+                          className="status-chip"
+                          data-status={item.status.toLowerCase()}
+                        >
+                          {t(statuses[item.status])}
+                        </StatusBadge>
+                      </td>
+                      <td>
+                        {item.current_revision ? (
+                          <span className="projects-row__rev">
+                            {formatRevision(item.current_revision)}
+                          </span>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                      <td className="ui-table__num">{item.position_count}</td>
+                      <td>
+                        <time dateTime={item.updated_at}>{formatDateTime(item.updated_at)}</time>
+                      </td>
+                      <td className="ui-table__num">
+                        {item.pricing_current
+                          ? formatMoney(item.total_price_gross, item.currency)
+                          : t("projects.unpriced")}
+                      </td>
+                      <td className="projects-row__next">{t(listNextKeys[item.status])}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
           {visible.length === 0 && <EmptyState title={t("projects.empty")} />}
         </>
       )}

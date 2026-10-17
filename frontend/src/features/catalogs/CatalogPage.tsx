@@ -18,6 +18,8 @@ import {
 } from "./OpeningCapabilitiesEditor";
 import type { Capability } from "../canvas/physicalOpenings";
 import { SystemWorkspaceView } from "./SystemWorkspace";
+import { ProfileIllustration } from "./ProfileIllustration";
+import { Icon } from "../../ui/Icon";
 import { SectionPreviewSvg } from "../canvas/SectionPreviewSvg";
 import { SectionImportPanel } from "./SectionImportPanel";
 import { CatalogProvenance, SectionReviewFacts } from "./CatalogProvenance";
@@ -299,7 +301,8 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
                 setNotice("");
                 setEditor({ resource: "systems" });
               }}
-              variant="primary"
+              variant="secondary"
+              icon={<Icon name="plus" size={18} />}
             >
               {ct("newSystem")}
             </Button>
@@ -312,8 +315,10 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
       <p className="catalog-status" role="status" aria-live="polite">
         {loading ? ct("loading") : notice}
       </p>
-      <p>
-        <a href="/catalogs/sheet-formats">Vidrios y paneles › Formatos de lámina</a>
+      <p className="catalog-secondary-link">
+        <a href="/catalogs/sheet-formats">
+          Vidrios y paneles · Formatos de lámina <span aria-hidden>↗</span>
+        </a>
       </p>
       {error && (
         <div>
@@ -373,13 +378,7 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
                       : "Catálogo histórico · "}
                     {ct(`option.${system.material}`)} · v{system.version}
                   </span>
-                  <small>
-                    {system.is_global ? ct("global") : ct("own")}
-                    {system.is_demo ? ` · ${ct("demo")}` : ""}
-                    {system.review_pending ? ` · ${ct("reviewPending")}` : ""}
-                    {" · "}
-                    <span>{systemReadinessLabel(system)}</span>
-                  </small>
+                  {system.review_pending ? <small>{ct("reviewPending")}</small> : null}
                 </button>
               </li>
             ))}
@@ -507,7 +506,17 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
                     <tbody>
                       {rows.map((row) => (
                         <tr key={row.id}>
-                          <th scope="row">{itemName(resource, row, data)}</th>
+                          <th scope="row">
+                            <div className="catalog-item-identity">
+                              {resource === "articles" && "role" in row ? (
+                                <ProfileIllustration
+                                  role={row.role ?? "FRAME"}
+                                  material={"material" in row ? row.material : "PVC"}
+                                />
+                              ) : null}
+                              <span>{itemName(resource, row, data)}</span>
+                            </div>
+                          </th>
                           <td>
                             {currentSystem?.is_demo ||
                             (resource === "hardware-kits" &&
@@ -1390,6 +1399,7 @@ function CatalogEditor({
             )}
             {sectionPreviewFromDraft(sectionDraft) ? (
               <SectionPreviewSvg
+                profileRole={draft.role ?? "FRAME"}
                 section={sectionPreviewFromDraft(sectionDraft)}
                 faceWidthMm={Number(draft.face_width_mm ?? 0)}
                 material={draft.material || "PVC"}

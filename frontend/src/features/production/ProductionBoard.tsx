@@ -4,6 +4,7 @@ import { EmptyState, ErrorState, LoadingState } from "../../ui";
 import { formatDate, formatDecimal } from "../../format";
 import { domainLabels } from "../../i18n/domainLabels";
 import { stationCodeLabel } from "./labels";
+import { Icon } from "../../ui/Icon";
 
 export type StationQueueGroup = {
   code?: string;
@@ -138,11 +139,12 @@ export function ProductionBoard({
                     <button
                       type="button"
                       className="production-board-order"
+                      data-blocked={order.status === "HOLD" || order.shortage > 0 || undefined}
                       key={order.id}
                       onClick={() => onOpen(order.id)}
                     >
                       <strong className="ui-value">{order.order_code}</strong>
-                      <span>
+                      <span className="production-board-work">
                         {order.project_code
                           ? `${order.project_code} · ${order.project_name ?? "Sin dato · obra sin nombre"}`
                           : "Sin dato · obra no vinculada"}
@@ -152,6 +154,13 @@ export function ProductionBoard({
                         {formatDecimal(order.quantity)} unidades · {order.steps_done}/
                         {order.steps_total} pasos
                       </span>
+                      {order.steps_total > 0 ? (
+                        <progress
+                          value={order.steps_done}
+                          max={order.steps_total}
+                          aria-label={`Avance de ${order.order_code}`}
+                        />
+                      ) : null}
                       <span className="ui-value">
                         {order.scheduled_date
                           ? `Compromiso ${formatDate(order.scheduled_date)}`
@@ -176,6 +185,10 @@ export function ProductionBoard({
                           Calidad · requiere supervisor
                         </span>
                       ) : null}
+                      <span className="production-board-open">
+                        Abrir trabajo
+                        <Icon name="arrow" size={16} />
+                      </span>
                     </button>
                   );
                 })

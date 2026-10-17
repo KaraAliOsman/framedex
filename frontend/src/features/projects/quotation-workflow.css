@@ -342,3 +342,55 @@
     position: static;
   }
 }
+.quotation-assistant-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin: 20px 0 28px;
+  padding: 22px 24px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-2);
+  background: var(--assistant-soft);
+}
+.quotation-assistant-entry > span {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.quotation-assistant-entry > span > svg {
+  color: var(--assistant-blue);
+  flex-shrink: 0;
+}
+.quotation-assistant-entry span span {
+  display: grid;
+  gap: 4px;
+}
+.quotation-assistant-entry strong {
+  font-size: var(--type-title-m);
+  font-weight: 500;
+}
+.quotation-assistant-entry small {
+  color: var(--text-secondary);
+  font-size: var(--type-dense);
+}
+.quotation-assistant-entry button {
+  flex-shrink: 0;
+}
+.quotation-checklist,
+.quotation-review {
+  border-radius: var(--r-2);
+  padding: 20px;
+}
+.quotation-workbench .quotation-customer,
+.quotation-panel fieldset,
+.quotation-panel .document-settings {
+  border-radius: var(--r-2);
+}
+@media (max-width: 760px) {
+  .quotation-assistant-entry {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 18px;
+  }
+}

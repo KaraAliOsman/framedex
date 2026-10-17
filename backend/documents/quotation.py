@@ -138,12 +138,43 @@ PRESENTATION_CSS = """
 .q-v1 .q-terms { white-space: pre-line; }
 """
 
+# A new sealed version keeps the first presentation reproducible. Brand accents
+# remain the manufacturer's choice; this composition shares the product's ink.
+STUDIO_CSS = """
+.q-v2 { color: #24334A; font-size: 9.5pt; }
+.q-v2 .q-head { padding-bottom: 4mm; }
+.q-v2 h1 { font-size: 26pt; line-height: 1.15; margin: 3mm 0; }
+.q-v2 h2 { font-size: 14pt; margin-top: 6mm; }
+.q-v2 .q-issuer { margin: 2mm 0 4mm; }
+.q-v2 .q-client { margin: 4mm 0; gap: 8mm; }
+.q-v2 .q-client-name { font-size: 15pt; }
+.q-v2 .q-intro { margin: 2mm 0 4mm; }
+.q-v2 .q-cover-total { background: #F3F6FA; border-left: 2pt solid #075F5A; padding: 3mm 4mm; }
+.q-v2 .q-cover-total .q-total { font-size: 22pt; }
+.q-v2 .q-overview { font-size: 8.5pt; }
+.q-v2 .q-overview th { background: #F3F6FA; padding: 2.5mm 1.5mm; }
+.q-v2 .q-overview td { padding: 2.5mm 1.5mm; }
+.q-v2 .q-overview th:nth-child(6) { font-size: 7.5pt; }
+.q-v2 .q-overview .q-thumb svg { width: 21mm; height: 18mm; }
+.q-v2 .q-position h3 { color: #24334A; font-size: 12pt; margin-bottom: 3mm; }
+.q-v2.q-editorial .q-figure { width: 82mm; flex-basis: 82mm; }
+.q-v2.q-editorial .q-figure svg { max-height: 82mm; }
+.q-v2.q-editorial .q-position { padding: 4mm 0; }
+.q-v2 .q-spec-row { margin-bottom: 1.5mm; }
+.q-v2 .q-position-price { background: #F3F6FA; padding: 2.5mm 3mm; }
+.q-v2 .q-position-price strong { font-weight: 600; }
+.q-v2 .q-commercial { gap: 8mm; }
+.q-v2 .q-terms { font-size: 9pt; }
+.q-v2 .q-final td { padding-top: 3mm; }
+"""
+
 
 def stylesheet(snapshot: dict) -> str:
     org = snapshot.get("organization") or {}
     prefs = document_preferences(org.get("document_preferences"))
     width = {"LETTER": "191.9mm", "OFICIO": "192mm", "A4": "186mm"}[prefs["paper"]]
-    css = CSS + (PRESENTATION_CSS if prefs.get("presentation_version") == 1 else "")
+    version = prefs.get("presentation_version")
+    css = CSS + (PRESENTATION_CSS if version in (1, 2) else "") + (STUDIO_CSS if version == 2 else "")
     return css.replace("191.9mm", width).replace("letter portrait", PAPERS[prefs["paper"]]).replace("#075F5A", ACCENTS[prefs["accent"]])
 
 
@@ -304,7 +335,7 @@ def render(snapshot: dict, *, portal_url: str | None = None) -> str:
     legal = " · ".join(value for value in [known(org.get("name")), "RUT " + known(org["tax_id"]) if known(org.get("tax_id")) else "", known(prefs.get("legal_footer"))] if value)
     fingerprint = str(snapshot.get("bom_hash") or "")[:12]
     footer = f'<footer class="q-footer"><div class="q-footer-line"><span class="q-num">{escape(folio)} · Rev. {escape(_rev_display(revision))}</span><span class="q-num">Página <span class="pg"></span></span></div><div class="q-footer-line q-legal"><span>{escape(legal)}</span><span class="q-num">Huella {escape(fingerprint)}</span></div></footer>'
-    modern = prefs.get("presentation_version") == 1
+    modern = prefs.get("presentation_version") in (1, 2)
     def drawing(position, **options):
         bom = next((item.get("engine_result") or {} for item in snapshot.get("bom") or []
                     if str(item.get("position_id")) == str(position.get("id"))), {})
@@ -312,6 +343,8 @@ def render(snapshot: dict, *, portal_url: str | None = None) -> str:
                              material_details=modern, **options)
     density = ("q-v1 q-compact" if prefs["quotation_layout"] == "COMPACT" else "q-v1 q-editorial") if modern else (
         "q-dense q-compact" if len(positions) > 24 else "q-compact" if len(positions) > 3 else "")
+    if prefs.get("presentation_version") == 2:
+        density += " q-v2"
     body = f'<main class="quote {density}">{footer}'
     mast = '<svg class="q-miter" viewBox="0 0 24 24"><path d="M0 0H24V24" fill="none" stroke="#075F5A" stroke-width="1.5"/><path d="M0 0L24 24" fill="none" stroke="#075F5A" stroke-width="1.5"/></svg>'
     cover_density = " q-cover-long" if len(known(project.get("client_name"))) > 70 else ""

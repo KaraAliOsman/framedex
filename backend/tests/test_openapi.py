@@ -108,6 +108,7 @@ def test_openapi_contains_only_authorized_shot_11_paths_and_bearer_security() ->
         "/api/v1/positions/{position_id}/design-assist/",
         "/api/v1/positions/{position_id}/design-alternatives/",
         "/api/v1/catalogs/systems/",
+        "/api/v1/catalogs/visuals/",
         "/api/v1/catalogs/glass/preview/",
         "/api/v1/catalogs/glass/rules/",
         "/api/v1/catalogs/glass/variants/",

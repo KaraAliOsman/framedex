@@ -1,3 +1,4 @@
+import { Icon, type IconName } from "../../ui/Icon";
 import { fmtMm, formatDecimal, parseLocaleNumber, quantize } from "../../format";
 import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
@@ -52,6 +53,7 @@ import { HardwarePanel } from "./HardwarePanel";
 import type { HardwareResolution } from "./hardwareContracts";
 import { SectionView } from "./SectionView";
 import { SectionPreviewSvg } from "./SectionPreviewSvg";
+import { usePresentationMembers } from "../catalogs/catalogVisuals";
 import { frontBounds, frontLayout, frontModuleBox, ProductFrontContent } from "./ProductFrontSvg";
 
 import { useAssemblyCalculation } from "./useAssemblyCalculation";
@@ -1874,6 +1876,8 @@ function ModuleInspector({
               <div>
                 <p className="inspector-note">{members.frame.sku ?? t("assembly.frame")}</p>
                 <SectionPreviewSvg
+                  profileRole="FRAME"
+                  profileSku={members.frame.sku}
                   section={members.frame.section}
                   faceWidthMm={members.frame.faceWidthMm}
                   material={members.frame.material}
@@ -1882,6 +1886,8 @@ function ModuleInspector({
               <div>
                 <p className="inspector-note">{members.sash.sku ?? t("assembly.sash")}</p>
                 <SectionPreviewSvg
+                  profileRole="SASH"
+                  profileSku={members.sash.sku}
                   section={members.sash.section}
                   faceWidthMm={members.sash.faceWidthMm}
                   material={members.sash.material}
@@ -2028,26 +2034,22 @@ function CouplingInspector({
 }
 
 function ToolIcon({ name }: { name: string }): JSX.Element {
-  const strokes: Record<string, JSX.Element> = {
-    select: <path d="M4 2l10 5.5-4.2 1.2L12 13l-2 1.4-2.2-4.3-3.8 2.9z" />,
-    split_v: <path d="M3 3h10v10H3z M8 3v10" />,
-    split_h: <path d="M3 3h10v10H3z M3 8h10" />,
-    couple_left: <path d="M6 3h7v10H6z M5.5 8H1 M2.5 5.5L1 8l1.5 2.5" />,
-    couple_right: <path d="M3 3h7v10H3z M10.5 8H15 M13.5 5.5L15 8l-1.5 2.5" />,
-    equalize: <path d="M3 5h10 M8 2.5L10.5 5 8 7.5 M3 11h10 M8 8.5L10.5 11 8 13.5" />,
-    opening: <path d="M3 3h10v10H3z M3 3l10 5-10 5" />,
-    glass: <path d="M3 3h10v10H3z M5 4l-1 2 M12 10l-2 2" />,
-    measure: <path d="M2 4v9h12 M4 8v2 M7 8v2 M10 8v2" />,
-    library: <path d="M3 2v12 M6 2v12 M9 2l4 11" />,
-    inspector: <path d="M2 3h12 M2 8h12 M2 13h12 M6 2v2 M10 7v2 M6 12v2" />,
-    help: <path d="M5 5a3 3 0 1 1 4 3c-1 .5-1 1-1 2 M8 12v1" />,
-    tree: <path d="M4 3h9 M4 8h9 M4 13h9 M1 3h.5 M1 8h.5 M1 13h.5" />,
+  const names: Record<string, IconName> = {
+    select: "select",
+    split_v: "split_v",
+    split_h: "split_h",
+    couple_left: "window",
+    couple_right: "window",
+    equalize: "ruler",
+    opening: "opening",
+    glass: "glass",
+    measure: "ruler",
+    library: "catalog",
+    inspector: "settings",
+    help: "help",
+    tree: "layers",
   };
-  return (
-    <svg viewBox="0 0 16 16" aria-hidden="true" className="tool-icon">
-      {strokes[name]}
-    </svg>
-  );
+  return <Icon name={names[name] ?? "window"} size={22} className="tool-icon" />;
 }
 
 export function AssemblyEditor({
@@ -2137,7 +2139,7 @@ export function AssemblyEditor({
   const issues = evaluation?.issues ?? [];
   const glassChecks = useGlassChecks(organizationId, product, options, evaluation);
   const [viewFace, setViewFace] = useState<"interior" | "exterior">("interior");
-  const members = useMemo(
+  const catalogMembers = useMemo(
     () =>
       withCutJoints(
         resolveMembers(options, inputs.color, viewFace),
@@ -2145,6 +2147,7 @@ export function AssemblyEditor({
       ),
     [options, inputs.color, viewFace, drawingEvaluation],
   );
+  const members = usePresentationMembers(catalogMembers);
   const [tool, setTool] = useState<EditorTool>("select");
   const [treeOpen, setTreeOpen] = useState(false);
   const narrow = useEditorMedia("(max-width: 1279px)");
@@ -2820,6 +2823,7 @@ export function AssemblyEditor({
         </output>
       )}
       <div className="assembly-tools" role="toolbar" aria-label={t("assembly.tools")}>
+        <span className="assembly-tools__caption">Diseñar</span>
         {[
           {
             name: "select",

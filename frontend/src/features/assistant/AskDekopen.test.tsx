@@ -193,6 +193,24 @@ describe("AskDekopen — Agente mode", () => {
     jobMock.mockReset();
   });
 
+  it("keeps the accepted instruction visible before the worker records its transcript", async () => {
+    agentMock.mockResolvedValue(agentJob() as never);
+    const queued = finishedJob({});
+    jobMock.mockResolvedValue({
+      ...queued,
+      data: { ...queued.data, state: "QUEUED", result: null, transcript: [] },
+    } as never);
+    const view = renderDock("/projects/queued-message");
+    fireEvent.click(screen.getByRole("button", { name: /Abrir asistente/i }));
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "Prepara solo esta ventana" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Enviar/i }));
+    await waitFor(() => expect(jobMock).toHaveBeenCalled());
+    expect(screen.getByText("Prepara solo esta ventana")).toBeVisible();
+    view.unmount();
+  });
+
   it("keeps the submitted job when an older continuity request returns late", async () => {
     let restore!: (value: unknown) => void;
     const previous = new Promise((resolve) => (restore = resolve));
@@ -293,7 +311,7 @@ describe("AskDekopen — Agente mode", () => {
         },
       },
     });
-    const applyButton = await screen.findByRole("button", { name: /Aplicar 1 operaciones/i });
+    const applyButton = await screen.findByRole("button", { name: /Aplicar cambios/i });
     let settleAudit!: () => void;
     vi.mocked(aiJobOutcomeCreate).mockImplementationOnce(
       () =>
@@ -345,7 +363,7 @@ describe("AskDekopen — Agente mode", () => {
       target: { value: "Cambia el alto" },
     });
     fireEvent.click(screen.getByRole("button", { name: /Enviar/i }));
-    const applyButton = await screen.findByRole("button", { name: /Aplicar 1 operaciones/i });
+    const applyButton = await screen.findByRole("button", { name: /Aplicar cambios/i });
     // A commit swapped the live product — the button must refuse.
     current = productB;
     view.rerender(

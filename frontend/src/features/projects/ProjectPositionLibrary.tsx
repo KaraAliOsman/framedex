@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { engineSystems, projectDesignOptions } from "../../api/generated/dekopen";
 import { ApiError } from "../../api/apiMutator";
@@ -6,9 +6,10 @@ import type { DesignOperationRequest } from "../../api/generated/models";
 import { domainLabel } from "../../i18n/domainLabels";
 import { parseDecimalInput } from "../../format";
 import { DimLoader } from "../../ui";
+import { Icon } from "../../ui/Icon";
 import { EditorFlyout } from "../canvas/EditorFlyout";
-import { StarterGallery } from "../canvas/StarterGallery";
-import { starterNominalSize, type StarterDefinition } from "../canvas/designLibrary";
+import { StarterGallery, StarterThumb } from "../canvas/StarterGallery";
+import { starterSize, starterTitle, type StarterDefinition } from "../canvas/designLibrary";
 import { resolveMembers } from "../canvas/members";
 import { sourcedStarter } from "../canvas/starterAuthority";
 import "../canvas/EditorLayout.css";
@@ -40,6 +41,17 @@ export function ProjectPositionLibrary({
   const [height, setHeight] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [definition, setDefinition] = useState<StarterDefinition | null>(null);
+  const widthInput = useRef<HTMLInputElement>(null);
+  const selectionPreview = useMemo(() => {
+    if (!definition) return null;
+    const size = starterSize(definition);
+    return definition.build(size.widthMm, size.heightMm);
+  }, [definition]);
+  useEffect(() => {
+    if (!definition) return;
+    widthInput.current?.focus({ preventScroll: true });
+    widthInput.current?.closest("fieldset")?.scrollTo({ top: 0 });
+  }, [definition]);
   const options = { headers: { "X-Organization-ID": orgId } };
   const systems = useQuery({
     queryKey: ["project-systems", orgId],
@@ -149,101 +161,155 @@ export function ProjectPositionLibrary({
         {catalog.data && (
           <>
             {error && <p role="alert">{error}</p>}
-            <StarterGallery
-              options={catalog.data}
-              allowedOpenings={catalog.data.compatible_openings}
-              members={resolveMembers(catalog.data)}
-              disabled={busy}
-              onPick={(choice) => {
-                setDefinition(choice);
-                const nominal = choice.nominal ?? starterNominalSize(choice.key);
-                setWidth(String(nominal.widthMm));
-                setHeight(String(nominal.heightMm));
-              }}
-            />
+            {!definition && (
+              <StarterGallery
+                options={catalog.data}
+                allowedOpenings={catalog.data.compatible_openings}
+                members={resolveMembers(catalog.data)}
+                disabled={busy}
+                onPick={(choice) => {
+                  setDefinition(choice);
+                  const nominal = starterSize(choice);
+                  setWidth(String(nominal.widthMm));
+                  setHeight(String(nominal.heightMm));
+                }}
+              />
+            )}
             {definition && (
-              <>
-                <p>Ajusta las medidas. Vidrio y acabado se heredan cuando son compatibles.</p>
-                <label>
-                  Ancho de fabricación (mm)
-                  <input
-                    inputMode="decimal"
-                    value={width}
-                    onChange={(event) => setWidth(event.target.value)}
-                  />
-                </label>
-                <label>
-                  Alto de fabricación (mm)
-                  <input
-                    inputMode="decimal"
-                    value={height}
-                    onChange={(event) => setHeight(event.target.value)}
-                  />
-                </label>
-                <label>
-                  Vidrio
-                  <select
-                    aria-label="Vidrio"
-                    value={glass}
-                    onChange={(event) => setGlass(event.target.value)}
+              <div className="project-library-choice">
+                <header>
+                  <Icon name="check" size={18} />
+                  <strong>{starterTitle(definition)}</strong>
+                  <span>Medidas de fabricación en mm</span>
+                </header>
+                <div className="project-library-selected">
+                  {selectionPreview && (
+                    <div className="project-library-preview">
+                      <StarterThumb
+                        product={selectionPreview}
+                        members={resolveMembers(catalog.data)}
+                        leaves={definition.previewLeaves}
+                      />
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    className="ui-button ui-button--small"
+                    onClick={() => setDefinition(null)}
                   >
-                    <option value="">Elige un vidrio</option>
-                    {catalog.data.glass_specs
-                      .filter((value) => value.compatible !== false)
-                      .map((value) => (
-                        <option key={value.sku} value={value.sku}>
-                          {value.spec || "Composición sin dato"} · {value.sku}
-                        </option>
-                      ))}
-                  </select>
-                </label>
+                    Cambiar diseño
+                  </button>
+                </div>
+                <div className="project-library-measures">
+                  <label>
+                    Ancho
+                    <input
+                      ref={widthInput}
+                      inputMode="decimal"
+                      value={width}
+                      onChange={(event) => setWidth(event.target.value)}
+                    />
+                  </label>
+                  <label>
+                    Alto
+                    <input
+                      inputMode="decimal"
+                      value={height}
+                      onChange={(event) => setHeight(event.target.value)}
+                    />
+                  </label>
+                  <label>
+                    Cantidad
+                    <input
+                      type="number"
+                      min={1}
+                      max={9999}
+                      value={quantity}
+                      onChange={(event) =>
+                        setQuantity(Math.max(1, Math.min(9999, Number(event.target.value) || 1)))
+                      }
+                    />
+                  </label>
+                </div>
                 <label>
-                  Color o acabado
-                  <select
-                    aria-label="Color o acabado"
-                    value={color}
-                    onChange={(event) => setColor(event.target.value)}
-                  >
-                    <option value="">Elige un acabado</option>
-                    {catalog.data.colors.map((value) => (
-                      <option key={value} value={value}>
-                        {domainLabel(value)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Cantidad
+                  Ubicación <span className="project-library-optional">opcional</span>
                   <input
-                    type="number"
-                    min={1}
-                    max={9999}
-                    value={quantity}
-                    onChange={(event) =>
-                      setQuantity(Math.max(1, Math.min(9999, Number(event.target.value) || 1)))
-                    }
-                  />
-                </label>
-                <label>
-                  Ubicación
-                  <input
+                    placeholder="Por ejemplo: cocina"
                     maxLength={120}
                     value={location}
                     onChange={(event) => setLocation(event.target.value)}
                   />
                 </label>
-                <button
-                  type="button"
-                  disabled={!w || !h || !glass || !color || busy}
-                  onClick={() => void propose()}
-                >
-                  Agregar a la obra
-                </button>
-              </>
+                <details className="project-library-materials" open={!glass || !color || undefined}>
+                  <summary>
+                    Vidrio y acabado{" "}
+                    <span>
+                      {!glass || !color
+                        ? "Completa los materiales para continuar"
+                        : "Se conservan los compatibles de la obra"}
+                    </span>
+                  </summary>
+                  <label>
+                    Vidrio
+                    <select
+                      aria-label="Vidrio"
+                      value={glass}
+                      onChange={(event) => setGlass(event.target.value)}
+                    >
+                      <option value="">Elige un vidrio</option>
+                      {catalog.data.glass_specs
+                        .filter((item) => item.compatible !== false)
+                        .map((item) => (
+                          <option key={item.sku} value={item.sku}>
+                            {item.spec || item.sku}
+                          </option>
+                        ))}
+                    </select>
+                  </label>
+                  <label>
+                    Color o acabado
+                    <select
+                      aria-label="Color o acabado"
+                      value={color}
+                      onChange={(event) => setColor(event.target.value)}
+                    >
+                      <option value="">Elige un acabado</option>
+                      {catalog.data.colors.map((item) => (
+                        <option key={item} value={item}>
+                          {domainLabel(item)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </details>
+                {!glass || !color ? (
+                  <p role="status">
+                    {!glass && !color
+                      ? "Esta serie necesita un vidrio y un acabado compatibles."
+                      : !glass
+                        ? "Esta serie necesita un vidrio compatible."
+                        : "Esta serie necesita un acabado compatible."}{" "}
+                    Si no aparecen opciones, completa la serie en Catálogo.
+                  </p>
+                ) : null}
+              </div>
             )}
           </>
         )}
       </fieldset>
+      {definition && catalog.data ? (
+        <footer className="project-library-actions">
+          <button
+            className="ui-button ui-button--primary"
+            type="button"
+            disabled={!w || !h || !glass || !color || busy}
+            onClick={() => void propose()}
+          >
+            <Icon name="plus" size={17} />
+            {busy ? "Preparando ventana…" : "Agregar a la obra"}
+          </button>
+        </footer>
+      ) : null}
     </EditorFlyout>
   );
 }

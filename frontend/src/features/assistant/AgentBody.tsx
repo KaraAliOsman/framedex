@@ -1,8 +1,10 @@
 import { ValidatedForm } from "../../ui/FormValidation";
+import { Icon } from "../../ui/Icon";
+import { ArtifactDetail, type Artifact } from "./ArtifactDetail";
 import { AI_PHASES } from "./providerLabels";
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { ApiError } from "../../api/apiMutator";
 import {
@@ -212,6 +214,11 @@ export function AgentBody({
   onJobState,
   onComposing,
   draft,
+  jobId,
+  fresh = false,
+  workspace = false,
+  onJob,
+  onDraftChange,
 }: {
   organizationId: string;
   userId?: string | null;
@@ -222,9 +229,15 @@ export function AgentBody({
   /** Lifts composition state — while a goal is typed the orb reads INPUT. */
   onComposing?: (composing: boolean) => void;
   draft?: { text: string; request: number } | null;
+  jobId?: string | null;
+  fresh?: boolean;
+  workspace?: boolean;
+  onJob?: (job: AiJobDetail) => void;
+  onDraftChange?: (text: string) => void;
 }): JSX.Element {
   const navigate = useNavigate();
   const bridge = useDesignOpsBridge();
+  const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const undos = useRef(new Map<string, () => boolean>());
   const [undone, setUndone] = useState(new Set<string>());
@@ -235,11 +248,13 @@ export function AgentBody({
   const [job, setJob] = useState<AiJobDetail | null>(null);
   useEffect(() => {
     onJobState?.(job?.state ?? null);
+    if (job) onJob?.(job);
     if (job) publishAssistantJob(queryClient, { organizationId, userId, surface, refs }, job);
-  }, [job, onJobState, queryClient, organizationId, userId, surface, refs]);
+  }, [job, onJobState, onJob, queryClient, organizationId, userId, surface, refs]);
   useEffect(() => {
     onComposing?.(!!goal.trim());
-  }, [goal, onComposing]);
+    onDraftChange?.(goal);
+  }, [goal, onComposing, onDraftChange]);
   const [message, setMessage] = useState("");
   const [thread, setThread] = useState<Turn[]>([]);
   /** Instructions typed while a run is live — the backend can't interleave
@@ -247,6 +262,12 @@ export function AgentBody({
   const [pending, setPending] = useState<string[]>([]);
   const pendingRef = useRef<string[]>([]);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const threadRef = useRef<HTMLDivElement>(null);
+  const nearEnd = useRef(true);
+  useEffect(() => {
+    const pane = threadRef.current;
+    if (pane && nearEnd.current) pane.scrollTop = pane.scrollHeight;
+  }, [thread, job?.state, busy]);
   useEffect(() => {
     if (!draft) return;
     if (draft.text) setGoal(draft.text);
@@ -283,6 +304,7 @@ export function AgentBody({
     jobId: string,
     seq: number,
     product: { [key: string]: unknown } | null = null,
+    submitted?: { turn: Turn; after: number },
   ): void {
     clearPoll();
     const tick = async (): Promise<void> => {
@@ -301,6 +323,18 @@ export function AgentBody({
         pollFailures.current = 0;
         setOffline(false);
         const built = threadFromJob(next);
+        // A queued follow-up can precede its durable transcript entry. Keep
+        // the accepted instruction visible until the worker records it.
+        if (
+          submitted &&
+          LIVE_STATES.has(next.state) &&
+          !(next.transcript ?? []).slice(submitted.after).some((entry) => {
+            const recorded = entry as TranscriptAgentTurn;
+            return recorded.role === "user" && recorded.text === submitted.turn.goal;
+          })
+        ) {
+          built.push(submitted.turn);
+        }
         if (product) {
           for (const turn of built) {
             // Restored turns (productSig set) keep their durable fingerprint —
@@ -352,11 +386,15 @@ export function AgentBody({
     let cancelled = false;
     void (async () => {
       try {
-        const presence = await aiPresenceGet({ surface, refs: refsKey }, headers);
-        if (cancelled || seq !== requestSeq.current || presence.status !== 200) return;
-        const match = presence.data.job;
-        if (!match) return;
-        const detail = await aiJobRetrieve(match.id, headers);
+        if (fresh && !jobId) return;
+        let targetId = jobId;
+        if (!targetId) {
+          const presence = await aiPresenceGet({ surface, refs: refsKey }, headers);
+          if (cancelled || seq !== requestSeq.current || presence.status !== 200) return;
+          targetId = presence.data.job?.id;
+        }
+        if (!targetId) return;
+        const detail = await aiJobRetrieve(targetId, headers);
         if (cancelled || seq !== requestSeq.current) return;
         if (detail.status !== 200) return;
         setJob(detail.data);
@@ -375,7 +413,7 @@ export function AgentBody({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- refsKey is the
     // stable serialization of refs; surface/refs changes re-run the lookup.
-  }, [organizationId, surface, refsKey]);
+  }, [organizationId, surface, refsKey, jobId, fresh]);
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -463,23 +501,21 @@ export function AgentBody({
       if (seq !== requestSeq.current) return;
       // Optimistic user turn — the transcript rebuild replaces it on the
       // first poll, but the goal should be visible immediately.
-      setThread((prev) => [
-        ...prev,
-        {
-          goal: trimmed,
-          replay: false,
-          result: null,
-          errorCode: null,
-          product,
-          productSig,
-          transcriptIndex: prev.length ? (prev[prev.length - 1]?.transcriptIndex ?? -1) + 1 : 0,
-          appliedOps: new Set(),
-          declinedOps: new Set(),
-        },
-      ]);
+      const acceptedTurn: Turn = {
+        goal: trimmed,
+        replay: false,
+        result: null,
+        errorCode: null,
+        product,
+        productSig,
+        transcriptIndex: job?.transcript?.length ?? 0,
+        appliedOps: new Set(),
+        declinedOps: new Set(),
+      };
+      setThread((prev) => [...prev, acceptedTurn]);
       setGoal("");
       operationKey.current = null;
-      watch(jobId, seq, product);
+      watch(jobId, seq, product, { turn: acceptedTurn, after: job?.transcript?.length ?? 0 });
       return;
     } catch (error) {
       if (seq !== requestSeq.current) return;
@@ -657,7 +693,14 @@ export function AgentBody({
 
   return (
     <>
-      <div className="ask-dock__thread">
+      <div
+        className="ask-dock__thread"
+        ref={threadRef}
+        onScroll={(event) => {
+          const pane = event.currentTarget;
+          nearEnd.current = pane.scrollHeight - pane.scrollTop - pane.clientHeight < 96;
+        }}
+      >
         {thread.some((turn) => turn.errorCode) ? (
           <div className="ask-dock__errorTurn">
             <p>
@@ -691,10 +734,10 @@ export function AgentBody({
         ) : null}
         {thread.length === 0 && !live ? (
           <div className="ask-dock__welcome">
-            <Orb state={presenceState(job)} size={48} />
-            <h2>¿Qué resolvemos?</h2>
+            <Orb state={presenceState(job)} size={workspace ? 46 : 38} />
+            <h2>De la idea a la ventana.</h2>
             <p className="ask-dock__hint">
-              Pídeme el resultado completo. Prepararé el trabajo y una muestra para que lo revises.
+              Cuéntame qué necesitas. Preparo el trabajo y te muestro el resultado.
             </p>
           </div>
         ) : (
@@ -1008,27 +1051,37 @@ export function AgentBody({
                                     </button>
                                   ) : null}
                                   <div className="ask-dock__ops-actions">
-                                    <button
-                                      type="button"
-                                      className="ask-dock__action"
-                                      disabled={
-                                        applied ||
-                                        declined ||
-                                        stale ||
-                                        !bridge ||
-                                        (step.simulation != null &&
-                                          (step.simulation as { valid?: boolean }).valid !== true)
-                                      }
-                                      title={stale && bridge ? t("assistant.stale") : undefined}
-                                      onClick={() => applyOps(turnIndex, stepIndex, ops)}
-                                    >
-                                      {applied
-                                        ? t("agent.applied")
-                                        : t("assistant.apply").replace(
-                                            "{count}",
-                                            String(ops.length),
-                                          )}
-                                    </button>
+                                    {!bridge && refs.project_id && refs.position_id ? (
+                                      <button
+                                        type="button"
+                                        className="ask-dock__action ask-dock__action--prepare"
+                                        onClick={() =>
+                                          navigate(
+                                            `/projects/${refs.project_id}/positions/${refs.position_id}/edit${job ? `?assistant_job=${job.id}` : ""}`,
+                                          )
+                                        }
+                                      >
+                                        Revisar cambios en el diseño
+                                        <Icon name="arrow" size={16} />
+                                      </button>
+                                    ) : (
+                                      <button
+                                        type="button"
+                                        className="ask-dock__action"
+                                        disabled={
+                                          applied ||
+                                          declined ||
+                                          stale ||
+                                          !bridge ||
+                                          (step.simulation != null &&
+                                            (step.simulation as { valid?: boolean }).valid !== true)
+                                        }
+                                        title={stale && bridge ? t("assistant.stale") : undefined}
+                                        onClick={() => applyOps(turnIndex, stepIndex, ops)}
+                                      >
+                                        {applied ? t("agent.applied") : t("assistant.apply")}
+                                      </button>
+                                    )}
                                     {applied && !wasUndone && undos.current.has(coordinate) ? (
                                       <button
                                         type="button"
@@ -1080,6 +1133,25 @@ export function AgentBody({
                             // flat shelf truncates to the newest entries, so a
                             // shelf index would drift to the wrong artifact.
                             const artRef = `${turn.transcriptIndex}:${i}`;
+                            if (workspace)
+                              return (
+                                <details
+                                  className="assistant-artifact"
+                                  id={`ai-artifact-${artRef.replace(":", "-")}`}
+                                  key={i}
+                                  open={
+                                    artifact.kind === "document_preview" ||
+                                    searchParams.get("art") === artRef
+                                  }
+                                >
+                                  <summary>
+                                    <Icon name="document" />
+                                    {artifact.title ?? "Resultado preparado"}
+                                    <Icon name="chevron" size={16} />
+                                  </summary>
+                                  <ArtifactDetail artifact={item as Artifact} />
+                                </details>
+                              );
                             return (
                               <button
                                 key={i}
@@ -1102,14 +1174,18 @@ export function AgentBody({
                   )}
                   {turnIndex === thread.length - 1 && job ? (
                     <p className="ask-dock__meta">
-                      <button
-                        type="button"
-                        className="ask-dock__meta-link"
-                        onClick={() => navigate(`/assistant?job=${job.id}`)}
-                      >
-                        {t("aiws.openWorkspace")}
-                      </button>
-                      {" · "}
+                      {!workspace ? (
+                        <>
+                          <button
+                            type="button"
+                            className="ask-dock__meta-link"
+                            onClick={() => navigate(`/assistant?job=${job.id}`)}
+                          >
+                            {t("aiws.openWorkspace")}
+                          </button>
+                          {" · "}
+                        </>
+                      ) : null}
                       <button type="button" className="ask-dock__meta-link" onClick={startFresh}>
                         {t("aiws.new")}
                       </button>
@@ -1161,7 +1237,17 @@ export function AgentBody({
                 inputRef.current?.focus();
               }}
             >
-              {preset}
+              <Icon name={surface === "position" ? "window" : "document"} size={18} />
+              <span>
+                {preset.startsWith("Prepara toda")
+                  ? "Prepara la cotización completa"
+                  : preset.startsWith("Revisa las ventanas")
+                    ? "Revisa mis ventanas"
+                    : preset.startsWith("Copia el vidrio")
+                      ? "Usa el mismo vidrio en todas"
+                      : preset}
+              </span>
+              <Icon name="arrow" size={16} />
             </button>
           ))}
         </div>
@@ -1197,20 +1283,33 @@ export function AgentBody({
             value={goal}
             maxLength={2000}
             rows={2}
-            placeholder={t("agent.placeholder")}
+            placeholder={
+              workspace ? "Diseña, cotiza o mejora un documento…" : "¿Qué hacemos con este trabajo?"
+            }
             aria-label={t("agent.placeholder")}
             onChange={(event) => setGoal(event.target.value)}
             onKeyDown={(event) => {
-              if (event.key === "Enter" && !event.shiftKey) {
+              if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
                 event.preventDefault();
                 run().catch(() => undefined);
               }
             }}
             disabled={busy && !live}
           />
-          <button type="submit" disabled={(busy && !live) || !goal.trim()}>
-            {t("agent.send")}
-          </button>
+          <div className="assistant-composer__footer">
+            <span>
+              {live
+                ? "Puedes añadir otra indicación"
+                : "Enter para enviar · Mayús + Enter para otra línea"}
+            </span>
+            <button
+              type="submit"
+              aria-label={t("agent.send")}
+              disabled={(busy && !live) || !goal.trim()}
+            >
+              <Icon name="up" size={20} />
+            </button>
+          </div>
         </ValidatedForm>
       ) : null}
     </>

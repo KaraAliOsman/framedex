@@ -9,15 +9,18 @@ let illustrativeGrain: THREE.DataTexture | undefined;
  * This visual fallback is explicitly identified as illustrative in the view. */
 function grainTexture(): THREE.DataTexture {
   if (illustrativeGrain) return illustrativeGrain;
-  const width = 64,
-    height = 512,
+  const width = 128,
+    height = 1024,
     pixels = new Uint8Array(width * height * 4);
   for (let y = 0; y < height; y += 1) {
     for (let x = 0; x < width; x += 1) {
       const wave =
-        x + 2.4 * Math.sin((y * Math.PI * 2) / height) + 0.8 * Math.sin((y * Math.PI * 8) / height);
+        x + 4.8 * Math.sin((y * Math.PI * 2) / height) + 1.6 * Math.sin((y * Math.PI * 8) / height);
       const shade = Math.round(
-        244 + 9 * Math.sin((wave * Math.PI) / 4) + 2 * Math.sin(wave * Math.PI),
+        222 +
+          22 * Math.sin((wave * Math.PI) / 7) +
+          8 * Math.sin(wave * Math.PI * 1.7) +
+          3 * Math.sin((x * 17 + y * 31) * 0.19),
       );
       const at = (y * width + x) * 4;
       pixels.set([shade, shade, shade, 255], at);

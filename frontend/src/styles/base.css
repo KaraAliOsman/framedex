@@ -13,6 +13,8 @@ body {
   font-family: var(--font-sans);
   font-size: var(--type-body);
   line-height: var(--line-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 button,
 input {
@@ -22,12 +24,18 @@ input {
 button,
 input,
 a {
-  border-radius: var(--r-2);
+  border-radius: var(--r-1);
 }
 button {
-  border: 1px solid var(--theme-border-subtle);
-  background: var(--theme-surface-card);
-  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-default);
+  background: var(--surface-sheet);
+  padding: 0.5rem 0.875rem;
+  cursor: pointer;
+  box-shadow: var(--e1);
+  transition:
+    background 140ms ease,
+    border-color 140ms ease,
+    transform 120ms var(--ease-out);
 }
 button:hover,
 a:hover {
@@ -43,4 +51,23 @@ a:focus-visible {
 :root[data-theme="dark"] input:focus-visible,
 :root[data-theme="dark"] a:focus-visible {
   outline-color: var(--theme-accent-strong);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+button:disabled {
+  box-shadow: none;
+}
+summary {
+  cursor: pointer;
+}
+button svg,
+a svg {
+  flex-shrink: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  button {
+    transition: none;
+  }
 }
