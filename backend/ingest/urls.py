@@ -11,7 +11,6 @@ from ingest.views import (
 )
 
 urlpatterns = [
-    path("catalog-imports/<uuid:import_id>/retry/", catalog_views.CatalogImportRetryView.as_view(), name="catalog-import-retry"),
     path("catalog-imports/template/", catalog_views.CatalogTemplateView.as_view(), name="catalog-template"),
     path("catalog-imports/schema/", catalog_views.CatalogTemplateSchemaView.as_view(), name="catalog-template-schema"),
     path("catalog-imports/<uuid:import_id>/review/", catalog_views.CatalogImportReviewView.as_view(), name="catalog-import-review"),

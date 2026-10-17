@@ -22,11 +22,6 @@ import { fmtMm, formatDecimal, formatDateTime } from "../../format";
 import { domainLabel } from "../../i18n/domainLabels";
 import { centerKindLabel, opKindLabel, stationCodeLabel } from "../production/labels";
 import { SectionPreviewSvg } from "../canvas/SectionPreviewSvg";
-import { useAuthSession } from "../../auth/AuthSessionProvider";
-import type { CatalogVisual } from "../../api/generated/models";
-import { useCatalogVisuals } from "./catalogVisuals";
-import { VisualSampleControl } from "./VisualSampleControl";
-import { CatalogFinishSamples } from "./CatalogFinishSamples";
 import { catalogVocabulary, type Resource, type Row, type catalogApi } from "./catalogModel";
 
 type Label = Parameters<typeof t>[0];
@@ -74,8 +69,6 @@ function ArticleCard({
   canEdit,
   onEdit,
   evidence,
-  sample,
-  organizationId,
 }: {
   article: ArticleResponse;
   purchased: boolean;
@@ -83,42 +76,26 @@ function ArticleCard({
   beads: number;
   canEdit: boolean;
   onEdit: () => void;
-  sample?: CatalogVisual;
-  organizationId: string;
 }) {
   const depth = article.section?.depth_mm;
   return (
     <article className="ws-article-card" id={`article-${article.id}`}>
       <div className="ws-article-section">
-        <SectionPreviewSvg
-          recognition
-          profileRole={article.role ?? "FRAME"}
-          sampleUrl={!sample?.cleared ? sample?.image_url : undefined}
-          section={article.section}
-          faceWidthMm={Number(article.face_width_mm)}
-          depthMm={depth ? Number(depth) : undefined}
-          material={article.material}
-        />
-        {canEdit ? (
-          <VisualSampleControl
-            organizationId={organizationId}
-            systemId={article.system_id}
-            kind="PROFILE"
-            targetKey={article.id}
-            label={article.name}
-            sample={sample}
-          />
-        ) : null}
         {article.section ? (
-          <details className="ws-section-facts">
-            <summary>Sección y orientación</summary>
-            <SectionReviewFacts facts={article.section_facts} />
-            <small>
-              {ct(`sectionSource.${article.section.source}`)}
-              {depth ? ` · ${fmtMm(depth)} mm` : ""}
-            </small>
-          </details>
-        ) : null}
+          <SectionPreviewSvg
+            section={article.section}
+            faceWidthMm={Number(article.face_width_mm)}
+            material={article.material}
+          />
+        ) : (
+          <p className="ws-empty">Sección: Sin dato. Declara la geometría del proveedor.</p>
+        )}
+        <SectionReviewFacts facts={article.section_facts} />
+        <small>
+          {article.section
+            ? `${ct(`sectionSource.${article.section.source}`)}${depth ? ` · ${fmtMm(depth)} mm` : ""}`
+            : wst("sectionApprox")}
+        </small>
       </div>
       <div className="ws-article-body">
         <header>
@@ -304,9 +281,6 @@ export function SystemWorkspaceView({
   onShowRecords,
   reloadKey,
 }: WorkspaceProps): JSX.Element {
-  const auth = useAuthSession();
-  const organizationId = auth.me?.active_organization?.id ?? "";
-  const samples = useCatalogVisuals(systemId, organizationId);
   const [workspace, setWorkspace] = useState<SystemWorkspace | null>(null);
   const [centers, setCenters] = useState<WorkCenter[] | null>(null);
   const [evidenceRows, setEvidenceRows] = useState<EvidenceRow[] | null>(null);
@@ -507,33 +481,30 @@ export function SystemWorkspaceView({
               {system.is_active ? ct("active") : ct("inactive")}
             </StatusBadge>
           </div>
-          <details className="ws-series-details">
-            <summary>Datos y fuente de la serie</summary>
-            <dl className="ws-identity-facts">
-              <div>
-                <dt>{ct("field.depth_mm")}</dt>
-                <dd>{fmtMm(system.depth_mm)} mm</dd>
-              </div>
-              <div>
-                <dt>{ct("field.chamber_count")}</dt>
-                <dd>{system.chamber_count}</dd>
-              </div>
-              <div>
-                <dt>{wst("processAuthority")}</dt>
-                <dd>
-                  {process_profile
-                    ? `${process_profile.label} · v${process_profile.version}`
-                    : wst("noProcess")}
-                </dd>
-              </div>
-              <div>
-                <dt>{wst("provenance")}</dt>
-                <dd>
-                  <CatalogProvenance row={system} evidence={evidenceRows ?? []} />
-                </dd>
-              </div>
-            </dl>
-          </details>
+          <dl className="ws-identity-facts">
+            <div>
+              <dt>{ct("field.depth_mm")}</dt>
+              <dd>{fmtMm(system.depth_mm)} mm</dd>
+            </div>
+            <div>
+              <dt>{ct("field.chamber_count")}</dt>
+              <dd>{system.chamber_count}</dd>
+            </div>
+            <div>
+              <dt>{wst("processAuthority")}</dt>
+              <dd>
+                {process_profile
+                  ? `${process_profile.label} · v${process_profile.version}`
+                  : wst("noProcess")}
+              </dd>
+            </div>
+            <div>
+              <dt>{wst("provenance")}</dt>
+              <dd>
+                <CatalogProvenance row={system} evidence={evidenceRows ?? []} />
+              </dd>
+            </div>
+          </dl>
           <button
             type="button"
             className="ui-button ui-button--small"
@@ -550,10 +521,7 @@ export function SystemWorkspaceView({
                 ? "Cotizable; revisa fabricación"
                 : "Bloqueado"}
           </strong>{" "}
-          ·{" "}
-          {system.readiness.state === "PASS"
-            ? "Serie disponible. Revisa los requisitos antes de fabricar."
-            : "Consulta lo que falta para continuar."}
+          · Cobertura de la serie. La emisión comprueba los artículos usados y sella su decisión.
         </p>
         <details className="ws-readiness">
           <summary>Ver requisitos para cotizar y fabricar</summary>
@@ -566,7 +534,6 @@ export function SystemWorkspaceView({
           ["perfiles", "Perfiles"],
           ["refuerzos", "Refuerzos"],
           ["vidrios", "Vidrios"],
-          ["acabados", "Acabados"],
           ["termica", "Térmica"],
           ["herrajes", "Herrajes"],
           ["reglas", "Reglas de compatibilidad"],
@@ -592,14 +559,6 @@ export function SystemWorkspaceView({
         </div>
       ) : null}
       {tab === "vidrios" ? <WorkspaceGlasses glasses={workspace.glasses} /> : null}
-      {tab === "acabados" ? (
-        <CatalogFinishSamples
-          authority={system.finish_authority}
-          systemId={systemId}
-          organizationId={organizationId}
-          canEdit={canEdit}
-        />
-      ) : null}
       {tab === "termica" ? <ThermalCatalogPanel systemId={systemId} /> : null}
       {tab === "costos" ? <WorkspaceCosts /> : null}
       {tab === "perfiles" && (
@@ -637,10 +596,6 @@ export function SystemWorkspaceView({
                   purchased={purchased.has(article.id)}
                   beads={beadsByArticle.get(article.id) ?? 0}
                   canEdit={canEdit}
-                  sample={samples.data?.find(
-                    (entry) => entry.kind === "PROFILE" && entry.target_key === article.id,
-                  )}
-                  organizationId={organizationId}
                   onEdit={() => onEdit("articles", article.id)}
                 />
               ))}

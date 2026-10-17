@@ -56,7 +56,6 @@
   .rail-collapsed .rail-group__title,
   .rail-collapsed .app-rail__identity,
   .rail-collapsed .rail-item > span,
-  .rail-collapsed .rail-more > summary > span,
   .rail-collapsed .rail-collapse > span {
     display: none;
   }
@@ -68,10 +67,6 @@
     padding-inline: 0;
   }
   .rail-collapsed .rail-item {
-    justify-content: center;
-    padding-inline: 0;
-  }
-  .rail-collapsed .rail-more > summary {
     justify-content: center;
     padding-inline: 0;
   }
@@ -87,7 +82,6 @@
   .rail-group__title,
   .app-rail__identity,
   .rail-item > span,
-  .rail-more > summary > span,
   .rail-collapse {
     display: none;
   }
@@ -99,10 +93,6 @@
     padding-inline: 0;
   }
   .rail-item {
-    justify-content: center;
-    padding-inline: 0;
-  }
-  .rail-more > summary {
     justify-content: center;
     padding-inline: 0;
   }

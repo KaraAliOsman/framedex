@@ -1,4 +1,3 @@
-import { Icon, type IconName } from "../../ui/Icon";
 import { fmtMm, formatDecimal, parseLocaleNumber, quantize } from "../../format";
 import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
@@ -24,6 +23,7 @@ import type { CommandContext, EditorTool } from "../commands/types";
 import { useCanvasStore } from "./canvasStore";
 import { assemblyCommands } from "./assemblyCommands";
 import { AlternativesPanel } from "./AlternativesPanel";
+import { AssistantPanel } from "./AssistantPanel";
 import { applyOperationEffects } from "./designOps";
 import { bayOperations, slidingOperation } from "./operationIntents";
 import { designOperationsSimulate } from "../../api/generated/dekopen";
@@ -41,7 +41,7 @@ import { EditorPriceChip } from "./EditorPriceChip";
 import { CanvasViewport } from "./CanvasViewport";
 import { ObjectTree } from "./ObjectTreeView";
 import { buildObjectTree } from "./objectTree";
-import { resolveMembers, withCutJoints, type MemberGeometry } from "./members";
+import { resolveMembers, type MemberGeometry } from "./members";
 import { EditorFlyout } from "./EditorFlyout";
 import { useEditorMedia } from "./useEditorLayout";
 import { dividerNudge } from "./dividerNudge";
@@ -53,7 +53,6 @@ import { HardwarePanel } from "./HardwarePanel";
 import type { HardwareResolution } from "./hardwareContracts";
 import { SectionView } from "./SectionView";
 import { SectionPreviewSvg } from "./SectionPreviewSvg";
-import { usePresentationMembers } from "../catalogs/catalogVisuals";
 import { frontBounds, frontLayout, frontModuleBox, ProductFrontContent } from "./ProductFrontSvg";
 
 import { useAssemblyCalculation } from "./useAssemblyCalculation";
@@ -960,79 +959,76 @@ function LeafFacts({
           onCommit={onHandleHeight}
         />
       )}
-      <details className="inspector-section editor-advanced">
-        <summary>Medidas de hoja y herrajes</summary>
-        <dl className="editor-leaf-facts">
-          <div>
-            <dt>Composición</dt>
-            <dd>{glass?.spec ?? bay.glass_spec ?? "Sin dato · elige vidrio"}</dd>
-          </div>
-          <div>
-            <dt>Espesor</dt>
-            <dd>
-              {bay.glass_thickness_mm
-                ? `${fmtMm(bay.glass_thickness_mm)} mm`
-                : "Sin dato · elige vidrio"}
-            </dd>
-          </div>
-          <div>
-            <dt>Hoja · ancho</dt>
-            <dd>
-              {leaf || resolved
-                ? `${fmtMm(quantize(leaf?.width_mm ?? resolved?.width_mm, 2))} mm`
-                : visualOpening(bay) === "FIXED"
-                  ? "No requiere · paño fijo"
-                  : "Sin dato · calcula el marco"}
-            </dd>
-          </div>
-          <div>
-            <dt>Hoja · alto</dt>
-            <dd>
-              {leaf || resolved
-                ? `${fmtMm(quantize(leaf?.height_mm ?? resolved?.height_mm, 2))} mm`
-                : visualOpening(bay) === "FIXED"
-                  ? "No requiere · paño fijo"
-                  : "Sin dato · calcula el marco"}
-            </dd>
-          </div>
-          <div>
-            <dt>Kit derivado</dt>
-            <dd>
-              {kit?.name ??
-                (visualOpening(bay) === "FIXED"
-                  ? "No requiere · paño fijo"
-                  : "Sin dato · revisa herrajes")}
-            </dd>
-          </div>
-          <div>
-            <dt>Manilla · lado</dt>
-            <dd>
-              {leaf?.handle
-                ? leaf.handle.side === "LEFT"
-                  ? "Izquierda"
-                  : leaf.handle.side === "RIGHT"
-                    ? "Derecha"
-                    : "Cierre superior/inferior"
-                : visualOpening(bay) === "FIXED"
-                  ? "No requiere · paño fijo"
-                  : "Sin dato · revisa apertura"}
-            </dd>
-          </div>
-          <div>
-            <dt>Fuente</dt>
-            <dd>
-              <details className="editor-leaf-facts__source">
-                <summary>¿De dónde sale?</summary>
-                <p>
-                  {leaf?.source ??
-                    resolved?.source ??
-                    "Evaluación del motor sobre la apertura declarada; composición y kit del catálogo de la serie."}
-                </p>
-              </details>
-            </dd>
-          </div>
-        </dl>
-      </details>
+      <dl className="editor-leaf-facts">
+        <div>
+          <dt>Composición</dt>
+          <dd>{glass?.spec ?? bay.glass_spec ?? "Sin dato · elige vidrio"}</dd>
+        </div>
+        <div>
+          <dt>Espesor</dt>
+          <dd>
+            {bay.glass_thickness_mm
+              ? `${fmtMm(bay.glass_thickness_mm)} mm`
+              : "Sin dato · elige vidrio"}
+          </dd>
+        </div>
+        <div>
+          <dt>Hoja · ancho</dt>
+          <dd>
+            {leaf || resolved
+              ? `${fmtMm(quantize(leaf?.width_mm ?? resolved?.width_mm, 2))} mm`
+              : visualOpening(bay) === "FIXED"
+                ? "No requiere · paño fijo"
+                : "Sin dato · calcula el marco"}
+          </dd>
+        </div>
+        <div>
+          <dt>Hoja · alto</dt>
+          <dd>
+            {leaf || resolved
+              ? `${fmtMm(quantize(leaf?.height_mm ?? resolved?.height_mm, 2))} mm`
+              : visualOpening(bay) === "FIXED"
+                ? "No requiere · paño fijo"
+                : "Sin dato · calcula el marco"}
+          </dd>
+        </div>
+        <div>
+          <dt>Kit derivado</dt>
+          <dd>
+            {kit?.name ??
+              (visualOpening(bay) === "FIXED"
+                ? "No requiere · paño fijo"
+                : "Sin dato · revisa herrajes")}
+          </dd>
+        </div>
+        <div>
+          <dt>Manilla · lado</dt>
+          <dd>
+            {leaf?.handle
+              ? leaf.handle.side === "LEFT"
+                ? "Izquierda"
+                : leaf.handle.side === "RIGHT"
+                  ? "Derecha"
+                  : "Cierre superior/inferior"
+              : visualOpening(bay) === "FIXED"
+                ? "No requiere · paño fijo"
+                : "Sin dato · revisa apertura"}
+          </dd>
+        </div>
+        <div>
+          <dt>Fuente</dt>
+          <dd>
+            <details className="editor-leaf-facts__source">
+              <summary>¿De dónde sale?</summary>
+              <p>
+                {leaf?.source ??
+                  resolved?.source ??
+                  "Evaluación del motor sobre la apertura declarada; composición y kit del catálogo de la serie."}
+              </p>
+            </details>
+          </dd>
+        </div>
+      </dl>
     </>
   );
 }
@@ -1876,8 +1872,6 @@ function ModuleInspector({
               <div>
                 <p className="inspector-note">{members.frame.sku ?? t("assembly.frame")}</p>
                 <SectionPreviewSvg
-                  profileRole="FRAME"
-                  profileSku={members.frame.sku}
                   section={members.frame.section}
                   faceWidthMm={members.frame.faceWidthMm}
                   material={members.frame.material}
@@ -1886,8 +1880,6 @@ function ModuleInspector({
               <div>
                 <p className="inspector-note">{members.sash.sku ?? t("assembly.sash")}</p>
                 <SectionPreviewSvg
-                  profileRole="SASH"
-                  profileSku={members.sash.sku}
                   section={members.sash.section}
                   faceWidthMm={members.sash.faceWidthMm}
                   material={members.sash.material}
@@ -2034,22 +2026,26 @@ function CouplingInspector({
 }
 
 function ToolIcon({ name }: { name: string }): JSX.Element {
-  const names: Record<string, IconName> = {
-    select: "select",
-    split_v: "split_v",
-    split_h: "split_h",
-    couple_left: "window",
-    couple_right: "window",
-    equalize: "ruler",
-    opening: "opening",
-    glass: "glass",
-    measure: "ruler",
-    library: "catalog",
-    inspector: "settings",
-    help: "help",
-    tree: "layers",
+  const strokes: Record<string, JSX.Element> = {
+    select: <path d="M4 2l10 5.5-4.2 1.2L12 13l-2 1.4-2.2-4.3-3.8 2.9z" />,
+    split_v: <path d="M3 3h10v10H3z M8 3v10" />,
+    split_h: <path d="M3 3h10v10H3z M3 8h10" />,
+    couple_left: <path d="M6 3h7v10H6z M5.5 8H1 M2.5 5.5L1 8l1.5 2.5" />,
+    couple_right: <path d="M3 3h7v10H3z M10.5 8H15 M13.5 5.5L15 8l-1.5 2.5" />,
+    equalize: <path d="M3 5h10 M8 2.5L10.5 5 8 7.5 M3 11h10 M8 8.5L10.5 11 8 13.5" />,
+    opening: <path d="M3 3h10v10H3z M3 3l10 5-10 5" />,
+    glass: <path d="M3 3h10v10H3z M5 4l-1 2 M12 10l-2 2" />,
+    measure: <path d="M2 4v9h12 M4 8v2 M7 8v2 M10 8v2" />,
+    library: <path d="M3 2v12 M6 2v12 M9 2l4 11" />,
+    inspector: <path d="M2 3h12 M2 8h12 M2 13h12 M6 2v2 M10 7v2 M6 12v2" />,
+    help: <path d="M5 5a3 3 0 1 1 4 3c-1 .5-1 1-1 2 M8 12v1" />,
+    tree: <path d="M4 3h9 M4 8h9 M4 13h9 M1 3h.5 M1 8h.5 M1 13h.5" />,
   };
-  return <Icon name={names[name] ?? "window"} size={22} className="tool-icon" />;
+  return (
+    <svg viewBox="0 0 16 16" aria-hidden="true" className="tool-icon">
+      {strokes[name]}
+    </svg>
+  );
 }
 
 export function AssemblyEditor({
@@ -2139,21 +2135,17 @@ export function AssemblyEditor({
   const issues = evaluation?.issues ?? [];
   const glassChecks = useGlassChecks(organizationId, product, options, evaluation);
   const [viewFace, setViewFace] = useState<"interior" | "exterior">("interior");
-  const catalogMembers = useMemo(
-    () =>
-      withCutJoints(
-        resolveMembers(options, inputs.color, viewFace),
-        drawingEvaluation?.bom?.profile_cuts ?? [],
-      ),
-    [options, inputs.color, viewFace, drawingEvaluation],
+  const members = useMemo(
+    () => resolveMembers(options, inputs.color, viewFace),
+    [options, inputs.color, viewFace],
   );
-  const members = usePresentationMembers(catalogMembers);
   const [tool, setTool] = useState<EditorTool>("select");
   const [treeOpen, setTreeOpen] = useState(false);
   const narrow = useEditorMedia("(max-width: 1279px)");
   const readOnly = useEditorMedia("(max-width: 1023px)");
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [assistantOpen, setAssistantOpen] = useState(false);
   const inspectorRef = useRef<HTMLDivElement>(null);
   const [proposal, setProposal] = useState<{
     simulation: Simulation;
@@ -2201,6 +2193,10 @@ export function AssemblyEditor({
   const [operationMessage, setOperationMessage] = useState("");
   /** Queued prompt for the assistant — "" means focus only. Every "…with
    * DEKOPEN" affordance funnels here; the human always confirms. */
+  const [assistantDraft, setAssistantDraft] = useState<{
+    text: string;
+    submit?: boolean;
+  } | null>(null);
 
   const issuesListRef = useRef<HTMLUListElement>(null);
   /** Canvas context menu — cursor position, closed on action/outside/Escape. */
@@ -2238,8 +2234,10 @@ export function AssemblyEditor({
 
   /** Every "…with DEKOPEN" affordance: scroll the assistant into view and
    * hand it a prompt draft — "" focuses the field untouched. */
-  function askAssistant(prompt: string, _submit = false): void {
-    window.dispatchEvent(new CustomEvent("dekopen:assistant", { detail: { prompt } }));
+  function askAssistant(prompt: string, submit = false): void {
+    setAssistantOpen(true);
+    setInspectorOpen(true);
+    setAssistantDraft({ text: prompt, submit });
   }
 
   useEffect(() => {
@@ -2823,7 +2821,6 @@ export function AssemblyEditor({
         </output>
       )}
       <div className="assembly-tools" role="toolbar" aria-label={t("assembly.tools")}>
-        <span className="assembly-tools__caption">Diseñar</span>
         {[
           {
             name: "select",
@@ -3734,8 +3731,23 @@ export function AssemblyEditor({
           </section>
         )}
         {product && (
-          <details className="editor-assistant">
-            <summary>Explorar alternativas</summary>
+          <details
+            open={assistantOpen}
+            onToggle={(event) => setAssistantOpen(event.currentTarget.open)}
+            className="editor-assistant"
+          >
+            <summary>Asistente y alternativas</summary>
+            <AssistantPanel
+              organizationId={organizationId}
+              positionId={positionId}
+              systemId={inputs.systemId}
+              color={inputs.color}
+              product={product}
+              disabled={disabled}
+              draft={assistantDraft}
+              onDraftHandled={() => setAssistantDraft(null)}
+              onApply={applyRegisteredOps}
+            />
             <AlternativesPanel
               organizationId={organizationId}
               positionId={positionId}

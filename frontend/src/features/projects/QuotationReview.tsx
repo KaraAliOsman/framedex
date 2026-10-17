@@ -1,11 +1,8 @@
-import { lazy, Suspense, useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import type { QuotationPreview } from "../../api/generated/models";
 import { formatDate, formatMoney } from "../money";
 import { formatDateTime, formatRevision } from "../../format";
 import { DimLoader } from "../../ui/Signature";
-import "../../ui/DocumentViewer.css";
-
-const PdfPreview = lazy(() => import("../../ui/PdfPreview"));
 
 /** Opens ancestor disclosures before scrolling and focusing the exact missing field. */
 export function focusQuotationField(id: string): void {
@@ -73,21 +70,12 @@ export function QuotationReview({
   onIssue: () => void;
 }): JSX.Element {
   const [objectUrl, setObjectUrl] = useState("");
-  const [document, setDocument] = useState<Blob | null>(null);
   const [error, setError] = useState("");
   const [attempt, setAttempt] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const [expired, setExpired] = useState(false);
-  const rendered = useCallback(
-    (ready: boolean) => {
-      setLoaded(ready);
-      onReady(ready);
-    },
-    [onReady],
-  );
   useEffect(() => {
     setObjectUrl("");
-    setDocument(null);
     setError("");
     setLoaded(false);
     onReady(false);
@@ -109,9 +97,7 @@ export function QuotationReview({
       )
         throw Error("pdf_integrity_failed");
       if (abort.signal.aborted) return;
-      const blob = new Blob([content], { type: "application/pdf" });
-      url = URL.createObjectURL(blob);
-      setDocument(blob);
+      url = URL.createObjectURL(new Blob([content], { type: "application/pdf" }));
       setObjectUrl(url);
     })().catch(() => {
       if (!abort.signal.aborted)
@@ -154,11 +140,14 @@ export function QuotationReview({
               <DimLoader label="Abriendo el PDF" /> Abriendo el PDF…
             </p>
           ) : (
-            document && (
-              <Suspense fallback={<p role="status">Abriendo PDF…</p>}>
-                <PdfPreview blob={document} title="Vista previa del PDF real" onReady={rendered} />
-              </Suspense>
-            )
+            <iframe
+              title="Vista previa del PDF real"
+              src={`${objectUrl}#view=FitH`}
+              onLoad={() => {
+                setLoaded(true);
+                onReady(true);
+              }}
+            />
           )}
           {objectUrl && (
             <a

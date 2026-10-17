@@ -4,14 +4,6 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import type { QuotationPreview } from "../../api/generated/models";
 import { focusQuotationField, QuotationReview } from "./QuotationReview";
 
-vi.mock("../../ui/PdfPreview", () => ({
-  default: ({ title, onReady }: { title: string; onReady(ready: boolean): void }) => (
-    <button type="button" title={title} onClick={() => onReady(true)}>
-      Completar renderizado del PDF verificado
-    </button>
-  ),
-}));
-
 const bytes = new TextEncoder().encode("%PDF-1.7\nreviewed quotation\n%%EOF");
 const preview: QuotationPreview = {
   id: "review",
@@ -68,8 +60,9 @@ test("issue requires the exact verified PDF to load, then names its recipient an
   const button = screen.getByRole("button", { name: "Emitir y enviar al cliente" });
   expect(button).toBeDisabled();
   const frame = await screen.findByTitle("Vista previa del PDF real");
+  expect(frame).toHaveAttribute("src", "blob:reviewed#view=FitH");
   expect(button).toBeDisabled();
-  fireEvent.click(frame);
+  fireEvent.load(frame);
   await waitFor(() => expect(button).toBeEnabled());
   fireEvent.click(button);
   expect(issue).toHaveBeenCalledOnce();
@@ -111,7 +104,7 @@ test("expired review requires a new preview even with prior confirmation", async
   mount({ ...preview, expires_at: "2020-01-01T00:00:00Z" });
   await screen.findByText(/La revisión del PDF venció/);
   const frame = await screen.findByTitle("Vista previa del PDF real");
-  fireEvent.click(frame);
+  fireEvent.load(frame);
   expect(screen.getByRole("button", { name: "Emitir y enviar al cliente" })).toBeDisabled();
 });
 

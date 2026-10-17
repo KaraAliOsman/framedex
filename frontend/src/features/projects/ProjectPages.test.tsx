@@ -2,7 +2,7 @@ import { webcrypto, createHash } from "node:crypto";
 // frontend/src/features/projects/ProjectPages.test.tsx
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { createMemoryRouter, parsePath, RouterProvider } from "react-router-dom";
+import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 import { ApiError, apiMutator } from "../../api/apiMutator";
@@ -13,7 +13,6 @@ import {
   positionsDestroy,
   projectOperationsPreview,
   projectOperationsApply,
-  projectDesignOptions,
   projectPaymentIntegrationStatus,
   projectPaymentLinksList,
   projectPaymentsList,
@@ -34,14 +33,6 @@ import type {
 import { t } from "../../i18n/es-CL";
 import { ConfirmProvider } from "../../ui";
 import { ProjectPages, projectNextAction } from "./ProjectPages";
-
-vi.mock("../../ui/PdfPreview", () => ({
-  default: ({ title, onReady }: { title: string; onReady(ready: boolean): void }) => (
-    <button type="button" title={title} onClick={() => onReady(true)}>
-      Completar renderizado del PDF verificado
-    </button>
-  ),
-}));
 
 vi.mock("../../api/apiMutator", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../api/apiMutator")>();
@@ -74,7 +65,6 @@ vi.mock("../../api/generated/dekopen", async (importOriginal) => {
     positionsDestroy: vi.fn(),
     projectOperationsPreview: vi.fn(),
     projectOperationsApply: vi.fn(),
-    projectDesignOptions: vi.fn(),
     projectPaymentsList: vi.fn(),
     projectPaymentsRecord: vi.fn(),
     projectPaymentVoid: vi.fn(),
@@ -190,7 +180,7 @@ const mounted: {
   client: QueryClient;
 }[] = [];
 
-function mount(path = "/projects/project-a", state?: unknown) {
+function mount(path = "/projects/project-a") {
   const client = new QueryClient({
     defaultOptions: {
       queries: { retry: false, gcTime: 0 },
@@ -202,7 +192,7 @@ function mount(path = "/projects/project-a", state?: unknown) {
       { path: "/projects", element: <ProjectPages /> },
       { path: "/projects/:id", element: <ProjectPages /> },
     ],
-    { initialEntries: [{ ...parsePath(path), state }] },
+    { initialEntries: [path] },
   );
 
   mounted.push({ router, client });
@@ -283,7 +273,7 @@ async function issueReviewedPdf(): Promise<void> {
     "Revisé este PDF, el destinatario y las condiciones de emisión",
   );
   expect(confirmation).toBeDisabled();
-  fireEvent.click(frame);
+  fireEvent.load(frame);
   await waitFor(() => expect(confirmation).toBeEnabled());
   fireEvent.click(confirmation);
   fireEvent.click(screen.getByRole("button", { name: "Emitir y enviar al cliente" }));
@@ -299,7 +289,6 @@ beforeEach(() => {
     },
   );
   vi.resetAllMocks();
-  vi.mocked(projectDesignOptions).mockResolvedValue(response(200, { profiles: [] }) as never);
   window.sessionStorage.clear();
   vi.stubGlobal("crypto", webcrypto);
   vi.stubGlobal(
@@ -384,8 +373,8 @@ it("creates a project, navigates to the server ID and renders persisted metadata
   vi.mocked(projectsCreate).mockResolvedValue(response(201, created));
   vi.mocked(projectsRetrieve).mockResolvedValue(response(200, created));
 
-  const router = mount("/projects?create=1");
-  await screen.findByLabelText(t("projects.name"));
+  const router = mount("/projects");
+  fireEvent.click(await screen.findByRole("button", { name: t("projects.create") }));
   change("projects.name", "Nombre ingresado");
   change("projects.client", "Cliente ingresado");
   change("projects.email", "ingresado@example.test");
@@ -603,75 +592,15 @@ it.each([409, 503])(
     expect(await screen.findByRole("alert")).toHaveTextContent("No se pudo confirmar el cambio");
     expect(screen.getByText("Dormitorio principal")).toBeInTheDocument();
     await waitFor(() =>
-      expect(
-        screen.getByRole("button", {
-          name: status >= 500 ? "Comprobar y completar el cambio" : "Aplicar cambios revisados",
-        }),
-      ).toBeEnabled(),
+      expect(screen.getByRole("button", { name: "Aplicar cambios revisados" })).toBeEnabled(),
     );
     const first = vi.mocked(projectOperationsApply).mock.calls[0]![1];
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: status >= 500 ? "Comprobar y completar el cambio" : "Aplicar cambios revisados",
-      }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Aplicar cambios revisados" }));
     await waitFor(() => expect(projectOperationsApply).toHaveBeenCalledTimes(2));
     expect(vi.mocked(projectOperationsApply).mock.calls[1]![1]).toEqual(first);
     expect(projectsRetrieve).toHaveBeenCalledTimes(1);
   },
 );
-
-it("recovers the assistant PDF as a review, without false missing fields or an automatic issue", async () => {
-  const project = makeProject({
-    pricing_current: true,
-    current_pricing_operation_id: "operation-a",
-    position_count: 1,
-    positions: [makePosition()],
-  });
-  vi.mocked(projectsRetrieve).mockResolvedValue(response(200, project));
-  vi.mocked(apiMutator).mockImplementation(async (url, options) => {
-    if (url.endsWith("/quotation-previews/preview-a/") && options.method === "GET")
-      return response(200, quotationPreview) as never;
-    if (url.endsWith("/inputs/") && options.method === "GET")
-      return response(200, {
-        project_id: project.id,
-        revision_code: "REV-A",
-        payment_terms: "Condiciones ya guardadas",
-        quotation_valid_until: "2999-01-01",
-        commercial_terms: quotationTerms,
-        positions: [],
-      }) as never;
-    throw Error(`Unexpected lifecycle request ${options.method} ${url}`);
-  });
-  mount("/projects/project-a?section=quote", {
-    quotationPreview: {
-      organizationId: "org-a",
-      projectId: project.id,
-      previewId: quotationPreview.id,
-    },
-  });
-  const renderer = await screen.findByTitle("Vista previa del PDF real");
-  expect(screen.queryByRole("navigation", { name: "Qué falta para emitir" })).toBeNull();
-  expect(screen.queryByRole("group", { name: "Cliente y obra" })).toBeNull();
-  const emit = screen.getByRole("button", { name: "Emitir y enviar al cliente" });
-  expect(emit).toBeDisabled();
-  fireEvent.click(renderer);
-  await waitFor(() =>
-    expect(
-      screen.getByLabelText("Revisé este PDF, el destinatario y las condiciones de emisión"),
-    ).toBeEnabled(),
-  );
-  expect(emit).toBeDisabled();
-  expect(apiMutator).toHaveBeenCalledTimes(1);
-  fireEvent.click(screen.getByRole("button", { name: "Ajustar datos y preparar de nuevo" }));
-  expect(await screen.findByLabelText(t("quotation.paymentTerms"))).toHaveValue(
-    "Condiciones ya guardadas",
-  );
-  expect(screen.getByRole("navigation", { name: "Qué falta para emitir" })).toBeVisible();
-  expect(vi.mocked(apiMutator).mock.calls.every(([, options]) => options.method === "GET")).toBe(
-    true,
-  );
-});
 
 it("prepares and explicitly emits the current priced revision", async () => {
   const position = makePosition();
@@ -1608,8 +1537,10 @@ it("explicitly retires current draft pricing with an audit reason before editing
       }),
     ),
   );
-  fireEvent.click(screen.getByRole("tab", { name: "Ventanas y puertas" }));
-  expect(await screen.findByRole("button", { name: "Agregar ventana" })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("tab", { name: "Posiciones" }));
+  expect(
+    await screen.findByRole("button", { name: "Agregar desde biblioteca" }),
+  ).toBeInTheDocument();
 });
 
 it("persists list search/status/sort in the URL across back navigation", async () => {

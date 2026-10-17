@@ -2,7 +2,6 @@ import {
   createContext,
   useContext,
   useEffect,
-  useId,
   useMemo,
   useRef,
   useState,
@@ -251,8 +250,6 @@ function Member({
   h,
   surface,
   className,
-  ringWidth,
-  joint,
 }: {
   x: number;
   y: number;
@@ -260,14 +257,7 @@ function Member({
   h: number;
   surface: MemberSurface;
   className: string;
-  ringWidth?: number;
-  joint?: "MITER" | "BUTT";
 }): JSX.Element {
-  const patternId = useId().replace(/:/g, "");
-  const textured =
-    !!surface.finish?.texture_path || ["FOIL", "WOOD_EFFECT"].includes(surface.finish?.kind ?? "");
-  const texture = (vertical: boolean) =>
-    textured ? `url(#${patternId}-${vertical ? "v" : "h"})` : surface.fill;
   const thin = Math.min(w, h);
   const detail = surface.detail !== "none" && thin >= 26;
   const inset = Math.min(thin * 0.3, 12);
@@ -277,110 +267,16 @@ function Member({
   const strip = Math.min(thin * 0.09, 3.5);
   return (
     <>
-      {textured && !surface.finish?.texture_path ? (
-        <title>Veta ilustrativa del acabado; no es una muestra del fabricante.</title>
-      ) : null}
-      {textured ? (
-        <defs>
-          {[true, false].map((vertical) => (
-            <pattern
-              key={String(vertical)}
-              id={`${patternId}-${vertical ? "v" : "h"}`}
-              patternUnits="userSpaceOnUse"
-              width={96}
-              height={900}
-              patternTransform={vertical ? undefined : "rotate(90)"}
-            >
-              <rect width={96} height={900} fill={surface.fill} />
-              {surface.finish?.texture_path ? (
-                <image
-                  href={surface.finish.texture_path}
-                  width={96}
-                  height={900}
-                  preserveAspectRatio="none"
-                />
-              ) : (
-                <g opacity={0.34} fill="none" stroke={surface.edge} strokeWidth={2.4}>
-                  {Array.from({ length: 13 }, (_, index) => (
-                    <path
-                      key={index}
-                      d={`M ${index * 8} -20 C ${index * 8 - 13} 170 ${index * 8 + 18} 260 ${index * 8} 450 S ${index * 8 - 9} 740 ${index * 8 + 5} 920`}
-                    />
-                  ))}
-                </g>
-              )}
-            </pattern>
-          ))}
-        </defs>
-      ) : null}
       <rect
         className={`member ${className}`}
         x={x}
         y={y}
         width={w}
         height={h}
-        fill={texture(vertical)}
+        fill={surface.fill}
         stroke={surface.edge}
         strokeWidth={2.5}
       />
-      {ringWidth
-        ? (() => {
-            const inset = Math.min(ringWidth, w / 2, h / 2);
-            const diagonal = joint === "MITER";
-            const polygons = [
-              {
-                vertical: true,
-                points: [
-                  [x, y],
-                  [x + inset, y + (diagonal ? inset : 0)],
-                  [x + inset, y + h - (diagonal ? inset : 0)],
-                  [x, y + h],
-                ],
-              },
-              {
-                vertical: true,
-                points: [
-                  [x + w, y],
-                  [x + w, y + h],
-                  [x + w - inset, y + h - (diagonal ? inset : 0)],
-                  [x + w - inset, y + (diagonal ? inset : 0)],
-                ],
-              },
-              {
-                vertical: false,
-                points: [
-                  [x + (diagonal ? 0 : inset), y],
-                  [x + w - (diagonal ? 0 : inset), y],
-                  [x + w - inset, y + inset],
-                  [x + inset, y + inset],
-                ],
-              },
-              {
-                vertical: false,
-                points: [
-                  [x + inset, y + h - inset],
-                  [x + w - inset, y + h - inset],
-                  [x + w - (diagonal ? 0 : inset), y + h],
-                  [x + (diagonal ? 0 : inset), y + h],
-                ],
-              },
-            ];
-            return (
-              <g pointerEvents="none" data-corner-joint={joint}>
-                {polygons.map((polygon, index) => (
-                  <polygon
-                    key={index}
-                    points={polygon.points.map((point) => point.join(",")).join(" ")}
-                    fill={texture(polygon.vertical)}
-                    stroke={joint ? surface.edge : "none"}
-                    strokeWidth={0.8}
-                    vectorEffect="non-scaling-stroke"
-                  />
-                ))}
-              </g>
-            );
-          })()
-        : null}
       {detail && (
         <rect
           className={`member-inner member-inner--${surface.detail}`}
@@ -743,8 +639,6 @@ function Bay({
                     w={width}
                     h={height}
                     surface={sashSurface}
-                    ringWidth={thickness}
-                    joint={members.sash.cornerJoint}
                     className="member-sash"
                   />
                 )}
@@ -897,8 +791,6 @@ function Bay({
                 w={leafW}
                 h={region.h}
                 surface={sashSurface}
-                ringWidth={leafSashT}
-                joint={members.sash.cornerJoint}
                 className="member-sash"
               />
               <rect
@@ -1033,8 +925,6 @@ function Bay({
             w={sashArea.w}
             h={Math.max(sashArea.h, 0)}
             surface={sashSurface}
-            ringWidth={sashT}
-            joint={members.sash.cornerJoint}
             className="member-sash"
           />
           {/* glazing beads: sightline ring inside the sash */}
@@ -2110,7 +2000,6 @@ export function ProductFrontContent({
   issues,
   disabled,
   preview = false,
-  selectionOnly = false,
   hideOverallWidth = false,
   divideTool = null,
   dimLevel = "design",
@@ -2143,8 +2032,6 @@ export function ProductFrontContent({
    * affordance (roles, tab stops, handlers) so it can live inside a
    * single outer button. */
   preview?: boolean;
-  /** Read-only inspection can pick parts without enabling dimension edits or drag. */
-  selectionOnly?: boolean;
   hideOverallWidth?: boolean;
   /** Armed divide tool — hovering shows where the mullion lands and
    * clicking splits the leaf bay under the cursor at the cursor offset. */
@@ -2198,7 +2085,7 @@ export function ProductFrontContent({
   const technicalLayout = technicalGutters(front, drawingFacts, openingFacts);
   const issueMap = useMemo(() => severityByModule(issues), [issues]);
   const midY = height / 2;
-  const interactive = !preview && (!disabled || selectionOnly) && !projected;
+  const interactive = !preview && !disabled && !projected;
   const sheetScale = useViewportScale();
   // ~12px on screen is the smallest usable drag target (W3C pointer
   // guidance); never wider than a third of the smallest affected span.
@@ -2440,7 +2327,7 @@ export function ProductFrontContent({
       <ExteriorTextContext.Provider value={members.viewFace === "exterior"}>
         {/* overall width chain — untranslated so it always clears the
           tallest silhouette point (arc crowns sit at viewBox y ≥ 0). */}
-        {!preview && !selectionOnly && hideOverallWidth === false && (
+        {!preview && hideOverallWidth === false && (
           <>
             <DimRun marks={[0, totalW]} edge={0} at={-70} vertical={false} />
             <SvgDim
@@ -2462,7 +2349,7 @@ export function ProductFrontContent({
         {/* the drawing band lifts for arc overshoot: sill stays shared. */}
         <g transform={`translate(0 ${lift})`}>
           {/* height chain */}
-          {!preview && !selectionOnly && (
+          {!preview && (
             <>
               <DimRun
                 marks={
@@ -2492,7 +2379,7 @@ export function ProductFrontContent({
           )}
           {/* per-column width chain — stacked members share the column span
             (design/technical only: overview keeps the overall W/H). */}
-          {!preview && !selectionOnly && dimLevel !== "overview" && (
+          {!preview && dimLevel !== "overview" && (
             <>
               <DimRun
                 marks={columns.flatMap((column) => [column.x, column.x + column.w])}
@@ -2545,7 +2432,7 @@ export function ProductFrontContent({
               exterior={members.viewFace === "exterior"}
             />
           )}
-          {!preview && !selectionOnly && (
+          {!preview && (
             <>
               <AddHandle
                 x={-70}
@@ -2582,7 +2469,7 @@ export function ProductFrontContent({
                       "aria-label": `${t("assembly.module")} ${moduleIndex + 1}`,
                       "aria-current": module.id === selectedId ? "true" : undefined,
                       "aria-keyshortcuts": "Enter Space",
-                      tabIndex: disabled && !selectionOnly ? -1 : 0,
+                      tabIndex: disabled ? -1 : 0,
                       onClick: (event) =>
                         divideTool
                           ? endDivide(module.id, event.clientX, event.clientY)
@@ -2635,8 +2522,6 @@ export function ProductFrontContent({
                       w={w}
                       h={h}
                       surface={frameSurface}
-                      ringWidth={frameT}
-                      joint={members.frame.cornerJoint}
                       className="member-frame"
                     />
                     <rect
@@ -2651,17 +2536,13 @@ export function ProductFrontContent({
                     >
                       <ModuleTree
                         moduleId={module.id}
-                        selectedBayId={
-                          selectionOnly && module.id !== selectedId ? null : selectedBayId
-                        }
+                        selectedBayId={selectedBayId}
                         onSelectBay={
                           interactive && !divideTool && onSelectBay
                             ? (bayId) => onSelectBay(module.id, bayId)
                             : undefined
                         }
-                        selectedDivisionId={
-                          selectionOnly && module.id !== selectedId ? null : selectedDivisionId
-                        }
+                        selectedDivisionId={selectedDivisionId}
                         onSelectDivision={
                           interactive && !divideTool && onSelectDivision
                             ? (divisionId) => onSelectDivision(module.id, divisionId)

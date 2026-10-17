@@ -60,19 +60,6 @@ export function solidToGeometry(solid: Solid3D): THREE.ExtrudeGeometry | null {
       depth: span,
       bevelEnabled: false,
     });
-    if (solid.miter) {
-      const positions = geo.getAttribute("position");
-      const us = outline.map(([u]) => u),
-        lo = Math.min(...us),
-        hi = Math.max(...us);
-      for (let index = 0; index < positions.count; index += 1) {
-        const u = positions.getX(index),
-          along = positions.getZ(index);
-        const inset = solid.mirrorU ? hi - u : u - lo;
-        positions.setZ(index, along + inset * (1 - (2 * along) / span));
-      }
-      geo.computeVertexNormals();
-    }
     if (flipped) {
       geo.rotateX(-Math.PI / 2);
       geo.translate(solid.u0, solid.a0, solid.v0);
@@ -84,22 +71,4 @@ export function solidToGeometry(solid: Solid3D): THREE.ExtrudeGeometry | null {
     return geo;
   }
   return null;
-}
-
-/** Grain follows each member's run. Repeat size is a drawing convention,
- * not a measured manufacturer sample or an engineering dimension. */
-export function mapFinishUvs(geometry: THREE.BufferGeometry, solid: Solid3D): void {
-  const positions = geometry.getAttribute("position");
-  const uv = new Float32Array(positions.count * 2);
-  geometry.computeBoundingBox();
-  const bounds = geometry.boundingBox!;
-  const size = bounds.getSize(new THREE.Vector3());
-  const vertical = solid.kind === "profile" ? solid.axis === "y" : size.y >= size.x;
-  for (let index = 0; index < positions.count; index += 1) {
-    const x = positions.getX(index) - bounds.min.x,
-      y = positions.getY(index) - bounds.min.y;
-    uv[index * 2] = (vertical ? x : y) / 120;
-    uv[index * 2 + 1] = (vertical ? y : x) / 900;
-  }
-  geometry.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
 }

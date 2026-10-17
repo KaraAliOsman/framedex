@@ -6,7 +6,6 @@ import type {
   ProjectResponse,
 } from "../../src/api/generated/models";
 import { fmtMm } from "../../src/format";
-import { domainLabel } from "../../src/i18n/domainLabels";
 import { test } from "./support/manual-project-fixture";
 
 test.use({ viewport: { width: 1366, height: 768 }, actionTimeout: 15_000 });
@@ -98,12 +97,7 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   );
   expect(emptyProjects.items).toEqual([]);
   await expect(page.getByText("No hay proyectos que coincidan.", { exact: true })).toBeVisible();
-  const created = await responseTo<ProjectResponse>(page, "POST", "/api/v1/projects/", 201, () =>
-    page.getByRole("button", { name: "Nueva obra", exact: true }).click(),
-  );
-  expect(created.client_name).toBe("");
-  expect(created.position_count).toBe(0);
-  await page.getByRole("button", { name: "Editar datos", exact: true }).click();
+  await page.getByRole("button", { name: "Crear proyecto", exact: true }).click();
   // Extended identity fields live under the collapsed "Datos adicionales" section.
   await page.locator("summary", { hasText: "Datos adicionales" }).click();
 
@@ -121,13 +115,7 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
     await page.getByLabel(label, { exact: true }).fill(value);
   }
 
-  const project = await responseTo<ProjectResponse>(
-    page,
-    "PATCH",
-    `/api/v1/projects/${created.id}/`,
-    200,
-    save,
-  );
+  const project = await responseTo<ProjectResponse>(page, "POST", "/api/v1/projects/", 201, save);
   expect(project).toMatchObject({
     name: projectName,
     client_name: "Cliente sintético E2E",
@@ -285,9 +273,7 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   for (const [index, cut] of editedBom.profile_cuts.entries()) {
     await expect(profileRows.nth(index).locator("td")).toHaveText([
       cut.sku,
-      domainLabel(cut.role),
       fmtMm(cut.length_mm),
-      `${fmtMm(cut.angle_left)}° / ${fmtMm(cut.angle_right)}°`,
       String(cut.qty),
     ]);
   }
@@ -358,7 +344,6 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
 
   await back();
   await expect(page).toHaveURL(new RegExp(`${projectPath}$`));
-  await page.locator("summary", { hasText: "Buscar, filtrar y seleccionar" }).click();
   await page.getByLabel(`Seleccionar posición ${saved.position_index}`, { exact: true }).check();
   const proposal = await responseTo<{ diff: { kind: string }[] }>(
     page,
@@ -480,8 +465,8 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
     page.goto(projectPath),
   );
   expect(unchangedSource).toEqual(source);
-  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
-  await screenshot(page, info, "05-project-light");
+  await page.getByRole("button", { name: "Cambiar tema", exact: true }).click();
+  await screenshot(page, info, "05-project-dark");
   // Estimators can browse the catalog (and run supplier imports); structural
   // edits stay owner/manager-only.
   // A cold route first resolves the real catalog authority. Wait for that

@@ -1,28 +1,16 @@
 ---
 type: research
 status: active
-updated: 2026-10-17
+updated: 2026-09-28
 volatility: medium
 sources:
   - public vendor material
   - owner competitor references
-  - docs/ux/2026-10-17/02-competencia.md
 ---
 
 # Competitor capability map
 
 This is a research guide, not a ranking.
-
-La [investigación del 17-10-2026](../../ux/2026-10-17/02-competencia.md)
-amplía esta guía con fuentes primarias, tramos de vídeos observados y una matriz
-de evidencia. Estudia NuveraPRO, Winart de Haustek, Moxisys/WindoorCraft y
-Logikal, más referentes secundarios. No implica cuentas/licencias operadas ni
-visionado íntegro. La [síntesis](experience-review-2026-10-17.md) preserva límites.
-
-Moxisys separa ediciones y presenta varios módulos ERP como opcionales/en
-desarrollo. Winart se identificó como el producto de Haustek Chile. El material
-Logikal 10 de WorkStation es histórico y distinto del tutorial oficial v12.
-Ausencia de evidencia de una función no equivale a ausencia del competidor.
 
 DEKOPEN should study competitors for domain coverage and workflow lessons without copying legacy UI.
 

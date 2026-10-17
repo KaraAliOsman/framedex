@@ -4,7 +4,6 @@ import { EmptyState, ErrorState, LoadingState } from "../../ui";
 import { formatDate, formatDecimal } from "../../format";
 import { domainLabels } from "../../i18n/domainLabels";
 import { stationCodeLabel } from "./labels";
-import { Icon } from "../../ui/Icon";
 
 export type StationQueueGroup = {
   code?: string;
@@ -35,22 +34,6 @@ export function ProductionBoard({
   const [project, setProject] = useState("");
   const [date, setDate] = useState("");
   const [block, setBlock] = useState("");
-  const [search, setSearch] = useState("");
-  const [limits, setLimits] = useState<Record<string, number>>({});
-  const needle = search.trim().toLocaleLowerCase("es-CL");
-  const matches = (o: ProductionOrder) =>
-    (!needle ||
-      `${o.order_code} ${o.project_code ?? ""} ${o.project_name ?? ""} ${o.client_name ?? ""}`
-        .toLocaleLowerCase("es-CL")
-        .includes(needle)) &&
-    (!project || o.project_code === project) &&
-    (!date || (!!o.scheduled_date && o.scheduled_date <= date)) &&
-    (!block ||
-      (block === "hold" && o.status === "HOLD") ||
-      (block === "shortage" && o.shortage > 0) ||
-      (block === "qc" && o.status === "HOLD" && o.qc_failed) ||
-      (block === "plan" && !o.optimization_ready));
-  const byId = new Map(orders.map((order) => [order.id, order]));
   const projects = [
     ...new Map(
       orders.filter((o) => o.project_code).map((o) => [o.project_code, o.project_name]),
@@ -58,13 +41,20 @@ export function ProductionBoard({
   ];
   const groups = stations.map((station) => ({
     ...station,
-    orders: (station.entries ?? [])
-      .filter((entry) => entry.is_next)
-      .map((entry) => byId.get(entry.order_id ?? ""))
-      .filter((order): order is ProductionOrder => !!order && matches(order)),
+    orders: orders.filter(
+      (o) =>
+        (station.entries ?? []).some((e) => e.order_id === o.id && e.is_next) &&
+        (!project || o.project_code === project) &&
+        (!date || (!!o.scheduled_date && o.scheduled_date <= date)) &&
+        (!block ||
+          (block === "hold" && o.status === "HOLD") ||
+          (block === "shortage" && o.shortage > 0) ||
+          (block === "qc" && o.status === "HOLD" && o.qc_failed) ||
+          (block === "plan" && !o.optimization_ready)),
+    ),
   }));
-  const ended = orders.filter(
-    (o) => ["COMPLETED", "DISPATCHED", "INSTALLED", "CANCELLED"].includes(o.status) && matches(o),
+  const ended = orders.filter((o) =>
+    ["COMPLETED", "DISPATCHED", "INSTALLED", "CANCELLED"].includes(o.status),
   );
   if (loading) return <LoadingState label="Cargando estaciones de producción" />;
   if (error) return <ErrorState title="No se pudo cargar la planta" body={error} onRetry={retry} />;
@@ -79,18 +69,6 @@ export function ProductionBoard({
   return (
     <section className="production-board" aria-label="Tablero por estación">
       <div className="production-board-filters">
-        <label>
-          Buscar en el taller
-          <input
-            type="search"
-            placeholder="OT, obra o cliente"
-            value={search}
-            onChange={(event) => {
-              setSearch(event.target.value);
-              setLimits({});
-            }}
-          />
-        </label>
         <label>
           Obra
           <select value={project} onChange={(e) => setProject(e.target.value)}>
@@ -133,18 +111,17 @@ export function ProductionBoard({
             </header>
             <div className="production-board-cards">
               {station.orders.length ? (
-                station.orders.slice(0, limits[station.code ?? ""] ?? 12).map((order) => {
+                station.orders.map((order) => {
                   const entry = station.entries?.find((e) => e.order_id === order.id && e.is_next);
                   return (
                     <button
                       type="button"
                       className="production-board-order"
-                      data-blocked={order.status === "HOLD" || order.shortage > 0 || undefined}
                       key={order.id}
                       onClick={() => onOpen(order.id)}
                     >
                       <strong className="ui-value">{order.order_code}</strong>
-                      <span className="production-board-work">
+                      <span>
                         {order.project_code
                           ? `${order.project_code} · ${order.project_name ?? "Sin dato · obra sin nombre"}`
                           : "Sin dato · obra no vinculada"}
@@ -154,13 +131,6 @@ export function ProductionBoard({
                         {formatDecimal(order.quantity)} unidades · {order.steps_done}/
                         {order.steps_total} pasos
                       </span>
-                      {order.steps_total > 0 ? (
-                        <progress
-                          value={order.steps_done}
-                          max={order.steps_total}
-                          aria-label={`Avance de ${order.order_code}`}
-                        />
-                      ) : null}
                       <span className="ui-value">
                         {order.scheduled_date
                           ? `Compromiso ${formatDate(order.scheduled_date)}`
@@ -185,10 +155,6 @@ export function ProductionBoard({
                           Calidad · requiere supervisor
                         </span>
                       ) : null}
-                      <span className="production-board-open">
-                        Abrir trabajo
-                        <Icon name="arrow" size={16} />
-                      </span>
                     </button>
                   );
                 })
@@ -196,20 +162,6 @@ export function ProductionBoard({
                 <p className="production-board-empty">Sin OT en este filtro.</p>
               )}
             </div>
-            {station.orders.length > (limits[station.code ?? ""] ?? 12) ? (
-              <button
-                type="button"
-                className="production-board-more"
-                onClick={() =>
-                  setLimits((current) => ({
-                    ...current,
-                    [station.code ?? ""]: (current[station.code ?? ""] ?? 12) + 12,
-                  }))
-                }
-              >
-                Ver más · {station.orders.length - (limits[station.code ?? ""] ?? 12)} pendientes
-              </button>
-            ) : null}
           </section>
         ))}
       </div>

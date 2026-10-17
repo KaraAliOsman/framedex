@@ -7,8 +7,6 @@
  */
 
 export interface PortalOrganization {
-  portal_heading?: string;
-  portal_intro?: string;
   /** @nullable */
   brand_schema?: number | null;
   brand_primary_color?: string;

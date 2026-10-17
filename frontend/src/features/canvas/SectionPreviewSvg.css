@@ -4,39 +4,6 @@
   display: grid;
   gap: var(--space-1);
 }
-.section-preview__photo {
-  display: block;
-  width: 100%;
-  max-width: 220px;
-  height: 160px;
-  object-fit: contain;
-  background: white;
-  border-radius: var(--radius-md);
-}
-
-.section-preview__recognition {
-  display: grid;
-  gap: var(--space-2);
-  margin: 0;
-}
-
-.section-preview__recognition .profile-illustration {
-  max-width: 220px;
-  border: 0;
-  background: var(--surface-panel);
-}
-
-.section-preview__detail summary {
-  cursor: pointer;
-  color: var(--text-secondary);
-  font-size: var(--type-dense);
-  padding-block: var(--space-2);
-}
-
-.section-preview__pending {
-  font-size: var(--type-dense);
-  color: var(--text-secondary);
-}
 
 .section-preview svg {
   display: block;

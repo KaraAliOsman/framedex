@@ -86,9 +86,9 @@ describe("SHOT-04 application routes", () => {
   it("opens the real project list from the authenticated shell", async () => {
     renderRoute("/dashboard", authValue("ready"));
     expect(await screen.findByTestId("app-shell")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Obras" })).toHaveAttribute("href", "/projects");
-    fireEvent.click(screen.getByRole("link", { name: "Obras" }));
-    expect(await screen.findByRole("heading", { name: "Obras" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Proyectos" })).toHaveAttribute("href", "/projects");
+    fireEvent.click(screen.getByRole("link", { name: "Proyectos" }));
+    expect(await screen.findByRole("heading", { name: "Todos los proyectos" })).toBeInTheDocument();
   });
 
   it("lets an operator explicitly open their role-scoped Today queue", async () => {
@@ -113,12 +113,12 @@ describe("SHOT-04 application routes", () => {
     expect(selector).toBeInTheDocument();
   });
 
-  it("uses the single appearance throughout the authenticated shell", async () => {
-    window.localStorage.setItem("dekopen.theme", "dark");
+  it("switches and persists the dual theme", async () => {
+    window.localStorage.setItem("dekopen.theme", "light");
     renderRoute("/dashboard", authValue("ready"));
-    await screen.findByTestId("app-shell");
-    expect(document.documentElement.dataset.theme).toBe("light");
-    expect(screen.queryByRole("button", { name: "Cambiar tema" })).not.toBeInTheDocument();
+    fireEvent.click(await screen.findByRole("button", { name: "Cambiar tema" }));
+    expect(document.documentElement.dataset.theme).toBe("dark");
+    expect(window.localStorage.getItem("dekopen.theme")).toBe("dark");
   });
 
   it("keeps dev-only routes out of production routing", () => {

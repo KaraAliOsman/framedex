@@ -59,16 +59,14 @@ from production.service import (
 )
 
 _CSS_BUNDLE = """
-.pack-section { break-before: auto; margin-top: 6mm; }
-.pack-section > h2 { break-after: avoid; border-top: 1pt solid #161C1F; padding-top: 3mm; }
-.pack-section h3 { break-after: avoid; }
+.pack-section { break-before: page; }
 .pack-section.first { break-before: auto; }
 .pack-grid { display: flex; flex-wrap: wrap; gap: 5mm; }
 .member-card { break-inside: avoid; width: 122mm; border: 0.4pt solid #161C1F;
                border-radius: 1.5mm; padding: 2.5mm 3mm; }
 .member-card h4 { font-size: 8.5pt; margin: 0 0 1.5mm; }
 .member-svg { width: 100%; height: auto; display: block; }
-.unit-map { break-inside: avoid; max-height: 110mm; display: block; margin: 0 auto; }
+.unit-map { max-height: 120mm; display: block; margin: 0 auto; }
 .unit-map-svg { width: auto; max-width: 100%; height: 118mm; display: block; }
 .qc-check { display: inline-block; width: 3.4mm; height: 3.4mm;
             border: 0.5pt solid #161C1F; border-radius: 0.5mm; }
@@ -301,75 +299,127 @@ def _unit_map_svg(
     unit: ManufacturingFactsV1,
     labels: dict[str, dict[object, str]],
 ) -> str:
-    """Sealed geometry with external, collision-free reference gutters.
+    """Per-unit plan map in member-plan space: infill rects, leaf outlines,
+    member runs with their M-xx codes, handle markers — the assembly
+    section's relationship view."""
+    width = _mm(unit.nominal_width_mm)
+    height = _mm(unit.nominal_height_mm)
+    font = max(min(width, height) / Decimal("24"), Decimal("28"))
+    pad = max(Decimal("80"), font * Decimal("1.4"))
+    vb_w = width + pad * 2
+    vb_h = height + pad * 2
+    # WeasyPrint scales svgs from physical width/height attributes, not CSS.
+    aspect = vb_w / vb_h
+    box_h = min(Decimal("118"), Decimal("200") / aspect)
+    box_w = box_h * aspect
 
-    Callout positions are page composition only; engineering coordinates,
-    codes and requested handle heights remain the frozen manufacturing facts.
-    """
-    width, height = _mm(unit.nominal_width_mm), _mm(unit.nominal_height_mm)
-    font = max(min(width, height) / Decimal("30"), Decimal("28"))
-    small = font * Decimal("0.8")
-    callouts: list[tuple[Decimal, Decimal, str, str]] = []
-    drawing = [f'<rect x="0" y="0" width="{width}" height="{height}" fill="none" stroke="#161C1F" stroke-width="3"/>']
-
-    def centered(cx: Decimal, text: str, size: Decimal) -> Decimal:
-        # WeasyPrint does not consistently support SVG text-anchor.
+    def _cx(cx: Decimal, text: str, size: Decimal) -> Decimal:
+        """Left-aligned x that visually centers ``text`` on ``cx`` —
+        text-anchor=middle is ignored by the renderer."""
         return cx - size * Decimal("0.6") * Decimal(len(text)) / 2
 
+    small = font * Decimal("0.7")
+    svg = [
+        f'<svg width="{box_w}mm" height="{box_h}mm" '
+        f'viewBox="{-pad} {-pad} {vb_w} {vb_h}" '
+        'preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">',
+        f'<rect x="0" y="0" width="{width}" height="{height}" fill="none" '
+        'stroke="#161C1F" stroke-width="3"/>',
+    ]
     for infill in unit.infills:
         rect = infill.rect
-        x, y, w, h = (_mm(rect.x_mm), _mm(rect.y_mm), _mm(rect.width_mm), _mm(rect.height_mm))
-        code = str(labels["infill"].get(infill.infill_id, infill.semantic_infill_id))
-        if infill.shape:
-            points = " ".join(f"{_mm(p.x_mm)},{_mm(p.y_mm)}" for p in infill.shape)
-            drawing.append(f'<polygon points="{points}" fill="#EEF4F5" stroke="#6E929D" stroke-width="2"/>')
+        code = labels["infill"].get(infill.infill_id, infill.semantic_infill_id)
+        x, y = _mm(rect.x_mm), _mm(rect.y_mm)
+        w, h = _mm(rect.width_mm), _mm(rect.height_mm)
+        shape = infill.shape or []
+        if shape:
+            points = " ".join(f"{_mm(p.x_mm)},{_mm(p.y_mm)}" for p in shape)
+            svg.append(
+                f'<polygon points="{points}" fill="#8FB8CC" '
+                'fill-opacity="0.25" stroke="#4A7E93" stroke-width="2" '
+                'stroke-dasharray="10 6"/>'
+            )
         else:
-            drawing.append(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" fill="#EEF4F5" stroke="#6E929D" stroke-width="2"/>')
-        drawing.append(f'<text x="{centered(x+w/2, code, font)}" y="{y+h/2}" fill="#2C5667" font-size="{font}" font-weight="600">{escape(code)}</text>')
+            svg.append(
+                f'<rect x="{x}" y="{y}" width="{w}" height="{h}" '
+                'fill="#8FB8CC" fill-opacity="0.25" stroke="#4A7E93" '
+                'stroke-width="2" stroke-dasharray="10 6"/>'
+            )
+        svg.append(
+            f'<text x="{_cx(x + w / 2, str(code), font)}" '
+            f'y="{y + h / 2 + font * Decimal("0.35")}" '
+            f'fill="#2C5667" font-size="{font}" font-weight="600">'
+            f"{escape(code)}</text>"
+        )
     for leaf in unit.leaves:
         rect = leaf.rect
-        x, y, w, h = (_mm(rect.x_mm), _mm(rect.y_mm), _mm(rect.width_mm), _mm(rect.height_mm))
-        drawing.append(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" fill="none" stroke="#0B7770" stroke-width="2.5" stroke-dasharray="8 6"/>')
-    for member in unit.members:
-        code = str(labels["member"].get(member.member_id, member.semantic_member_id))
+        x, y = _mm(rect.x_mm), _mm(rect.y_mm)
+        w, h = _mm(rect.width_mm), _mm(rect.height_mm)
+        opening = _OPENING_LABELS.get(
+            str(leaf.opening_type.value), str(leaf.opening_type.value)
+        )
+        svg.append(
+            f'<rect x="{x}" y="{y}" width="{w}" height="{h}" fill="none" '
+            'stroke="#0B7770" stroke-width="2.5" stroke-dasharray="4 4"/>'
+            f'<text x="{_cx(x + w / 2, opening, small)}" '
+            f'y="{y + h - small * Decimal("0.4")}" '
+            f'fill="#0B4D49" font-size="{small}">'
+            f"{escape(opening)}</text>"
+        )
+    for index, member in enumerate(unit.members):
+        code = labels["member"].get(member.member_id, member.semantic_member_id)
         x1, y1 = _mm(member.start.x_mm), _mm(member.start.y_mm)
         x2, y2 = _mm(member.end.x_mm), _mm(member.end.y_mm)
-        drawing.append(f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="#161C1F" stroke-width="6"/>')
-        callouts.append(((x1+x2)/2, (y1+y2)/2, code, "#161C1F"))
+        # Labels stagger along the run and alternate the perpendicular side
+        # so clustered members (sash over frame) don't print their codes on
+        # top of each other; mid-run collides with centered infill codes.
+        dx, dy = x2 - x1, y2 - y1
+        run = max((dx * dx + dy * dy).sqrt(), Decimal("1"))
+        px, py = -dy / run, dx / run
+        along = Decimal("0.10") + Decimal(index % 3) * Decimal("0.38")
+        side = Decimal("0.9") if index % 2 == 0 else Decimal("-0.7")
+        lx = (x1 + dx * along) + px * font * side
+        ly = (y1 + dy * along) + py * font * side
+        svg.append(
+            f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" '
+            'stroke="#161C1F" stroke-width="7" stroke-linecap="round"/>'
+            f'<text x="{_cx(lx, str(code), font)}" '
+            f'y="{ly + font * Decimal("0.3")}" '
+            f'fill="#161C1F" font-size="{font}" font-weight="700">'
+            f'{escape(code)}</text>'
+        )
     for handle in unit.handles:
         code = labels["handle"].get(handle.handle_id, "MAN")
         x, y = _mm(handle.point.x_mm), _mm(handle.point.y_mm)
-        text = f"{code} · {_fmt_mm(handle.requested_height_mm)} mm"
-        drawing.append(f'<circle cx="{x}" cy="{y}" r="{font*Decimal("0.3")}" fill="#0B7770"/>')
-        callouts.append((x, y, text, "#0B655E"))
-
-    sides: list[list[tuple[Decimal, Decimal, str, str]]] = [[], []]
-    for index, item in enumerate(callouts):
-        side = 0 if item[0] < width/2 else 1 if item[0] > width/2 else index % 2
-        sides[side].append(item)
-    line_height = font * Decimal("1.65")
-    span = max(height, Decimal(max(map(len, sides), default=0)) * line_height)
-    extra = (span-height)/2
-    gutter = max((Decimal(len(item[2])) * font * Decimal("0.6") for item in callouts), default=font*4) + font*3
-    margin = font*2
-    vb_w, vb_h = width+gutter*2, span+margin*2
-    box_h = min(Decimal("108"), Decimal("250") * vb_h/vb_w)
-    box_w = box_h * vb_w/vb_h
-    svg = [f'<svg width="{box_w}mm" height="{box_h}mm" viewBox="{-gutter} {-extra-margin} {vb_w} {vb_h}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">', *drawing]
-    for side, entries in enumerate(sides):
-        entries.sort(key=lambda item: (item[1], item[0], item[2]))
-        for index, (x, y, code, color) in enumerate(entries):
-            # Even slots, ordered by target height: labels cannot overlap and
-            # leaders keep their vertical order, including narrow/tall units.
-            ly = -extra + span * Decimal(index+1)/Decimal(len(entries)+1)
-            elbow = -font if side == 0 else width+font
-            edge = -gutter+font if side == 0 else width+gutter-font
-            text_x = edge if side == 0 else width+font*2
-            svg.append(f'<path d="M{x},{y} L{elbow},{ly} L{edge},{ly}" fill="none" stroke="#A8B3B5" stroke-width="1.5"/>')
-            svg.append(f'<text x="{text_x}" y="{ly-font*Decimal("0.25")}" fill="{color}" font-size="{font}" font-weight="600">{escape(code)}</text>')
-    w_text, h_text = f"{_fmt_mm(width)} mm", f"{_fmt_mm(height)} mm"
-    svg.append(f'<text x="{centered(width/2, w_text, font)}" y="{-extra-font*Decimal("0.65")}" fill="#161C1F" font-size="{font}">{w_text}</text>')
-    svg.append(f'<text x="{centered(width/2, h_text, small)}" y="{height+extra+font*Decimal("1.3")}" fill="#465158" font-size="{small}">Alto {h_text}</text></svg>')
+        r = font * Decimal("0.55")
+        label = f"{code} · {_fmt_mm(handle.requested_height_mm)} mm"
+        # Right-hand default flips to left-of-mark when it would clip the
+        # viewBox edge (handle near the right jamb).
+        est = Decimal(len(label)) * small * Decimal("0.55")
+        gap = r + font * Decimal("0.3")
+        lx = x + gap
+        if lx + est > width:
+            lx = x - gap - est
+        svg.append(
+            f'<circle cx="{x}" cy="{y}" r="{r}" fill="#E56A32"/>'
+            f'<text x="{lx}" '
+            f'y="{y + small * Decimal("0.35")}" fill="#8A3A12" '
+            f'font-size="{small}" font-weight="700">{escape(label)}</text>'
+        )
+    # overall dims on the margins
+    w_text = _value(width)
+    h_text = _value(height)
+    svg.append(
+        f'<text x="{_cx(width / 2, w_text, font)}" '
+        f'y="{-pad * Decimal("0.35")}" '
+        f'fill="#161C1F" font-size="{font}">{w_text}</text>'
+        f'<text x="{width + pad * Decimal("0.35")}" '
+        f'y="{_cx(height / 2, h_text, font)}" '
+        f'fill="#161C1F" font-size="{font}" '
+        f'transform="rotate(90 {width + pad * Decimal("0.35")} '
+        f'{_cx(height / 2, h_text, font)})">{h_text}</text>'
+    )
+    svg.append("</svg>")
     return "".join(svg)
 
 
@@ -609,7 +659,7 @@ def _pack_html(
                 + ("<h2>Plan de barras</h2>" if first else "")
                 + '<div class="bar-band">'
                 + f"<h3>Barra {bar_no} · {escape(bar_sku)} · "
-                f"{escape({'STEEL': 'Acero', 'ALUMINUM': 'Aluminio', 'PVC': 'PVC'}.get(str(bar.get('material')), _value(bar.get('material'))))} · "
+                f"{escape(_value(bar.get('material')))} · "
                 f"{_fmt_mm(bar.get('stock_length_mm'))} mm {badge} · "
                 f"rendimiento {_pct(bar.get('yield_pct'))} %</h3>"
                 + _bar_svg(bar, labels, cut_map, codes=codes)

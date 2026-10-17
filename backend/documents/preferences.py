@@ -16,8 +16,6 @@ DEFAULT_TERMS = {
 DEFAULT_PREFERENCES = {
     "portal_successor_link": False,
     "paper": "LETTER", "accent": "TEAL", "legal_footer": "",
-    "quotation_layout": "EDITORIAL", "presentation_title": "", "presentation_intro": "",
-    "portal_heading": "", "portal_intro": "",
     "quotation_preview_minutes": 30,
     "quotation_valid_days": 15,
     "piece_label_paper": "LETTER",

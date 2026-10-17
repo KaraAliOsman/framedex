@@ -591,11 +591,7 @@ export function PortalQuotePage(): JSX.Element {
           <Issuer organization={quote.organization} />
           <div>
             <p className="portal-kicker">Cotización · {quote.project_code}</p>
-            <h1>{quote.organization?.portal_heading || quote.project_name || "Su obra"}</h1>
-            {quote.organization?.portal_heading ? <p>{quote.project_name}</p> : null}
-            {quote.organization?.portal_intro ? (
-              <p className="portal-introduction">{quote.organization.portal_intro}</p>
-            ) : null}
+            <h1>{quote.project_name || "Su obra"}</h1>
             <p>
               Para {quote.client_name || "cliente sin identificar"} · Oferta ·{" "}
               {formatRevision(quote.revision_code)}

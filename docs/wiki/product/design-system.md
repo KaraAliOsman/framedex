@@ -1,12 +1,10 @@
 ---
 type: concept
 status: active
-updated: 2026-10-17
+updated: 2026-10-10
 volatility: medium
-verified_ref: dca9454bd7989f57a3f1b001bf1920b3f83a0a8d
+verified_ref: fa3731843dbfbd75d00024e95f4986a3616a8747
 sources:
-  - docs/ux/2026-10-17/11-reconstruccion.md
-  - docs/wiki/sources/owner-ux-direction-2026-10-17.md
   - ED2 PR https://github.com/KaraAliOsman/framedex/pull/145, CI 4/4 sobre dd3fe1ffce2c14ba1125442d8a137021d1ba32f2, corrida https://github.com/KaraAliOsman/framedex/actions/runs/38091279743, squash fa3731843dbfbd75d00024e95f4986a3616a8747, 2026-10-10.
   - ED2 implementación 0ab8b7204ac250c0bd8d118fdab041c22b5892b3, navegador, 2026-10-10
   - docs/redesign/ED2-ACEPTACION.md
@@ -24,25 +22,6 @@ sources:
 ---
 
 # Sistema de diseño convertido en código
-
-## Construcción autorizada · 17-10-2026
-
-El dueño rechazó la primera composición verde de `codex/v1-experiencia`. La
-[segunda reconstrucción](../../ux/2026-10-17/11-reconstruccion.md) adopta papel
-blanco, tinta azul, azul de acción y acento cálido discreto. `ThemeProvider`
-conserva un solo tema y descarta preferencias oscuras antiguas. Los controles
-comunes tienen 40 px; los radios son 8/16 px. Un sistema SVG común sirve a
-navegación, tareas e IA. Los materiales mantienen colores independientes.
-
-Hoy abre con un encargo; Obras ofrece fichas con avance y siguiente acción real.
-IA usa conversación e historial, y comparte ejecutor con el panel contextual.
-La biblioteca hereda decisiones compatibles; el editor mantiene el lienzo y
-detalle progresivo. Los dominios no rediseñados específicamente heredan la base,
-sin atribuirles una reconstrucción integral. La
-[primera implementación](../../ux/2026-10-17/10-implementacion.md) es histórica.
-
-Las aceptaciones siguientes conservan fecha/ref. No se atribuye al dueño la
-elección de cada token ni se da por demostrada una nueva aceptación profesional.
 
 **Hecho verificado en PR #117, merge `023b8ba303b680ca50b6e10119ce4ee4514c9c38`:** tokens por rol, fuentes IBM Plex autoalojadas, primitivas técnicas, formatos Decimal, validación común en español, guardas con trinquete y detectores computados. `/dev/ui` consume las posiciones/BOM de la organización autenticada y existe solo en desarrollo. No acredita que las pantallas pendientes ya estén rediseñadas.
 

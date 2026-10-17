@@ -399,7 +399,7 @@ class HttpProvider:
                     raw = SupabaseDocumentStorage().download_bounded(document_path, 20 * 1024 * 1024)
                     if raw is None:
                         raise ProviderError("ai_source_page_limit")
-                    wire_input["_document_pages"] = pdf_page_parts(raw, page_range=input_payload.get("page_range"))
+                    wire_input["_document_pages"] = pdf_page_parts(raw)
             deadline = started + options["timeout_s"]
             options["_deadline"] = deadline
             retries = min(2, max(0, int(route.get("retries", 2))))

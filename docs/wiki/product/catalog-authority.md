@@ -1,12 +1,10 @@
 ---
 type: concept
 status: active
-updated: 2026-10-17
+updated: 2026-10-10
 volatility: medium
-verified_ref: dca9454bd7989f57a3f1b001bf1920b3f83a0a8d
+verified_ref: codex/P16-catalogo-tecnico
 sources:
-  - docs/ux/2026-10-17/11-reconstruccion.md
-  - docs/ux/2026-10-17/05-ia-catalogos.md
   - engine/src/dekopen_engine/catalog_rules.py
   - engine/tests/test_gold_cases_catalog_families.py
   - supabase/migrations/20261229000100_catalog_family_authorities.sql
@@ -21,43 +19,6 @@ sources:
 ---
 
 # Autoridad de catálogo por familia
-
-## Dirección de experiencia · 17-10-2026
-
-La [segunda reconstrucción](../../ux/2026-10-17/11-reconstruccion.md) incorpora
-fotos opcionales privadas por organización, serie y perfil/acabado. Se normalizan
-a WebP, eliminan metadatos y se sirven con URL temporal; guardar o restaurar la
-ilustración agrega un evento inmutable. RLS y permisos de catálogo se aplican en
-API y SQL. Una foto es una ayuda de reconocimiento, no una sección ni autoridad
-de cálculo. Las texturas privadas solo alteran la representación interactiva;
-no se insertan en snapshots, motor, PDF emitido o portal. La sección real conserva
-su escala. En las tarjetas del catálogo, foto/ilustración permiten reconocer la
-familia y la sección declarada se despliega aparte; sin sección no se inventan
-cotas. La ilustración no es una reproducción exacta del perfil del fabricante.
-
-Proline y Aluminios 2000 no se han adjuntado. El catálogo de prueba y las fotos
-sintéticas no acreditan su importación.
-
-El dueño pide que la entrada habitual sea subir el PDF y que la IA prepare el
-catálogo. El [plan de ingesta y revisión](../../ux/2026-10-17/05-ia-catalogos.md)
-orientó la construcción autorizada en `codex/v1-experiencia`: PDF primero,
-lectura por bloques de cuatro páginas (hasta 1.000), texto e imagen para páginas
-mixtas, progreso/replay y reintento del mismo job/chunks. Revisión por dudas y
-fuente por página; claves naturales conservan contradicciones. Se mantienen
-autoridad y publicación humana. Faltan OCR por región/bbox y evaluación integral
-con corpus autorizado de fabricantes; no se promete fabricación desde cualquier
-PDF. [Estado y límites](../../ux/2026-10-17/10-implementacion.md).
-
-La inspección **anterior** de `edcfd2844d2c2fc7cbb0d3b543b50e9089ab9b3f` encontró en
-`backend/ingest/catalog_service.py:238` → `catalog_ai.py:75` un contrato basado en
-texto etiquetado (`source_lines`), con límite de 100 000 caracteres, más una
-referencia de fuente que la pasarela resuelve y transporta de forma multimodal.
-`ai_gateway/multimodal.py` rasteriza páginas sin texto; para páginas con texto
-envía texto, y limita todo PDF a 20 páginas. Los HIGH se verifican contra los
-literales locales de `tagged`. El OCR con capacidad `vision_ocr` de
-`backend/ingest/service.py` es otro flujo de posiciones; no niega el transporte
-multimodal compartido del catálogo. Los casos históricos descritos abajo no
-bastan para afirmar lectura integral de páginas mixtas, planos y relaciones.
 
 ## Hechos verificados en D01
 

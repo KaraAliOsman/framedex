@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   aiAgent,
+  aiAsk,
   aiJobOutcomeCreate,
   aiJobRetrieve,
   aiPresenceGet,
@@ -24,10 +25,12 @@ vi.mock("../../api/generated/dekopen", () => ({
     data: { context_label: "Proyecto P-000001", context_url: null, job: null },
     headers: new Headers(),
   }),
+  aiAsk: vi.fn(),
   aiAgent: vi.fn(),
   aiJobRetrieve: vi.fn(),
   aiJobOutcomeCreate: vi.fn(),
 }));
+const askMock = vi.mocked(aiAsk);
 const agentMock = vi.mocked(aiAgent);
 const jobMock = vi.mocked(aiJobRetrieve);
 vi.mocked(aiJobOutcomeCreate).mockResolvedValue({
@@ -36,7 +39,20 @@ vi.mocked(aiJobOutcomeCreate).mockResolvedValue({
   data: {},
 } as never);
 
-beforeEach(() => sessionStorage.removeItem("dk:askdock"));
+function successResponse() {
+  return {
+    status: 200,
+    headers: new Headers(),
+    data: {
+      audit_id: "a1",
+      model: "mock-context-1",
+      credits_debited: 2,
+      answer: "Tienes 3 proyectos activos.",
+      actions: [{ kind: "navigate", path: "/projects", label: "Ver proyectos" }],
+      warnings: [],
+    },
+  };
+}
 
 function render(ui: ReactElement) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -75,25 +91,20 @@ describe("routeContext", () => {
 });
 
 describe("AskDekopen", () => {
-  beforeEach(() => agentMock.mockReset());
+  beforeEach(() => askMock.mockReset());
 
   it("answers inside the route's typed surface and navigates on actions", async () => {
-    agentMock.mockResolvedValue(
-      agentResponse({
-        reply: "Tienes 3 proyectos activos.",
-        steps: [{ kind: "navigate", path: "/projects", label: "Ver proyectos" }],
-      }) as never,
-    );
+    askMock.mockResolvedValue(successResponse() as never);
     renderDock("/projects/abc-1");
-    fireEvent.click(screen.getByRole("button", { name: /Abrir asistente/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Abrir el asistente/i }));
     fireEvent.change(screen.getByRole("textbox"), { target: { value: "¿Qué ves aquí?" } });
     fireEvent.click(screen.getByRole("button", { name: /Enviar/i }));
-    await waitFor(() => expect(agentMock).toHaveBeenCalledTimes(1));
-    const [body, options] = agentMock.mock.calls[0] ?? [];
+    await waitFor(() => expect(askMock).toHaveBeenCalledTimes(1));
+    const [body, options] = askMock.mock.calls[0] ?? [];
     expect(body).toMatchObject({
       surface: "project",
       refs: { project_id: "abc-1" },
-      goal: "¿Qué ves aquí?",
+      question: "¿Qué ves aquí?",
     });
     expect(new Headers(options?.headers).get("X-Organization-ID")).toBe("org-1");
     expect(await screen.findByText("Tienes 3 proyectos activos.")).toBeTruthy();
@@ -101,8 +112,8 @@ describe("AskDekopen", () => {
   });
 
   it("drops the in-flight answer when the surface changes", async () => {
-    let resolve!: (value: ReturnType<typeof agentJob>) => void;
-    agentMock.mockReturnValue(new Promise((r) => (resolve = r)) as never);
+    let resolve!: (value: ReturnType<typeof successResponse>) => void;
+    askMock.mockReturnValue(new Promise((r) => (resolve = r)) as never);
     const view = render(
       <MemoryRouter initialEntries={["/dashboard"]}>
         <AssistantSurfaceProvider>
@@ -112,24 +123,24 @@ describe("AskDekopen", () => {
         </AssistantSurfaceProvider>
       </MemoryRouter>,
     );
-    fireEvent.click(screen.getByRole("button", { name: /Abrir asistente/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Abrir el asistente/i }));
     fireEvent.change(screen.getByRole("textbox"), { target: { value: "hola" } });
     fireEvent.click(screen.getByRole("button", { name: /Enviar/i }));
-    await waitFor(() => expect(agentMock).toHaveBeenCalledTimes(1));
+    expect(askMock).toHaveBeenCalledTimes(1);
     // Simulate a route change by unmounting/remounting on a different surface.
     view.unmount();
-    resolve(agentJob());
+    resolve(successResponse());
     await waitFor(() => expect(screen.queryByText("Tienes 3 proyectos activos.")).toBeNull());
   });
 
   it("shows the API error detail when the ask fails", async () => {
-    agentMock.mockResolvedValue({
+    askMock.mockResolvedValue({
       status: 400,
       headers: new Headers(),
       data: { error: { detail: "contexto inválido" } },
     } as never);
     renderDock();
-    fireEvent.click(screen.getByRole("button", { name: /Abrir asistente/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Abrir el asistente/i }));
     fireEvent.change(screen.getByRole("textbox"), { target: { value: "algo" } });
     fireEvent.submit(screen.getByRole("button", { name: /Enviar/i }).closest("form")!);
     expect(await screen.findByText("contexto inválido")).toBeTruthy();
@@ -193,24 +204,6 @@ describe("AskDekopen — Agente mode", () => {
     jobMock.mockReset();
   });
 
-  it("keeps the accepted instruction visible before the worker records its transcript", async () => {
-    agentMock.mockResolvedValue(agentJob() as never);
-    const queued = finishedJob({});
-    jobMock.mockResolvedValue({
-      ...queued,
-      data: { ...queued.data, state: "QUEUED", result: null, transcript: [] },
-    } as never);
-    const view = renderDock("/projects/queued-message");
-    fireEvent.click(screen.getByRole("button", { name: /Abrir asistente/i }));
-    fireEvent.change(screen.getByRole("textbox"), {
-      target: { value: "Prepara solo esta ventana" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: /Enviar/i }));
-    await waitFor(() => expect(jobMock).toHaveBeenCalled());
-    expect(screen.getByText("Prepara solo esta ventana")).toBeVisible();
-    view.unmount();
-  });
-
   it("keeps the submitted job when an older continuity request returns late", async () => {
     let restore!: (value: unknown) => void;
     const previous = new Promise((resolve) => (restore = resolve));
@@ -222,11 +215,12 @@ describe("AskDekopen — Agente mode", () => {
         finishedJob({ reply: id === "old-job" ? "Trabajo anterior" : "Respuesta actual" }) as never,
     );
     renderDock("/projects/race-test");
-    fireEvent.click(screen.getByRole("button", { name: /Abrir asistente/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Abrir el asistente/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Agente" }));
     fireEvent.change(screen.getByRole("textbox", { name: /Qué necesitas lograr/i }), {
       target: { value: "Revisar el proyecto actual" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /Enviar/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Ejecutar/i }));
     expect(await screen.findByText("Respuesta actual")).toBeTruthy();
     restore({ status: 200, data: { job: { id: "old-job" } } });
     await waitFor(() => expect(screen.queryByText("Trabajo anterior")).toBeNull());
@@ -241,11 +235,12 @@ describe("AskDekopen — Agente mode", () => {
   it("runs a goal through the agent endpoint and renders steps + provenance", async () => {
     agentMock.mockResolvedValue(agentResponse() as never);
     renderDock("/projects/abc-1");
-    fireEvent.click(screen.getByRole("button", { name: /Abrir asistente/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Abrir el asistente/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Agente" }));
     fireEvent.change(screen.getByRole("textbox", { name: /Qué necesitas lograr/i }), {
       target: { value: "Revisa el estado del proyecto" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /Enviar/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Ejecutar/i }));
     await waitFor(() => expect(agentMock).toHaveBeenCalledTimes(1));
     const [body, options] = agentMock.mock.calls[0] ?? [];
     expect(body).toMatchObject({
@@ -295,11 +290,12 @@ describe("AskDekopen — Agente mode", () => {
         </AssistantSurfaceProvider>
       </MemoryRouter>,
     );
-    fireEvent.click(screen.getByRole("button", { name: /Abrir asistente/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Abrir el asistente/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Agente" }));
     fireEvent.change(screen.getByRole("textbox", { name: /Qué necesitas lograr/i }), {
       target: { value: "Cambia el ancho a 1400" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /Enviar/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Ejecutar/i }));
     await waitFor(() => expect(agentMock).toHaveBeenCalledTimes(1));
     // The complete graph lets the shared engine address bays and dividers.
     expect(agentMock.mock.calls[0]?.[0]).toMatchObject({
@@ -311,7 +307,7 @@ describe("AskDekopen — Agente mode", () => {
         },
       },
     });
-    const applyButton = await screen.findByRole("button", { name: /Aplicar cambios/i });
+    const applyButton = await screen.findByRole("button", { name: /Aplicar 1 operaciones/i });
     let settleAudit!: () => void;
     vi.mocked(aiJobOutcomeCreate).mockImplementationOnce(
       () =>
@@ -358,12 +354,13 @@ describe("AskDekopen — Agente mode", () => {
         </AssistantSurfaceProvider>
       </MemoryRouter>,
     );
-    fireEvent.click(screen.getByRole("button", { name: /Abrir asistente/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Abrir el asistente/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Agente" }));
     fireEvent.change(screen.getByRole("textbox", { name: /Qué necesitas lograr/i }), {
       target: { value: "Cambia el alto" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /Enviar/i }));
-    const applyButton = await screen.findByRole("button", { name: /Aplicar cambios/i });
+    fireEvent.click(screen.getByRole("button", { name: /Ejecutar/i }));
+    const applyButton = await screen.findByRole("button", { name: /Aplicar 1 operaciones/i });
     // A commit swapped the live product — the button must refuse.
     current = productB;
     view.rerender(

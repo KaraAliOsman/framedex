@@ -16,7 +16,6 @@ import type {
 import { t, type TranslationKey } from "../../i18n/es-CL";
 import { ConfirmProvider } from "../../ui";
 import { CatalogPage } from "./CatalogPage";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { Capability } from "../canvas/physicalOpenings";
 
 const identity = vi.hoisted(() => ({
@@ -218,13 +217,9 @@ function expectNoWrites() {
 
 async function mount() {
   render(
-    <QueryClientProvider
-      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
-    >
-      <ConfirmProvider>
-        <CatalogPage />
-      </ConfirmProvider>
-    </QueryClientProvider>,
+    <ConfirmProvider>
+      <CatalogPage />
+    </ConfirmProvider>,
   );
   await screen.findByRole("heading", { name: t("catalog.title") });
 }
@@ -303,10 +298,7 @@ async function declareSection() {
 
 beforeEach(() => {
   vi.resetAllMocks();
-  vi.mocked(client.catalogVisualsList).mockResolvedValue(ok([]));
   vi.mocked(client.catalogEvidenceList).mockResolvedValue(ok({ items: [] }));
-  vi.mocked(client.catalogImportsList).mockResolvedValue(ok({ imports: [] }));
-  vi.mocked(client.catalogTemplateSchema).mockResolvedValue(ok({ version: "1", sheets: [] }));
   identity.role = "OWNER";
 
   vi.mocked(client.catalogSystemList).mockResolvedValue(ok({ items: [system()] }));

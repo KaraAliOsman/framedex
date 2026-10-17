@@ -5,7 +5,6 @@ from decimal import Decimal
 import json
 from uuid import UUID
 from jsonschema import validate as validate_json, ValidationError
-from rest_framework.exceptions import ValidationError as InputValidationError
 
 from authentication.errors import ContractAPIException
 from dekopen_engine.design_operations import OperationError, as_product, validate_operation
@@ -15,7 +14,6 @@ from projects import ops_registry, service
 from projects.finishes import position_finish_code
 from engine_api.repository import SystemParamsRepository, SystemNotFound, UnsupportedCatalogContract
 from pricing.repository import json_text
-from dekopen_engine.commercial import PricingError
 
 TOOLS = [
     {"name": name, "description": description, "parameters": {"type": "object", "additionalProperties": False,
@@ -37,16 +35,6 @@ TOOLS = [
 TOOLS.append({"name": "preview_project_operations", "description": "Simula creación, copia, eliminación, cantidad, ubicación y filtros en el proyecto; no escribe.",
               "parameters": {"type": "object", "additionalProperties": False, "properties": {
                   "project_id": {"type": "string"}, "ops": {"type": "array", "items": {"type": "object"}, "maxItems": 50}}}})
-TOOLS.append({"name": "preview_presentation", "description": "Prepara una muestra de cambios de presentación de PDF y página del cliente; solo dueño, sin publicar.",
-              "parameters": {"type": "object", "additionalProperties": False, "required": ["patch"], "properties": {
-                  "patch": {"type": "object", "additionalProperties": False, "properties": {
-                      "quotation_layout": {"type": "string", "enum": ["EDITORIAL", "COMPACT"]},
-                      "presentation_title": {"type": "string", "maxLength": 120}, "presentation_intro": {"type": "string", "maxLength": 1200},
-                      "portal_heading": {"type": "string", "maxLength": 120}, "portal_intro": {"type": "string", "maxLength": 1200},
-                      "paper": {"type": "string", "enum": ["LETTER", "A4", "OFICIO"]},
-                      "accent": {"type": "string", "enum": ["TEAL", "TEAL_DARK", "GRAPHITE"]}}}}}})
-TOOLS.append({"name": "preview_quotation", "description": "Prepara la cotización de TODA la obra, nunca una sola ventana: calcula venta con preferencias reales y lista lo que falta para emitir. Sin aplicar precio ni emitir.",
-              "parameters": {"type": "object", "additionalProperties": False, "properties": {"project_id": {"type": "string"}}}})
 BY_NAME = {item["name"]: item for item in TOOLS}
 
 
@@ -140,10 +128,10 @@ class EngineTools:
         # uses the same context implicitly. Both must reuse the verified
         # simulation rather than consume another query or lose its preview.
         arguments = dict(arguments)
-        if name in {"preview_project_operations", "price_project", "preview_quotation"}:
+        if name in {"preview_project_operations", "price_project"}:
             if "project_id" not in arguments and self.refs.get("project_id"):
                 arguments["project_id"] = self.refs["project_id"]
-        elif name not in {"list_catalog_options", "get_blockers", "preview_presentation"}:
+        elif name not in {"list_catalog_options", "get_blockers"}:
             if "position_id" not in arguments and self.refs.get("position_id"):
                 arguments["position_id"] = self.refs["position_id"]
         key = json.dumps({"name": name, "arguments": arguments}, sort_keys=True, default=str)
@@ -153,10 +141,7 @@ class EngineTools:
             raise OperationError("tool_budget_exceeded", "El trabajo agotó sus consultas. Divide la petición y vuelve a intentar.")
         try:
             output = self._execute(name, arguments)
-        except PricingError as error:
-            from pricing.service import pricing_public_detail
-            output = {"error": error.code, "detail": pricing_public_detail(error.code)}
-        except (OperationError, ContractAPIException, CatalogRuleError, MissingFabricationAuthority, SystemNotFound, UnsupportedCatalogContract, ValueError, InputValidationError) as error:
+        except (OperationError, ContractAPIException, CatalogRuleError, MissingFabricationAuthority, SystemNotFound, UnsupportedCatalogContract, ValueError) as error:
             output = {"error": getattr(error, "code", None) or getattr(error, "contract_code", None) or "technical_authority_required",
                       "detail": getattr(error, "public_detail", None) or str(error)}
         # The provider, grounding validator and stored transcript see exactly
@@ -170,12 +155,6 @@ class EngineTools:
         return output, True
 
     def _execute(self, name, arguments):
-        if name == "preview_quotation":
-            from ai_gateway.quotation import prepare
-            return prepare(org_id=self.org_id, user_id=self.user_id, project_id=self._reference(arguments, "project_id"))
-        if name == "preview_presentation":
-            from ai_gateway.presentation import preview
-            return preview(org_id=self.org_id, user_id=self.user_id, patch=arguments["patch"])
         if name == "preview_project_operations":
             from projects.project_ops import preview_project_operations
             identity = self._reference(arguments, "project_id")

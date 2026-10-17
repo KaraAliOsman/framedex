@@ -1,6 +1,5 @@
 from django.urls import path
 from ai_gateway.operations_views import AiSettingsView, AiConnectionView, AiUsageView, AiModeView
-from ai_gateway.presentation_views import PresentationPreviewView, PresentationApplyView, PresentationUndoView, PresentationStateView
 
 from ai_gateway.views import (
     AiAgentView,
@@ -16,10 +15,6 @@ from ai_gateway.views import (
 )
 
 urlpatterns = [
-    path("presentation/state/", PresentationStateView.as_view(), name="ai-presentation-state"),
-    path("presentation/preview/", PresentationPreviewView.as_view(), name="ai-presentation-preview"),
-    path("presentation/apply/", PresentationApplyView.as_view(), name="ai-presentation-apply"),
-    path("presentation/<uuid:operation_id>/undo/", PresentationUndoView.as_view(), name="ai-presentation-undo"),
     path("mode/", AiModeView.as_view(), name="ai-test-mode"),
     path("settings/", AiSettingsView.as_view(), name="ai-settings"),
     path("connection-test/", AiConnectionView.as_view(), name="ai-connection-test"),

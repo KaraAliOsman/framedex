@@ -6,7 +6,6 @@ import type { FinishColor } from "../../api/generated/models";
 import { finishColorCss } from "./finishColors";
 
 export interface MemberSurface {
-  finish?: FinishColor;
   /** member body fill */
   fill: string;
   /** inner shadow / rebate line */
@@ -57,5 +56,5 @@ export function memberSurface(
   finish?: FinishColor,
 ): MemberSurface {
   const surface = SURFACES[material ?? ""] ?? DEFAULT_SURFACE;
-  return finish ? { ...surface, finish, fill: finishColorCss(finish) } : surface;
+  return finish ? { ...surface, fill: finishColorCss(finish), detail: "none" } : surface;
 }

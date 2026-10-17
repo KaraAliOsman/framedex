@@ -10,8 +10,6 @@ import { ApiError } from "../../api/apiMutator";
 import { chartFinish, finishColorCss, type FinishFace } from "../canvas/finishColors";
 import { Button, DimLoader, Money } from "../../ui";
 import { fmtMm } from "../../format";
-import { Icon } from "../../ui/Icon";
-import { useTextureSample } from "../catalogs/catalogVisuals";
 import "./finishes.css";
 
 const processNames: Record<string, string> = {
@@ -24,14 +22,12 @@ const processNames: Record<string, string> = {
 };
 
 function Swatch({ color }: { color: FinishColor }): JSX.Element {
-  const sample = useTextureSample(color.code);
-  const texture = sample ?? color.texture_path;
   return (
     <span
-      className={`finish-swatch${!texture && ["FOIL", "WOOD_EFFECT"].includes(color.kind) ? " finish-swatch--illustrative" : ""}`}
+      className="finish-swatch"
       style={{
         backgroundColor: finishColorCss(color),
-        backgroundImage: texture ? `url(${texture})` : undefined,
+        backgroundImage: color.texture_path ? `url(${color.texture_path})` : undefined,
       }}
       aria-hidden="true"
     />
@@ -54,8 +50,6 @@ export function FinishSelector({
   onChange(value: string): void;
 }): JSX.Element {
   const selected = chartFinish(authority, value);
-  const interiorSample = useTextureSample(selected?.interior.code ?? "");
-  const exteriorSample = useTextureSample(selected?.exterior.code ?? "");
   const [same, setSame] = useState(selected?.interior.code === selected?.exterior.code);
   useEffect(() => {
     setSame(selected?.interior.code === selected?.exterior.code);
@@ -97,38 +91,6 @@ export function FinishSelector({
   const rule = selected?.combination;
   return (
     <section className="finish-selector" aria-label="Acabado por caras" data-density="office">
-      <div className="finish-samples" role="group" aria-label="Muestrario de acabados">
-        {combinations
-          .filter((combo) => !same || combo.interior === combo.exterior)
-          .map((combo) => {
-            const inside = authority.colors.find((color) => color.code === combo.interior);
-            const outside = authority.colors.find((color) => color.code === combo.exterior);
-            if (!inside || !outside) return null;
-            const equal = inside.code === outside.code;
-            return (
-              <button
-                type="button"
-                className="finish-sample"
-                key={combo.code}
-                aria-pressed={combo.code === value}
-                disabled={disabled}
-                onClick={() => onChange(combo.code)}
-              >
-                <span className="finish-sample__material">
-                  <Swatch color={inside} />
-                  {!equal ? <Swatch color={outside} /> : null}
-                  {combo.code === value ? (
-                    <span className="finish-sample__check">
-                      <Icon name="check" size={14} />
-                    </span>
-                  ) : null}
-                </span>
-                <strong>{equal ? inside.name : `${inside.name} / ${outside.name}`}</strong>
-                <small>{equal ? processNames[inside.kind] : "Interior / exterior"}</small>
-              </button>
-            );
-          })}
-      </div>
       <div className="finish-selector__row">
         {(["interior", "exterior"] as const).map((face) => {
           const color = selected?.[face];
@@ -197,7 +159,7 @@ export function FinishSelector({
           Igual en ambas caras
         </label>
         <div className="finish-price" aria-live="polite">
-          <span>Cambio en el precio neto</span>
+          <span>Δ precio neto por posición</span>
           {price.isFetching ? (
             <DimLoader label="Calculando cambio de acabado" />
           ) : price.data?.delta_price_net ? (
@@ -207,17 +169,6 @@ export function FinishSelector({
           )}
         </div>
       </div>
-      {selected &&
-      [selected.interior, selected.exterior].some(
-        (color, index) =>
-          !color.texture_path &&
-          !(index === 0 ? interiorSample : exteriorSample) &&
-          ["FOIL", "WOOD_EFFECT"].includes(color.kind),
-      ) ? (
-        <p className="finish-selector__notice">
-          Veta ilustrativa. Comprueba el acabado con la muestra del proveedor.
-        </p>
-      ) : null}
       {!selected ? (
         <p role="alert">
           Bloqueado · el acabado guardado no está en esta carta. Elige una combinación vigente en
@@ -225,23 +176,20 @@ export function FinishSelector({
         </p>
       ) : (
         <>
-          <details className="finish-source">
-            <summary>Condiciones del acabado</summary>
-            <p className="finish-selector__notice">
-              {rule?.reinforcement_required
-                ? "Refuerzo obligatorio"
-                : "Refuerzo según dimensiones de la serie"}{" "}
-              ·{" "}
-              {rule?.extra_lead_days == null
-                ? "Sin dato de plazo adicional · completa la carta del proveedor"
-                : `Plazo adicional: ${rule.extra_lead_days} días`}{" "}
-              ·{" "}
-              {selected.interior.approximate || selected.exterior.approximate
-                ? "Color aproximado; revisa la muestra del fabricante"
-                : "Color declarado por el fabricante"}
-              {selected.interior.synthetic || selected.exterior.synthetic ? " · DEMO" : ""}
-            </p>
-          </details>
+          <p className="finish-selector__notice">
+            {rule?.reinforcement_required
+              ? "Refuerzo obligatorio"
+              : "Refuerzo según dimensiones de la serie"}{" "}
+            ·{" "}
+            {rule?.extra_lead_days == null
+              ? "Sin dato de plazo adicional · completa la carta del proveedor"
+              : `Plazo adicional: ${rule.extra_lead_days} días`}{" "}
+            ·{" "}
+            {selected.interior.approximate || selected.exterior.approximate
+              ? "Color aproximado; revisa la muestra del fabricante"
+              : "Color declarado por el fabricante"}
+            {selected.interior.synthetic || selected.exterior.synthetic ? " · DEMO" : ""}
+          </p>
           <details className="finish-source">
             <summary>Restricciones y fuente del acabado</summary>
             <dl>

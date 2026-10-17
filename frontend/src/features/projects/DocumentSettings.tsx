@@ -5,7 +5,7 @@ import type {
   DocumentPreferencesPatchRequest,
 } from "../../api/generated/models";
 import { ValidatedForm } from "../../ui/FormValidation";
-import { DimLoader } from "../../ui";
+import { DimLoader, useConfirm } from "../../ui";
 import { actionErrorDetail } from "../errors";
 import { CommercialTermsEditor, validCommercialTerms } from "./CommercialTermsEditor";
 import "./document-settings.css";
@@ -25,6 +25,7 @@ export function DocumentSettings({
 }): JSX.Element {
   const [value, setValue] = useState<DocumentPreferences | null>(null);
   const [expected, setExpected] = useState<string>();
+  const confirm = useConfirm();
   const [status, setStatus] = useState("Cargando preferencias de documentos…");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
@@ -122,6 +123,13 @@ export function DocumentSettings({
               setError(true);
               return;
             }
+            if (
+              !(await confirm({
+                title: "Guardar preferencias",
+                body: "Estos ajustes se usarán en nuevas revisiones. Los documentos emitidos conservan sus condiciones y formato.",
+              }))
+            )
+              return;
             setBusy(true);
             setStatus("");
             setError(false);
@@ -145,11 +153,6 @@ export function DocumentSettings({
                           legal_footer: value.legal_footer,
                           quotation_preview_minutes: value.quotation_preview_minutes,
                           portal_successor_link: value.portal_successor_link,
-                          quotation_layout: value.quotation_layout,
-                          presentation_title: value.presentation_title,
-                          presentation_intro: value.presentation_intro,
-                          portal_heading: value.portal_heading,
-                          portal_intro: value.portal_intro,
                         }
                       : value;
               const response = await organizationBrandingSave(
@@ -186,67 +189,6 @@ export function DocumentSettings({
             <legend>Formato de impresión</legend>
             {(section === "all" || section === "documents") && (
               <>
-                <label>
-                  Composición de la cotización
-                  <select
-                    value={value.quotation_layout ?? "EDITORIAL"}
-                    onChange={(event) =>
-                      setValue({
-                        ...value,
-                        quotation_layout: event.target
-                          .value as DocumentPreferences["quotation_layout"],
-                      })
-                    }
-                  >
-                    <option value="EDITORIAL">
-                      Editorial · dibujos grandes y detalle por ventana
-                    </option>
-                    <option value="COMPACT">Compacta · resumen y detalle seguido</option>
-                  </select>
-                </label>
-                <label>
-                  Título de la propuesta
-                  <input
-                    maxLength={120}
-                    placeholder="Propuesta para su obra"
-                    value={value.presentation_title ?? ""}
-                    onChange={(event) =>
-                      setValue({ ...value, presentation_title: event.target.value })
-                    }
-                  />
-                </label>
-                <label>
-                  Presentación de la propuesta
-                  <textarea
-                    maxLength={1200}
-                    value={value.presentation_intro ?? ""}
-                    placeholder="Un texto breve para presentar su trabajo"
-                    onChange={(event) =>
-                      setValue({ ...value, presentation_intro: event.target.value })
-                    }
-                  />
-                </label>
-                <details>
-                  <summary>Página del cliente</summary>
-                  <label>
-                    Título de la página
-                    <input
-                      maxLength={120}
-                      value={value.portal_heading ?? ""}
-                      onChange={(event) =>
-                        setValue({ ...value, portal_heading: event.target.value })
-                      }
-                    />
-                  </label>
-                  <label>
-                    Presentación de la página
-                    <textarea
-                      maxLength={1200}
-                      value={value.portal_intro ?? ""}
-                      onChange={(event) => setValue({ ...value, portal_intro: event.target.value })}
-                    />
-                  </label>
-                </details>
                 <label>
                   Papel
                   <select

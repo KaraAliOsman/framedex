@@ -1039,297 +1039,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
-  /api/v1/ai/presentation/{operation_id}/undo/:
-    post:
-      operationId: ai_presentation_undo
-      parameters:
-      - in: header
-        name: X-Organization-ID
-        schema:
-          type: string
-          format: uuid
-        description: Active organization; validated against the JWT user's active
-          memberships.
-      - in: path
-        name: operation_id
-        schema:
-          type: string
-          format: uuid
-        required: true
-      tags:
-      - ai
-      security:
-      - SupabaseBearer: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PresentationApplied'
-          description: ''
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '401':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '403':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '409':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '503':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-  /api/v1/ai/presentation/apply/:
-    post:
-      operationId: ai_presentation_apply
-      parameters:
-      - in: header
-        name: X-Organization-ID
-        schema:
-          type: string
-          format: uuid
-        description: Active organization; validated against the JWT user's active
-          memberships.
-      tags:
-      - ai
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PresentationApplyRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PresentationApplyRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PresentationApplyRequest'
-        required: true
-      security:
-      - SupabaseBearer: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PresentationApplied'
-          description: ''
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '401':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '403':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '409':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '503':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-  /api/v1/ai/presentation/preview/:
-    post:
-      operationId: ai_presentation_preview
-      parameters:
-      - in: header
-        name: X-Organization-ID
-        schema:
-          type: string
-          format: uuid
-        description: Active organization; validated against the JWT user's active
-          memberships.
-      tags:
-      - ai
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PresentationPreviewRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PresentationPreviewRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PresentationPreviewRequest'
-        required: true
-      security:
-      - SupabaseBearer: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PresentationPreviewResponse'
-          description: ''
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '401':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '403':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '409':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '503':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-  /api/v1/ai/presentation/state/:
-    get:
-      operationId: ai_presentation_state
-      parameters:
-      - in: header
-        name: X-Organization-ID
-        schema:
-          type: string
-          format: uuid
-        description: Active organization; validated against the JWT user's active
-          memberships.
-      - in: query
-        name: operation_key
-        schema:
-          type: string
-        required: true
-      tags:
-      - ai
-      security:
-      - SupabaseBearer: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PresentationState'
-          description: ''
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '401':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '403':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '409':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '503':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
   /api/v1/ai/settings/:
     get:
       operationId: ai_settings_get
@@ -3817,76 +3526,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CatalogImportConfirmResponse'
-          description: ''
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '401':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '403':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '409':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '503':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-  /api/v1/catalog-imports/{import_id}/retry/:
-    post:
-      operationId: catalog_import_retry
-      parameters:
-      - in: header
-        name: X-Organization-ID
-        schema:
-          type: string
-          format: uuid
-        description: Active organization; validated against the JWT user's active
-          memberships.
-      - in: path
-        name: import_id
-        schema:
-          type: string
-          format: uuid
-        required: true
-      tags:
-      - catalogs
-      security:
-      - SupabaseBearer: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CatalogImportDetailResponse'
           description: ''
         '400':
           content:
@@ -6841,135 +6480,6 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
         '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '503':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-  /api/v1/catalogs/visuals/:
-    get:
-      operationId: catalog_visuals_list
-      parameters:
-      - in: header
-        name: X-Organization-ID
-        schema:
-          type: string
-          format: uuid
-        description: Active organization; validated against the JWT user's active
-          memberships.
-      - in: query
-        name: system_id
-        schema:
-          type: string
-          format: uuid
-        required: true
-      tags:
-      - catalogs
-      security:
-      - SupabaseBearer: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/CatalogVisual'
-          description: ''
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '401':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '403':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '409':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '503':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-    post:
-      operationId: catalog_visuals_create
-      parameters:
-      - in: header
-        name: X-Organization-ID
-        schema:
-          type: string
-          format: uuid
-        description: Active organization; validated against the JWT user's active
-          memberships.
-      tags:
-      - catalogs
-      requestBody:
-        content:
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/VisualUploadRequest'
-        required: true
-      security:
-      - SupabaseBearer: []
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CatalogVisual'
-          description: ''
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '401':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '403':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '409':
           content:
             application/json:
               schema:
@@ -27377,54 +26887,6 @@ components:
           type: boolean
       required:
       - confirmed
-    CatalogVisual:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        system_id:
-          type: string
-          format: uuid
-        kind:
-          type: string
-        target_key:
-          type: string
-        target_code:
-          type: string
-          nullable: true
-        file_name:
-          type: string
-        content_sha256:
-          type: string
-          nullable: true
-        image_url:
-          type: string
-          nullable: true
-        width_px:
-          type: integer
-          nullable: true
-        height_px:
-          type: integer
-          nullable: true
-        cleared:
-          type: boolean
-        created_at:
-          type: string
-          format: date-time
-      required:
-      - cleared
-      - content_sha256
-      - created_at
-      - file_name
-      - height_px
-      - id
-      - image_url
-      - kind
-      - system_id
-      - target_code
-      - target_key
-      - width_px
     CategoryEnum:
       enum:
       - HANDLE
@@ -30531,20 +29993,6 @@ components:
     DocumentPreferences:
       type: object
       properties:
-        quotation_layout:
-          $ref: '#/components/schemas/QuotationLayoutEnum'
-        presentation_title:
-          type: string
-          maxLength: 120
-        presentation_intro:
-          type: string
-          maxLength: 1200
-        portal_heading:
-          type: string
-          maxLength: 120
-        portal_intro:
-          type: string
-          maxLength: 1200
         portal_successor_link:
           type: boolean
         piece_label_paper:
@@ -30582,20 +30030,6 @@ components:
       type: object
       description: Save only the section edited by the user; preserve other sections.
       properties:
-        quotation_layout:
-          $ref: '#/components/schemas/QuotationLayoutEnum'
-        presentation_title:
-          type: string
-          maxLength: 120
-        presentation_intro:
-          type: string
-          maxLength: 1200
-        portal_heading:
-          type: string
-          maxLength: 120
-        portal_intro:
-          type: string
-          maxLength: 1200
         portal_successor_link:
           type: boolean
         piece_label_paper:
@@ -39945,7 +39379,7 @@ components:
           maxLength: 255
         client_name:
           type: string
-          default: ''
+          minLength: 1
           maxLength: 255
         client_rut:
           type: string
@@ -40949,10 +40383,6 @@ components:
     PortalOrganization:
       type: object
       properties:
-        portal_heading:
-          type: string
-        portal_intro:
-          type: string
         brand_schema:
           type: integer
           nullable: true
@@ -41544,134 +40974,6 @@ components:
       - design
       - location_tag
       - quantity
-    PresentationApplied:
-      type: object
-      properties:
-        operation_id:
-          type: string
-          format: uuid
-        applied:
-          type: boolean
-        replayed:
-          type: boolean
-      required:
-      - applied
-      - operation_id
-      - replayed
-    PresentationApplyRequest:
-      type: object
-      properties:
-        patch:
-          $ref: '#/components/schemas/PresentationPatchRequest'
-        before_sig:
-          type: string
-          minLength: 1
-          pattern: ^[a-f0-9]{64}$
-        operation_key:
-          type: string
-          minLength: 8
-          maxLength: 200
-      required:
-      - before_sig
-      - operation_key
-      - patch
-    PresentationOperationStateEnum:
-      enum:
-      - PROPOSED
-      - APPLIED
-      - UNDONE
-      type: string
-      description: |-
-        * `PROPOSED` - PROPOSED
-        * `APPLIED` - APPLIED
-        * `UNDONE` - UNDONE
-    PresentationPatch:
-      type: object
-      properties:
-        quotation_layout:
-          $ref: '#/components/schemas/QuotationLayoutEnum'
-        presentation_title:
-          type: string
-          maxLength: 120
-        presentation_intro:
-          type: string
-          maxLength: 1200
-        portal_heading:
-          type: string
-          maxLength: 120
-        portal_intro:
-          type: string
-          maxLength: 1200
-        accent:
-          $ref: '#/components/schemas/AccentEnum'
-        paper:
-          $ref: '#/components/schemas/PaperEnum'
-    PresentationPatchRequest:
-      type: object
-      properties:
-        quotation_layout:
-          $ref: '#/components/schemas/QuotationLayoutEnum'
-        presentation_title:
-          type: string
-          maxLength: 120
-        presentation_intro:
-          type: string
-          maxLength: 1200
-        portal_heading:
-          type: string
-          maxLength: 120
-        portal_intro:
-          type: string
-          maxLength: 1200
-        accent:
-          $ref: '#/components/schemas/AccentEnum'
-        paper:
-          $ref: '#/components/schemas/PaperEnum'
-    PresentationPreviewRequest:
-      type: object
-      properties:
-        patch:
-          $ref: '#/components/schemas/PresentationPatchRequest'
-      required:
-      - patch
-    PresentationPreviewResponse:
-      type: object
-      properties:
-        valid:
-          type: boolean
-        before_sig:
-          type: string
-        patch:
-          $ref: '#/components/schemas/PresentationPatch'
-        before: {}
-        after: {}
-        changes:
-          type: array
-          items:
-            type: object
-            additionalProperties: {}
-        scope:
-          type: string
-      required:
-      - after
-      - before
-      - before_sig
-      - changes
-      - patch
-      - scope
-      - valid
-    PresentationState:
-      type: object
-      properties:
-        operation_id:
-          type: string
-          format: uuid
-          nullable: true
-        state:
-          $ref: '#/components/schemas/PresentationOperationStateEnum'
-      required:
-      - operation_id
-      - state
     PriceRequestRequest:
       type: object
       properties:
@@ -43231,10 +42533,20 @@ components:
           format: uuid
           nullable: true
         state:
-          $ref: '#/components/schemas/PresentationOperationStateEnum'
+          $ref: '#/components/schemas/ProjectOpsStateStateEnum'
       required:
       - operation_id
       - state
+    ProjectOpsStateStateEnum:
+      enum:
+      - PROPOSED
+      - APPLIED
+      - UNDONE
+      type: string
+      description: |-
+        * `PROPOSED` - PROPOSED
+        * `APPLIED` - APPLIED
+        * `UNDONE` - UNDONE
     ProjectPayment:
       type: object
       properties:
@@ -43302,7 +42614,6 @@ components:
           maxLength: 255
         client_name:
           type: string
-          default: ''
           maxLength: 255
         client_rut:
           type: string
@@ -43392,6 +42703,7 @@ components:
         quotation_validity_source:
           type: string
       required:
+      - client_name
       - code
       - currency
       - current_pricing_operation_id
@@ -43479,7 +42791,7 @@ components:
           maxLength: 255
         client_name:
           type: string
-          default: ''
+          minLength: 1
           maxLength: 255
         client_rut:
           type: string
@@ -43517,6 +42829,7 @@ components:
         notes_internal:
           type: string
       required:
+      - client_name
       - name
     ProviderEnum:
       enum:
@@ -44111,14 +43424,6 @@ components:
       - expected_recipient
       - expected_snapshot_sha256
       - preview_id
-    QuotationLayoutEnum:
-      enum:
-      - EDITORIAL
-      - COMPACT
-      type: string
-      description: |-
-        * `EDITORIAL` - EDITORIAL
-        * `COMPACT` - COMPACT
     QuotationPreview:
       type: object
       properties:
@@ -47185,36 +46490,6 @@ components:
         * `OUTER_BOTTOM` - OUTER_BOTTOM
         * `LEAF_TOP` - LEAF_TOP
         * `LEAF_BOTTOM` - LEAF_BOTTOM
-    VisualUploadKindEnum:
-      enum:
-      - PROFILE
-      - TEXTURE
-      type: string
-      description: |-
-        * `PROFILE` - PROFILE
-        * `TEXTURE` - TEXTURE
-    VisualUploadRequest:
-      type: object
-      properties:
-        system_id:
-          type: string
-          format: uuid
-        kind:
-          $ref: '#/components/schemas/VisualUploadKindEnum'
-        target_key:
-          type: string
-          minLength: 1
-          maxLength: 100
-        file:
-          type: string
-          format: binary
-        cleared:
-          type: boolean
-          default: false
-      required:
-      - kind
-      - system_id
-      - target_key
     Wallet:
       type: object
       properties:

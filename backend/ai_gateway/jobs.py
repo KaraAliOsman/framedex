@@ -678,7 +678,7 @@ def record_outcome(
                 if 0 <= recorded["step_index"] < len(steps)
                 else None
             )
-            if step is None or step.get("kind") not in ("ops", "batch_ops", "prepare", "project_ops", "presentation"):
+            if step is None or step.get("kind") not in ("ops", "batch_ops", "prepare", "project_ops"):
                 return None
             if recorded["action"] == "undone" and not any(
                 outcome.get("turn_index") == recorded["turn_index"]
@@ -721,7 +721,7 @@ def record_outcome(
                     (turn_index, step_index)
                     for turn_index, turn_row in enumerate(transcript)
                     for step_index, step_row in enumerate(turn_row.get("steps") or [])
-                    if step_row.get("kind") in ("ops", "batch_ops", "prepare", "project_ops", "presentation")
+                    if step_row.get("kind") in ("ops", "batch_ops", "prepare", "project_ops")
                 ]
                 resolved = {
                     (outcome["turn_index"], outcome["step_index"])

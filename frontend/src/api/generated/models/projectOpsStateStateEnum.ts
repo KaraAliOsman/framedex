@@ -11,10 +11,10 @@
  * * `APPLIED` - APPLIED
  * * `UNDONE` - UNDONE
  */
-export type PresentationOperationStateEnum =
-  (typeof PresentationOperationStateEnum)[keyof typeof PresentationOperationStateEnum];
+export type ProjectOpsStateStateEnum =
+  (typeof ProjectOpsStateStateEnum)[keyof typeof ProjectOpsStateStateEnum];
 
-export const PresentationOperationStateEnum = {
+export const ProjectOpsStateStateEnum = {
   PROPOSED: "PROPOSED",
   APPLIED: "APPLIED",
   UNDONE: "UNDONE",

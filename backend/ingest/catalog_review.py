@@ -124,7 +124,7 @@ def _entries(import_row, items):
         saved = json.loads(saved)
     by_key = {entry["key"]: entry for entry in saved}
     output = []
-    if not items or len(items) > 10000 or len({item["key"] for item in items}) != len(items):
+    if not items or len(items) > 2000 or len({item["key"] for item in items}) != len(items):
         raise contract_error(422, "catalog_review_items_invalid", "Selecciona filas distintas para revisar.")
     for item in items:
         original = by_key.get(item["key"])

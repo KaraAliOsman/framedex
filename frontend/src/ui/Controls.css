@@ -3,9 +3,9 @@ button.ui-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-8px);
+  gap: var(--space-6px);
   height: var(--control-height);
-  padding: 0 var(--space-16px);
+  padding: 0 var(--space-12px);
   border: 1px solid var(--border-default);
   border-radius: var(--r-1);
   background: var(--surface-panel);
@@ -14,19 +14,14 @@ button.ui-button {
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
-  box-shadow: var(--e1);
-  transition:
-    background 140ms ease,
-    border-color 140ms ease,
-    transform 120ms var(--ease-out);
+  transition: background var(--t-micro) var(--ease-in);
 }
 .ui-button:hover:not(:disabled) {
   background: var(--surface-hover);
   border-color: var(--border-strong);
 }
 .ui-button--primary,
-button.ui-button--primary,
-:root .ui-button--primary {
+button.ui-button--primary {
   background: var(--interactive-fill);
   border-color: var(--interactive-fill);
   color: var(--text-on-fill);
@@ -44,7 +39,6 @@ button.ui-button--danger {
   color: var(--text-on-danger);
 }
 .ui-button--ghost {
-  box-shadow: none;
   background: transparent;
   border-color: transparent;
   color: var(--interactive);
@@ -78,8 +72,6 @@ button:disabled {
   cursor: pointer;
 }
 :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
-  outline: 2px solid var(--border-focus);
-  outline-offset: 2px;
   box-shadow: none;
   outline: 2px solid var(--border-focus);
   outline-offset: 1px;
@@ -100,8 +92,8 @@ button:disabled {
   font-size: var(--type-label);
   font-weight: 500;
   line-height: var(--line-label);
-  letter-spacing: normal;
-  text-transform: none;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 .ui-field__input,
 .ui-code__fallback input {

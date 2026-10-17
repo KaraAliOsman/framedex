@@ -37,14 +37,11 @@
 
 .finish-swatch {
   display: inline-block;
-  width: 44px;
-  height: 38px;
+  width: var(--space-6);
+  height: var(--space-6);
   flex-shrink: 0;
   border: 1px solid var(--theme-border-strong);
   background-size: cover;
-}
-.finish-swatch--illustrative {
-  background-image: var(--mat-grain-swatch);
 }
 
 .finish-equal {
@@ -95,82 +92,4 @@
 .finish-number {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-}
-
-.finish-samples {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-  gap: 10px;
-  margin-bottom: 20px;
-}
-.finish-sample {
-  padding: 6px 6px 10px;
-  text-align: left;
-  background: var(--surface-sheet);
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-2);
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  cursor: pointer;
-}
-.finish-sample[aria-pressed="true"] {
-  outline: 2px solid var(--interactive-fill);
-  outline-offset: 2px;
-  border-color: transparent;
-}
-.finish-sample__material {
-  position: relative;
-  display: flex;
-  width: 100%;
-  height: 68px;
-  border-radius: var(--r-1);
-  overflow: hidden;
-  margin-bottom: 6px;
-  border: 1px solid var(--border-subtle);
-}
-.finish-sample__material > .finish-swatch {
-  flex: 1;
-  width: auto;
-  height: 100%;
-  border: 0;
-  border-radius: 0;
-}
-.finish-sample strong {
-  font-size: var(--type-dense);
-  font-weight: 500;
-  line-height: 1.3;
-  padding-inline: 3px;
-}
-.finish-sample small {
-  font-size: var(--type-label);
-  color: var(--text-muted);
-  padding-inline: 3px;
-}
-.finish-sample__check {
-  position: absolute;
-  display: grid;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  border-radius: var(--r-pill);
-  right: 5px;
-  bottom: 5px;
-  background: var(--interactive-fill);
-  color: var(--paper);
-  box-shadow: var(--e1);
-}
-.finish-swatch {
-  background-size: cover;
-  background-position: center;
-}
-.finish-swatch--illustrative {
-  background-image: var(--mat-grain-swatch);
-}
-.finish-selector__row {
-  gap: 16px;
-}
-.finish-source summary {
-  font-size: var(--type-dense);
-  color: var(--text-secondary);
 }

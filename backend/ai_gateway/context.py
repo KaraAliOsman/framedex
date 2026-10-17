@@ -1598,8 +1598,6 @@ def _catalog_compiler(org_id: UUID) -> dict:
 
 
 def _settings(org_id: UUID) -> dict:
-    from projects.org_branding import get_branding
-
     # The admin surface's real questions are "what is configured and what is
     # missing" — project exactly that: team size, white-label presence, and
     # SII readiness (certificate + CAF coverage per DTE type). Everything is
@@ -1627,7 +1625,6 @@ def _settings(org_id: UUID) -> dict:
     return {
         "members_active": int(members[0]["n"]) if members else 0,
         "branding_configured": bool(org and org[0]["branded"]),
-        "presentation": get_branding(org_id=org_id)["document_preferences"],
         "sii_certificates": int(cert[0]["n"]) if cert else 0,
         "caf_pools": [
             {

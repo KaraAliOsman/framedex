@@ -55,13 +55,6 @@ async function reviewAndIssueQuotation(
   const emit = page.getByRole("button", { name: "Emitir y enviar al cliente", exact: true });
   await expect(emit).toBeDisabled();
   await expect(confirmed).toBeEnabled();
-  const review = page.locator(".quotation-workbench--review");
-  await expect(review).toBeVisible();
-  const [workbenchBox, documentBox] = await Promise.all([
-    review.boundingBox(),
-    review.locator(".quotation-review").boundingBox(),
-  ]);
-  expect(documentBox!.width).toBeGreaterThanOrEqual(workbenchBox!.width * 0.95);
   await expect(page.locator(".quotation-confirmation")).toContainText(preview.recipient);
   await confirmed.check();
   const issued = page.waitForResponse(
@@ -388,7 +381,6 @@ test("real Magic Link reaches Mailpit and authenticates Django /auth/me", async 
   const navigation = page.getByRole("navigation", { name: "Navegación principal" });
   // ESTIMATOR can read technical authority, while publication and organization
   // administration remain supervisor capabilities enforced by the backend.
-  await navigation.locator("summary", { hasText: "Más herramientas" }).click();
   await expect(navigation.getByRole("link", { name: "Catálogo técnico", exact: true })).toHaveCount(
     1,
   );
@@ -418,14 +410,21 @@ test("real Magic Link reaches Mailpit and authenticates Django /auth/me", async 
     page.getByRole("heading", { name: "Documentos", exact: true, level: 2 }),
   ).toBeVisible();
   await expect(page.getByRole("button", { name: "Guardar documentos", exact: true })).toBeVisible();
-  for (const route of ["Obras", "Clientes", "Hoy"]) {
+  for (const route of ["Proyectos", "Clientes", "Inicio"]) {
     await navigation.getByRole("link", { name: route, exact: true }).click();
     await expect(page.getByTestId("app-shell")).toBeVisible();
   }
-  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
-  await expect(page.getByRole("button", { name: "Cambiar tema" })).toHaveCount(0);
+  const initialTheme = await page.locator("html").getAttribute("data-theme");
+  await page.getByRole("button", { name: "Cambiar tema" }).click();
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-theme",
+    initialTheme === "light" ? "dark" : "light",
+  );
   await page.reload();
-  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-theme",
+    initialTheme === "light" ? "dark" : "light",
+  );
   await expect(page.getByTestId("app-shell")).toBeVisible();
 
   // A consumed email link must not create a second authenticated session.
@@ -502,26 +501,18 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
     reason: "Test commercial rules",
   });
   await page.goto("/projects");
+  await page.getByRole("button", { name: "Crear proyecto", exact: true }).click();
+  await page.getByLabel("Nombre del proyecto", { exact: true }).fill("Commercial browser gate");
+  await page.getByLabel("Cliente", { exact: true }).fill("Synthetic fixture");
   const creation = page.waitForResponse(
     (response) =>
       response.request().method() === "POST" &&
       new URL(response.url()).pathname === "/api/v1/projects/",
   );
-  await page.getByRole("button", { name: "Nueva obra", exact: true }).click();
+  await page.getByRole("button", { name: "Guardar", exact: true }).click();
   const createdResponse = await creation;
   expect(createdResponse.status()).toBe(201);
-  const draft = (await createdResponse.json()) as { id: string; client_name: string };
-  expect(draft.client_name).toBe("");
-  await page.getByRole("button", { name: "Editar datos", exact: true }).click();
-  await page.getByLabel("Nombre del proyecto", { exact: true }).fill("Commercial browser gate");
-  await page.getByLabel("Cliente", { exact: true }).fill("Synthetic fixture");
-  const metadataSave = page.waitForResponse(
-    (response) =>
-      response.request().method() === "PATCH" &&
-      new URL(response.url()).pathname === `/api/v1/projects/${draft.id}/`,
-  );
-  await page.getByRole("button", { name: "Guardar", exact: true }).click();
-  expect((await metadataSave).status()).toBe(200);
+  const draft = (await createdResponse.json()) as { id: string };
   await page.getByRole("link", { name: "Agregar vanos", exact: true }).click();
   await page.getByLabel("Ubicación del vano", { exact: true }).fill("Fijo comercial");
   await page.getByLabel("Cantidad", { exact: true }).fill("2");
@@ -593,7 +584,6 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
       .first(),
   ).toContainText(formatMoney(quote.project_gross, "CLP"));
   await page.goto(`/projects/${draft.id}`);
-  await page.locator("summary", { hasText: "Datos y avance de la obra" }).click();
   const projectGross = page
     .locator(".project-head__facts dd.project-number")
     .filter({ hasText: formatMoney(quote.project_gross, "CLP") });
@@ -673,7 +663,7 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   expect((await successor).status()).toBe(201);
   await expect(page.getByText("Borrador", { exact: true })).toBeVisible();
   await expect(page.getByText("Revisión B", { exact: true })).toBeVisible();
-  await page.getByRole("tab", { name: "Ventanas y puertas", exact: true }).click();
+  await page.getByRole("tab", { name: "Posiciones", exact: true }).click();
   // The collection opens the exact selected position with Enter.
   await page
     .getByRole("list", { name: "Posiciones" })
@@ -737,23 +727,16 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   ).toEqual(["REV-A", "REV-B"]);
 
   await page.goto("/projects");
+  await page.getByRole("button", { name: "Crear proyecto", exact: true }).click();
+  await page.getByLabel("Nombre del proyecto", { exact: true }).fill("Composite browser gate");
+  await page.getByLabel("Cliente", { exact: true }).fill("Synthetic composite fixture");
   const compositeCreation = page.waitForResponse(
     (response) =>
       response.request().method() === "POST" &&
       new URL(response.url()).pathname === "/api/v1/projects/",
   );
-  await page.getByRole("button", { name: "Nueva obra", exact: true }).click();
-  const compositeProject = (await (await compositeCreation).json()) as { id: string };
-  await page.getByRole("button", { name: "Editar datos", exact: true }).click();
-  await page.getByLabel("Nombre del proyecto", { exact: true }).fill("Composite browser gate");
-  await page.getByLabel("Cliente", { exact: true }).fill("Synthetic composite fixture");
-  const compositeMetadata = page.waitForResponse(
-    (response) =>
-      response.request().method() === "PATCH" &&
-      new URL(response.url()).pathname === `/api/v1/projects/${compositeProject.id}/`,
-  );
   await page.getByRole("button", { name: "Guardar", exact: true }).click();
-  expect((await compositeMetadata).status()).toBe(200);
+  const compositeProject = (await (await compositeCreation).json()) as { id: string };
   await page.getByRole("link", { name: "Agregar vanos", exact: true }).click();
   await page.getByLabel("Ubicación del vano", { exact: true }).fill("Fachada compuesta");
   await page.locator(".editor-system-chip").click();

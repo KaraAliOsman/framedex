@@ -265,6 +265,7 @@ function ProductionOfficePage(): JSX.Element {
     events: "trazabilidad",
     quality: "calidad",
   };
+  const activeTab = aliases[requestedTab] ?? requestedTab;
   const selectTab = (tab: string) => {
     const next = new URLSearchParams(params);
     next.set("section", tab);
@@ -273,12 +274,6 @@ function ProductionOfficePage(): JSX.Element {
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [orders, setOrders] = useState<ProductionOrder[]>([]);
   const [detail, setDetail] = useState<ProductionOrderDetail | null>(null);
-  const nextStation = detail?.steps.find((step) => step.status !== "DONE")?.code;
-  const activeTab = params.has("section")
-    ? (aliases[requestedTab] ?? requestedTab)
-    : nextStation === "QC"
-      ? "calidad"
-      : "resumen";
   const [detailError, setDetailError] = useState("");
   const [prepVersions, setPrepVersions] = useState<ProductionPrepItem[]>([]);
   // While a work order is open, Ask DEKOPEN answers inside that order's

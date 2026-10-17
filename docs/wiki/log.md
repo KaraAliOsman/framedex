@@ -1645,7 +1645,7 @@ a introducir carga documental en el arranque de los agentes.
 ## 2026-10-17 · Investigación de experiencia y prompts preparados
 
 Por petición del dueño se prepara
-[el plan de experiencia](../ux/2026-10-17/README.md): auditoría con 35 hallazgos,
+[el plan de experiencia](https://github.com/KaraAliOsman/framedex/blob/d97245987276784c9195662657cd807109c89fa1/docs/ux/2026-10-17/README.md): auditoría con 35 hallazgos,
 competencia/fuentes, flujos, dirección visual, renderer, IA/catálogos,
 documentos/operación, método y doce encargos más prompt maestro. Incluye tres
 láminas conceptuales HTML y doce imágenes propias seleccionadas con manifiesto.
@@ -1712,8 +1712,8 @@ Tres encargos con proveedor/worker reales en DEMO no son un nuevo resultado del
 harness IA. El tercero, `P-000016`, aplica el precio del motor y prepara un PDF de
 tres páginas desde la muestra. API confirma borrador, cero emitidos y cero correos;
 los antecedentes del fixture se prepararon mediante APIs de dominio. Seis
-[capturas seleccionadas](../ux/2026-10-17/evidencia/README.md) y
-el [registro de construcción](../ux/2026-10-17/10-implementacion.md)
+[capturas seleccionadas](https://github.com/KaraAliOsman/framedex/blob/d97245987276784c9195662657cd807109c89fa1/docs/ux/2026-10-17/evidencia/README.md) y
+el [registro de construcción](https://github.com/KaraAliOsman/framedex/blob/d97245987276784c9195662657cd807109c89fa1/docs/ux/2026-10-17/10-implementacion.md)
 conservan procedencia y límites. El cambio ajeno de `golden_analytics.json` queda
 fuera de la entrega; `golden_extras.json` solo normaliza finales de línea.
 
@@ -1744,7 +1744,7 @@ sin alterar emitidos ni renderers anteriores. Clientes, cobranza y analítica
 heredan la base y navegación; no se reconstruye su composición completa.
 
 La investigación amplía fuentes públicas con Windowmaker, Klaes y A+W, y estudia
-Grok Bot/Dots oficiales. El [registro vigente](../ux/2026-10-17/11-reconstruccion.md)
+Grok Bot/Dots oficiales. El [registro vigente](https://github.com/KaraAliOsman/framedex/blob/d97245987276784c9195662657cd807109c89fa1/docs/ux/2026-10-17/11-reconstruccion.md)
 separa vídeo observado, documentación, publicidad, construcción y límites. No
 acredita inspección privada exhaustiva ni superioridad universal. Proline y
 Aluminios 2000 no se han adjuntado; no se declara su importación probada.
@@ -1765,10 +1765,32 @@ anterior y la corrección: «solo esta ventana» devuelve 498.769 CLP indicativo
 iguales al motor, conserva ancho guardado y reconoce el cambio pendiente; no
 pregunta otra vez ni aplica, emite o envía. No es una evaluación nueva del harness.
 Se inspeccionan previews PDF de nueve páginas y pack de taller de diecinueve;
-no se emite una revisión nueva. Nueve [capturas seleccionadas](../ux/2026-10-17/evidencia/README.md)
+no se emite una revisión nueva. Nueve [capturas seleccionadas](https://github.com/KaraAliOsman/framedex/blob/d97245987276784c9195662657cd807109c89fa1/docs/ux/2026-10-17/evidencia/README.md)
 conservan procedencia y hash sin redistribuir documentos de terceros.
 
 REVIEW se reconstruye sin fixture/reset, preservando datos y sesiones; los gates
 usan bases aisladas. El cambio ajeno `engine/tests/golden_analytics.json` queda
 excluido con SHA-256 `F6A97BEBCED724C4C80FBBA0170B43019BD6C409E62901E472E420138EEAC8B3`.
 Referencia fija del código de cierre: `dca9454bd7989f57a3f1b001bf1920b3f83a0a8d`.
+
+## 2026-10-17 · Reversión completa del rediseño por instrucción del dueño
+
+El dueño rechaza el resultado y pide «revierte los cambios». Se revierten las
+cinco confirmaciones de experiencia posteriores a `edcfd2844d2c2fc7cbb0d3b543b50e9089ab9b3f`,
+incluidas ambas direcciones visuales, IA, catálogo y documentos. El código del
+producto vuelve a ese ref; la limpieza previa y el cambio local ajeno de
+`engine/tests/golden_analytics.json` permanecen intactos. No continuar ni volver
+a aplicar los prompts del rediseño sin una nueva instrucción del dueño.
+
+La investigación, planes y capturas retirados del checkout permanecen en
+[el snapshot rechazado](https://github.com/KaraAliOsman/framedex/tree/d97245987276784c9195662657cd807109c89fa1/docs/ux/2026-10-17).
+Las entradas anteriores son históricas y no describen aceptación vigente. Sus
+enlaces a archivos retirados apuntan al snapshot de Git.
+
+REVIEW se reconstruye con el código restaurado: web, API y worker, sin fixture,
+reset, downgrade destructivo ni eliminación de datos/sesiones. Las dos migraciones
+aditivas ya aplicadas y su historial local se conservan sin uso por el código
+restaurado. El build web y el arranque API/worker pasan; se comprueba la respuesta
+HTTP y la igualdad de fuentes del producto con el ref anterior. El navegador
+local está deshabilitado en Work; no se afirma una inspección visual nueva.
+La PR #159 se retira sin merge ni despliegue productivo.

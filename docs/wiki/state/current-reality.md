@@ -3,10 +3,8 @@ type: state
 status: active
 updated: 2026-10-17
 volatility: high
-verified_ref: dca9454bd7989f57a3f1b001bf1920b3f83a0a8d
+verified_ref: edcfd2844d2c2fc7cbb0d3b543b50e9089ab9b3f
 sources:
-  - https://github.com/KaraAliOsman/framedex/pull/159
-  - docs/ux/2026-10-17/11-reconstruccion.md
   - https://github.com/KaraAliOsman/framedex/pull/157
   - docs/cola/ESTADO.md
   - docs/redesign/acceptance-2026-10-12.md
@@ -15,40 +13,22 @@ sources:
 
 # Estado vigente de DEKOPEN v1
 
-## Segunda reconstrucción de experiencia · 17-10-2026
+## Reversión del rediseño · 17-10-2026
 
-El dueño autorizó implementar y luego rechazó la primera dirección. La rama
-`codex/v1-experiencia`, [PR #159](https://github.com/KaraAliOsman/framedex/pull/159),
-reconstruye la experiencia desde `0c3d2cbb`: tema luminoso blanco/tinta azul,
-controles reconocibles, Hoy/Obras, biblioteca con materiales heredados,
-lienzo/inspector, IA compartida entre página y panel, fotos privadas y PDF v2.
-El [registro vigente](../../ux/2026-10-17/11-reconstruccion.md) distingue prompts
-autoejecutados, código, investigación, pruebas, fallos corregidos y límites.
-La [primera implementación](../../ux/2026-10-17/10-implementacion.md) queda como
-historia; no acredita aceptación de esta segunda dirección.
+El dueño rechazó ambas iteraciones de `codex/v1-experiencia` y ordenó revertir
+los cambios. El código del producto vuelve a
+`edcfd2844d2c2fc7cbb0d3b543b50e9089ab9b3f`, anterior a este trabajo. Se conservan
+la limpieza previa y el cambio local ajeno de `golden_analytics.json`. La
+dirección y los prompts del rediseño quedan retirados; no constituyen una nueva
+instrucción ni aceptación del dueño. La evidencia histórica se conserva en
+[Git](https://github.com/KaraAliOsman/framedex/tree/d97245987276784c9195662657cd807109c89fa1/docs/ux/2026-10-17).
 
-La campaña de cierre registra 2.662 pruebas motor/backend y dos xfail esperados,
-1.167 frontend en 106 archivos, corridas afectadas posteriores, 612 integración
-y 1.483 pgTAP en 97 archivos. PostgreSQL 16 limpio y actualizaciones pobladas
-pasan. El registro vigente conserva por separado las corridas de navegador.
-No se suman repeticiones como pruebas únicas ni se atribuyen resultados
-históricos a esta reconstrucción.
+REVIEW sirve las imágenes reconstruidas del código restaurado, sin fixture/reset
+ni borrado de datos o sesiones. Las migraciones aditivas ya aplicadas a la base
+local conservan sus datos e historial; el código anterior no usa sus capacidades.
+Los resultados descritos más abajo pertenecen a la integración histórica de v1.
 
-REVIEW se reconstruyó sin fixture/reset, conservando datos y sesiones. La
-inspección incluye 1.440×900, 1.280×800, 1.024×768 y 390×844. Dos muestras
-sintéticas recorrieron API/Storage privado y se restauraron con auditoría.
-Un encargo real de IA sobre una sola ventana devolvió la venta indicativa del
-motor, mantuvo el diseño guardado y no emitió/envió. No es un score nuevo del
-harness IA ni una medición de aprendizaje en quince minutos.
-
-Proline y Aluminios 2000 siguen sin adjuntarse; faltan corpus fabricante/OCR
-regional y activos físicos aprobados. El PDF usa un renderer separado y conserva
-versiones antiguas selladas. La IA modifica campos autorizados, sin código
-arbitrario ni alteración de emitidos. Clientes, cobranza y analítica heredan la
-base/navegación, sin reconstrucción completa de su composición específica. No
-se declara aceptación definitiva ni superioridad universal sobre competidores.
-
-## Integración histórica · 12-10-2026
+## Integración histórica
 
 `main` contiene el programa completo mediante
 [PR #157](https://github.com/KaraAliOsman/framedex/pull/157), squash

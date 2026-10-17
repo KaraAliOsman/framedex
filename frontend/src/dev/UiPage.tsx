@@ -138,7 +138,7 @@ export function UiPage(): JSX.Element {
 function Manual(): JSX.Element {
   const auth = useAuthSession();
   const orgId = auth.me?.active_organization?.id ?? "";
-  const { theme } = useTheme();
+  const { theme, toggleTheme } = useTheme();
   const [density, setDensity] = useState("office");
   const [tab, setTab] = useState("manual");
   const [number, setNumber] = useState("");
@@ -224,10 +224,11 @@ function Manual(): JSX.Element {
   useEffect(
     () =>
       register([
+        { id: "theme", label: "Cambiar tema", shortcut: "Ctrl+K", run: toggleTheme },
         { id: "drawer", label: "Abrir ficha de la obra", run: () => setOverlay("drawer") },
         { id: "document", label: "Usar densidad de documento", run: () => setDensity("document") },
       ]),
-    [register],
+    [register, toggleTheme],
   );
   const inspectorGroups = useMemo(
     () => [
@@ -302,7 +303,7 @@ function Manual(): JSX.Element {
             options={densities}
             onValueChange={setDensity}
           />
-          <span>Apariencia del producto</span>
+          <Button onClick={toggleTheme}>Tema {theme === "light" ? "oscuro" : "claro"}</Button>
           <CommandPalette />
         </div>
       </header>

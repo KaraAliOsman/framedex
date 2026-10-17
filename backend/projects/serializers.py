@@ -26,7 +26,7 @@ from projects.client_serializers import (
 
 class ProjectWriteSerializer(StrictSerializer):
     name = serializers.CharField(max_length=255)
-    client_name = serializers.CharField(max_length=255, required=False, allow_blank=True, default="")
+    client_name = serializers.CharField(max_length=255)
     client_rut = serializers.CharField(max_length=50, required=False, allow_blank=True)
     client_email = serializers.EmailField(required=False, allow_blank=True)
     client_phone = serializers.CharField(max_length=50, required=False, allow_blank=True)

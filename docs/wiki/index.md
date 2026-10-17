@@ -13,7 +13,7 @@ specification and the linked domain pages, then inspect current code.
 | Task | Source entry points | Test entry points | Domain knowledge / specification |
 |---|---|---|---|
 | Calculation, geometry, physical authority | `engine/src/dekopen_engine/`, `backend/engine_api/` | `engine/tests/`, `backend/tests/` | [Catalog authority](product/catalog-authority.md), [openings](product/physical-openings.md), [glass](product/glass-composition.md); [PRD-01](../PRD/PRD-01.md), [domain v3](../PRD/PRD-20-domain-v3.md) |
-| Catalog import and publishing | `backend/{catalogs,ingest}/`, `frontend/src/features/catalogs/` | `backend/tests/test_catalog_*.py`, colocated UI tests | [Catalog authority](product/catalog-authority.md); [PRD-08](../PRD/PRD-08.md), [PRD-20](../PRD/PRD-20.md) |
+| Catalog import and publishing | `backend/catalogs/`, `frontend/src/features/catalogs/` | `backend/tests/test_catalog_*.py`, colocated UI tests | [Catalog authority](product/catalog-authority.md); [PRD-08](../PRD/PRD-08.md), [PRD-20](../PRD/PRD-20.md) |
 | Projects, canvas, inspector and 3D | `backend/projects/`, `frontend/src/features/{projects,canvas,glass,inspector}/` | `backend/tests/`, `engine/tests/`, colocated UI tests | [Workspace](product/project-workspace.md), [editor](product/editor-canvas.md), [3D](product/physical-3d.md); [PRD-04](../PRD/PRD-04.md), [PRD-07](../PRD/PRD-07.md), [PRD-12](../PRD/PRD-12.md) |
 | Price, quotation, PDF and client agreement | `backend/{pricing,documents,portal}/`, `frontend/src/features/{pricing,quotations,portal}/` | `backend/tests/`, `engine/tests/`, colocated UI tests | [Price](product/price-workspace.md), [quotation](product/quotation-document.md), [agreement](product/customer-proposals.md); [PRD-05](../PRD/PRD-05.md), [PRD-06](../PRD/PRD-06.md), [PRD-11](../PRD/PRD-11.md) |
 | AI proposals, operations and jobs | `backend/{ai_gateway,jobs}/`, `engine/src/dekopen_engine/design_operations.py`, `frontend/src/features/{assistant,jobs}/` | `backend/tests/test_ai_*.py`, `engine/tests/`, colocated UI tests | [Assistant](product/assistant-work.md), [provider](product/ai-provider.md), [operation contract](../ai/OPERACIONES.md); [PRD-10](../PRD/PRD-10.md), [PRD-13](../PRD/PRD-13.md) |
@@ -49,9 +49,6 @@ acceptance claims keep separate refs; newer code always requires verification.
 - [Design constitution](../design/CONSTITUCION.md) - mandatory UI/product quality source for v1 work.
 
 ## Product direction
-
-- [Experiencia y dirección del dueño · 17-10-2026](sources/owner-ux-direction-2026-10-17.md) — segunda reconstrucción autorizada: tema único luminoso, IA práctica con referencias Grok Bot/Dots, catálogo PDF y pruebas al final; [estado vigente](../ux/2026-10-17/11-reconstruccion.md).
-- [Plan UX, implementación y prompts](../ux/2026-10-17/README.md) — investigación pública de siete competidores, auditoría, prompts autoejecutados y evidencia separada de ambas direcciones. No acredita una nueva aceptación definitiva.
 
 - [Owner decisions](decisions/owner-decisions.md) — durable product and engineering decisions extracted from project conversations.
 - [Product vision](product/vision.md) — what DEKOPEN is trying to become and what it is explicitly not.
@@ -115,8 +112,6 @@ acceptance claims keep separate refs; newer code always requires verification.
 - [AI outcome baseline](quality/ai-outcome-baseline.md) — 26 owner requests, rollback harness, real-provider measurement and fixture limits.
 
 ## Research
-
-- [Revisión de experiencia · 17-10-2026](research/experience-review-2026-10-17.md) — hechos de código, observaciones REVIEW con build no confirmado y fuentes externas separadas.
 
 - [Competitor capability map](research/competitor-map.md) — sector references and what DEKOPEN should learn from them.
 

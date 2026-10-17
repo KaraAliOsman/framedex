@@ -3,7 +3,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { Edges, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import type { ModuleScene, Scene3D, Solid3D } from "./Product3DScene";
-import { solidToGeometry, mapFinishUvs } from "./scene3dGeometry";
+import { solidToGeometry } from "./scene3dGeometry";
 import {
   disposeFinishMaterials,
   finishGeometryMaterials,
@@ -52,12 +52,10 @@ function SolidMesh({
   clipPlane: THREE.Plane | null;
   onPick(owner: string): void;
 }): JSX.Element {
-  const geometry = useMemo(() => {
-    const geometry =
-      solid.kind === "box" ? new THREE.BoxGeometry(...solid.size) : solidToGeometry(solid);
-    if (geometry && solid.finish) mapFinishUvs(geometry, solid);
-    return geometry;
-  }, [solid]);
+  const geometry = useMemo(
+    () => (solid.kind === "box" ? new THREE.BoxGeometry(...solid.size) : solidToGeometry(solid)),
+    [solid],
+  );
   const [textureEpoch, setTextureEpoch] = useState(0);
   useEffect(() => {
     let alive = true;
@@ -141,11 +139,8 @@ function SolidMesh({
       {/* Approximate member boxes (no declared catalog section) get the
        * schematic edge look — visually distinct from a real extruded
        * profile so convention never masquerades as authority. */}
-      {(selected ||
-        solid.approximate === true ||
-        mode === "technical" ||
-        (solid.kind === "profile" && solid.miter)) &&
-        ["box", "profile", "shape"].includes(solid.kind) && (
+      {(selected || solid.approximate === true || mode === "technical") &&
+        (solid.kind === "box" || solid.kind === "profile") && (
           <Edges
             scale={1.002}
             color={

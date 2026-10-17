@@ -70,7 +70,7 @@ afterEach(cleanup);
 it("keeps exact entity and phase/currency links, and preserves ordered actions across pages", async () => {
   show();
   const queue = await screen.findByRole("list", { name: "Acciones pendientes" });
-  expect(within(queue).getAllByRole("listitem")).toHaveLength(8);
+  expect(within(queue).getAllByRole("listitem")).toHaveLength(50);
   expect(within(queue).getAllByRole("link", { name: "Abrir entrega" })[0]).toHaveAttribute(
     "href",
     "/production?order=order-1",
@@ -80,7 +80,7 @@ it("keeps exact entity and phase/currency links, and preserves ordered actions a
     "/quotes?phase=IN_PRODUCTION&currency=USD",
   );
   fireEvent.click(screen.getByRole("button", { name: "Siguiente" }));
-  expect(within(queue).getByRole("heading", { name: "Completa la entrega 9" })).toBeVisible();
+  expect(within(queue).getByRole("heading", { name: "Completa la entrega 51" })).toBeVisible();
   fireEvent.click(screen.getByRole("button", { name: "Anterior" }));
   expect(within(queue).getByRole("heading", { name: "Completa la entrega 1" })).toBeVisible();
   fireEvent.click(screen.getByRole("button", { name: "Atención pendiente" }));

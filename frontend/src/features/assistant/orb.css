@@ -1,56 +1,193 @@
+/* One graphite body, paired slots and one teal orbit. Real job changes set
+ * static poses; no decorative loops, breathing, bounce or rotating spinner. */
 .orb {
-  color: var(--assistant-blue);
   display: inline-block;
   vertical-align: middle;
-  flex-shrink: 0;
-  overflow: visible;
+  flex: none;
 }
-.orb__tile {
-  fill: var(--assistant-soft);
-  stroke: var(--border-subtle);
-  stroke-width: 0.5;
-}
-.orb__signal {
-  fill: var(--assistant-blue);
-  stroke: var(--surface-sheet);
-  stroke-width: 2;
+.orb__ring {
+  fill: none;
+  stroke-width: 1.5;
   opacity: 0;
+  transform: rotate(-90deg);
+  stroke-dasharray: 30 112;
+  stroke-dashoffset: 15;
 }
-.orb.is-input .orb__tile,
-.orb.is-thinking .orb__tile,
-.orb.is-working .orb__tile {
-  fill: var(--assistant-blue);
-  stroke: var(--assistant-blue);
+.orb__ribbon {
+  fill: none;
+  stroke: var(--orb-ribbon);
+  stroke-width: 1.5;
+  stroke-linecap: square;
 }
-.orb.is-input,
-.orb.is-thinking,
-.orb.is-working {
-  color: var(--paper);
+.orb__ribbon--back {
+  stroke: var(--orb-ribbon-soft);
 }
-.orb:is(.is-thinking, .is-working, .is-queued) .orb__signal {
+.orb__body {
+  stroke: var(--orb-edge);
+  stroke-width: 0.8;
+}
+.orb__shade {
+  fill: var(--orb-deep);
+}
+.orb__eyes--joy path {
+  fill: none;
+  stroke: var(--orb-eye);
+  stroke-width: 1.5;
+}
+.orb__eyes--worry rect,
+.orb__eyes--flat rect {
+  fill: var(--orb-eye);
+}
+.orb__eyes--joy,
+.orb__eyes--worry,
+.orb__eyes--flat {
+  visibility: hidden;
+}
+.orb.is-success .orb__eyes--joy,
+.orb.is-error .orb__eyes--worry,
+.orb.is-canceled .orb__eyes--flat {
+  visibility: visible;
+}
+.orb.is-success .orb__eyes--open,
+.orb.is-error .orb__eyes--open,
+.orb.is-canceled .orb__eyes--open {
+  visibility: hidden;
+}
+.orb--s .orb__shade {
+  display: none;
+}
+.orb__eyes,
+.orb__ring {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform var(--t-state) var(--ease-in);
+}
+.orb.is-input .orb__eyes {
+  transform: translateY(-1px);
+}
+.orb.is-queued .orb__eyes {
+  transform: scaleY(0.6);
+}
+.orb.is-thinking .orb__eyes {
+  transform: translateX(-1.5px);
+}
+.orb.is-thinking .orb__ring {
   opacity: 1;
+  stroke: var(--interactive);
+  stroke-dasharray: 8 134;
 }
-.orb:is(.is-thinking, .is-working) .orb__bridge {
-  stroke-width: 4.5;
-  opacity: 0.65;
-}
-.orb:is(.is-waiting, .is-approval) .orb__signal {
+.orb.is-working .orb__ring {
   opacity: 1;
-  fill: var(--state-warning);
+  stroke: var(--interactive);
+  stroke-dasharray: 68 74;
 }
-.orb.is-error .orb__signal {
-  opacity: 1;
-  fill: var(--state-danger);
+.orb.is-waiting .orb__eyes,
+.orb.is-approval .orb__eyes {
+  transform: translateY(-2px);
 }
-.orb.is-success .orb__signal {
+.orb.is-waiting .orb__ring {
   opacity: 1;
-  fill: var(--state-success);
+  stroke: var(--interactive);
+}
+.orb.is-approval .orb__ring,
+.orb.is-approval .orb__ribbon {
+  opacity: 1;
+  stroke: var(--theme-mark);
+}
+.orb.is-success .orb__ring,
+.orb.is-success .orb__ribbon {
+  opacity: 1;
+  stroke: var(--theme-success);
+}
+.orb.is-error .orb__ring,
+.orb.is-error .orb__ribbon {
+  opacity: 1;
+  stroke: var(--theme-danger);
 }
 .orb.is-canceled {
-  opacity: 0.6;
+  opacity: 0.55;
+}
+.bot-figure {
+  display: block;
+  margin-inline: auto;
+}
+.bot-figure__body {
+  stroke: var(--orb-edge);
+  stroke-width: 1;
+}
+.bot-figure__shade {
+  fill: var(--orb-deep);
+}
+.bot-figure__shadow {
+  fill: var(--border-default);
+  opacity: 0.24;
+}
+.bot-figure__ribbon {
+  fill: none;
+  stroke: var(--orb-ribbon);
+  stroke-width: 4;
+}
+.bot-figure__ribbon--back {
+  stroke: var(--orb-ribbon-soft);
+}
+.bot-figure__eyes {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform var(--t-state) var(--ease-in);
+}
+.bot-figure.is-thinking .bot-figure__eyes {
+  transform: translateX(-4px);
+}
+.bot-figure.is-input .bot-figure__eyes {
+  transform: translateY(-2px);
+}
+.bot-figure.is-working .bot-figure__eyes {
+  transform: scaleY(0.8);
+}
+.bot-figure.is-success .bot-figure__eyes {
+  transform: scaleY(0.25);
+}
+.bot-figure.is-error .bot-figure__eyes {
+  transform: rotate(-8deg) scaleY(0.4);
+}
+.bot-figure--welcome .bot-figure__panes {
+  display: none;
+}
+.bot-figure__window {
+  animation: bot-window-assemble var(--t-max) var(--ease-in) both;
+}
+@keyframes bot-window-assemble {
+  from {
+    transform: translateX(12px);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+.bot-figure.is-waiting .bot-figure__eyes,
+.bot-figure.is-approval .bot-figure__eyes {
+  transform: translateY(-4px);
+}
+.bot-figure.is-approval .bot-figure__ribbon {
+  stroke: var(--theme-mark);
+}
+.bot-figure.is-error .bot-figure__ribbon {
+  stroke: var(--theme-danger);
+}
+.bot-figure.is-success .bot-figure__ribbon {
+  stroke: var(--theme-success);
+}
+.bot-figure.is-queued .bot-figure__eyes,
+.bot-figure.is-canceled .bot-figure__eyes {
+  transform: scaleY(0.6);
+}
+.bot-figure.is-canceled {
+  opacity: 0.55;
 }
 @media (prefers-reduced-motion: reduce) {
-  .orb__bridge {
-    animation: none !important;
+  .orb *,
+  .bot-figure * {
+    transition: none;
+    animation: none;
   }
 }

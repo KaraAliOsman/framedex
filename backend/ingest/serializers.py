@@ -29,7 +29,7 @@ class CatalogReviewItemSerializer(StrictSerializer):
 
 
 class CatalogReviewRequestSerializer(StrictSerializer):
-    items = CatalogReviewItemSerializer(many=True, min_length=1, max_length=10000)
+    items = CatalogReviewItemSerializer(many=True, min_length=1, max_length=2000)
 
 
 class CatalogPublishRequestSerializer(CatalogReviewRequestSerializer):

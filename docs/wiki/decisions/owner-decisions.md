@@ -7,12 +7,21 @@ sources:
   - owner conversations through 2026-09-28
   - docs/PRODUCT.md
   - docs/ENGINEERING.md
-  - docs/wiki/sources/owner-ux-direction-2026-10-17.md
 ---
 
 # Owner decisions
 
 Durable decisions that should survive chat/session boundaries.
+
+## Rejected experience redesign · 2026-10-17
+
+The owner rejected both iterations delivered in `codex/v1-experiencia` and
+explicitly requested a rollback. Restore the product to `edcfd2844d2c2fc7cbb0d3b543b50e9089ab9b3f`;
+do not reapply the discarded visual direction, AI changes or execution prompts
+without a new owner instruction. Earlier requests and implementation records
+remain [historical evidence](https://github.com/KaraAliOsman/framedex/tree/d97245987276784c9195662657cd807109c89fa1/docs/ux/2026-10-17),
+not product acceptance. Existing project data, issued documents, sessions and
+unrelated local work must be preserved during restoration.
 
 ## Product identity
 
@@ -58,25 +67,6 @@ Every feature needs a clear why.
 
 ## UI direction
 
-**Actualización del dueño · 17-10-2026:** puntúa la experiencia anterior en
-30/100, difícil y robótica incluso para un profesional. Prioriza sencillez,
-placer de uso, representación convincente, IA con menos trámite y catálogo
-desde PDF. Después amplía el encargo a una v1 definitiva y autoriza construir
-con **«ahora empieza»**. La espera inicial queda satisfecha. La constitución
-se reconcilió durante esa implementación.
-
-La IA es la capacidad principal: puede realizar el trabajo completo delegado,
-mostrar una muestra para doble revisión y preparar cambios de presentación de
-página/portal y PDF. El dueño conserva presupuesto, permisos y límites; las
-acciones externas conservan su clic humano. La dirección exige un tema único;
-la composición clara y neutra es una decisión de diseño tomada al construir.
-En la confirmación posterior del mismo día, el dueño elige que la IA use las
-preferencias guardadas de la empresa al preparar una cotización y pregunte solo
-cuando falte un dato imprescindible.
-El [plan y estado](../../ux/2026-10-17/README.md) y
-[la fuente](../sources/owner-ux-direction-2026-10-17.md) distinguen intención,
-implementación y evidencia, sin acreditar aceptación definitiva por sí solas.
-
 The product should feel:
 
 - human;
@@ -99,12 +89,6 @@ Design references include high-quality Adobe/Figma/Linear/Raycast/Duolingo inter
 
 ## Agent workflow
 
-**Preferencia vigente para el rediseño del 17-10:** construir con foco en calidad;
-pruebas automatizadas, regresión y campaña de bugs al final. Inspeccionar el
-resultado mientras se diseña no implica un gate por componente. Evitar reportes
-y confirmaciones constantes. El cierre conserva comprobaciones apropiadas e
-invariantes; no es autorización para omitirlos ni debilitar CI.
-
 Preferred agent behavior:
 
 - autonomous;
@@ -116,9 +100,7 @@ Preferred agent behavior:
 
 Avoid excessive maker/checker/Gauntlet ceremony.
 
-Prefer one primary writer/integrator. Specialist delegation requires current
-authorization; do not infer permission to spawn agents from this historical
-preference alone.
+Prefer one primary writer/integrator plus specialist read-only reviewers when parallelism helps.
 
 ## Engineering trust
 

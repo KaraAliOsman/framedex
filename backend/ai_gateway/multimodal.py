@@ -12,20 +12,14 @@ MAX_IMAGE_BYTES = 12 * 1024 * 1024
 MAX_TEXT_CHARS = 100_000
 
 
-def pdf_page_parts(content, *, page_range=None):
+def pdf_page_parts(content):
     import pypdfium2 as pdfium
     parts, total, text_chars = [], 0, 0
     try:
         with pdfium.PdfDocument(content) as document:
-            start, end = 1, len(document)
-            if page_range is not None:
-                if (not isinstance(page_range, list) or len(page_range) != 2
-                        or any(type(value) is not int for value in page_range)):
-                    raise ProviderError("ai_source_page_limit")
-                start, end = page_range
-            if start < 1 or end > len(document) or end < start or end - start + 1 > MAX_SCAN_PAGES:
+            if len(document) > MAX_SCAN_PAGES:
                 raise ProviderError("ai_source_page_limit")
-            for index in range(start - 1, end):
+            for index in range(len(document)):
                 with closing(document[index]) as page:
                     with closing(page.get_textpage()) as text:
                         text_chars += text.count_chars()
@@ -34,20 +28,18 @@ def pdf_page_parts(content, *, page_range=None):
                         literal = text.get_text_range().strip()
                         if literal:
                             parts.append({"ref": f"página {index + 1}", "text": literal})
-                    # Mixed pages need their diagrams too. Text is evidence;
-                    # the image preserves sections, arrows and table layout.
+                            continue
                     width, height = page.get_size()
-                    if width <= 0 or height <= 0:
+                    if width <= 0 or height <= 0 or width * height * 4 > MAX_PIXELS:
                         raise ProviderError("ai_source_page_limit")
-                    scale = min(2, (MAX_PIXELS / (width * height)) ** 0.5)
-                    with closing(page.render(scale=scale)) as bitmap:
+                    with closing(page.render(scale=2)) as bitmap:
                         output = BytesIO()
-                        bitmap.to_pil().convert("RGB").save(output, format="JPEG", quality=88, optimize=True)
+                        bitmap.to_pil().save(output, format="PNG", optimize=True)
                         raw = output.getvalue()
                     total += len(raw)
                     if total > MAX_IMAGE_BYTES:
                         raise ProviderError("ai_source_page_limit")
-                    parts.append({"mime": "image/jpeg", "data": base64.b64encode(raw).decode("ascii"), "ref": f"página {index + 1}"})
+                    parts.append({"mime": "image/png", "data": base64.b64encode(raw).decode("ascii"), "ref": f"página {index + 1}"})
     except ProviderError:
         raise
     except Exception:

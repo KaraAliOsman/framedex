@@ -560,9 +560,6 @@ def _svg_elements(node: dict[str, object], x: Decimal, y: Decimal,
         _svg_elements(children[0], x, y, width, height, out, glyph_only, pal, physical, origin, exterior)
         return
     if node_type in ("SPLIT_V", "SPLIT_H"):
-        # A bay at a divider is not an outer-frame corner. Never imply a
-        # miter there from the outer frame's fabrication cuts.
-        pal = {**pal, "joint": None} if pal.get("material_details") else pal
         offset = node.get("split_offset_mm")
         if offset is None or len(children) != 2:
             raise DocumentaryError("invalid_frozen_parametric_tree")
@@ -601,8 +598,6 @@ def _svg_elements(node: dict[str, object], x: Decimal, y: Decimal,
             f'fill="{pal["frame_fill"]}" stroke="{pal["frame_edge"]}" stroke-width="' + _pt(min(width, height) / Decimal("40"))
             + '"/>'
         )
-        if pal.get("material_details"):
-            _commercial_profile_face(x, y, width, height, inset_x, inset_y, pal, out)
         out.append(
             f'<rect x="{_pt(ix)}" y="{_pt(iy)}" width="{_pt(iw)}" height="{_pt(ih)}" '
             f'fill="{pal["bay_fill"]}" stroke="{pal["bay_edge"]}" stroke-width="{stroke}"/>'
@@ -751,37 +746,9 @@ def _contour_svg_path(
     return " ".join(commands) + " Z", top, bottom, left, right
 
 
-def _commercial_profile_face(x, y, width, height, inset_x, inset_y, pal, out):
-    """Same schematic envelope; grain direction and joints use sealed facts."""
-    right, bottom = x + width, y + height
-    ix, iy, ir, ib = x + inset_x, y + inset_y, right - inset_x, bottom - inset_y
-    miter = pal.get("joint") == "MITER"
-    points = [
-        ((x, y), (ix, iy), (ix, ib), (x, bottom)),
-        ((right, y), (right, bottom), (ir, ib), (ir, iy)),
-        ((x, y), (right, y), (ir, iy), (ix, iy)),
-        ((x, bottom), (ix, ib), (ir, ib), (right, bottom)),
-    ] if miter else [
-        ((x, y), (ix, y), (ix, bottom), (x, bottom)),
-        ((ir, y), (right, y), (right, bottom), (ir, bottom)),
-        ((ix, y), (ir, y), (ir, iy), (ix, iy)),
-        ((ix, ib), (ir, ib), (ir, bottom), (ix, bottom)),
-    ]
-    for index, polygon in enumerate(points):
-        fill = pal.get("frame_vertical" if index < 2 else "frame_horizontal") or pal["frame_fill"]
-        coordinates = " ".join(f"{_pt(px)},{_pt(py)}" for px, py in polygon)
-        out.append(f'<polygon data-profile-face="true" points="{coordinates}" fill="{fill}"/>')
-    if pal.get("joint"):
-        lines = [((x, y), (ix, iy)), ((right, y), (ir, iy)), ((right, bottom), (ir, ib)), ((x, bottom), (ix, ib))] if miter else [
-            ((x, iy), (ix, iy)), ((ir, iy), (right, iy)), ((x, ib), (ix, ib)), ((ir, ib), (right, ib))]
-        path = "".join(f"M{_pt(a[0])} {_pt(a[1])}L{_pt(b[0])} {_pt(b[1])}" for a, b in lines)
-        out.append(f'<path data-profile-joint="{pal["joint"]}" d="{path}" stroke="{pal["frame_edge"]}" stroke-width="{_pt(min(width, height)/Decimal("500"))}" fill="none"/>')
-
-
 def _position_svg(
     position: dict[str, object], *, commercial: bool = False, view: str = "interior", dimensions: bool = False,
     dimension_font_divisor: Decimal | None = None, include_sliding_plan: bool = True,
-    material_details: bool = False,
 ) -> str:
     if view not in ("interior", "exterior"):
         raise DocumentaryError("invalid_drawing_view")
@@ -799,24 +766,7 @@ def _position_svg(
                 bay = bay.removeprefix(prefix)
             grouped.setdefault(bay, []).append(fact)
         return grouped
-    pal = _commercial_palette(position, view if material_details else "interior") if commercial else _PAL_TECH
-    definitions = ""
-    if commercial and material_details:
-        pal["material_details"] = "true"
-        cuts = [cut for cut in position.get("_visual_cuts", []) if cut.get("role") == "FRAME"]
-        angles = [cut.get(key) for cut in cuts for key in ("angle_left", "angle_right")]
-        if angles and all(value is not None and _num(value) == 45 for value in angles):
-            pal["joint"] = "MITER"
-        elif angles and all(value is not None and _num(value) == 90 for value in angles):
-            pal["joint"] = "BUTT"
-        face = (position.get("resolved_finish") or {}).get(view) or {}
-        if face.get("kind") in ("FOIL", "WOOD_EFFECT"):
-            prefix = "grain-" + str(position.get("position_index", "0"))
-            for axis, rotation in (("vertical", "0"), ("horizontal", "90")):
-                identity = prefix + "-" + axis
-                definitions += f'<pattern id="{escape(identity)}" patternUnits="userSpaceOnUse" width="18" height="160" patternTransform="rotate({rotation})"><rect width="18" height="160" fill="{pal["frame_fill"]}"/><path d="M4 0C1 40 8 85 4 160M13 0C17 50 8 110 13 160" stroke="#33251c" stroke-opacity="0.17" stroke-width="1.6" fill="none"/></pattern>'
-                pal["frame_" + axis] = f"url(#{identity})"
-            definitions = '<defs><title>Veta ilustrativa; compruebe la muestra del proveedor</title>' + definitions + '</defs>'
+    pal = _commercial_palette(position) if commercial else _PAL_TECH
     elements: list[str] = []
     drawing_width = Decimal("0")
     drawing_height = Decimal("0")
@@ -1007,7 +957,7 @@ def _position_svg(
         f'<svg viewBox="{_pt((min(Decimal("0"), width-drawing_width) if view == "exterior" else Decimal("0"))-label_margin)} {-caption_size * 2} {_pt(max(width, drawing_width)+label_margin*2)} {_pt(max(height, drawing_height) + caption_size * 2)}" '
         'xmlns="http://www.w3.org/2000/svg" role="img" '
         f'aria-label="Vano {_value(position.get("position_index"))}">'
-        + definitions + f'<title>{title}</title><text x="0" y="{-caption_size}" font-family="IBM Plex Sans" '
+        + f'<title>{title}</title><text x="0" y="{-caption_size}" font-family="IBM Plex Sans" '
           f'font-size="{_pt(caption_size)}" fill="{pal["glyph"]}">{title}</text>' + graphic + "</svg>"
     )
 

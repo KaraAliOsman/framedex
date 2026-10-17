@@ -1,11 +1,10 @@
 ---
 type: synthesis
 status: active
-updated: 2026-10-17
+updated: 2026-10-11
 volatility: high
-verified_ref: 42ccac96823f53ee1b33e9d8baba00fb698e204d
+verified_ref: ff210e7a439b861349d1d602c4137ebe4e65d0c8
 sources:
-  - docs/ux/2026-10-17/04-representacion.md
   - docs/redesign/P19-ACEPTACION.md
   - scripts/generate_scene3d_fixtures.py
   - frontend/src/features/canvas/poses3d.test.ts
@@ -13,15 +12,6 @@ sources:
 ---
 
 # Representación física 3D
-
-**Construcción autorizada · 17-10-2026:** `codex/v1-experiencia` representa
-uniones MITER/BUTT a partir de los cortes evaluados 45/90, veta por eje en SVG,
-inglete en barras 3D y UV longitudinal. FOIL/WOOD_EFFECT tienen representación
-ilustrativa; siguen faltando activos aprobados del fabricante. No se modifica
-una fórmula para acomodar la imagen y el PDF conserva un renderer proporcional
-distinto. [Implementación y límites](../../ux/2026-10-17/10-implementacion.md).
-La observación previa de Nogal plano corresponde al build de la auditoría, cuyo
-SHA no se verificó. Los resultados de P19 abajo conservan su ref histórico.
 
 P19 entrega hechos evaluados D03/D08 a la escena del editor y hechos sellados
 a la escena pública. El visor, exportación PNG y miniaturas comparten cámara,

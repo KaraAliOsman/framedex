@@ -1,7 +1,5 @@
 /** One glossary for API enums. Unknown additions must fail the exhaustiveness gate. */
 export const domainLabels: Readonly<Record<string, string>> = {
-  EDITORIAL: "Editorial",
-  COMPACT: "Compacto",
   RESIDENTIAL: "Residencial",
   EDUCATION: "Educación",
   HEALTH: "Salud",
@@ -347,7 +345,6 @@ export const domainLabels: Readonly<Record<string, string>> = {
   PRICE_PER_M2_BY_TYPOLOGY: "Precio por m² y tipología",
   PRODUCTION: "Producción",
   PROFILE: "Perfil",
-  TEXTURE: "Acabado",
   PROFILE_CUT: "Corte de perfil",
   PROJECT_REVISION: "Revisión del proyecto",
   PVC: "PVC",

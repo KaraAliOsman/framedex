@@ -12,8 +12,11 @@ export interface ProjectWriteRequest {
    * @maxLength 255
    */
   name: string;
-  /** @maxLength 255 */
-  client_name?: string;
+  /**
+   * @minLength 1
+   * @maxLength 255
+   */
+  client_name: string;
   /** @maxLength 50 */
   client_rut?: string;
   client_email?: string;

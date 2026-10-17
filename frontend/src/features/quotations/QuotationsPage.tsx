@@ -15,7 +15,6 @@ import {
   Timestamp,
 } from "../../ui";
 import { phaseLabels } from "../../app/todayLabels";
-import { Icon } from "../../ui/Icon";
 import "./quotations.css";
 
 export const quoteStates: Record<string, string> = {
@@ -74,16 +73,7 @@ function QuotationIndex({ orgId }: { orgId: string }): JSX.Element {
   });
   return (
     <section className="quotations-page" data-density="office">
-      <PageHeader
-        title="Cotizaciones"
-        context="De la propuesta a la respuesta del cliente"
-        actions={
-          <Link className="ui-button" to="/projects">
-            <Icon name="projects" size={18} />
-            Ir a mis obras
-          </Link>
-        }
-      />
+      <PageHeader title="Cotizaciones" context="Revisiones emitidas vigentes por proyecto" />
       <div className="quote-filters">
         <label>
           Buscar proyecto o cliente

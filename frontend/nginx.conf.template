@@ -22,19 +22,6 @@ server {
         add_header Cache-Control "public, max-age=31536000, immutable";
     }
 
-    # Module workers require a JavaScript MIME type. nginx's default mime.types
-    # does not include .mjs, which prevents the local PDF renderer from starting.
-    location ~ ^/assets/.*\.mjs$ {
-        default_type application/javascript;
-        try_files $uri =404;
-        add_header Cache-Control "public, max-age=31536000, immutable";
-    }
-
-    location = /field-worker.js {
-        try_files $uri =404;
-        add_header Cache-Control "no-cache, must-revalidate";
-    }
-
     location /api/ {
         proxy_pass ${BACKEND_ORIGIN}/api/;
         proxy_http_version 1.1;
@@ -50,6 +37,5 @@ server {
 
     location / {
         try_files $uri $uri/ /index.html;
-        add_header Cache-Control "no-cache, must-revalidate";
     }
 }

@@ -14,7 +14,7 @@ export interface ProjectResponse {
   /** @maxLength 255 */
   name: string;
   /** @maxLength 255 */
-  client_name?: string;
+  client_name: string;
   /** @maxLength 50 */
   client_rut?: string;
   client_email?: string;

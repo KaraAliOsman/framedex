@@ -1,21 +1,9 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 
-import type {
-  PositionDesign,
-  ProductIssue,
-  ResolvedFinish,
-  ProfileCut,
-} from "../../api/generated/models";
-import { projectDesignOptions } from "../../api/generated/dekopen";
+import type { PositionDesign, ProductIssue } from "../../api/generated/models";
 import { t } from "../../i18n/es-CL";
 import type { IntentNode } from "../canvas/intentEditing";
-import {
-  resolveMembers,
-  withFinishMembers,
-  withCutJoints,
-  type MemberGeometry,
-} from "../canvas/members";
+import { resolveMembers, type MemberGeometry } from "../canvas/members";
 import { isProductModel, wrapTreeAsProduct, type ProductJson } from "../canvas/productEditing";
 import { frontLayout, ProductFrontContent } from "../canvas/ProductFrontSvg";
 import { webglAvailable } from "../canvas/webglAvailable";
@@ -31,7 +19,8 @@ const NO_ISSUES: ProductIssue[] = [];
 const NO_LEAVES: OpeningLeafFact[] = [];
 const NOOP = () => {};
 
-/** Fallback geometry when a historical position has no catalog section. */
+/** Neutral PVC-60 member geometry — the thumbnail shows real bay layout and
+ * opening glyphs; catalog face widths only exist inside the editor. */
 export const THUMB_MEMBERS = resolveMembers(undefined);
 
 export function designProduct(design: PositionDesign): ProductJson {
@@ -70,13 +59,12 @@ function useVisible<T extends HTMLElement>(): [React.RefObject<T>, boolean] {
 /** Live front-elevation thumbnail for a saved position: classic trees are
  * wrapped as a one-module product so both storage shapes render identically.
  * The tight viewBox crops the dimension chains — only the product reads. */
-export type DrawingSelection = {
-  moduleId: string;
-  nodeId?: string;
-  kind: "module" | "bay" | "division";
-};
-
-type PositionThumbProps = {
+export function PositionThumb({
+  design,
+  variant = "elevation",
+  members = THUMB_MEMBERS,
+  openingLeaves = NO_LEAVES,
+}: {
   design: PositionDesign;
   /** "studio" renders the §05 commercial view — the premium visual for
    * project cards; "elevation" keeps the technical line drawing used
@@ -86,52 +74,7 @@ type PositionThumbProps = {
    * (portal) pass a re-skinned set so the render matches the quoted color. */
   members?: MemberGeometry;
   openingLeaves?: OpeningLeafFact[];
-  orgId?: string;
-  systemId?: string;
-  finish?: ResolvedFinish | null;
-  cuts?: ProfileCut[];
-  selection?: DrawingSelection | null;
-  onSelectPart?(selection: DrawingSelection): void;
-};
-
-export function PositionThumb(props: PositionThumbProps): JSX.Element {
-  if (props.orgId && props.systemId && !props.members) return <CatalogPositionThumb {...props} />;
-  return <PositionVisual {...props} />;
-}
-
-function CatalogPositionThumb(props: PositionThumbProps): JSX.Element {
-  const { orgId, systemId } = props;
-  const options = useQuery({
-    queryKey: ["design-options", orgId, systemId],
-    enabled: !!orgId && !!systemId,
-    staleTime: 60_000,
-    queryFn: async () => {
-      const response = await projectDesignOptions(systemId!, {
-        headers: { "X-Organization-ID": orgId! },
-      });
-      if (response.status !== 200) throw new Error("catalog_unavailable");
-      return response.data;
-    },
-  });
-  const members = useMemo(() => resolveMembers(options.data), [options.data]);
-  return <PositionVisual {...props} members={members} />;
-}
-
-function PositionVisual({
-  design,
-  variant = "elevation",
-  members: suppliedMembers,
-  openingLeaves = NO_LEAVES,
-  finish,
-  cuts,
-  selection,
-  onSelectPart,
-}: PositionThumbProps): JSX.Element {
-  const members = useMemo(() => {
-    let resolved = suppliedMembers ?? THUMB_MEMBERS;
-    if (finish) resolved = withFinishMembers(resolved, finish);
-    return cuts ? withCutJoints(resolved, cuts) : resolved;
-  }, [suppliedMembers, finish, cuts]);
+}): JSX.Element {
   const product = useMemo(() => designProduct(design), [design]);
   const openingFacts = useMemo(
     () =>
@@ -167,33 +110,18 @@ function PositionVisual({
     <svg
       className="position-thumb"
       viewBox={`${-pad - leftOver} ${-pad} ${totalW + leftOver + rightOver + pad * 2} ${height + lift + dip + pad * 2}`}
-      role={onSelectPart ? "group" : "img"}
+      role="img"
       aria-label={t("projects.positionThumb")}
     >
       <ProductFrontContent
         product={product}
         members={members}
         openingFacts={openingFacts}
-        selectedId={selection?.moduleId ?? null}
-        selectedBayId={selection?.kind === "bay" ? (selection.nodeId ?? null) : null}
-        selectedDivisionId={selection?.kind === "division" ? (selection.nodeId ?? null) : null}
+        selectedId={null}
         issues={NO_ISSUES}
         disabled
-        preview={!onSelectPart}
-        selectionOnly={!!onSelectPart}
-        onSelectModule={
-          onSelectPart ? (moduleId) => onSelectPart({ moduleId, kind: "module" }) : NOOP
-        }
-        onSelectBay={
-          onSelectPart
-            ? (moduleId, nodeId) => onSelectPart({ moduleId, nodeId, kind: "bay" })
-            : undefined
-        }
-        onSelectDivision={
-          onSelectPart
-            ? (moduleId, nodeId) => onSelectPart({ moduleId, nodeId, kind: "division" })
-            : undefined
-        }
+        preview
+        onSelectModule={NOOP}
         onAddUnit={NOOP}
         onCommitModuleWidth={NOOP}
         onCommitTotalWidth={NOOP}

@@ -1,4 +1,4 @@
-/* One luminous workspace. Physical material colors remain independent. */
+/* Constitution §3. Physical materials are invariant; chrome uses functional roles. */
 @font-face {
   font-family: "IBM Plex Sans";
   font-style: normal;
@@ -42,35 +42,34 @@
   src: url("/fonts/ibm-plex-mono-latin-600-normal.woff2") format("woff2");
 }
 :root {
-  --g-950: #1d2939;
-  --g-900: #344054;
-  --g-700: #526071;
-  --g-500: #667487;
-  --g-400: #98a2b3;
-  --g-300: #d0d7e2;
-  --g-200: #e5e9f0;
-  --g-100: #f1f3f7;
-  --g-50: #f7f8fb;
-  --g-25: #ffffff;
-  --teal-950: #1c3584;
-  --teal-900: #2545a8;
-  --teal-800: #3659e3;
-  --teal-700: #3556cf;
-  --teal-600: #5578ec;
+  --g-950: #161c1f;
+  --g-900: #252d31;
+  --g-700: #465158;
+  --g-500: #727d82;
+  --g-400: #9aa6a9;
+  --g-300: #cdd5d6;
+  --g-200: #e0e6e5;
+  --g-100: #eef2f1;
+  --g-50: #f5f7f6;
+  --g-25: #fcfdfc;
+  --teal-950: #042e2c;
+  --teal-900: #064440;
+  --teal-800: #075f5a;
+  --teal-700: #0b7770;
+  --teal-600: #0f8f85;
   --teal-500: #20a79a;
   --teal-400: #48bcaf;
-  --teal-100: #e3eaff;
-  --teal-50: #edf1ff;
+  --teal-300: #7fd4c8;
+  --teal-200: #b0e4dc;
+  --teal-100: #d4efea;
+  --teal-50: #e6f4f2;
   --orange-700: #a84418;
   --orange-600: #c24e1e;
   --orange-500: #e56a32;
+  --orange-400: #ed8653;
+  --orange-300: #f3ac84;
   --orange-100: #fbebe2;
   --paper: #ffffff;
-  --workspace-warm: #fbf8f3;
-  --workspace-clay: #c87555;
-  --assistant-ink: #223653;
-  --assistant-blue: #3659e3;
-  --assistant-soft: #edf1ff;
   --scrim: rgb(22 28 31 / 42%);
   --success-base: #1e7a4c;
   --success-soft: #e3f2ea;
@@ -83,28 +82,29 @@
   --danger-ink: #7e1f19;
   --font-sans: "IBM Plex Sans", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
-  --type-display: 2.25rem;
-  --line-display: 2.625rem;
-  --type-title-l: 1.75rem;
-  --line-title-l: 2.125rem;
-  --type-title-m: 1.125rem;
-  --line-title-m: 1.5rem;
-  --type-label: 0.75rem;
+  --type-display: 2rem;
+  --line-display: 2.25rem;
+  --type-title-l: 1.25rem;
+  --line-title-l: 1.625rem;
+  --type-title-m: 0.875rem;
+  --line-title-m: 1.125rem;
+  --type-label: 0.6875rem;
   --line-label: 0.875rem;
-  --type-body: 0.9375rem;
-  --line-body: 1.4375rem;
-  --type-dense: 0.8125rem;
-  --line-dense: 1.125rem;
+  --type-body: 0.8125rem;
+  --line-body: 1.125rem;
+  --type-dense: 0.75rem;
+  --line-dense: 1rem;
   --type-dim: 0.8125rem;
   --line-dim: 1rem;
   --type-micro: 0.6875rem;
   --type-workshop: 1rem;
   --line-micro: 0.875rem;
   --r-0: 0;
-  --r-1: 8px;
-  --r-2: 16px;
+  --r-1: 2px;
+  --r-2: 4px;
   --r-pill: 999px;
-  --e1: 0 1px 2px rgb(29 41 57 / 5%);
+  --e1: none;
+  --focus-ring: none;
   --e2: 0 1px 2px rgb(22 28 31 / 5%), 0 4px 12px rgb(22 28 31 / 8%);
   --e3: 0 2px 6px rgb(22 28 31 / 6%), 0 12px 32px rgb(22 28 31 / 14%);
   --sheet: 0 1px 3px rgb(22 28 31 / 7%);
@@ -121,13 +121,13 @@
   --t-spatial: 220ms;
   --t-max: 280ms;
   --t-exit: 120ms;
-  --ease-in: cubic-bezier(0.23, 1, 0.32, 1);
-  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in: cubic-bezier(0.2, 0, 0.38, 1);
+  --ease-out: cubic-bezier(0.4, 0.14, 1, 1);
   --density-compact: 28px;
-  --density-default: 40px;
+  --density-default: 32px;
   --density-loose: 44px;
   --control-height: var(--density-default);
-  --table-row-height: 40px;
+  --table-row-height: 32px;
   --inspector-width: 320px;
   --tree-width: 260px;
   --tool-strip: 48px;
@@ -151,6 +151,8 @@
   --space-48px: 48px;
   --space-64px: 64px;
   --orb-mid: var(--g-900);
+  --orb-deep: var(--g-950);
+  --orb-edge: var(--g-500);
   --orb-eye: var(--teal-400);
   --orb-ribbon: var(--teal-500);
   --orb-ribbon-soft: var(--teal-800);
@@ -160,14 +162,6 @@
   --mat-foil-fill: #7b5a3b;
   --mat-foil-edge: #523d26;
   --mat-foil-highlight: #96714c;
-  --mat-grain-swatch: repeating-linear-gradient(
-    92deg,
-    transparent 0 3px,
-    rgb(10 5 0 / 15%) 4px,
-    transparent 6px 11px,
-    rgb(255 255 255 / 12%) 12px,
-    transparent 14px 21px
-  );
   --mat-aluminium-fill: #dce3e5;
   --mat-aluminium-edge: #a3b0b4;
   --mat-aluminium-highlight: #f2f6f7;
@@ -183,7 +177,7 @@
   --mat-gasket: #2e3134;
   --mat-edge: #6b7075;
   --mat-op-mark: #7a5af8;
-  --mat-glass-pane: #eaf1f5;
+  --mat-glass-pane: #e9f2f1;
   --mat-signature-ink: #1a1f24;
   --member-pvc-fill: var(--mat-pvc-fill);
   --member-pvc-edge: var(--mat-pvc-edge);
@@ -220,12 +214,12 @@
   --surface-panel: var(--g-25);
   --surface-card: var(--g-100);
   --surface-sheet: var(--paper);
-  --surface-hover: #f2f5fc;
-  --surface-active: #e5ebff;
+  --surface-hover: #e2e8e7;
+  --surface-active: #d4dedd;
   --surface-selected: var(--teal-50);
   --border-subtle: var(--g-200);
   --border-default: var(--g-300);
-  --border-strong: #a9b5c8;
+  --border-strong: #a9b4b6;
   --border-focus: var(--teal-600);
   --text-primary: var(--g-950);
   --text-secondary: var(--g-700);
@@ -260,11 +254,11 @@
   --canvas-member: var(--text-primary);
   --canvas-dim: var(--text-secondary);
   --canvas-dim-line: var(--text-muted);
-  --canvas-glazing: rgba(83, 139, 175, 0.06);
+  --canvas-glazing: rgba(15, 143, 133, 0.07);
   --canvas-glazing-stroke: var(--teal-600);
   --canvas-opening-symbol: var(--text-secondary);
-  --canvas-selection: var(--interactive-fill);
-  --canvas-selection-fill: rgba(54, 89, 227, 0.06);
+  --canvas-selection: var(--teal-600);
+  --canvas-selection-fill: rgba(15, 143, 133, 0.08);
   --canvas-handle: var(--mark);
   --canvas-handle-stroke: var(--paper);
   --canvas-snap: var(--success-base);
@@ -272,6 +266,65 @@
   --canvas-invalid: var(--state-danger);
   --viewport-stage: #e0e6e5;
   --viewport-ground: #cdd5d6;
+}
+[data-theme="dark"],
+[data-density="workshop"]:not([data-theme]) {
+  --bg-app: #0f1416;
+  --surface-panel: #151b1e;
+  --surface-card: #1b2326;
+  --surface-sheet: #182024;
+  --surface-hover: #243033;
+  --surface-active: #2f3c3f;
+  --surface-selected: #123b36;
+  --border-subtle: #243033;
+  --border-default: #2f3c3f;
+  --border-strong: #607074;
+  --border-focus: var(--teal-500);
+  --text-primary: #e7edec;
+  --text-secondary: #aeb9bb;
+  --text-muted: #86928f;
+  --text-small-muted: #aeb9bb;
+  --text-on-fill: var(--g-950);
+  --text-disabled: #86928f;
+  --interactive: var(--teal-400);
+  --interactive-fill: var(--teal-500);
+  --interactive-hover: var(--teal-400);
+  --interactive-pressed: var(--teal-300);
+  --mark: var(--orange-400);
+  --state-success: #4caf7f;
+  --state-success-soft: #16291f;
+  --state-success-ink: #86d0a7;
+  --state-warning: #e09543;
+  --state-warning-soft: #33231a;
+  --state-warning-ink: #f3bc7b;
+  --state-danger: #e06154;
+  --state-danger-soft: #331d1a;
+  --state-danger-ink: #f3a49b;
+  --text-on-danger: var(--g-950);
+  --state-info: var(--teal-400);
+  --state-info-soft: #123b36;
+  --state-info-ink: var(--teal-200);
+  --state-person: var(--orange-400);
+  --state-person-soft: #39251b;
+  --state-person-ink: var(--orange-300);
+  --canvas-sheet: var(--surface-sheet);
+  --canvas-grid: #2f3c3f;
+  --canvas-grid-lines: #243033;
+  --canvas-member: var(--text-primary);
+  --canvas-dim: var(--text-secondary);
+  --canvas-dim-line: var(--text-muted);
+  --canvas-glazing: rgba(72, 188, 175, 0.07);
+  --canvas-glazing-stroke: var(--teal-500);
+  --canvas-opening-symbol: var(--text-secondary);
+  --canvas-selection: var(--teal-500);
+  --canvas-selection-fill: rgba(15, 143, 133, 0.08);
+  --canvas-handle: var(--mark);
+  --canvas-handle-stroke: var(--paper);
+  --canvas-snap: var(--success-base);
+  --canvas-preview: var(--mark);
+  --canvas-invalid: var(--state-danger);
+  --viewport-stage: #262c2f;
+  --viewport-ground: #1c2225;
 }
 :root,
 [data-theme],
@@ -369,14 +422,14 @@
   --theme-text: var(--text-primary);
 }
 [data-density="office"] {
-  --type-body: 0.9375rem;
-  --line-body: 1.4375rem;
-  --control-height: 40px;
-  --table-row-height: 40px;
+  --type-body: 0.8125rem;
+  --line-body: 1.125rem;
+  --control-height: 32px;
+  --table-row-height: 32px;
 }
 [data-density="workshop"] {
   --type-body: 1rem;
-  --line-body: 1.4375rem;
+  --line-body: 1.375rem;
   --type-label: 0.8125rem;
   --line-label: 1.125rem;
   --type-dim: 1rem;
@@ -384,7 +437,7 @@
   --table-row-height: 48px;
 }
 [data-density="document"] {
-  --type-body: 0.9375rem;
+  --type-body: 0.875rem;
   --line-body: 1.25rem;
   --control-height: 40px;
   --table-row-height: 40px;
