@@ -236,7 +236,7 @@
 .project-library.editor-flyout {
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: clip;
   position: fixed;
   inset: 80px auto auto 50%;
   transform: translateX(-50%);
