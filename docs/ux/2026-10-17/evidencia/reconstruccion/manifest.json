@@ -1,0 +1,119 @@
+{
+  "phase": "second-reconstruction",
+  "date": "2026-10-17",
+  "code_ref": "dca9454bd7989f57a3f1b001bf1920b3f83a0a8d",
+  "code_ref_role": "Final reviewed source; captures were selected across integration builds and are described individually, not all attributed to the final build.",
+  "capture_build_ref": null,
+  "provenance": "Owned REVIEW rebuilt from checkout without fixture/reset. Screenshots copied unchanged; extension adjusted from actual bytes without recompression. PDF previews render existing DEMO snapshots in memory without issuing new documents.",
+  "data": "Synthetic DEMO. No production services, exact manufacturer appearance or industrial certification asserted.",
+  "captures": [
+    {
+      "file": "ia-principal.jpg",
+      "source": ".run/v1-final/studio-captures/ia-principal-final.jpg",
+      "provenance": "CUA; final REVIEW web rebuild including dca9454b",
+      "description": "Inicio del asistente, historial y cuatro encargos.",
+      "date": "2026-10-17",
+      "format": "JPEG",
+      "width": 1440,
+      "height": 900,
+      "bytes": 91998,
+      "sha256": "3098ec4425155562b6ae55778f1565043f43ff94e2b25ca3e9c919ff4e67a455"
+    },
+    {
+      "file": "ia-alcance.jpg",
+      "source": ".run/v1-final/studio-captures/ia-alcance-final.jpg",
+      "provenance": "CUA; final integration build before documentation closure",
+      "description": "Respuesta real para una ventana, con precio del motor y diseño guardado.",
+      "date": "2026-10-17",
+      "format": "JPEG",
+      "width": 1440,
+      "height": 900,
+      "bytes": 138698,
+      "sha256": "d45cb41aff90787f51be127a20d05ae1b5b0240a48996fa6579d00088aa17570"
+    },
+    {
+      "file": "biblioteca-mobile.jpg",
+      "source": ".run/v1-final/studio-captures/biblioteca-final-mobile.jpg",
+      "provenance": "CUA; final REVIEW web rebuild including dca9454b",
+      "description": "Biblioteca 390x844 con cabecera, medidas y acción persistentes.",
+      "date": "2026-10-17",
+      "format": "JPEG",
+      "width": 375,
+      "height": 812,
+      "bytes": 29112,
+      "sha256": "9740dd13368099cc06df1c4e73b93a815ceb441b93e8695bd42d5cee75d0716c"
+    },
+    {
+      "file": "biblioteca-1024.jpg",
+      "source": ".run/v1-final/studio-captures/biblioteca-final-1024.jpg",
+      "provenance": "CUA; integration build before final overflow clipping correction",
+      "description": "Biblioteca 1024x768 con selección resumida y acción visible.",
+      "date": "2026-10-17",
+      "format": "JPEG",
+      "width": 1009,
+      "height": 757,
+      "bytes": 52030,
+      "sha256": "65b5c065372df7249c95cc2873f716bd852893ac679aef09105352f0b2ca1f02"
+    },
+    {
+      "file": "catalogo.jpg",
+      "source": ".run/v1-final/studio-captures/catalogo-final-1440.jpg",
+      "provenance": "CUA; final integration build before documentation closure",
+      "description": "Reconocimiento por familia y sección declarada accesible por separado.",
+      "date": "2026-10-17",
+      "format": "JPEG",
+      "width": 1425,
+      "height": 891,
+      "bytes": 104015,
+      "sha256": "06ce8219398718174b7944e6f2e648c19d093368baf672d25c1bc48d227fe14b"
+    },
+    {
+      "file": "editor-2d.jpg",
+      "source": ".run/v1-final/studio-captures/editor-2d-final.jpg",
+      "provenance": "CUA; final REVIEW web rebuild including dca9454b; normal viewport after reset",
+      "description": "Lienzo 2D con la altura corregida e inspector en el build final.",
+      "date": "2026-10-17",
+      "format": "JPEG",
+      "width": 1280,
+      "height": 720,
+      "bytes": 85916,
+      "sha256": "ce7eaa8b66b992e6e50150efa6259cd1848167b36fa1b78e327dfafe423d0791"
+    },
+    {
+      "file": "editor-3d.jpg",
+      "source": ".run/v1-final/studio-captures/editor-3d-final.jpg",
+      "provenance": "CUA; final integration build before documentation closure",
+      "description": "Vista exterior Nogal con encuentros y veta ilustrativa.",
+      "date": "2026-10-17",
+      "format": "JPEG",
+      "width": 1440,
+      "height": 900,
+      "bytes": 109286,
+      "sha256": "d0e2901c39bcdd7e322c00be388c14a3bd6d615bc1c7b3dfca12b4c8ddf02196"
+    },
+    {
+      "file": "pdf-portada.png",
+      "source": ".run/v1-final/studio-pdf/editorial-1.png",
+      "provenance": "Poppler rendering; existing snapshot copied and adapted in memory; no issue",
+      "description": "Portada de preview Editorial v2 sobre datos sintéticos.",
+      "date": "2026-10-17",
+      "format": "PNG",
+      "width": 1082,
+      "height": 1400,
+      "bytes": 164746,
+      "sha256": "61599b152ca6edcf0f292019b3adee3188a560c36d3037de209e55f69dac413e"
+    },
+    {
+      "file": "pdf-resumen.png",
+      "source": ".run/v1-final/studio-pdf/editorial-end-9.png",
+      "provenance": "Poppler rendering; existing snapshot copied and adapted in memory; no issue",
+      "description": "Resumen comercial y aceptación juntos en página nueve.",
+      "date": "2026-10-17",
+      "format": "PNG",
+      "width": 1005,
+      "height": 1300,
+      "bytes": 92949,
+      "sha256": "b8c9ffa4c0778da3955751a51e75d2f43528fc64be138a1adcc82cd3652d8955"
+    }
+  ]
+}

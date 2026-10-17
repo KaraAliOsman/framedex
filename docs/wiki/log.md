@@ -1723,3 +1723,52 @@ renderer separado; no existe una transacción única diseño/precio/PDF y varias
 superficies del negocio conservan su composición anterior.
 
 Referencia fija del código de cierre: `42ccac96823f53ee1b33e9d8baba00fb698e204d`.
+
+## 2026-10-17 · Segunda reconstrucción tras el rechazo del dueño
+
+El dueño rechaza la primera dirección por apariencia genérica, poca claridad y
+exceso de ceremonia. Confirma referencias «grok bot y dots de gpt»; mantiene logo,
+defaults guardados, IA capaz de preparar trabajo completo y revisión antes de
+consecuencias externas. La nueva dirección de Constitución usa papel blanco,
+tinta azul, azul de acción y acento cálido; es una decisión de implementación,
+sin atribuir al dueño la elección de cada token ni aceptación definitiva.
+
+En `codex/v1-experiencia`, [PR #159](https://github.com/KaraAliOsman/framedex/pull/159),
+P13–P20 quedan autoejecutados. Se reconstruyen Hoy/Obras, biblioteca, controles,
+iconos, lienzo/inspector y conversación compartida entre página y dock. La
+biblioteca mantiene cabecera/acción visibles en móvil. Catálogo usa foto o
+ilustración de familia y conserva la sección declarada separada. Fotos privadas
+de perfiles/acabados se normalizan, firman y restauran con eventos inmutables;
+API/RLS conservan el permiso de catálogo. Los PDF nuevos sellan presentación v2,
+sin alterar emitidos ni renderers anteriores. Clientes, cobranza y analítica
+heredan la base y navegación; no se reconstruye su composición completa.
+
+La investigación amplía fuentes públicas con Windowmaker, Klaes y A+W, y estudia
+Grok Bot/Dots oficiales. El [registro vigente](../ux/2026-10-17/11-reconstruccion.md)
+separa vídeo observado, documentación, publicidad, construcción y límites. No
+acredita inspección privada exhaustiva ni superioridad universal. Proline y
+Aluminios 2000 no se han adjuntado; no se declara su importación probada.
+
+Campaña final: 2.662 motor/backend y dos xfail esperados; 1.167 frontend/106
+archivos en la corrida completa, con dos casos nuevos y corridas afectadas
+posteriores. Base aislada: 612 integración, 1.483 pgTAP/97 archivos y siete casos
+de fotos pasan. Los 19 escenarios de navegador tienen resultado verde en su
+última ejecución: 18/19 generales y ocho del editor tras corregir altura útil,
+sin presentar la suma como otra corrida completa. PostgreSQL 16 desde base
+limpia y actualizaciones pobladas pasa; el gate aislado termina con salida 0.
+Ruff, mypy, Django, ESLint/TypeScript, formato,
+guardas, generación API y build pasan; permanece el aviso de tamaño del chunk 3D.
+
+Dos muestras sintéticas recorren API y Storage privado con 201/200 y restauración.
+El job IA real `4a40661a-a045-41f3-a860-655d3683c272` conserva el fallo de alcance
+anterior y la corrección: «solo esta ventana» devuelve 498.769 CLP indicativos,
+iguales al motor, conserva ancho guardado y reconoce el cambio pendiente; no
+pregunta otra vez ni aplica, emite o envía. No es una evaluación nueva del harness.
+Se inspeccionan previews PDF de nueve páginas y pack de taller de diecinueve;
+no se emite una revisión nueva. Nueve [capturas seleccionadas](../ux/2026-10-17/evidencia/README.md)
+conservan procedencia y hash sin redistribuir documentos de terceros.
+
+REVIEW se reconstruye sin fixture/reset, preservando datos y sesiones; los gates
+usan bases aisladas. El cambio ajeno `engine/tests/golden_analytics.json` queda
+excluido con SHA-256 `F6A97BEBCED724C4C80FBBA0170B43019BD6C409E62901E472E420138EEAC8B3`.
+Referencia fija del código de cierre: `dca9454bd7989f57a3f1b001bf1920b3f83a0a8d`.

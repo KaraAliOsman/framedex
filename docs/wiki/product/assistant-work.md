@@ -3,8 +3,9 @@ type: synthesis
 status: active
 updated: 2026-10-17
 volatility: high
-verified_ref: 42ccac96823f53ee1b33e9d8baba00fb698e204d
+verified_ref: dca9454bd7989f57a3f1b001bf1920b3f83a0a8d
 sources:
+  - docs/ux/2026-10-17/11-reconstruccion.md
   - docs/ux/2026-10-17/05-ia-catalogos.md
   - docs/redesign/P17-ACEPTACION.md
   - backend/tests/integration/test_assistant_presence.py
@@ -13,6 +14,28 @@ sources:
 ---
 
 # Asistente, trabajos y presencia
+
+**Segunda reconstrucción · 17-10-2026:** `AssistantWorkspacePage` y el panel
+contextual comparten `AgentBody`. La página restaura conversaciones por `job`,
+artefactos por `art` y decisiones con `audit`; el diseño conserva sus referencias.
+Expandir transfiere el texto sin enviarlo. Las operaciones de editor sin bridge
+enlazan al diseño con el mismo encargo. El historial pagina y los cambios se
+revisan/aplican con los ejecutores existentes. El símbolo abstracto azul refleja
+el estado real; no imita personajes de Grok Bot o Dots. El panel se acopla en
+pantallas amplias y ocupa una capa propia en tamaños menores.
+
+La cotización prepara toda la obra y declara ese alcance en la tarjeta. Para
+«solo esta ventana» el agente usa `price_position`. El ejercicio real posterior
+al ajuste devolvió 498.769 CLP netos, iguales al motor del editor, sobre el diseño
+guardado de una posición de P-000013; no insistió en la pregunta del ancho
+pendiente, ni aplicó, emitió o envió. El mismo job conserva el fallo anterior de
+alcance como evidencia; no es una nueva evaluación completa del harness IA.
+
+[Registro actual y verificación](../../ux/2026-10-17/11-reconstruccion.md). Los
+ejercicios reales descritos más abajo pertenecen a la primera implementación;
+no se trasladan como una nueva medición de este diseño. No hay ejecución
+arbitraria de código, edición de PDF emitido ni una transacción única para
+resolver todas las etapas del negocio. Los límites de servidor siguen vigentes.
 
 **Construcción autorizada · 17-10-2026, rama `codex/v1-experiencia`:** una entrada
 contextual, muestra antes de cambios amplios y detalle/fuentes plegados. La nueva

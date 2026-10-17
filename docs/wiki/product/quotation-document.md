@@ -1,10 +1,11 @@
 ---
 type: concept
 status: active
-updated: 2026-10-08
+updated: 2026-10-17
 volatility: medium
-verified_ref: 97aea5dfec6e4dddcb429a48b421c7598e758a0d
+verified_ref: dca9454bd7989f57a3f1b001bf1920b3f83a0a8d
 sources:
+  - docs/ux/2026-10-17/11-reconstruccion.md
   - docs/redesign/P09-ACEPTACION.md
   - backend/documents/quotation.py
   - engine/src/dekopen_engine/quotation.py
@@ -12,6 +13,14 @@ sources:
 ---
 
 # Propuesta comercial sellada
+
+**Reconstrucción de experiencia · 17-10-2026:** los snapshots nuevos sellan
+`presentation_version=2`, con tinta azul, superficies neutras y fichas más
+compactas. El renderer conserva rutas explícitas para legado y versión 1;
+no se regeneran documentos emitidos. Las preferencias de marca selladas siguen
+determinando su acento. La muestra de doce posiciones produce nueve páginas en
+Editorial y Compacto. Son previews sobre datos DEMO existentes, sin emisión.
+[Implementación y evidencia](../../ux/2026-10-17/11-reconstruccion.md).
 
 La intención de P09 es un documento white-label que el fabricante pueda firmar:
 emisor, cliente, solución, dibujos acotados, condiciones y aceptación. La

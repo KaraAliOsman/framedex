@@ -3,8 +3,9 @@
 [Volver al plan](../README.md)
 
 Capturas propias del producto y páginas renderizadas de documentos del fixture.
-Se conservan doce imágenes de la auditoría inicial y seis de la implementación,
-sin convertir toda la exploración temporal en documentación versionada.
+Se conservan doce imágenes de la auditoría inicial, seis de la primera
+implementación y nueve de la segunda reconstrucción. Cada etapa conserva su
+procedencia; no se convierte toda la exploración temporal en evidencia versionada.
 
 ## Procedencia y autoridad de la auditoría inicial
 
@@ -90,3 +91,42 @@ de imagen, bytes y SHA-256. Los archivos son JPEG devueltos por CUA; solo se cor
 la extensión, sin editar ni recomprimir. Las dimensiones del archivo no acreditan
 por sí mismas una matriz de dispositivos. No se incluyen QR de acceso, PDFs
 completos con capacidades, credenciales, mensajes de acceso ni sesiones.
+
+## Segunda reconstrucción · 17-10-2026
+
+Estas imágenes documentan la dirección que sustituye la primera apariencia
+rechazada por el dueño. El [registro vigente](../11-reconstruccion.md) conserva
+P13–P20, investigación, implementación, pruebas y límites. Código de cierre:
+`dca9454bd7989f57a3f1b001bf1920b3f83a0a8d`, en
+[PR #159](https://github.com/KaraAliOsman/framedex/pull/159).
+
+REVIEW se reconstruyó desde el checkout, sin fixture/reset ni pérdida de sesiones.
+Las capturas se seleccionaron de builds sucesivos; no todas corresponden al
+último build. La página principal de IA, el editor 2D y la biblioteca móvil sí se
+capturaron después de reconstruir con el último ajuste. Biblioteca a 1.024 px
+precede al ajuste de recorte del contenedor, sin cambios posteriores en su
+composición. El manifiesto distingue
+estos estados y no inventa un SHA embebido por captura.
+
+| Captura | Qué permite revisar |
+|---|---|
+| [Asistente](reconstruccion/ia-principal.jpg) | Conversación principal, historial y encargos reconocibles. |
+| [IA para una ventana](reconstruccion/ia-alcance.jpg) | Precio real del motor y conservación del diseño guardado, sin emitir o enviar. |
+| [Biblioteca móvil](reconstruccion/biblioteca-mobile.jpg) | Cabecera, medidas y acción de creación a 390×844. |
+| [Biblioteca a 1.024 px](reconstruccion/biblioteca-1024.jpg) | Selección y decisiones heredadas en un espacio más estrecho. |
+| [Catálogo](reconstruccion/catalogo.jpg) | Ilustración de familia como ayuda de reconocimiento y sección declarada separada. |
+| [Editor 2D](reconstruccion/editor-2d.jpg) | Dibujo, herramientas e inspector de la segunda dirección. |
+| [Exterior 3D](reconstruccion/editor-3d.jpg) | Encuentros y acabado Nogal ilustrativo. |
+| [Portada PDF](reconstruccion/pdf-portada.png) | Presentación Editorial v2 con preferencias de marca selladas. |
+| [Resumen PDF](reconstruccion/pdf-resumen.png) | Resumen comercial y aceptación en la misma página. |
+
+[Manifiesto de reconstrucción](reconstruccion/manifest.json): origen local,
+fecha, formato, dimensiones, bytes y SHA-256. Las imágenes se copiaron sin editar
+ni recomprimir. Los PDF son previews de datos sintéticos existentes, renderizados
+con Poppler; no se emitió una revisión nueva. No se incluyen PDF completos con
+capacidades, QR de acceso, credenciales ni sesiones. Las fotos privadas se
+ejercitaron con muestras sintéticas restauradas mediante eventos de auditoría.
+
+La revisión visual incluyó 1.440×900, 1.280×800, 1.024×768 y 390×844; estas nueve
+imágenes no representan una matriz exhaustiva ni una medición de aprendizaje.
+Proline y Aluminios 2000 no se adjuntaron: ninguna imagen acredita su importación.

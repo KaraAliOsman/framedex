@@ -61,6 +61,14 @@ orden/revisión nueva. Doce imágenes propias se conservan con manifiesto en
 
 ## Investigación externa
 
+La [segunda revisión](../../ux/2026-10-17/11-reconstruccion.md) amplía tareas de
+Windowmaker, Klaes y A+W y estudia las fuentes oficiales de
+[Grok Bot](https://x.ai/news/designing-grok-bot) y
+[Dots](https://learn.chatgpt.com/docs/dots?nav=features), consultadas el 17-10-2026.
+Se adopta continuidad del encargo, estado discreto y resultados interactivos.
+Documentación pública no equivale a operar sus productos autenticados ni conocer
+sus capacidades privadas. La matriz enlaza la evidencia y sus incógnitas.
+
 Vídeos por tramos: dos de NuveraPRO, uno de Winart/Haustek, tres de Moxisys y
 referencia oficial Logikal 12; además contexto histórico Logikal 10.1.0.45 de
 WorkStation. El registro enlaza vídeos y tiempos aproximados. No se vieron

@@ -50,8 +50,8 @@ acceptance claims keep separate refs; newer code always requires verification.
 
 ## Product direction
 
-- [Experiencia y dirección del dueño · 17-10-2026](sources/owner-ux-direction-2026-10-17.md) — plan integral preparado; tema único, IA práctica, catálogo PDF y pruebas al final. Implementación autorizada con «ahora empieza»; [estado de construcción](../ux/2026-10-17/10-implementacion.md).
-- [Plan UX, implementación y prompts](../ux/2026-10-17/README.md) — auditoría y competencia iniciales; registro separado del código construido, campaña final y límites. No acredita una nueva aceptación definitiva.
+- [Experiencia y dirección del dueño · 17-10-2026](sources/owner-ux-direction-2026-10-17.md) — segunda reconstrucción autorizada: tema único luminoso, IA práctica con referencias Grok Bot/Dots, catálogo PDF y pruebas al final; [estado vigente](../ux/2026-10-17/11-reconstruccion.md).
+- [Plan UX, implementación y prompts](../ux/2026-10-17/README.md) — investigación pública de siete competidores, auditoría, prompts autoejecutados y evidencia separada de ambas direcciones. No acredita una nueva aceptación definitiva.
 
 - [Owner decisions](decisions/owner-decisions.md) — durable product and engineering decisions extracted from project conversations.
 - [Product vision](product/vision.md) — what DEKOPEN is trying to become and what it is explicitly not.

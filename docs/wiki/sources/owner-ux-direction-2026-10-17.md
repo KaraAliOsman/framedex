@@ -28,6 +28,19 @@ competidores por sí sola. La investigación resultante está en
 [el estudio de experiencia](../../ux/2026-10-17/README.md) y
 [su síntesis de evidencia](../research/experience-review-2026-10-17.md).
 
+**Segundo rechazo y reconstrucción:** después de probar la primera entrega, el
+dueño considera que sigue siendo barata, apagada y confusa. Pide rehacer la
+interacción, distinguir controles de información y dar sentido a cada detalle.
+Conserva el logo y valora el 3D como base. Solicita preparar prompts y ejecutarlos
+en la misma sesión. Las referencias se aclaran como **«grok bot y dots de gpt»**,
+no como una instrucción de copiar sus marcas. [Segunda dirección y ejecución
+P13–P20](../../ux/2026-10-17/11-reconstruccion.md).
+
+El aprendizaje en unos quince minutos es un objetivo del dueño, todavía sin
+medición independiente. Las fotos de perfiles/materiales son opcionales; cuando
+faltan, pide una ilustración reconocible. Anuncia catálogos Proline y Aluminios
+2000, pero no se han recibido en esta sesión y no se atribuyen pruebas a ellos.
+
 ## Decisiones explícitas
 
 - La experiencia actual parece una demo robótica, difícil incluso para un

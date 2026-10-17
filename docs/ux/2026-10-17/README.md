@@ -1,12 +1,18 @@
 # DEKOPEN · Plan de experiencia de producto
 
-**17 de octubre de 2026 · Investigación, dirección de diseño y encargos preparados.**
+**17 de octubre de 2026 · Investigación, reconstrucción y verificación de la experiencia.**
 
 **Estado: implementación autorizada con «ahora empieza» y construida en
-`codex/v1-experiencia`; campaña local de cierre completada.** El
-[registro de implementación](10-implementacion.md) distingue cambios reales,
-evidencia y límites. Los capítulos 01–09 conservan la investigación y el plan
-iniciales; sus hallazgos anteriores no describen automáticamente el build nuevo.
+`codex/v1-experiencia`. La segunda dirección reemplaza la apariencia rechazada
+por el dueño.** El [registro vigente](11-reconstruccion.md) contiene P13–P20,
+construcción, campaña de cierre, evidencia y límites. El
+[registro anterior](10-implementacion.md) y los capítulos 01–09 conservan la
+primera implementación, investigación y plan; no describen automáticamente el
+build nuevo ni acreditan su aceptación.
+
+Los diagnósticos y observaciones de auditoría que siguen describen el punto de
+partida. Para el comportamiento construido y sus límites actuales manda el
+registro 11; no se presentan los defectos iniciales como fallos aún vigentes.
 
 ## La conclusión
 
@@ -40,6 +46,7 @@ que avanzar juntos.
 | [09 · Láminas de dirección visual](09-direccion-visual.html) | Propuesta documental de editor, importación y cotización. Es una maqueta, no una funcionalidad implementada. |
 | [Evidencia seleccionada](evidencia/README.md) | Capturas propias, procedencia y límites. |
 | [10 · Implementación y cierre](10-implementacion.md) | Cambios construidos, pruebas, evidencia y pendientes reales. |
+| [11 · Segunda reconstrucción](11-reconstruccion.md) | Rechazo de la primera dirección, referencias Grok Bot/Dots, prompts P13–P20 y nueva implementación. |
 
 ## Decisiones de dirección propuestas
 

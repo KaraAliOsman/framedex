@@ -3,8 +3,10 @@ type: state
 status: active
 updated: 2026-10-17
 volatility: high
-verified_ref: 42ccac96823f53ee1b33e9d8baba00fb698e204d
+verified_ref: dca9454bd7989f57a3f1b001bf1920b3f83a0a8d
 sources:
+  - https://github.com/KaraAliOsman/framedex/pull/159
+  - docs/ux/2026-10-17/11-reconstruccion.md
   - https://github.com/KaraAliOsman/framedex/pull/157
   - docs/cola/ESTADO.md
   - docs/redesign/acceptance-2026-10-12.md
@@ -13,23 +15,38 @@ sources:
 
 # Estado vigente de DEKOPEN v1
 
-## Construcción de experiencia · 17-10-2026
+## Segunda reconstrucción de experiencia · 17-10-2026
 
-El dueño autorizó construir con «ahora empieza». La rama `codex/v1-experiencia`
-parte de `edcfd2844d2c2fc7cbb0d3b543b50e9089ab9b3f`; su
-[registro de implementación](../../ux/2026-10-17/10-implementacion.md) detalla
-tema claro único, obra/biblioteca, IA de cotización y presentación, PDF por
-bloques, uniones/acabados, documentos/materiales y operación. REVIEW se
-reconstruyó desde la rama conservando datos y sesiones, sin ejecutar fixtures.
+El dueño autorizó implementar y luego rechazó la primera dirección. La rama
+`codex/v1-experiencia`, [PR #159](https://github.com/KaraAliOsman/framedex/pull/159),
+reconstruye la experiencia desde `0c3d2cbb`: tema luminoso blanco/tinta azul,
+controles reconocibles, Hoy/Obras, biblioteca con materiales heredados,
+lienzo/inspector, IA compartida entre página y panel, fotos privadas y PDF v2.
+El [registro vigente](../../ux/2026-10-17/11-reconstruccion.md) distingue prompts
+autoejecutados, código, investigación, pruebas, fallos corregidos y límites.
+La [primera implementación](../../ux/2026-10-17/10-implementacion.md) queda como
+historia; no acredita aceptación de esta segunda dirección.
 
-Campaña al cierre: 1.064 pruebas del motor, 1.583 backend, 1.147 frontend en la
-corrida completa, 605 integración y 1.483 comprobaciones pgTAP pasan; el registro
-separa verificaciones afectadas posteriores. PostgreSQL 16 pasa y los 19 escenarios
-de navegador tienen resultado verde en su última ejecución: 16 en la corrida
-general y tres en repeticiones afectadas; no es una nueva corrida completa. No es
-una aceptación definitiva ni un score nuevo del harness IA. Quedan límites
-explícitos de corpus fabricante/OCR regional, activos físicos, renderer PDF
-separado y superficies del negocio que solo heredan base/navegación.
+La campaña de cierre registra 2.662 pruebas motor/backend y dos xfail esperados,
+1.167 frontend en 106 archivos, corridas afectadas posteriores, 612 integración
+y 1.483 pgTAP en 97 archivos. PostgreSQL 16 limpio y actualizaciones pobladas
+pasan. El registro vigente conserva por separado las corridas de navegador.
+No se suman repeticiones como pruebas únicas ni se atribuyen resultados
+históricos a esta reconstrucción.
+
+REVIEW se reconstruyó sin fixture/reset, conservando datos y sesiones. La
+inspección incluye 1.440×900, 1.280×800, 1.024×768 y 390×844. Dos muestras
+sintéticas recorrieron API/Storage privado y se restauraron con auditoría.
+Un encargo real de IA sobre una sola ventana devolvió la venta indicativa del
+motor, mantuvo el diseño guardado y no emitió/envió. No es un score nuevo del
+harness IA ni una medición de aprendizaje en quince minutos.
+
+Proline y Aluminios 2000 siguen sin adjuntarse; faltan corpus fabricante/OCR
+regional y activos físicos aprobados. El PDF usa un renderer separado y conserva
+versiones antiguas selladas. La IA modifica campos autorizados, sin código
+arbitrario ni alteración de emitidos. Clientes, cobranza y analítica heredan la
+base/navegación, sin reconstrucción completa de su composición específica. No
+se declara aceptación definitiva ni superioridad universal sobre competidores.
 
 ## Integración histórica · 12-10-2026
 

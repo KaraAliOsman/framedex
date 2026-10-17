@@ -3,8 +3,9 @@ type: concept
 status: active
 updated: 2026-10-17
 volatility: medium
-verified_ref: 42ccac96823f53ee1b33e9d8baba00fb698e204d
+verified_ref: dca9454bd7989f57a3f1b001bf1920b3f83a0a8d
 sources:
+  - docs/ux/2026-10-17/11-reconstruccion.md
   - docs/ux/2026-10-17/05-ia-catalogos.md
   - engine/src/dekopen_engine/catalog_rules.py
   - engine/tests/test_gold_cases_catalog_families.py
@@ -22,6 +23,20 @@ sources:
 # Autoridad de catálogo por familia
 
 ## Dirección de experiencia · 17-10-2026
+
+La [segunda reconstrucción](../../ux/2026-10-17/11-reconstruccion.md) incorpora
+fotos opcionales privadas por organización, serie y perfil/acabado. Se normalizan
+a WebP, eliminan metadatos y se sirven con URL temporal; guardar o restaurar la
+ilustración agrega un evento inmutable. RLS y permisos de catálogo se aplican en
+API y SQL. Una foto es una ayuda de reconocimiento, no una sección ni autoridad
+de cálculo. Las texturas privadas solo alteran la representación interactiva;
+no se insertan en snapshots, motor, PDF emitido o portal. La sección real conserva
+su escala. En las tarjetas del catálogo, foto/ilustración permiten reconocer la
+familia y la sección declarada se despliega aparte; sin sección no se inventan
+cotas. La ilustración no es una reproducción exacta del perfil del fabricante.
+
+Proline y Aluminios 2000 no se han adjuntado. El catálogo de prueba y las fotos
+sintéticas no acreditan su importación.
 
 El dueño pide que la entrada habitual sea subir el PDF y que la IA prepare el
 catálogo. El [plan de ingesta y revisión](../../ux/2026-10-17/05-ia-catalogos.md)
