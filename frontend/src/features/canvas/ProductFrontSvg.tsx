@@ -2,6 +2,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
@@ -239,6 +240,47 @@ export function OpeningGlyph({
 
 type Region = { x: number; y: number; w: number; h: number };
 
+/** Wood grain at physical scale (model units are millimetres): fibres run
+ * along the member — vertical on posts, horizontal on rails. Identical
+ * definitions may repeat across thumbnails; they resolve to the same look. */
+function GrainPatterns(): JSX.Element {
+  const fibres = [
+    { x: 3, w: 0.9, o: 0.16, sway: 1.2 },
+    { x: 8, w: 0.6, o: 0.1, sway: 2 },
+    { x: 13, w: 1.4, o: 0.2, sway: 1.4 },
+    { x: 19, w: 0.7, o: 0.12, sway: 2.4 },
+    { x: 24, w: 1, o: 0.15, sway: 1.1 },
+    { x: 30, w: 0.5, o: 0.09, sway: 1.8 },
+    { x: 35, w: 1.2, o: 0.18, sway: 2.2 },
+  ];
+  const content = fibres.map((fibre) => (
+    <path
+      key={fibre.x}
+      d={`M${fibre.x} 0 C${fibre.x + fibre.sway} 60 ${fibre.x - fibre.sway} 120 ${fibre.x} 180 S${fibre.x + fibre.sway} 300 ${fibre.x} 360`}
+      stroke="var(--grain-ink)"
+      strokeOpacity={fibre.o * 4}
+      strokeWidth={fibre.w}
+      fill="none"
+    />
+  ));
+  return (
+    <defs>
+      <pattern id="dk-grain-v" patternUnits="userSpaceOnUse" width={40} height={360}>
+        {content}
+      </pattern>
+      <pattern
+        id="dk-grain-h"
+        patternUnits="userSpaceOnUse"
+        width={40}
+        height={360}
+        patternTransform="rotate(90)"
+      >
+        {content}
+      </pattern>
+    </defs>
+  );
+}
+
 /** Rectangular member drawn as a filled ring segment — frame, sash, mullion,
  * threshold and coupler all share it. When the member is wide enough, its
  * material family's interior detail is drawn inside (PVC chamber rebate /
@@ -250,6 +292,7 @@ function Member({
   h,
   surface,
   className,
+  ring,
 }: {
   x: number;
   y: number;
@@ -257,6 +300,8 @@ function Member({
   h: number;
   surface: MemberSurface;
   className: string;
+  /** A closed frame/sash ring: draws the declared corner joints. */
+  ring?: { thickness: number; cornerDeg?: number | null };
 }): JSX.Element {
   const thin = Math.min(w, h);
   const detail = surface.detail !== "none" && thin >= 26;
@@ -277,6 +322,20 @@ function Member({
         stroke={surface.edge}
         strokeWidth={2.5}
       />
+      {surface.texture && thin >= 4 ? (
+        <MemberTexture x={x} y={y} w={w} h={h} vertical={vertical} texture={surface.texture} />
+      ) : null}
+      {surface.grain && thin >= 8 && (
+        <rect
+          className="member-grain"
+          x={x}
+          y={y}
+          width={w}
+          height={h}
+          fill={vertical ? "url(#dk-grain-v)" : "url(#dk-grain-h)"}
+          pointerEvents="none"
+        />
+      )}
       {detail && (
         <rect
           className={`member-inner member-inner--${surface.detail}`}
@@ -287,6 +346,7 @@ function Member({
           stroke={surface.highlight}
         />
       )}
+      {ring ? <CornerJoints x={x} y={y} w={w} h={h} ring={ring} stroke={surface.edge} /> : null}
       {detail &&
         surface.detail === "thermal" &&
         (vertical ? (
@@ -309,6 +369,94 @@ function Member({
           />
         ))}
     </>
+  );
+}
+
+/** A photo texture clipped to one member, at its declared physical tile size
+ * and turned so the grain runs along the member. */
+function MemberTexture({
+  x,
+  y,
+  w,
+  h,
+  vertical,
+  texture,
+}: {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  vertical: boolean;
+  texture: NonNullable<MemberSurface["texture"]>;
+}): JSX.Element {
+  const id = `dk-tex-${useId().replace(/:/g, "")}`;
+  const turn = texture.grain === "NONE" ? 0 : vertical === (texture.grain === "ALONG") ? 0 : 90;
+  return (
+    <>
+      <defs>
+        <pattern
+          id={id}
+          patternUnits="userSpaceOnUse"
+          width={texture.tileMm}
+          height={texture.tileMm}
+          patternTransform={`translate(${x} ${y}) rotate(${turn})`}
+        >
+          <image
+            href={texture.href}
+            width={texture.tileMm}
+            height={texture.tileMm}
+            preserveAspectRatio="xMidYMid slice"
+          />
+        </pattern>
+      </defs>
+      <rect
+        className="member-texture"
+        x={x}
+        y={y}
+        width={w}
+        height={h}
+        fill={`url(#${id})`}
+        pointerEvents="none"
+      />
+    </>
+  );
+}
+
+/** Corner joints as the catalog declares them: a 45° cut reads as a diagonal
+ * from outer to inner corner (mitred aluminium or welded PVC); a 90° cut
+ * reads as a butt seam where the rails meet the posts. Undeclared → none. */
+function CornerJoints({
+  x,
+  y,
+  w,
+  h,
+  ring,
+  stroke,
+}: {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  ring: { thickness: number; cornerDeg?: number | null };
+  stroke: string;
+}): JSX.Element | null {
+  const t = ring.thickness;
+  if (!ring.cornerDeg || t <= 0 || w <= t * 2 || h <= t * 2) return null;
+  const d =
+    ring.cornerDeg === 45
+      ? `M${x} ${y}L${x + t} ${y + t}M${x + w} ${y}L${x + w - t} ${y + t}` +
+        `M${x} ${y + h}L${x + t} ${y + h - t}M${x + w} ${y + h}L${x + w - t} ${y + h - t}`
+      : `M${x + t} ${y}V${y + t}M${x + w - t} ${y}V${y + t}` +
+        `M${x + t} ${y + h - t}V${y + h}M${x + w - t} ${y + h - t}V${y + h}`;
+  return (
+    <path
+      className="member-joint"
+      d={d}
+      stroke={stroke}
+      strokeWidth={1.4}
+      fill="none"
+      pointerEvents="none"
+    />
   );
 }
 
@@ -640,6 +788,7 @@ function Bay({
                     h={height}
                     surface={sashSurface}
                     className="member-sash"
+                    ring={{ thickness, cornerDeg: members.sash.cornerCutDeg }}
                   />
                 )}
                 <rect
@@ -792,6 +941,7 @@ function Bay({
                 h={region.h}
                 surface={sashSurface}
                 className="member-sash"
+                ring={{ thickness: members.sash.faceWidthMm, cornerDeg: members.sash.cornerCutDeg }}
               />
               <rect
                 className="member-bead"
@@ -926,6 +1076,7 @@ function Bay({
             h={Math.max(sashArea.h, 0)}
             surface={sashSurface}
             className="member-sash"
+            ring={{ thickness: members.sash.faceWidthMm, cornerDeg: members.sash.cornerCutDeg }}
           />
           {/* glazing beads: sightline ring inside the sash */}
           <rect
@@ -2325,6 +2476,7 @@ export function ProductFrontContent({
       transform={members.viewFace === "exterior" ? `translate(${totalW} 0) scale(-1 1)` : undefined}
     >
       <ExteriorTextContext.Provider value={members.viewFace === "exterior"}>
+        <GrainPatterns />
         {/* overall width chain — untranslated so it always clears the
           tallest silhouette point (arc crowns sit at viewBox y ≥ 0). */}
         {!preview && hideOverallWidth === false && (
@@ -2523,6 +2675,7 @@ export function ProductFrontContent({
                       h={h}
                       surface={frameSurface}
                       className="member-frame"
+                      ring={{ thickness: frameT, cornerDeg: members.frame.cornerCutDeg }}
                     />
                     <rect
                       className="module-opening"

@@ -6,9 +6,12 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { AccentEnum } from "./accentEnum";
+import type { AcceptanceModeEnum } from "./acceptanceModeEnum";
 import type { CommercialTermsRequest } from "./commercialTermsRequest";
 import type { PaperEnum } from "./paperEnum";
 import type { PieceLabelPaperEnum } from "./pieceLabelPaperEnum";
+import type { QuotationLayoutRequest } from "./quotationLayoutRequest";
+import type { QuotationTemplateEnum } from "./quotationTemplateEnum";
 
 /**
  * Save only the section edited by the user; preserve other sections.
@@ -41,4 +44,7 @@ export interface DocumentPreferencesPatchRequest {
   /** @maxLength 240 */
   legal_footer?: string;
   commercial_terms?: CommercialTermsRequest;
+  quotation_template?: QuotationTemplateEnum;
+  acceptance_mode?: AcceptanceModeEnum;
+  quotation_layout?: QuotationLayoutRequest;
 }

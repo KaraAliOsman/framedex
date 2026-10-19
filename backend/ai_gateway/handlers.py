@@ -77,6 +77,7 @@ def ai_agent_run(
             row = cursor.fetchone()
     if row is None or str(row[0]) not in _AGENT_CALLERS:
         raise JobPermanentError("ai_membership_revoked")
+    role = str(row[0])
     report(10)
 
     transcript_before: list = []
@@ -150,6 +151,14 @@ def ai_agent_run(
                 # is client input and must not enter the grounding set.
                 history_trusted=mode == "resume",
                 progress=report,
+                # Saving reversible drafts needs the caller's write role at
+                # run time, verified above — not the role at submit time.
+                autonomy=str(payload.get("autonomy") or "propose"),
+                role=role,
+                interaction_mode=str(payload.get("interaction_mode") or "work"),
+                # Sealed at submit (ids + hashes); ownership and hash are
+                # re-validated when the parts are read for this run.
+                attachments=list(payload.get("attachments") or []),
             )
         report(95)
     except _Unclaimable:
@@ -177,19 +186,34 @@ def ai_agent_run(
                 # user already committed.
                 jobs.clear_cancel_signal(job_id=ai_job_id)
                 raise JobPermanentError("ai_job_canceled") from error
+            sealed_turn = {
+                "interaction_mode": str(payload.get("interaction_mode") or "work"),
+                "autonomy": str(payload.get("autonomy") or "propose"),
+                **({"attachments": list(payload["attachments"])} if payload.get("attachments") else {}),
+            }
             if mode == "resume":
                 jobs.record_failure(
                     job_id=ai_job_id,
                     transcript_before=transcript_before,
                     goal=goal,
                     error_code=code,
+                    turn_extra=sealed_turn,
                 )
             else:
                 jobs.fail_queued_job(
-                    job_id=ai_job_id, goal=goal, error_code=code
+                    job_id=ai_job_id, goal=goal, error_code=code, turn_extra=sealed_turn
                 )
         raise JobPermanentError(code) from error
     finally:
+        # Holds still ACTIVE after the round belong to exchanges whose debit
+        # rolled back with the domain work (legacy: no commercial debit) —
+        # release them now; settled ones committed with their debit.
+        try:
+            from billing import holds
+
+            holds.release_job(org_id=org_id, ai_job_id=ai_job_id)
+        except Exception:
+            pass
         # A signal sent between the last round and finish_job would otherwise
         # linger and cancel the NEXT round on a resumed run.
         try:

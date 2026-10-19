@@ -11,7 +11,7 @@ import { parseMoneyInput } from "../money";
 import {
   Button,
   DeniedState,
-  DimLoader,
+  Loading,
   ErrorState,
   Skeleton,
   UnknownValue,
@@ -204,7 +204,7 @@ export function AiSettingsSection({ orgId }: { orgId: string }): JSX.Element {
       {query.isPending ? (
         <>
           <Skeleton lines={4} />
-          <DimLoader label="Consultando la configuración de IA" />
+          <Loading label="Consultando la configuración de IA" />
         </>
       ) : query.error instanceof ApiError && query.error.status === 403 ? (
         <DeniedState reason="Solo el dueño con verificación en dos pasos puede configurar la IA. Pídele que revise estos ajustes." />
@@ -504,7 +504,7 @@ export function AiSettingsSection({ orgId }: { orgId: string }): JSX.Element {
               <Link to="/jobs?capability=agent">Ver costo y traza de trabajos</Link>
             </div>
             {busy && (
-              <DimLoader
+              <Loading
                 label={
                   busy === "probe"
                     ? "Probando una propuesta con el motor"

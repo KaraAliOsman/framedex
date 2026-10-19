@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 
 import { t } from "../i18n/es-CL";
 import { useFloatingLayer } from "./floatingLayer";
-import { Icon } from "./Glyphs";
+import { Icon } from "./Icon";
 
 export type DialogProps = PropsWithChildren<{
   title: string;
@@ -110,7 +110,7 @@ export function Dialog({
             onClick={onClose}
             type="button"
           >
-            <Icon kind="close" />
+            <Icon name="close" />
           </button>
         </header>
         <div className="ui-dialog__body">{children}</div>

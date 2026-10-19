@@ -67,7 +67,7 @@ import {
 import { QuotationLinkLedger } from "./QuotationLinkLedger";
 import { QuotationGlobalChanges } from "./QuotationGlobalChanges";
 import { MailHistory } from "../notifications/MailPanels";
-import { DimLoader } from "../../ui/Signature";
+import { Loading } from "../../ui/Signature";
 
 function requirementsFor(position: DocumentaryPreparationPosition): HandleRequirement[] {
   const group = position.handle_requirements.find(
@@ -1191,9 +1191,7 @@ export function ProjectQuotationPanel({
       );
       if (response.status !== 200) throw new ApiError(response.status, response.data);
       await onChanged();
-      setMessage(
-        "Cliente y dirección de obra guardados. Los precios aplicados conservan su autoridad.",
-      );
+      setMessage("Cliente y dirección de obra guardados. Los precios aplicados no cambian.");
       setCustomerDirty(false);
     } catch (error) {
       setMessage(
@@ -2497,7 +2495,7 @@ export function ProjectQuotationPanel({
       )}
       {busy ? (
         <p>
-          <DimLoader label="Preparando la cotización" /> Preparando la cotización…
+          <Loading label="Preparando la cotización" />
         </p>
       ) : null}
       {!canWrite && project.status === "DRAFT" ? (
@@ -2507,7 +2505,7 @@ export function ProjectQuotationPanel({
       ) : null}
       {approvals.isPending ? (
         <p>
-          <DimLoader label="Cargando el historial del enlace" /> Cargando el historial del enlace…
+          <Loading label="Cargando el historial del enlace" />
         </p>
       ) : approvals.isError ? (
         <div>

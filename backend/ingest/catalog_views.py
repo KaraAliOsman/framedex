@@ -161,3 +161,37 @@ class CatalogImportUndoView(APIView):
                 return _payload(catalog_review.undo_publication(org_id=org_id, actor_id=token.user_id, import_id=import_id))
         except DatabaseError as error:
             raise contract_error(409, "catalog_undo_locked", "El catálogo ya se usa en otro registro. Conserva esta autoridad y publica una nueva versión para corregirla.") from error
+
+
+class CatalogImportRetryView(APIView):
+    """Re-run only the page batches that failed; finished pages are kept."""
+
+    @extend_schema(operation_id="catalog_import_retry", request=None,
+        responses={200: CatalogImportDetailResponseSerializer, **ERRORS}, **SCHEMA)
+    def post(self, request, import_id):
+        from ingest.catalog_service import retry_catalog_batches
+
+        with documentary_scope(request, _CATALOG_WRITERS) as (token, _, org_id):
+            return _payload(retry_catalog_batches(org_id=org_id, actor_id=token.user_id, import_id=import_id))
+
+
+class CatalogImportPageView(APIView):
+    """One page of the source PDF, rendered, to review an exception beside
+    the region it came from."""
+
+    @extend_schema(operation_id="catalog_import_page", responses={200: OpenApiTypes.BINARY, **ERRORS}, **SCHEMA)
+    def get(self, request, import_id, page):
+        from ingest.catalog_pages import page_png
+
+        with documentary_scope(request, _CATALOG_WRITERS) as (_, _, org_id):
+            row, content = catalog_sources.original_source(org_id, import_id)
+            if row["kind"] != "PDF":
+                raise contract_error(422, "catalog_page_unavailable", "Solo los PDF tienen páginas para revisar.")
+            try:
+                image = page_png(content, int(page))
+            except ValueError as error:
+                raise contract_error(404, "catalog_page_unavailable", "Esa página no existe en el catálogo.") from error
+        response = HttpResponse(image, content_type="image/png")
+        response["Cache-Control"] = "private, max-age=600"
+        response["X-Content-Type-Options"] = "nosniff"
+        return response

@@ -14,7 +14,7 @@ import { formatMoney } from "../money";
 import { apiMutator, ApiError } from "../../api/apiMutator";
 import { companyGet } from "../../api/generated/dekopen";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
-import { DemoBadge, DeniedState, DimLoader, PageHeader, Tabs } from "../../ui";
+import { DemoBadge, DeniedState, Loading, PageHeader, Tabs } from "../../ui";
 import { t } from "../../i18n/es-CL";
 import { ProjectPrices } from "./ProjectPrices";
 import "./pricing.css";
@@ -531,7 +531,7 @@ function PricingWorkspace({
       )}
       {busy && (
         <p className="price-loading" role="status">
-          <DimLoader label={t("pricing.loading")} />
+          <Loading label={t("pricing.loading")} />
           {t("pricing.loading")}
         </p>
       )}

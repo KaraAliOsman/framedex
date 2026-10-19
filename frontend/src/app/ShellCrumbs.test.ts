@@ -4,8 +4,8 @@ import { crumbsFor } from "./ShellCrumbs";
 
 describe("crumbsFor", () => {
   it("names rail destinations as the single crumb", () => {
-    expect(crumbsFor("/dashboard", null, null)).toEqual([{ label: "Hoy" }]);
-    expect(crumbsFor("/inventory", null, null)).toEqual([{ label: "Inventario" }]);
+    expect(crumbsFor("/dashboard", null, null)).toEqual([{ label: "Pendientes" }]);
+    expect(crumbsFor("/inventory", null, null)).toEqual([{ label: "Existencias" }]);
     expect(crumbsFor("/quotes", null, null)).toEqual([{ label: "Cotizaciones" }]);
     expect(crumbsFor("/production", null, null)).toEqual([{ label: "Producción" }]);
     expect(crumbsFor("/clients", null, null)).toEqual([{ label: "Clientes" }]);

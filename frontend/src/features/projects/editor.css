@@ -1,4 +1,4 @@
-.app-shell:has(.position-editor) {
+.app-shell:has(.position-editor:not([hidden])) {
   height: 100dvh;
   min-height: 0;
 }
@@ -6,10 +6,10 @@
   display: flex;
   justify-content: center;
 }
-.app-body:has(.position-editor) {
+.app-body:has(.position-editor:not([hidden])) {
   min-height: 0;
 }
-.workspace:has(.position-editor) {
+.workspace:has(.position-editor:not([hidden])) {
   padding: 0;
   overflow: hidden;
   min-height: 0;
@@ -27,197 +27,136 @@
   position: relative;
 }
 .position-strip {
-  display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2);
-  border-bottom: 1px solid var(--border-default);
   background: var(--surface-panel);
+  border-bottom: 1px solid var(--border-subtle);
   box-sizing: border-box;
+  display: flex;
   flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: var(--space-8px);
+  min-height: 56px;
+  padding: var(--space-8px) var(--space-16px);
 }
 .position-editor .position-strip label {
-  margin: 0;
   display: flex;
-  gap: var(--space-1);
-}
-.position-editor .position-strip input {
-  padding: var(--space-1);
-  height: 28px;
-  font-size: var(--type-dense);
-}
-.position-editor .position-strip button {
-  padding: var(--space-1) var(--space-2);
-  font-size: var(--type-dense);
-}
-.position-editor .position-strip .editor-history {
-  padding: 0;
-}
-.position-editor .position-strip .editor-price {
-  padding-block: 0;
+  gap: var(--space-6px);
+  margin: 0;
 }
 .position-strip :is(input, button, select) {
   box-sizing: border-box;
-  min-height: 28px;
   font: inherit;
+  min-height: 34px;
+}
+.position-editor .position-strip input {
+  background: var(--surface-sheet);
+  border: 1px solid var(--border-control);
+  border-radius: var(--r-1);
+  padding: 0 var(--space-8px);
 }
 .editor-project-link {
-  font-size: var(--type-dense);
+  align-items: center;
+  border-radius: var(--r-1);
+  color: var(--text-secondary);
+  display: inline-flex;
+  gap: var(--space-2px);
+  max-width: 14rem;
+  min-height: 34px;
+  padding: 0 var(--space-8px) 0 var(--space-4px);
+  text-decoration: none;
   white-space: nowrap;
 }
-.editor-position-code {
-  font-size: var(--type-micro);
-  font-family: var(--font-mono);
-}
-.position-strip .editor-location {
-  width: clamp(96px, 10vw, 160px);
-  min-width: 0;
-  padding-inline: var(--space-2);
-}
-.editor-quantity {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  color: var(--text-secondary);
-  font-size: var(--type-dense);
-}
-.editor-quantity input {
-  width: 44px;
-  padding-inline: var(--space-1);
-  font-family: var(--font-mono);
-}
-.editor-chip {
-  font-size: var(--type-dense);
-  max-width: 132px;
+.editor-project-link span {
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.editor-project-link:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+.editor-position-code {
+  color: var(--text-muted);
+  font-size: var(--type-dense);
   white-space: nowrap;
-  padding: var(--space-1) var(--space-2);
+}
+.position-strip .editor-location {
+  font-weight: 600;
+  min-width: 0;
+  width: clamp(10rem, 16vw, 18rem);
+}
+.editor-quantity {
+  align-items: center;
+  color: var(--text-secondary);
+  display: flex;
+  font-size: var(--type-dense);
+  gap: var(--space-6px);
+}
+.editor-quantity input {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  width: 3.5rem;
+}
+.editor-chip {
+  align-items: center;
+  background: var(--surface-panel);
+  border: 1px solid var(--border-control);
+  border-radius: var(--r-1);
+  display: inline-flex;
+  gap: var(--space-6px);
+  max-width: 13rem;
+  overflow: hidden;
+  padding: 0 var(--space-12px);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.editor-chip .ui-icon {
+  color: var(--text-secondary);
 }
 .editor-system-chip {
-  max-width: 160px;
+  max-width: 15rem;
 }
 .editor-save-state {
   color: var(--text-secondary);
-  font-size: var(--type-micro);
+  font-size: var(--type-dense);
   margin-left: auto;
   white-space: nowrap;
 }
 .editor-history {
-  min-width: 28px;
-  width: 28px;
+  align-items: center;
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-secondary);
+  display: inline-flex;
+  justify-content: center;
+  min-width: 34px;
   padding: 0;
+  width: 34px;
 }
-.editor-history span {
-  font-size: var(--type-title-m);
+.editor-history:hover:not(:disabled) {
+  color: var(--text-primary);
 }
 .editor-price {
+  align-items: flex-end;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
   min-width: 140px;
-  padding: var(--space-1) var(--space-2);
-  font-size: var(--type-dense);
-  font-family: var(--font-mono);
+  padding: var(--space-2px) var(--space-8px);
+  white-space: nowrap;
 }
 .editor-price small {
-  font-family: var(--font-sans);
-  font-size: var(--type-micro);
   color: var(--text-secondary);
+  font-size: var(--type-micro);
 }
 .editor-system-field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  width: min(440px, 80vw);
-}
-.editor-system-field select {
-  width: 100%;
-}
-.position-body {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  overflow: hidden;
-}
-.position-workspace {
-  margin: 0;
-  width: 100%;
-  display: flex;
-  flex: 1;
-  min-height: 0;
-}
-.position-body .assembly-editor {
-  flex: 1;
-  min-height: 0;
-  width: 100%;
-  height: 100%;
-}
-.editor-bottom {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  flex-shrink: 0;
-  min-height: 32px;
-  padding: 0 var(--space-3);
-  border-top: 1px solid var(--border-default);
+  display: grid;
   font-size: var(--type-dense);
-}
-.editor-bottom summary {
-  cursor: pointer;
-}
-.position-editor .editor-bottom > div > button {
-  padding: var(--space-1) var(--space-2);
-  min-height: 28px;
-  font-size: var(--type-dense);
-}
-.editor-bottom .project-bom {
-  margin: 0;
-}
-.editor-bottom .editor-bottom-panel {
-  top: auto;
-  position: absolute;
-  bottom: 36px;
-  left: 120px;
-  width: min(640px, calc(100% - 144px));
-  max-height: 60dvh;
-  overflow: auto;
-  z-index: var(--z-popover);
-  padding: var(--space-3);
-  background: var(--surface-panel);
-  border: 1px solid var(--border-default);
-  box-sizing: border-box;
-}
-.editor-position-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-.editor-position-list a {
-  padding: var(--space-2);
-}
-.editor-message {
-  position: absolute;
-  top: 48px;
-  left: 128px;
-  max-width: calc(100% - 160px);
-  z-index: var(--z-toast);
-  padding: var(--space-2);
-  background: var(--surface-panel);
-  border: 1px solid var(--border-default);
-}
-.editor-readonly {
-  margin: 0;
-  padding: var(--space-2);
-  border-bottom: 1px solid var(--border-default);
-  font-size: var(--type-dense);
+  gap: var(--space-4px);
 }
 .position-editor .draft-banner {
-  margin: 0;
   border-radius: var(--r-0);
-  padding: var(--space-1) var(--space-2);
+  margin: 0;
+  padding: var(--space-6px) var(--space-16px);
 }
 @media (max-width: 1279px) {
   .position-strip .editor-position-code {
@@ -227,7 +166,7 @@
     margin-left: 0;
   }
   .editor-chip {
-    max-width: 112px;
+    max-width: 9rem;
   }
   .editor-price {
     min-width: 132px;
@@ -243,7 +182,7 @@
   .position-strip .editor-history {
     display: none;
   }
-  .position-strip .primary-action {
+  .position-strip .editor-save {
     display: none;
   }
   .editor-price {
@@ -259,4 +198,10 @@
     left: var(--space-2);
     width: calc(100% - 16px);
   }
+}
+
+/* The price chip carries a call to action when there is no price yet
+ * («Calcular precio de la obra»): never clip it at narrow widths. */
+.editor-chip.editor-price {
+  max-width: none;
 }

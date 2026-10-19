@@ -69,8 +69,8 @@ it("restores applied edits read-only and can undo using their durable identity",
     response({ operation_id: "operation", state: "UNDONE", project: {} }),
   );
   const settled = show();
-  fireEvent.click(await screen.findByRole("button", { name: "Deshacer cambios" }));
-  expect(await screen.findByText("Cambios deshechos")).toBeTruthy();
+  fireEvent.click(await screen.findByRole("button", { name: "Deshacer" }));
+  expect(await screen.findByText("Deshecho")).toBeTruthy();
   expect(projectOperationsUndo).toHaveBeenCalledWith("project", "operation", expect.anything());
   expect(projectOperationsApply).not.toHaveBeenCalled();
   expect(settled).toHaveBeenCalledWith("undone", preview.ops);
@@ -81,8 +81,8 @@ it("keeps an undone edit settled after reopening", async () => {
     response({ operation_id: "operation", state: "UNDONE" }),
   );
   show();
-  expect(await screen.findByText("Cambios deshechos")).toBeTruthy();
-  expect(screen.queryByRole("button", { name: "Aplicar cambios al proyecto" })).toBeNull();
+  expect(await screen.findByText("Deshecho")).toBeTruthy();
+  expect(screen.queryByRole("button", { name: "Aplicar" })).toBeNull();
   expect(projectOperationsApply).not.toHaveBeenCalled();
 });
 
@@ -101,12 +101,12 @@ it("retries a stale proposal with a fresh server simulation and the same idempot
     response({ ...preview, before_sig: "fresh" }),
   );
   show();
-  fireEvent.click(await screen.findByRole("button", { name: "Aplicar cambios al proyecto" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Aplicar" }));
   fireEvent.click(await screen.findByRole("button", { name: "Reintentar simulación" }));
-  const apply = await screen.findByRole("button", { name: "Aplicar cambios al proyecto" });
+  const apply = await screen.findByRole("button", { name: "Aplicar" });
   await vi.waitFor(() => expect(apply).not.toBeDisabled());
   fireEvent.click(apply);
-  expect(await screen.findByText("Cambios aplicados")).toBeTruthy();
+  expect(await screen.findByText("Guardado en la obra")).toBeTruthy();
   expect(projectOperationsApply).toHaveBeenLastCalledWith(
     "project",
     expect.objectContaining({ before_sig: "fresh", operation_key: "ai:job:1:0" }),
@@ -118,6 +118,6 @@ it("explains the required role without offering an apply action after permission
   vi.mocked(projectOperationsState).mockRejectedValue(new ApiError(403, { error: {} }));
   show();
   expect(await screen.findByRole("alert")).toHaveTextContent("Solo el dueño o un estimador");
-  expect(screen.getByRole("button", { name: "Aplicar cambios al proyecto" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Aplicar" })).toBeDisabled();
   expect(projectOperationsApply).not.toHaveBeenCalled();
 });

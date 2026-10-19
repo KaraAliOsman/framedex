@@ -1,51 +1,56 @@
-import { type HTMLAttributes, type ReactNode, useEffect, useId, useState } from "react";
+import { type HTMLAttributes, type ReactNode, useId } from "react";
 import { Popover } from "./Overlays";
 import { Button } from "./Controls";
 
-export function DimLoader({
-  label = "Midiendo el avance",
+/** Local, stable waiting state (constitution §3.5). The composition does not
+ * move: a small activity mark beside the real task name. A bar appears only
+ * when the caller knows the real progress; there is never an invented
+ * percentage. */
+export function Loading({
+  label = "Cargando",
   progress,
+  detail,
+  quiet = false,
 }: {
   label?: string;
+  /** 0–100, only when the backend reports measurable progress. */
   progress?: number;
+  /** Real step text, e.g. «Página 12 de 40». */
+  detail?: string;
+  /** Hide the label visually (inside a labelled button). */
+  quiet?: boolean;
 }): JSX.Element {
   const value = progress === undefined ? undefined : Math.max(0, Math.min(100, progress));
-  const [drawn, setDrawn] = useState(0);
-  useEffect(() => {
-    if (value !== undefined) return;
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
-      setDrawn(100);
-      return;
-    }
-    const timer = window.setInterval(
-      () => setDrawn((current) => (current >= 100 ? 0 : current + 20)),
-      160,
+  if (value !== undefined)
+    return (
+      <span className="ui-loading ui-loading--progress">
+        <span className="ui-loading__text">
+          <span>{label}</span>
+          {detail ? <span className="ui-loading__detail">{detail}</span> : null}
+        </span>
+        <span
+          className="ui-loading__bar"
+          role="progressbar"
+          aria-label={label}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(value)}
+          aria-valuetext={detail}
+        >
+          <span style={{ inlineSize: `${value}%` }} />
+        </span>
+      </span>
     );
-    return () => clearInterval(timer);
-  }, [value]);
   return (
-    <span
-      className="ui-dim-loader"
-      role={value === undefined ? "status" : "progressbar"}
-      aria-label={label}
-      aria-valuemin={value === undefined ? undefined : 0}
-      aria-valuemax={value === undefined ? undefined : 100}
-      aria-valuenow={value}
-    >
-      <svg
-        aria-hidden
-        viewBox="0 0 100 16"
-        className={value === undefined ? "is-indeterminate" : ""}
-      >
-        <path d="M3 3v10M97 3v10M1 13l4-4M95 13l4-4" />
-        <path
-          className="ui-dim-loader__measure"
-          d="M3 9H97"
-          pathLength="100"
-          strokeDasharray="100"
-          strokeDashoffset={100 - (value ?? drawn)}
-        />
+    <span className={`ui-loading${quiet ? " ui-loading--quiet" : ""}`} role="status">
+      <svg aria-hidden="true" viewBox="0 0 16 16" className="ui-loading__mark">
+        <circle cx="8" cy="8" r="6" />
+        <path d="M8 2a6 6 0 0 1 6 6" />
       </svg>
+      <span className={quiet ? "sr-only" : "ui-loading__text"}>
+        <span>{label}</span>
+        {detail ? <span className="ui-loading__detail">{detail}</span> : null}
+      </span>
     </span>
   );
 }

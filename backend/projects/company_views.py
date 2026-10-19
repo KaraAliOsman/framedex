@@ -4,7 +4,7 @@ from contextlib import contextmanager
 
 from django.db import DatabaseError
 from django.http import HttpResponse
-from drf_spectacular.utils import extend_schema, OpenApiTypes
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
 from rest_framework import serializers
 from rest_framework.views import APIView
 
@@ -19,8 +19,8 @@ from pricing.views import (
     validate,
     public_pricing_errors,
 )
-from projects import company
-from projects.serializers import OrgBrandingWriteSerializer
+from projects import company, design_defaults, finish_references, materials
+from projects.serializers import DesignDefaultsSerializer, OrgBrandingWriteSerializer
 from projects.views import SCHEMA, response
 from documents.views import public_documentary_errors
 
@@ -292,3 +292,240 @@ class CompanyPreviewView(APIView):
             result["Cache-Control"] = "private, no-store"
             result["Content-Disposition"] = 'inline; filename="vista-previa.pdf"'
             return result
+
+
+class CompanyDesignDefaultsWriteSerializer(StrictSerializer):
+    values = DesignDefaultsSerializer()
+
+
+class CompanyDesignDefaultsSerializer(serializers.Serializer):
+    values = DesignDefaultsSerializer()
+    updated_at = serializers.DateTimeField(required=False, allow_null=True)
+
+
+class CompanyDesignDefaultsView(APIView):
+    """Usual series, finish and glass that seed new windows (company level)."""
+
+    parser_classes = [DecimalJSONParser]
+
+    @extend_schema(
+        operation_id="company_design_defaults",
+        responses={200: CompanyDesignDefaultsSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def get(self, request):
+        with scope(request, ("OWNER", "ESTIMATOR", "WORKSHOP_MANAGER")) as (_, _, org):
+            return response(design_defaults.company_defaults(org))
+
+    @extend_schema(
+        operation_id="company_design_defaults_save",
+        request=CompanyDesignDefaultsWriteSerializer,
+        responses={200: CompanyDesignDefaultsSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def put(self, request):
+        data = validate(CompanyDesignDefaultsWriteSerializer, request.data)
+        with scope(request, ("OWNER", "ESTIMATOR")) as (_, _, org):
+            return response(design_defaults.save_company_defaults(org, data))
+
+
+class FinishReferenceSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    name = serializers.CharField()
+    finish_code = serializers.CharField()
+    original_type = serializers.CharField()
+    tile_mm = serializers.CharField()
+    grain = serializers.ChoiceField(choices=["ALONG", "ACROSS", "NONE"])
+    version = serializers.IntegerField()
+    created_at = serializers.DateTimeField()
+    updated_at = serializers.DateTimeField()
+
+
+class FinishReferenceListSerializer(serializers.Serializer):
+    items = FinishReferenceSerializer(many=True)
+
+
+class FinishReferenceUpdateSerializer(StrictSerializer):
+    name = serializers.CharField(required=False, max_length=120)
+    tile_mm = serializers.CharField(required=False, max_length=12)
+    grain = serializers.ChoiceField(required=False, choices=["ALONG", "ACROSS", "NONE"])
+
+
+_UPLOAD_FIELDS = {
+    "file": {"type": "string", "format": "binary"},
+    "name": {"type": "string"},
+    "finish_code": {"type": "string"},
+    "tile_mm": {"type": "string"},
+    "grain": {"type": "string", "enum": ["ALONG", "ACROSS", "NONE"]},
+    "x": {"type": "string"},
+    "y": {"type": "string"},
+    "size": {"type": "string"},
+}
+
+
+class FinishReferencesView(APIView):
+    """Private library of the company's own material samples."""
+
+    @extend_schema(
+        operation_id="finish_references_list",
+        responses={200: FinishReferenceListSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def get(self, request):
+        with scope(request, ("OWNER", "ESTIMATOR", "WORKSHOP_MANAGER")) as (_, _, org):
+            return response(finish_references.list_references(org))
+
+    @extend_schema(
+        operation_id="finish_references_create",
+        request={"multipart/form-data": {"type": "object", "properties": _UPLOAD_FIELDS, "required": ["file", "name", "finish_code"]}},
+        responses={201: FinishReferenceSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def post(self, request):
+        file_obj = request.FILES.get("file") if hasattr(request, "FILES") else None
+        if file_obj is None:
+            raise contract_error(400, "finish_reference_missing", "Adjunta una imagen PNG, JPEG o WebP.")
+        if file_obj.size and file_obj.size > finish_references.MAX_UPLOAD_BYTES:
+            raise contract_error(400, "finish_reference_size_invalid", "La imagen debe pesar hasta 8 MB.")
+        content = file_obj.read()
+        data = {key: request.data.get(key) for key in ("name", "finish_code", "tile_mm", "grain", "x", "y", "size")}
+        with scope(request, ("OWNER", "ESTIMATOR")) as (token, _, org):
+            return response(finish_references.create_reference(org, token.user_id, data, content), status=201)
+
+
+class FinishReferenceView(APIView):
+    parser_classes = [DecimalJSONParser]
+
+    @extend_schema(
+        operation_id="finish_references_update",
+        request=FinishReferenceUpdateSerializer,
+        responses={200: FinishReferenceSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def patch(self, request, reference_id):
+        data = validate(FinishReferenceUpdateSerializer, request.data)
+        with scope(request, ("OWNER", "ESTIMATOR")) as (_, _, org):
+            return response(finish_references.update_reference(org, reference_id, data))
+
+    @extend_schema(
+        operation_id="finish_references_archive",
+        responses={200: FinishReferenceListSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def delete(self, request, reference_id):
+        with scope(request, ("OWNER", "ESTIMATOR")) as (_, _, org):
+            return response(finish_references.archive_reference(org, reference_id))
+
+
+class FinishReferenceImageView(APIView):
+    @extend_schema(
+        operation_id="finish_references_image",
+        responses={200: {"type": "string", "format": "binary"}, **ERRORS},
+        **{
+            **SCHEMA,
+            "parameters": [
+                *SCHEMA["parameters"],
+                OpenApiParameter("variant", str, enum=["prepared", "original"], required=False),
+            ],
+        },
+    )
+    def get(self, request, reference_id):
+        variant = "original" if request.query_params.get("variant") == "original" else "prepared"
+        with scope(request, ("OWNER", "ESTIMATOR", "WORKSHOP_MANAGER")) as (_, _, org):
+            content, content_type = finish_references.reference_image(org, reference_id, variant)
+        return HttpResponse(content, content_type=content_type, headers={"Cache-Control": "private, max-age=600"})
+
+
+class MaterialRowSerializer(serializers.Serializer):
+    reference = serializers.CharField()
+    name = serializers.CharField()
+    finish = serializers.CharField(allow_null=True)
+    unit = serializers.CharField()
+    count = serializers.IntegerField()
+    length_mm = serializers.CharField(allow_null=True)
+    length_m = serializers.CharField(allow_null=True)
+    area_m2 = serializers.CharField(allow_null=True)
+    windows = serializers.ListField(child=serializers.CharField())
+
+
+class MaterialGroupsSerializer(serializers.Serializer):
+    profiles = MaterialRowSerializer(many=True)
+    reinforcements = MaterialRowSerializer(many=True)
+    glass = MaterialRowSerializer(many=True)
+    hardware = MaterialRowSerializer(many=True)
+    other = MaterialRowSerializer(many=True)
+
+
+class WindowMaterialsSerializer(serializers.Serializer):
+    position_id = serializers.UUIDField()
+    label = serializers.CharField()
+    quantity = serializers.IntegerField()
+    materials = MaterialGroupsSerializer()
+
+
+class MaterialsFreshnessSerializer(serializers.Serializer):
+    latest_revision = serializers.CharField(allow_null=True)
+    latest_version_id = serializers.UUIDField(required=False)
+    design_changed = serializers.BooleanField()
+
+
+class ProjectMaterialsSerializer(serializers.Serializer):
+    consolidated = MaterialGroupsSerializer()
+    windows = WindowMaterialsSerializer(many=True)
+    freshness = MaterialsFreshnessSerializer()
+
+
+class CutMissingSerializer(serializers.Serializer):
+    cause = serializers.CharField()
+    action = serializers.CharField()
+    path = serializers.CharField()
+    window = serializers.CharField(required=False)
+    detail = serializers.CharField(required=False)
+
+
+class CutProfileSerializer(serializers.Serializer):
+    code = serializers.CharField()
+    kerf_mm = serializers.CharField()
+    head_trim_mm = serializers.CharField()
+    tail_trim_mm = serializers.CharField()
+
+
+class CutDraftSerializer(serializers.Serializer):
+    state = serializers.ChoiceField(choices=["READY", "MISSING", "EMPTY"])
+    missing = CutMissingSerializer(many=True)
+    profile = CutProfileSerializer(required=False)
+    stock_source = serializers.CharField(required=False)
+    bars = serializers.ListField(child=serializers.DictField(), required=False)
+    purchase = serializers.ListField(child=serializers.DictField(), required=False)
+    unplaced = serializers.ListField(child=serializers.DictField(), required=False)
+    metrics = serializers.DictField(required=False, allow_null=True)
+
+
+MATERIAL_ROLES = ("OWNER", "ESTIMATOR", "WORKSHOP_MANAGER")
+
+
+class ProjectMaterialsView(APIView):
+    """What the work's saved design consumes, per window and consolidated."""
+
+    @extend_schema(
+        operation_id="project_materials",
+        responses={200: ProjectMaterialsSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def get(self, request, project_id):
+        with scope(request, MATERIAL_ROLES) as (_, _, org):
+            return response(materials.project_materials(org, project_id))
+
+
+class ProjectCutDraftView(APIView):
+    """Draft cut of the whole work with declared stock and cutting profile, or
+    the exact missing authorities. Reading it never releases an order."""
+
+    @extend_schema(
+        operation_id="project_cut_draft",
+        responses={200: CutDraftSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def get(self, request, project_id):
+        with scope(request, MATERIAL_ROLES) as (_, _, org):
+            return response(materials.cut_draft(org, project_id))

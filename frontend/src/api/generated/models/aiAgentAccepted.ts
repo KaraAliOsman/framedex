@@ -13,4 +13,6 @@
 export interface AiAgentAccepted {
   job_id: string;
   state: string;
+  /** @nullable */
+  thread_id?: string | null;
 }

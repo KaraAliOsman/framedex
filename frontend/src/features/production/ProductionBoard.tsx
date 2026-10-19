@@ -66,8 +66,53 @@ export function ProductionBoard({
         action={<button onClick={retry}>Actualizar</button>}
       />
     );
+  const active = orders.filter((o) => !ended.includes(o));
+  const causes = [
+    {
+      key: "plan",
+      count: active.filter((o) => !o.optimization_ready).length,
+      label: "sin plan de corte",
+      action: "Ver cuáles",
+    },
+    {
+      key: "shortage",
+      count: active.filter((o) => o.shortage > 0).length,
+      label: "con falta de material",
+      action: "Ver cuáles",
+    },
+    {
+      key: "qc",
+      count: active.filter((o) => o.status === "HOLD" && o.qc_failed).length,
+      label: "rechazadas en calidad",
+      action: "Ver cuáles",
+    },
+    {
+      key: "hold",
+      count: active.filter((o) => o.status === "HOLD" && !o.qc_failed).length,
+      label: "bloqueadas",
+      action: "Ver cuáles",
+    },
+  ].filter((cause) => cause.count > 0);
   return (
     <section className="production-board" aria-label="Tablero por estación">
+      {causes.length ? (
+        <ul className="production-causes" aria-label="Decisiones pendientes">
+          {causes.map((cause) => (
+            <li key={cause.key}>
+              <strong className="ui-value">{formatDecimal(cause.count)}</strong>{" "}
+              {cause.count === 1 ? "orden" : "órdenes"} {cause.label}
+              <button
+                type="button"
+                className="link-button"
+                aria-pressed={block === cause.key}
+                onClick={() => setBlock(block === cause.key ? "" : cause.key)}
+              >
+                {block === cause.key ? "Ver todas" : cause.action}
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
       <div className="production-board-filters">
         <label>
           Obra
@@ -75,7 +120,7 @@ export function ProductionBoard({
             <option value="">Todas las obras</option>
             {projects.map(([code, name]) => (
               <option key={code} value={code!}>
-                {code} · {name}
+                {name ?? code}
               </option>
             ))}
           </select>
@@ -120,13 +165,16 @@ export function ProductionBoard({
                       key={order.id}
                       onClick={() => onOpen(order.id)}
                     >
-                      <strong className="ui-value">{order.order_code}</strong>
-                      <span>
-                        {order.project_code
-                          ? `${order.project_code} · ${order.project_name ?? "Sin dato · obra sin nombre"}`
-                          : "Sin dato · obra no vinculada"}
+                      <strong className="production-board-work">
+                        {order.project_name ?? order.project_code ?? "Obra no vinculada"}
+                      </strong>
+                      <span className="production-board-meta">
+                        {order.client_name ? `${order.client_name} · ` : ""}
+                        <span className="ui-value">{order.order_code}</span>
                       </span>
-                      {order.client_name ? <span>{order.client_name}</span> : null}
+                      <span className="production-board-next">
+                        Siguiente: {order.next_step?.label ?? stationCodeLabel(station.code)}
+                      </span>
                       <span className="production-board-line ui-value">
                         {formatDecimal(order.quantity)} unidades · {order.steps_done}/
                         {order.steps_total} pasos

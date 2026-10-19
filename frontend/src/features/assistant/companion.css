@@ -1,0 +1,46 @@
+/* Copilot character (constitution §5.11, contract 06). One clean round body
+ * and two dark pill eyes. Motion is driven by the local clock in
+ * Companion.tsx (SVG attributes, no layout); CSS only paints. */
+.companion {
+  display: inline-block;
+  flex: none;
+  overflow: visible;
+  vertical-align: middle;
+}
+
+.companion__body {
+  fill: var(--companion-body);
+  stroke: var(--companion-edge);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.companion__eye {
+  fill: var(--companion-eye);
+}
+
+/* Unavailable (no provider, no credits, network lost): a static pose with
+ * a quieter body; the cause is always written next to it. */
+.companion.is-unavailable .companion__body {
+  fill: var(--surface-card);
+}
+
+/* Internal pose catalog (07 review): states side by side with one clock. */
+.companion-catalog {
+  display: grid;
+  gap: var(--space-16px);
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+}
+
+.companion-catalog figure {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8px);
+  margin: 0;
+}
+
+.companion-catalog figcaption {
+  color: var(--text-secondary);
+  font-size: var(--type-dense);
+}

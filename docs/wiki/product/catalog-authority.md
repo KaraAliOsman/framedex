@@ -1,7 +1,7 @@
 ---
 type: concept
 status: active
-updated: 2026-10-10
+updated: 2026-10-18
 volatility: medium
 verified_ref: codex/P16-catalogo-tecnico
 sources:
@@ -19,6 +19,46 @@ sources:
 ---
 
 # Autoridad de catálogo por familia
+
+## Biblioteca real y fuentes reunidas · 18-10-2026
+
+El [paquete final](../../research/2026-10-18-direccion-final/README.md) conserva
+esta exigencia en el producto manual: incorporar/usar una serie real no puede
+depender de IA ni de créditos. La IA de planes superiores acelera preparación
+y excepciones con la misma revisión técnica. La fase actual sigue documental:
+no hay nueva publicación ni aceptación de fabricación por escribir el prompt.
+
+El dueño pide fabricante → serie/sistema → configuraciones/artículos, imágenes
+útiles y separación de demos. PRO6004 y PROSLIDE70 se agrupan bajo Proline;
+un número comercial 60/70 no demuestra equivalencia. «Vinhaus» sigue ambiguo.
+La [revisión de fuentes](../../research/2026-10-18-revision-profunda/catalogos-reales.md)
+incluye Proline, Winhouse, Deceuninck e Indalum y separa procedencia, identidad
+de proveedor y preparación para cotizar/fabricar/CNC.
+
+A diferencia de la disponibilidad descrita en la investigación del 17-10,
+esta revisión sí inspeccionó los PDF de Proline aportados/referenciados en el
+material del dueño: catálogo de 24 páginas y casos de corte de 25 páginas, con
+huellas y límites documentados. Los casos no se convierten en fórmula general;
+errores de documento o celdas `#NAME?` no son autoridad productiva. No se publicó
+un catálogo ni se certificó fabricación mediante esta investigación.
+
+La app local del 18-10 en `claude/v1-implementacion` (`6f78e329` más cambios
+locales) muestra lista plana dominada por DEMO; no está vacía de registros.
+La propuesta mejora su organización sin borrar la DB ni revisiones existentes.
+Ver [auditoría](../../research/2026-10-18-revision-profunda/auditoria-dekopen.md).
+
+## Investigación posterior · 17-10-2026
+
+El dueño pide PDF como entrada única habitual, integración asistida y revisión
+de excepciones. El [plan](../../research/2026-10-17-claude/08-catalogos-y-ocr.md)
+propone extracción por regiones, trabajos reanudables, relaciones y preparación
+por capacidad. No está implementado. En `6f78e329`, el helper multimodal de
+`backend/ai_gateway/multimodal.py` admite como máximo 20 páginas y omite imagen
+cuando hay texto; el compilador acota texto y pide división manual. Estos límites
+no significan ausencia total de OCR/IA. Los PDF concretos de Proline y Aluminios
+2000 no fueron aportados ni probados. Ninguna interpretación IA certifica una
+regla de fabricación ausente. Los hechos históricos siguientes mantienen sus
+fuentes y no son evidencia de la nueva experiencia propuesta.
 
 ## Hechos verificados en D01
 

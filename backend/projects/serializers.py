@@ -24,9 +24,28 @@ from projects.client_serializers import (
 )
 
 
+class DesignDefaultsSerializer(StrictSerializer):
+    system_id = serializers.CharField(required=False, allow_blank=True, max_length=80)
+    color = serializers.CharField(required=False, allow_blank=True, max_length=80)
+    glass_article_sku = serializers.CharField(required=False, allow_blank=True, max_length=80)
+
+
+class DesignDefaultValueSerializer(serializers.Serializer):
+    value = serializers.CharField()
+    source = serializers.ChoiceField(choices=["company", "project"])
+
+
+class EffectiveDesignDefaultsSerializer(serializers.Serializer):
+    system_id = DesignDefaultValueSerializer(required=False)
+    color = DesignDefaultValueSerializer(required=False)
+    glass_article_sku = DesignDefaultValueSerializer(required=False)
+
+
 class ProjectWriteSerializer(StrictSerializer):
     name = serializers.CharField(max_length=255)
-    client_name = serializers.CharField(max_length=255)
+    # A quotation can start before its client is known; issuance still
+    # requires the client (documents.issuance._requirements).
+    client_name = serializers.CharField(max_length=255, required=False, allow_blank=True, default="")
     client_rut = serializers.CharField(max_length=50, required=False, allow_blank=True)
     client_email = serializers.EmailField(required=False, allow_blank=True)
     client_phone = serializers.CharField(max_length=50, required=False, allow_blank=True)
@@ -38,6 +57,8 @@ class ProjectWriteSerializer(StrictSerializer):
     delivery_address = serializers.CharField(required=False, allow_blank=True)
     notes_commercial = serializers.CharField(required=False, allow_blank=True)
     notes_internal = serializers.CharField(required=False, allow_blank=True)
+    # Usual values for new windows of this work; empty means «as the company».
+    design_defaults = DesignDefaultsSerializer(required=False)
 
 
 class ResetPricingSerializer(StrictSerializer):
@@ -207,6 +228,9 @@ class ProjectVersionResponseSerializer(serializers.Serializer):
 
 
 class ProjectResponseSerializer(ProjectWriteSerializer):
+    # Always present in responses (blank while a draft has no client yet).
+    client_name = serializers.CharField(max_length=255, allow_blank=True)
+    effective_design_defaults = EffectiveDesignDefaultsSerializer(required=False)
     accepted_version_id = serializers.UUIDField(required=False, allow_null=True)
     accepted_revision = serializers.CharField(required=False, allow_null=True)
     accepted_source = serializers.CharField(required=False)

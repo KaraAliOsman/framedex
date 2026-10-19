@@ -276,7 +276,7 @@ export function OnboardingPage(): JSX.Element {
                       {!system.readiness.quote_ready ? (
                         <span>
                           {system.readiness.levels?.flatMap((level) => level.blockers)[0]?.why ??
-                            "Falta completar y revisar la autoridad de la serie. Abre el catálogo para resolverla."}
+                            "Faltan datos de la serie (largos, costos o reglas). Abre el catálogo para completarlos."}
                         </span>
                       ) : null}
                     </span>

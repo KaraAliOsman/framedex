@@ -48,7 +48,6 @@ import {
   type Visit,
   type Workspace,
 } from "./types";
-import { useTheme } from "../../theme/ThemeProvider";
 import "./field.css";
 
 type Send = (visitId: string, body: Omit<Command, "operation_key">) => Promise<void>;
@@ -83,7 +82,6 @@ function useConnection(): boolean {
 
 export function FieldPage({ office = false }: { office?: boolean }): JSX.Element {
   const Surface = office ? "section" : "main";
-  const { theme, toggleTheme } = useTheme(office ? "light" : "dark");
   const auth = useAuthSession();
   const current = useRef(auth);
   current.current = auth;
@@ -229,7 +227,6 @@ export function FieldPage({ office = false }: { office?: boolean }): JSX.Element
     <Surface
       className={`field-page ${office ? "field-office" : ""}`}
       data-density={office ? "office" : "workshop"}
-      data-theme={theme}
     >
       <header>
         <div>
@@ -242,9 +239,6 @@ export function FieldPage({ office = false }: { office?: boolean }): JSX.Element
         </div>
         <div className="field-tools">
           <Link to="/dashboard">Hoy</Link>
-          <button type="button" className="secondary-action" onClick={toggleTheme}>
-            Cambiar tema
-          </button>
         </div>
       </header>
       <nav className="field-nav" aria-label="Trabajo en obra">
@@ -1744,7 +1738,7 @@ function Case({
         {c.code} · {labels[c.kind]} · {labels[c.status]}
       </h2>
       <p>
-        {c.context.project_code} · {c.context.project_name} · {c.context.contact_name}
+        {c.context.project_name} · {c.context.project_code} · {c.context.contact_name}
       </p>
       <p>{c.description}</p>
       <button type="button" className="secondary-action" onClick={() => open(c.visit_id)}>
@@ -1902,7 +1896,7 @@ function Case({
                   </label>
                   <p>
                     La compra conserva la asignación del proveedor elegible. No modifica pedidos
-                    anteriores; el precio se completa con autoridad.
+                    anteriores; el precio lo completa la oficina.
                   </p>
                 </>
               )}

@@ -22,8 +22,6 @@ import {
 import type { CommandContext, EditorTool } from "../commands/types";
 import { useCanvasStore } from "./canvasStore";
 import { assemblyCommands } from "./assemblyCommands";
-import { AlternativesPanel } from "./AlternativesPanel";
-import { AssistantPanel } from "./AssistantPanel";
 import { applyOperationEffects } from "./designOps";
 import { bayOperations, slidingOperation } from "./operationIntents";
 import { designOperationsSimulate } from "../../api/generated/dekopen";
@@ -31,6 +29,7 @@ import { ApiError } from "../../api/apiMutator";
 import type { DesignOperationRequest } from "../../api/generated/models";
 import type { CommandArgs, CommandSpec } from "../commands/types";
 import { useRegisterDesignOpsBridge } from "../assistant/assistantContext";
+import { useCopilot } from "../assistant/copilotBridge";
 import { Link } from "react-router-dom";
 import type { DesignOperation } from "../../api/generated/models";
 import { AssemblyPlanPane } from "./AssemblyPlanPane";
@@ -86,7 +85,7 @@ import {
   type ProductModuleJson,
 } from "./productEditing";
 import { OPENING_OPTIONS } from "./openings";
-import { LegacyOpeningPalette, OpeningPalette } from "./OpeningPalette";
+import { LegacyOpeningPalette, OpeningOptionsState, OpeningPalette } from "./OpeningPalette";
 import {
   openingChoices,
   physicalNodeLabel,
@@ -1036,6 +1035,14 @@ function LeafFacts({
 /** A bay (paño) is the leaf granularity the workshop thinks in — opening,
  * glazing and handle placement edit on this leaf alone, through the same
  * normalized request-tree every other canvas edit uses. */
+/** A series that declares neither capabilities nor historical compatible
+ * openings offers no opening at all — never a universal palette. */
+function openingsUndeclared(options: DesignOptions): boolean {
+  return (
+    (options.opening_capabilities?.length ?? 0) === 0 && options.compatible_openings.length === 0
+  );
+}
+
 function BayInspector({
   options,
   evaluation,
@@ -1051,8 +1058,10 @@ function BayInspector({
   commit,
   onOpeningPreview,
   onAskAssistant,
+  optionsReady = true,
 }: {
   options?: DesignOptions;
+  optionsReady?: boolean;
   evaluation: EngineAssemblyCalculateResponse | null;
   module: ProductModuleJson;
   bay: IntentNode;
@@ -1128,7 +1137,11 @@ function BayInspector({
       </div>
       <details className="inspector-section" open>
         <summary>{t("assembly.opening")}</summary>
-        {options?.opening_capabilities?.length ? (
+        {options === undefined ? (
+          <OpeningOptionsState state={optionsReady ? "error" : "loading"} />
+        ) : openingsUndeclared(options) ? (
+          <OpeningOptionsState state="missing" />
+        ) : options.opening_capabilities?.length ? (
           <OpeningPalette
             compact
             options={options}
@@ -1667,8 +1680,10 @@ function ModuleInspector({
   onOpeningPreview,
   onAskAssistant,
   onMountingChanged,
+  optionsReady = true,
 }: {
   options?: DesignOptions;
+  optionsReady?: boolean;
   organizationId: string;
   color: string;
   evaluation: EngineAssemblyCalculateResponse | null;
@@ -1740,7 +1755,11 @@ function ModuleInspector({
       </details>
       <details className="inspector-section" open>
         <summary>{t("assembly.opening")}</summary>
-        {options?.opening_capabilities?.length && modulePrimaryBay(module) ? (
+        {options === undefined ? (
+          <OpeningOptionsState state={optionsReady ? "error" : "loading"} />
+        ) : openingsUndeclared(options) ? (
+          <OpeningOptionsState state="missing" />
+        ) : options.opening_capabilities?.length && modulePrimaryBay(module) ? (
           <OpeningPalette
             compact
             options={options}
@@ -1875,6 +1894,7 @@ function ModuleInspector({
                   section={members.frame.section}
                   faceWidthMm={members.frame.faceWidthMm}
                   material={members.frame.material}
+                  role="FRAME"
                 />
               </div>
               <div>
@@ -1883,6 +1903,7 @@ function ModuleInspector({
                   section={members.sash.section}
                   faceWidthMm={members.sash.faceWidthMm}
                   material={members.sash.material}
+                  role="SASH"
                 />
               </div>
             </div>
@@ -1985,7 +2006,7 @@ function CouplingInspector({
       <p className="assembly-hint">
         {chosen?.coupling_rule
           ? `Admite ${fmtMm(chosen.coupling_rule.min_angle_deg)}° a ${fmtMm(chosen.coupling_rule.max_angle_deg)}°; aporte neto ${fmtMm(chosen.coupling_rule.development_mm)} mm.`
-          : "Sin dato · elige un acoplador con autoridad angular del catálogo."}
+          : "Sin dato · elige un acoplador del catálogo que declare su ángulo."}
       </p>
       {compatible.length === 0 && (
         <p role="alert">
@@ -1994,10 +2015,10 @@ function CouplingInspector({
       )}
       <details>
         <summary>Fuente del acoplador</summary>
-        <p>{chosen?.coupling_rule?.source ?? "Sin dato · falta autoridad del proveedor."}</p>
+        <p>{chosen?.coupling_rule?.source ?? "Sin dato · el proveedor no declara este dato."}</p>
       </details>
       <Link data-coupler-catalog to={`/catalogs/systems?system=${systemId}&resource=articles`}>
-        Revisar autoridad en el catálogo
+        Revisar el acoplador en Catálogos
       </Link>
       <div className="inspector-actions">
         <button
@@ -2145,7 +2166,7 @@ export function AssemblyEditor({
   const readOnly = useEditorMedia("(max-width: 1023px)");
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
-  const [assistantOpen, setAssistantOpen] = useState(false);
+  const copilot = useCopilot();
   const inspectorRef = useRef<HTMLDivElement>(null);
   const [proposal, setProposal] = useState<{
     simulation: Simulation;
@@ -2191,12 +2212,6 @@ export function AssemblyEditor({
   const [view3dExpanded, setView3dExpanded] = useState(false);
   const [operationBusy, setOperationBusy] = useState(false);
   const [operationMessage, setOperationMessage] = useState("");
-  /** Queued prompt for the assistant — "" means focus only. Every "…with
-   * DEKOPEN" affordance funnels here; the human always confirms. */
-  const [assistantDraft, setAssistantDraft] = useState<{
-    text: string;
-    submit?: boolean;
-  } | null>(null);
 
   const issuesListRef = useRef<HTMLUListElement>(null);
   /** Canvas context menu — cursor position, closed on action/outside/Escape. */
@@ -2232,12 +2247,20 @@ export function AssemblyEditor({
     });
   }, [currentEvaluation, inputs, operationBusy, isPending, errorCode, onEvaluationChange]);
 
-  /** Every "…with DEKOPEN" affordance: scroll the assistant into view and
-   * hand it a prompt draft — "" focuses the field untouched. */
-  function askAssistant(prompt: string, submit = false): void {
-    setAssistantOpen(true);
-    setInspectorOpen(true);
-    setAssistantDraft({ text: prompt, submit });
+  /** Optional delegation: opens the global copilot popup (AI plans only)
+   * with this position and the current selection as explicit context. It
+   * never calls the model by itself and the editor keeps its inspector. */
+  function askAssistant(prompt: string): void {
+    if (!copilot.available) return;
+    const selection = useCanvasStore.getState().selection;
+    copilot.delegate({
+      mode: "work",
+      text: prompt,
+      refs: {
+        ...(positionId ? { position_id: positionId } : {}),
+        ...(selection ? { selection: String(selection) } : {}),
+      },
+    });
   }
 
   useEffect(() => {
@@ -2991,7 +3014,7 @@ export function AssemblyEditor({
         >
           {!inputs.systemId && (
             <p>
-              Elige una serie con autoridad para calcular el diseño.{" "}
+              Elige una serie con datos completos para calcular el diseño.{" "}
               <button type="button" onClick={onChooseSystem}>
                 Elegir serie
               </button>
@@ -3316,8 +3339,8 @@ export function AssemblyEditor({
               </details>
               {!proposal.simulation.valid && (
                 <p role="alert">
-                  El motor bloquea la propuesta. Revisa las medidas y la autoridad de la serie antes
-                  de aplicar.
+                  El motor bloquea la propuesta. Revisa las medidas y los datos de la serie antes de
+                  aplicar.
                 </p>
               )}
               <button
@@ -3510,7 +3533,7 @@ export function AssemblyEditor({
                 )}
               </button>
             ))}
-          {selectedLabel && (
+          {selectedLabel && copilot.available && (
             <button
               type="button"
               role="menuitem"
@@ -3659,6 +3682,7 @@ export function AssemblyEditor({
             onMountingChanged={onChanged}
             onOpeningPreview={setOpeningPreviewProduct}
             options={options}
+            optionsReady={optionsReady}
             evaluation={currentEvaluation}
             module={selectedModule}
             product={product}
@@ -3671,7 +3695,7 @@ export function AssemblyEditor({
             busy={busy}
             commit={simulateCommand}
             onAskAssistant={
-              selectedLabel
+              selectedLabel && copilot.available
                 ? () => askAssistant(t("assistant.modifyPrompt").replace("{target}", selectedLabel))
                 : undefined
             }
@@ -3680,6 +3704,7 @@ export function AssemblyEditor({
           <BayInspector
             onOpeningPreview={setOpeningPreviewProduct}
             options={options}
+            optionsReady={optionsReady}
             evaluation={currentEvaluation}
             module={selectedBayModule}
             bay={selectedBayNode}
@@ -3692,7 +3717,7 @@ export function AssemblyEditor({
             busy={busy}
             commit={simulateCommand}
             onAskAssistant={
-              selectedLabel
+              selectedLabel && copilot.available
                 ? () => askAssistant(t("assistant.modifyPrompt").replace("{target}", selectedLabel))
                 : undefined
             }
@@ -3706,7 +3731,7 @@ export function AssemblyEditor({
             commit={simulateCommand}
             onSelect={(id) => select(id)}
             onAskAssistant={
-              selectedLabel
+              selectedLabel && copilot.available
                 ? () => askAssistant(t("assistant.modifyPrompt").replace("{target}", selectedLabel))
                 : undefined
             }
@@ -3720,7 +3745,7 @@ export function AssemblyEditor({
             busy={busy}
             commit={simulateCommand}
             onAskAssistant={
-              selectedLabel
+              selectedLabel && copilot.available
                 ? () => askAssistant(t("assistant.modifyPrompt").replace("{target}", selectedLabel))
                 : undefined
             }
@@ -3729,47 +3754,6 @@ export function AssemblyEditor({
           <section className="assembly-inspector">
             <p className="assembly-hint">{t("assembly.elementHint")}</p>
           </section>
-        )}
-        {product && (
-          <details
-            open={assistantOpen}
-            onToggle={(event) => setAssistantOpen(event.currentTarget.open)}
-            className="editor-assistant"
-          >
-            <summary>Asistente y alternativas</summary>
-            <AssistantPanel
-              organizationId={organizationId}
-              positionId={positionId}
-              systemId={inputs.systemId}
-              color={inputs.color}
-              product={product}
-              disabled={disabled}
-              draft={assistantDraft}
-              onDraftHandled={() => setAssistantDraft(null)}
-              onApply={applyRegisteredOps}
-            />
-            <AlternativesPanel
-              organizationId={organizationId}
-              positionId={positionId}
-              systemId={inputs.systemId}
-              product={product}
-              members={members}
-              disabled={disabled}
-              onUse={(next) => commit(next)}
-              catalogReady={optionsReady}
-              catalogKey={[
-                ...(options?.glass_skus ?? []),
-                ...(options?.panel_skus ?? []),
-                ...(options?.coupler_skus ?? []),
-                ...(options?.glazing_thicknesses ?? []),
-                // Recipes are catalog authority too — a composition edit
-                // makes old cards stale and new generations a new request.
-                ...(options?.glass_specs ?? []).map((item) => `${item.sku}=${item.spec}`),
-              ]
-                .sort()
-                .join("|")}
-            />
-          </details>
         )}
       </div>
       <footer className="assembly-statusbar">

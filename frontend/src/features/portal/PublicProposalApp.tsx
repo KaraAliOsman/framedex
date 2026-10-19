@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect } from "react";
 import { createBrowserRouter, Route, RouterProvider, Routes, useLocation } from "react-router-dom";
 import { ConnectionBoundary, RecoveryPage } from "../../app/RecoveryPage";
 import { RouteErrorBoundary } from "../../app/RouteErrorBoundary";
-import { DimLoader } from "../../ui/Signature";
+import { Loading } from "../../ui/Signature";
 import { PortalQuotePage } from "./PortalQuotePage";
 
 const PaymentReturnPage = lazy(async () => ({
@@ -28,7 +28,7 @@ export function publicProposalRoutes(): JSX.Element {
       <Route
         path="/pago/simulado/:linkId"
         element={
-          <Suspense fallback={<DimLoader label="Consultando el cobro de prueba" />}>
+          <Suspense fallback={<Loading label="Consultando el cobro de prueba" />}>
             <FlowSimulationPage />
           </Suspense>
         }
@@ -36,7 +36,7 @@ export function publicProposalRoutes(): JSX.Element {
       <Route
         path="/pago/retorno"
         element={
-          <Suspense fallback={<DimLoader label="Consultando el pago" />}>
+          <Suspense fallback={<Loading label="Consultando el pago" />}>
             <PaymentReturnPage />
           </Suspense>
         }

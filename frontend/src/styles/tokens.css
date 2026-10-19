@@ -57,17 +57,11 @@
   --teal-800: #075f5a;
   --teal-700: #0b7770;
   --teal-600: #0f8f85;
-  --teal-500: #20a79a;
-  --teal-400: #48bcaf;
-  --teal-300: #7fd4c8;
-  --teal-200: #b0e4dc;
   --teal-100: #d4efea;
   --teal-50: #e6f4f2;
   --orange-700: #a84418;
   --orange-600: #c24e1e;
   --orange-500: #e56a32;
-  --orange-400: #ed8653;
-  --orange-300: #f3ac84;
   --orange-100: #fbebe2;
   --paper: #ffffff;
   --scrim: rgb(22 28 31 / 42%);
@@ -83,25 +77,28 @@
   --font-sans: "IBM Plex Sans", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
   --type-display: 2rem;
-  --line-display: 2.25rem;
-  --type-title-l: 1.25rem;
-  --line-title-l: 1.625rem;
-  --type-title-m: 0.875rem;
-  --line-title-m: 1.125rem;
-  --type-label: 0.6875rem;
-  --line-label: 0.875rem;
-  --type-body: 0.8125rem;
-  --line-body: 1.125rem;
-  --type-dense: 0.75rem;
-  --line-dense: 1rem;
+  --line-display: 2.375rem;
+  --type-title-l: 1.5rem;
+  --line-title-l: 1.875rem;
+  --type-subtitle: 1.125rem;
+  --line-subtitle: 1.5rem;
+  --type-title-m: 0.9375rem;
+  --line-title-m: 1.25rem;
+  --type-label: 0.8125rem;
+  --line-label: 1.125rem;
+  --type-body: 0.875rem;
+  --line-body: 1.25rem;
+  --type-dense: 0.8125rem;
+  --line-dense: 1.125rem;
   --type-dim: 0.8125rem;
-  --line-dim: 1rem;
-  --type-micro: 0.6875rem;
+  --line-dim: 1.125rem;
+  --type-micro: 0.75rem;
   --type-workshop: 1rem;
-  --line-micro: 0.875rem;
+  --line-micro: 1rem;
   --r-0: 0;
-  --r-1: 2px;
-  --r-2: 4px;
+  --r-1: 6px;
+  --r-2: 8px;
+  --r-3: 12px;
   --r-pill: 999px;
   --e1: none;
   --focus-ring: none;
@@ -121,14 +118,17 @@
   --t-spatial: 220ms;
   --t-max: 280ms;
   --t-exit: 120ms;
+  --t-cycle: 900ms;
   --ease-in: cubic-bezier(0.2, 0, 0.38, 1);
   --ease-out: cubic-bezier(0.4, 0.14, 1, 1);
-  --density-compact: 28px;
-  --density-default: 32px;
-  --density-loose: 44px;
+  --density-compact: 32px;
+  --density-default: 38px;
+  --density-loose: 48px;
   --control-height: var(--density-default);
-  --table-row-height: 32px;
-  --inspector-width: 320px;
+  --table-row-height: 40px;
+  --inspector-width: 352px;
+  --nav-width: 216px;
+  --topbar-height: 56px;
   --tree-width: 260px;
   --tool-strip: 48px;
   --space-1: 4px;
@@ -150,12 +150,6 @@
   --space-32px: 32px;
   --space-48px: 48px;
   --space-64px: 64px;
-  --orb-mid: var(--g-900);
-  --orb-deep: var(--g-950);
-  --orb-edge: var(--g-500);
-  --orb-eye: var(--teal-400);
-  --orb-ribbon: var(--teal-500);
-  --orb-ribbon-soft: var(--teal-800);
   --mat-pvc-fill: #f4f7f6;
   --mat-pvc-edge: #b9c4c2;
   --mat-pvc-highlight: #ffffff;
@@ -179,6 +173,7 @@
   --mat-op-mark: #7a5af8;
   --mat-glass-pane: #e9f2f1;
   --mat-signature-ink: #1a1f24;
+  --grain-ink: rgb(46 28 12 / 22%);
   --member-pvc-fill: var(--mat-pvc-fill);
   --member-pvc-edge: var(--mat-pvc-edge);
   --member-pvc-highlight: var(--mat-pvc-highlight);
@@ -208,17 +203,17 @@
   --signature-ink: var(--mat-signature-ink);
 }
 :root,
-[data-theme="light"],
 [data-density="document"] {
-  --bg-app: var(--g-50);
-  --surface-panel: var(--g-25);
+  --bg-app: #f4f6f7;
+  --surface-panel: var(--paper);
   --surface-card: var(--g-100);
   --surface-sheet: var(--paper);
-  --surface-hover: #e2e8e7;
-  --surface-active: #d4dedd;
+  --surface-hover: #ebf0f0;
+  --surface-active: #dde5e4;
   --surface-selected: var(--teal-50);
   --border-subtle: var(--g-200);
   --border-default: var(--g-300);
+  --border-control: #859296;
   --border-strong: #a9b4b6;
   --border-focus: var(--teal-600);
   --text-primary: var(--g-950);
@@ -232,6 +227,10 @@
   --interactive-hover: var(--teal-700);
   --interactive-pressed: var(--teal-900);
   --mark: var(--orange-500);
+  /* Copilot character (contract 06): one stable light body, dark pill eyes. */
+  --companion-body: var(--paper);
+  --companion-edge: var(--border-strong);
+  --companion-eye: var(--g-950);
   --state-success: var(--success-base);
   --state-success-soft: var(--success-soft);
   --state-success-ink: var(--success-ink);
@@ -267,67 +266,7 @@
   --viewport-stage: #e0e6e5;
   --viewport-ground: #cdd5d6;
 }
-[data-theme="dark"],
-[data-density="workshop"]:not([data-theme]) {
-  --bg-app: #0f1416;
-  --surface-panel: #151b1e;
-  --surface-card: #1b2326;
-  --surface-sheet: #182024;
-  --surface-hover: #243033;
-  --surface-active: #2f3c3f;
-  --surface-selected: #123b36;
-  --border-subtle: #243033;
-  --border-default: #2f3c3f;
-  --border-strong: #607074;
-  --border-focus: var(--teal-500);
-  --text-primary: #e7edec;
-  --text-secondary: #aeb9bb;
-  --text-muted: #86928f;
-  --text-small-muted: #aeb9bb;
-  --text-on-fill: var(--g-950);
-  --text-disabled: #86928f;
-  --interactive: var(--teal-400);
-  --interactive-fill: var(--teal-500);
-  --interactive-hover: var(--teal-400);
-  --interactive-pressed: var(--teal-300);
-  --mark: var(--orange-400);
-  --state-success: #4caf7f;
-  --state-success-soft: #16291f;
-  --state-success-ink: #86d0a7;
-  --state-warning: #e09543;
-  --state-warning-soft: #33231a;
-  --state-warning-ink: #f3bc7b;
-  --state-danger: #e06154;
-  --state-danger-soft: #331d1a;
-  --state-danger-ink: #f3a49b;
-  --text-on-danger: var(--g-950);
-  --state-info: var(--teal-400);
-  --state-info-soft: #123b36;
-  --state-info-ink: var(--teal-200);
-  --state-person: var(--orange-400);
-  --state-person-soft: #39251b;
-  --state-person-ink: var(--orange-300);
-  --canvas-sheet: var(--surface-sheet);
-  --canvas-grid: #2f3c3f;
-  --canvas-grid-lines: #243033;
-  --canvas-member: var(--text-primary);
-  --canvas-dim: var(--text-secondary);
-  --canvas-dim-line: var(--text-muted);
-  --canvas-glazing: rgba(72, 188, 175, 0.07);
-  --canvas-glazing-stroke: var(--teal-500);
-  --canvas-opening-symbol: var(--text-secondary);
-  --canvas-selection: var(--teal-500);
-  --canvas-selection-fill: rgba(15, 143, 133, 0.08);
-  --canvas-handle: var(--mark);
-  --canvas-handle-stroke: var(--paper);
-  --canvas-snap: var(--success-base);
-  --canvas-preview: var(--mark);
-  --canvas-invalid: var(--state-danger);
-  --viewport-stage: #262c2f;
-  --viewport-ground: #1c2225;
-}
 :root,
-[data-theme],
 [data-density="workshop"],
 [data-density="document"] {
   --theme-bg-canvas: var(--bg-app);
@@ -343,7 +282,6 @@
   --theme-text-muted: var(--text-small-muted);
   --theme-text-tertiary: var(--text-small-muted);
   --theme-accent: var(--interactive);
-  --theme-accent-strong: var(--interactive-fill);
   --theme-accent-soft: var(--state-info-soft);
   --theme-accent-ink: var(--state-info-ink);
   --theme-mark: var(--mark);
@@ -358,7 +296,6 @@
   --theme-unknown-soft: var(--surface-card);
   --theme-blocked: var(--state-danger-ink);
   --theme-blocked-soft: var(--state-danger-soft);
-  --theme-focus-ring: var(--border-focus);
   --theme-selection: var(--surface-selected);
   --theme-disabled-bg: var(--surface-card);
   --theme-disabled-ink: var(--text-disabled);
@@ -376,7 +313,7 @@
   --radius-sm: var(--r-1);
   --radius-md: var(--r-2);
   --radius-lg: var(--r-2);
-  --radius-xl: var(--r-2);
+  --radius-xl: var(--r-3);
   --radius-pill: var(--r-1);
   --motion-fast: var(--t-micro);
   --motion-base: var(--t-state);
@@ -418,29 +355,28 @@
   --theme-radius-sm: var(--r-1);
   --theme-surface-inset: var(--surface-card);
   --theme-surface-page: var(--bg-app);
-  --theme-surface-sunken: var(--surface-card);
   --theme-text: var(--text-primary);
 }
 [data-density="office"] {
-  --type-body: 0.8125rem;
-  --line-body: 1.125rem;
-  --control-height: 32px;
-  --table-row-height: 32px;
+  --type-body: 0.875rem;
+  --line-body: 1.25rem;
+  --control-height: 38px;
+  --table-row-height: 40px;
 }
 [data-density="workshop"] {
   --type-body: 1rem;
-  --line-body: 1.375rem;
-  --type-label: 0.8125rem;
-  --line-label: 1.125rem;
+  --line-body: 1.5rem;
+  --type-label: 0.875rem;
+  --line-label: 1.25rem;
   --type-dim: 1rem;
-  --control-height: 44px;
-  --table-row-height: 48px;
+  --control-height: 48px;
+  --table-row-height: 52px;
 }
 [data-density="document"] {
-  --type-body: 0.875rem;
-  --line-body: 1.25rem;
-  --control-height: 40px;
-  --table-row-height: 40px;
+  --type-body: 0.9375rem;
+  --line-body: 1.375rem;
+  --control-height: 44px;
+  --table-row-height: 44px;
 }
 
 .sheet-miter {

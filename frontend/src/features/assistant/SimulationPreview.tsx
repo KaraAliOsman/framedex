@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { projectDesignOptions } from "../../api/generated/dekopen";
 import type { DesignOptions, Simulation } from "../../api/generated/models";
 import { fmtMm } from "../../format";
-import { DimLoader } from "../../ui/Signature";
+import { Loading } from "../../ui/Signature";
 import { ProductFrontSvg } from "../canvas/ProductFrontSvg";
 import { resolveMembers } from "../canvas/members";
 import { isProductModel, type ProductJson } from "../canvas/productEditing";
@@ -149,7 +149,7 @@ export function SimulationPreview({
               />
             ) : (
               <p>
-                {!error ? <DimLoader label="Cargando dibujo" /> : null}
+                {!error ? <Loading label="Cargando dibujo" /> : null}
                 {error
                   ? "No pudimos cargar el catálogo para dibujar. Vuelve a abrir la propuesta."
                   : "Cargando dibujo…"}

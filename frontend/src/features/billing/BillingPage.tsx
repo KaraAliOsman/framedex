@@ -6,6 +6,7 @@ import { Button, DeniedState, PageHeader } from "../../ui";
 import { t } from "../../i18n/es-CL";
 import "./billing.css";
 import { CommercePanel } from "./CommercePanel";
+import { PlansOverview } from "../plans/PlansOverview";
 
 const label = (value: string) => t(`billing.${value}` as Parameters<typeof t>[0]);
 const date = (value: string) =>
@@ -91,6 +92,7 @@ function BillingWorkspace({ orgId }: { orgId: string }): JSX.Element {
               onRefresh={() => setRevision((value) => value + 1)}
             />
           </section>
+          <PlansOverview />
           <section aria-labelledby="billing-payments" className="settings-group">
             <h2 id="billing-payments" className="settings-group__title">
               {t("billing.payments")}

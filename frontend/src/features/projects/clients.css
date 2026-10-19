@@ -193,3 +193,21 @@
     padding: var(--space-3);
   }
 }
+
+/* v1 08 — reuse an existing record before creating a duplicate. */
+.customer-similar {
+  margin: 0 0 var(--space-12px);
+  padding: var(--space-8px) var(--space-12px);
+  border-radius: var(--r-2);
+  background: var(--state-info-soft);
+  color: var(--state-info-ink);
+}
+
+.customer-similar p {
+  margin: 0 0 var(--space-4px);
+}
+
+.customer-similar ul {
+  margin: 0;
+  padding-left: var(--space-16px);
+}

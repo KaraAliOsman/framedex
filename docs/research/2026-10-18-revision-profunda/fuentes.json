@@ -1,0 +1,1239 @@
+{
+  "date": "2026-10-18",
+  "unique_urls": 176,
+  "sources": [
+    {
+      "url": "https://www.klaes.de/en-tour",
+      "title": "Klaes Tour",
+      "uses": [
+        "klaes:K1"
+      ]
+    },
+    {
+      "url": "https://www.klaes.de/en-klaes-3d",
+      "title": "Klaes 3D",
+      "uses": [
+        "klaes:K2"
+      ]
+    },
+    {
+      "url": "https://www.klaes.de/en-e-prod",
+      "title": "Klaes e-prod",
+      "uses": [
+        "klaes:K3"
+      ]
+    },
+    {
+      "url": "https://www.klaes.de/en-inventory-management",
+      "title": "Inventory Management / MAWI",
+      "uses": [
+        "klaes:K4"
+      ]
+    },
+    {
+      "url": "https://www.klaes.de/en-reports",
+      "title": "Klaes Reports",
+      "uses": [
+        "klaes:K5"
+      ]
+    },
+    {
+      "url": "https://www.klaes.de/en-web-business",
+      "title": "Klaes Web Business",
+      "uses": [
+        "klaes:K6"
+      ]
+    },
+    {
+      "url": "https://www.klaes.de/en-web-tracking",
+      "title": "Klaes Web Tracking",
+      "uses": [
+        "klaes:K7"
+      ]
+    },
+    {
+      "url": "https://www.klaes.de/en-webtrade",
+      "title": "Klaes webtrade",
+      "uses": [
+        "klaes:K8"
+      ]
+    },
+    {
+      "url": "https://www.klaes.de/en-webshop",
+      "title": "Klaes webshop",
+      "uses": [
+        "klaes:K9"
+      ]
+    },
+    {
+      "url": "https://www.klaes.de/en-opentrans",
+      "title": "Klaes openTRANS",
+      "uses": [
+        "klaes:K10"
+      ]
+    },
+    {
+      "url": "https://www.klaes.de/en-klaes-door-designer",
+      "title": "Klaes Door Designer",
+      "uses": [
+        "klaes:K11"
+      ]
+    },
+    {
+      "url": "https://www.klaes.de/en-e-control",
+      "title": "Klaes e-control",
+      "uses": [
+        "klaes:K12"
+      ]
+    },
+    {
+      "url": "https://www.klaes.de/en-manual",
+      "title": "Cómo acceder a los manuales",
+      "uses": [
+        "klaes:K13"
+      ]
+    },
+    {
+      "url": "https://www.klaes.de/files/Content_data_website/01_Startseite/News%20Slider/EN/Startslider/2024-10-Arbeitswelten-Klaes-Imagebrosch%C3%BCre-en.pdf",
+      "title": "Brochure Work Worlds",
+      "uses": [
+        "klaes:K14"
+      ]
+    },
+    {
+      "url": "https://www.klaes.de/en-news/fensterbau-frontale-2026-preview-en",
+      "title": "Fensterbau Frontale 2026 preview",
+      "uses": [
+        "klaes:K15"
+      ]
+    },
+    {
+      "url": "https://www.klaes.de/en-news/the-perfect-exhibition",
+      "title": "The perfect exhibition",
+      "uses": [
+        "klaes:K16"
+      ]
+    },
+    {
+      "url": "https://www.klaes.de/assets/images/z/en-11-sonderseiten-leadpage-bildschirm-konstruktion-tuer-und-fenster-holz-5pj18w3kgnrqxth.png",
+      "title": "Captura de construcción del Tour",
+      "uses": [
+        "klaes:K17"
+      ]
+    },
+    {
+      "url": "https://www.preference.com/integrated-erp-platform/",
+      "title": "Integrated ERP Platform",
+      "uses": [
+        "prefsuite:P1"
+      ]
+    },
+    {
+      "url": "https://www.preference.com/quotation-and-selling-software/",
+      "title": "Quotation and Selling Software",
+      "uses": [
+        "prefsuite:P2"
+      ]
+    },
+    {
+      "url": "https://www.preference.com/pre-go-live-services/",
+      "title": "Pre Go-Live Services",
+      "uses": [
+        "prefsuite:P3"
+      ]
+    },
+    {
+      "url": "https://preferencemercosur.com/portfolio-prefsuite/",
+      "title": "Portfolio PrefSuite Mercosur",
+      "uses": [
+        "prefsuite:P4"
+      ]
+    },
+    {
+      "url": "https://prefsuite.zendesk.com/hc/pt-br/articles/34430593841684-PrefSuite-N%C3%ADveis-de-folhas",
+      "title": "PrefSuite — Níveis de folhas",
+      "uses": [
+        "prefsuite:P5"
+      ]
+    },
+    {
+      "url": "https://prefsuite.zendesk.com/hc/pt-br/articles/34522274674708-PrefSuite-Otimiza%C3%A7%C3%A3o-de-Barras",
+      "title": "PrefSuite — Otimização de Barras",
+      "uses": [
+        "prefsuite:P6"
+      ]
+    },
+    {
+      "url": "https://prefsuite.zendesk.com/hc/pt-br/articles/34491852776468-PrefSuite-Romaneio-de-Materiais",
+      "title": "PrefSuite — Romaneio de Materiais",
+      "uses": [
+        "prefsuite:P7"
+      ]
+    },
+    {
+      "url": "https://prefsuite.zendesk.com/hc/pt-br/articles/34491745286804-PrefSuite-Cadastro-de-um-novo-tratamento-para-os-perfis",
+      "title": "Registro de tratamiento para perfiles",
+      "uses": [
+        "prefsuite:P8"
+      ]
+    },
+    {
+      "url": "https://prefsuite.zendesk.com/hc/pt-br/articles/34491592376596-PrefSuite-Alterar-a-cor-de-v%C3%A1rios-itens-da-obra-ao-mesmo-tempo",
+      "title": "Cambiar color de varios ítems",
+      "uses": [
+        "prefsuite:P9"
+      ]
+    },
+    {
+      "url": "https://prefsuite.zendesk.com/hc/pt-br/articles/34491820785428-PrefSuite-Troca-de-Croquis-em-Proposta",
+      "title": "Croquis personalizado en propuesta",
+      "uses": [
+        "prefsuite:P10"
+      ]
+    },
+    {
+      "url": "https://preferencemercosur.com/prefweb/",
+      "title": "PrefWeb",
+      "uses": [
+        "prefsuite:P11"
+      ]
+    },
+    {
+      "url": "https://preferencemercosur.com/prefcim/",
+      "title": "PrefCIM",
+      "uses": [
+        "prefsuite:P12"
+      ]
+    },
+    {
+      "url": "https://prefsuite.zendesk.com/hc/pt-br/articles/23349345677588-Relat%C3%B3rio-de-listagem-de-obras-por-or%C3%A7amentista",
+      "title": "Listado de obras por presupuestador",
+      "uses": [
+        "prefsuite:P13"
+      ]
+    },
+    {
+      "url": "https://prefsuite.zendesk.com/hc/pt-br/articles/34491799716500-PrefSuite-Cadastro-de-novos-usu%C3%A1rios",
+      "title": "Registro de usuarios",
+      "uses": [
+        "prefsuite:P14"
+      ]
+    },
+    {
+      "url": "https://prefsuite.zendesk.com/hc/pt-br/articles/23326502475796-Principais-recursos-PrefOne",
+      "title": "Principales recursos PrefOne",
+      "uses": [
+        "prefsuite:P15"
+      ]
+    },
+    {
+      "url": "https://prefsuite.zendesk.com/hc/pt-br/articles/23326116065300-Substituir-componentes-de-um-modelo",
+      "title": "Sustituir componentes de un modelo",
+      "uses": [
+        "prefsuite:P16"
+      ]
+    },
+    {
+      "url": "https://prefsuite.zendesk.com/hc/pt-br/articles/23349197510548-Salvar-relat%C3%B3rios-em-formato-PDF",
+      "title": "Guardar informes PDF",
+      "uses": [
+        "prefsuite:P17"
+      ]
+    },
+    {
+      "url": "https://canaldocliente.esquadgroup.com.br/uploads/manual/51680436.jpg",
+      "title": "Captura de niveles de hojas PrefCad",
+      "uses": [
+        "prefsuite:P18"
+      ]
+    },
+    {
+      "url": "https://canaldocliente.esquadgroup.com.br/presuite/video/40",
+      "title": "Video: tipología rápida FastOffering",
+      "uses": [
+        "prefsuite:P19"
+      ]
+    },
+    {
+      "url": "https://canaldocliente.esquadgroup.com.br/presuite/video/42",
+      "title": "Video: construcción de tipologías PVC",
+      "uses": [
+        "prefsuite:P20"
+      ]
+    },
+    {
+      "url": "https://www.raworkshop.com/compare-editions/",
+      "title": "Compare editions",
+      "uses": [
+        "ra_workshop:R1"
+      ]
+    },
+    {
+      "url": "https://www.raworkshop.com/ra-workshop-professional/",
+      "title": "RA Workshop Professional",
+      "uses": [
+        "ra_workshop:R2"
+      ]
+    },
+    {
+      "url": "https://www.raworkshop.com/faq/",
+      "title": "FAQ",
+      "uses": [
+        "ra_workshop:R3"
+      ]
+    },
+    {
+      "url": "https://help.raworkshop.bg/docs?lang=bg&url=https://www.raworkshop.com/Help/Ra%2520Workshop/4.1/en/topics/profile-system-overview.htm",
+      "title": "Manual 4.1 — Profile systems",
+      "uses": [
+        "ra_workshop:R4"
+      ]
+    },
+    {
+      "url": "https://help.raworkshop.bg/docs?lang=bg&url=https://www.raworkshop.com/Help/Ra%2520Workshop/4.1/en/topics/stock-optimization-full-optimization.htm",
+      "title": "Manual 4.1 — Full stock optimization",
+      "uses": [
+        "ra_workshop:R5"
+      ]
+    },
+    {
+      "url": "https://www.raworkshop.com/ra-inventory/",
+      "title": "RA Inventory",
+      "uses": [
+        "ra_workshop:R8"
+      ]
+    },
+    {
+      "url": "https://www.raworkshop.com/media/",
+      "title": "Media — videos globales",
+      "uses": [
+        "ra_workshop:R9"
+      ]
+    },
+    {
+      "url": "https://raworkshop.bg/en/resources/videos",
+      "title": "Recursos — videos regionales",
+      "uses": [
+        "ra_workshop:R10"
+      ]
+    },
+    {
+      "url": "https://raworkshop.bg/en/products/smart-office",
+      "title": "Smart Office regional — alcance y disponibilidad",
+      "uses": [
+        "ra_workshop:R11"
+      ]
+    },
+    {
+      "url": "https://raworkshop.bg/products/smart-office/automation-ai",
+      "title": "Smart Office — automation and AI",
+      "uses": [
+        "ra_workshop:R13"
+      ]
+    },
+    {
+      "url": "https://help.raworkshop.bg/api/docs/resource?url=https%3A%2F%2Fwww.raworkshop.com%2FHelp%2FRa%2520Workshop%2F4.1%2Fen%2Ftopics%2Fimages%2Fannotations%2Fprofile_system_overview%2Fprofile%2520system%2520-%2520dialog.png",
+      "title": "Captura Profile Systems",
+      "uses": [
+        "ra_workshop:R14"
+      ]
+    },
+    {
+      "url": "https://www.logikal-software.com/en/faq",
+      "title": "Logikal FAQ",
+      "uses": [
+        "logikal:L01"
+      ]
+    },
+    {
+      "url": "https://help.orgadata.com/en/documentation/input-of-elements/user-interface/",
+      "title": "Input of elements: user interface",
+      "uses": [
+        "logikal:L02"
+      ]
+    },
+    {
+      "url": "https://help.orgadata.com/en/documentation/input-of-elements/windows-and-doors/element/insertion-selection/",
+      "title": "Insertion selection",
+      "uses": [
+        "logikal:L03"
+      ]
+    },
+    {
+      "url": "https://help.orgadata.com/en/documentation/input-of-elements/user-interface/3d-view/",
+      "title": "3D view",
+      "uses": [
+        "logikal:L04"
+      ]
+    },
+    {
+      "url": "https://help.orgadata.com/en/documentation/input-of-elements/windows-and-doors/grid/couplings/",
+      "title": "Couplings",
+      "uses": [
+        "logikal:L05"
+      ]
+    },
+    {
+      "url": "https://help.orgadata.com/en/documentation/input-of-elements/windows-and-doors/glazing/glazing/",
+      "title": "Glazing",
+      "uses": [
+        "logikal:L06"
+      ]
+    },
+    {
+      "url": "https://help.orgadata.com/en/documentation/database/system-articles/",
+      "title": "System articles",
+      "uses": [
+        "logikal:L07"
+      ]
+    },
+    {
+      "url": "https://help.orgadata.com/en/documentation/dataservices/customised-databases/commercial-and-technical-article-data/",
+      "title": "Commercial and technical article data",
+      "uses": [
+        "logikal:L08"
+      ]
+    },
+    {
+      "url": "https://help.orgadata.com/en/documentation/dataservices/customised-databases/requirements/",
+      "title": "Customized databases: requirements",
+      "uses": [
+        "logikal:L09"
+      ]
+    },
+    {
+      "url": "https://help.orgadata.com/en/documentation/estimation-and-labour-hours/estimation/estimation-data/discount-groups/",
+      "title": "Discount groups",
+      "uses": [
+        "logikal:L10"
+      ]
+    },
+    {
+      "url": "https://help.orgadata.com/en/documentation/printouts/",
+      "title": "Printouts",
+      "uses": [
+        "logikal:L11"
+      ]
+    },
+    {
+      "url": "https://help.orgadata.com/en/documentation/printouts/estimation-printouts/material-analysis/",
+      "title": "Material analysis",
+      "uses": [
+        "logikal:L12"
+      ]
+    },
+    {
+      "url": "https://help.orgadata.com/en/documentation/project-centre/article-options/residual-lengths/",
+      "title": "Residual lengths",
+      "uses": [
+        "logikal:L13"
+      ]
+    },
+    {
+      "url": "https://help.orgadata.com/en/documentation/project-centre/position-history/",
+      "title": "Position history",
+      "uses": [
+        "logikal:L14"
+      ]
+    },
+    {
+      "url": "https://help.orgadata.com/en/documentation/settings/user/",
+      "title": "User settings",
+      "uses": [
+        "logikal:L15"
+      ]
+    },
+    {
+      "url": "https://help.orgadata.com/en/documentation/project-centre/keyboard-shortcuts-and-combinations/",
+      "title": "Keyboard shortcuts and combinations",
+      "uses": [
+        "logikal:L16"
+      ]
+    },
+    {
+      "url": "https://help.orgadata.com/en/documentation/simplytag/",
+      "title": "SimplyTag",
+      "uses": [
+        "logikal:L17"
+      ]
+    },
+    {
+      "url": "https://help.orgadata.com/en/documentation/cnc/machine-setup/saw-setup/",
+      "title": "Saw setup",
+      "uses": [
+        "logikal:L18"
+      ]
+    },
+    {
+      "url": "https://help.orgadata.com/en/documentation/interfaces/erp/erp-export-via-mdb/",
+      "title": "ERP export via MDB",
+      "uses": [
+        "logikal:L19"
+      ]
+    },
+    {
+      "url": "https://help.orgadata.com/en/documentation/project-centre/create-projects/",
+      "title": "Create projects",
+      "uses": [
+        "logikal:L20"
+      ]
+    },
+    {
+      "url": "https://www.schueco.com/es/fabricantes/soluciones-digitales/schuecal",
+      "title": "SchüCal — España",
+      "uses": [
+        "schuecal:S01"
+      ]
+    },
+    {
+      "url": "https://www.schueco.com/de-en/fabricators/digital-solutions/schuecal",
+      "title": "SchüCal — DE-EN",
+      "uses": [
+        "schuecal:S02"
+      ]
+    },
+    {
+      "url": "https://www.schueco.com/uk/fabricators/digital-solutions/fabrication-data-center",
+      "title": "Fabrication Data Center",
+      "uses": [
+        "schuecal:S03"
+      ]
+    },
+    {
+      "url": "https://www.schueco.com/de/verarbeiter/digitale-loesungen/schuecal-mes",
+      "title": "SchüCal MES",
+      "uses": [
+        "schuecal:S04"
+      ]
+    },
+    {
+      "url": "https://www.schueco.com/de-en/fabricators/digital-solutions/schuecal-mobile",
+      "title": "SchüCal mobile",
+      "uses": [
+        "schuecal:S05"
+      ]
+    },
+    {
+      "url": "https://www.schueco.com/uk/specifiers/digital-solutions/docu-center",
+      "title": "Docu Center",
+      "uses": [
+        "schuecal:S06"
+      ]
+    },
+    {
+      "url": "https://www.schueco.com/es/fabricantes/soluciones-digitales/polycal",
+      "title": "PolyCal — España",
+      "uses": [
+        "schuecal:S07"
+      ]
+    },
+    {
+      "url": "https://www.schueco.com/resource/blob/4249866/bd6e3252f6b70a93524d9f7b7ab3d2d1/digital_solutions_brochure_en.pdf?domain=no",
+      "title": "Digital Solutions in Construction",
+      "uses": [
+        "schuecal:S08"
+      ]
+    },
+    {
+      "url": "https://www.schueco.com/uk/fabricators/magazine/the-future-of-fabrication",
+      "title": "The future of fabrication",
+      "uses": [
+        "schuecal:S09"
+      ]
+    },
+    {
+      "url": "https://www.schueco.com/de-en/fabricators/machinery/cnc-maschinen/cnc-machining/vx-800",
+      "title": "VX 800",
+      "uses": [
+        "schuecal:S10"
+      ]
+    },
+    {
+      "url": "https://youtube.com/playlist?list=PL1bRABLS_JWyI3pZJK_pcKyXL6v88PR6G",
+      "title": "SchüCal tutorials — official playlist",
+      "uses": [
+        "schuecal:S11"
+      ]
+    },
+    {
+      "url": "https://www.schueco.com/uk/fabricators/my-workplace/software",
+      "title": "Software licenses — My Workplace",
+      "uses": [
+        "schuecal:S12"
+      ]
+    },
+    {
+      "url": "https://www.jansen.com/servicepack/Homepage/KEY-USER/Template/JANIsoft-Schulung_Dokumentation_IT.pdf",
+      "title": "JANIsoft/SchüCal training documentation",
+      "uses": [
+        "schuecal:S13"
+      ]
+    },
+    {
+      "url": "https://www.jansen.com/en-us/building-systems-profile-systems-steel/services-steel-systems/processing/machine-range/detail/cnc-af-510.html",
+      "title": "Jansen CNC AF 510",
+      "uses": [
+        "schuecal:S14"
+      ]
+    },
+    {
+      "url": "https://www.cyncly.com/resources/news/v6-advantage-visualizer-award",
+      "title": "V6 Advantage X3D Visualizer award announcement",
+      "uses": [
+        "v6:V01"
+      ]
+    },
+    {
+      "url": "https://www.cyncly.com/pt-BR/products/soft-tech-v6/capabilities",
+      "title": "Soft Tech V6 capabilities",
+      "uses": [
+        "v6:V02"
+      ]
+    },
+    {
+      "url": "https://www.cyncly.com/en-GB/products/soft-tech-v6/modules",
+      "title": "Soft Tech V6 modules",
+      "uses": [
+        "v6:V03"
+      ]
+    },
+    {
+      "url": "https://www.cyncly.com/en-GB/products/soft-tech-v6/academy",
+      "title": "Soft Tech Academy",
+      "uses": [
+        "v6:V04"
+      ]
+    },
+    {
+      "url": "https://academy.softtech.com/img/Soft%20Tech%20Academy%20V6%20Accreditation.pdf",
+      "title": "Soft Tech Academy V6 Accreditation",
+      "uses": [
+        "v6:V05"
+      ]
+    },
+    {
+      "url": "https://wnaymg.files.cmp.optimizely.com/download/assets/WDG%2B-%2BDatasheet%2B-%2BV6%2B-%2BProfile%2Bsuppliers%2B-%2BEN%2BUS.pdf/56b13f8ab5e011f09db95ac263d27420",
+      "title": "V6 datasheet — profile suppliers",
+      "uses": [
+        "v6:V06"
+      ]
+    },
+    {
+      "url": "https://wnaymg.files.cmp.optimizely.com/download/assets/DataSheet%2BV6%2BAdvantage%2B-%2BWindow%2Band%2BDoor%2BFabricators%2BAPAC%2BA4%2B%2B-%2BEN.pdf/29aa56227ec011f0970f5e1af917a384",
+      "title": "V6 Advantage datasheet — window and door fabricators",
+      "uses": [
+        "v6:V07"
+      ]
+    },
+    {
+      "url": "https://www.cyncly.com/en-AU/resources/news/cyncly-ausfenex-2025",
+      "title": "Cyncly at AusFenEx 2025",
+      "uses": [
+        "v6:V08"
+      ]
+    },
+    {
+      "url": "https://www.cyncly.com/en-HU/resources/news/fensterbau-frontale-2026",
+      "title": "Cyncly at Fensterbau Frontale 2026",
+      "uses": [
+        "v6:V09"
+      ]
+    },
+    {
+      "url": "https://wnaymg.files.cmp.optimizely.com/download/assets/WDG%2B-%2BOverview%2B3%2B-%2BV6%2BOverview%2B-%2BEN.mp4/b23a65b4512911f09ad1f28d889ce8c1",
+      "title": "V6 Overview — official MP4",
+      "uses": [
+        "v6:V10"
+      ]
+    },
+    {
+      "url": "https://www.a-w.com/aw-cantor/",
+      "title": "A+W Cantor",
+      "uses": [
+        "cantor:A01"
+      ]
+    },
+    {
+      "url": "https://www.a-w.com/aw-cantor/aw-erpcim/",
+      "title": "A+W ERP/CIM",
+      "uses": [
+        "cantor:A02"
+      ]
+    },
+    {
+      "url": "https://www.a-w.com/aw-cantor/aw-dealer-cloud/",
+      "title": "A+W Dealer Cloud",
+      "uses": [
+        "cantor:A03"
+      ]
+    },
+    {
+      "url": "https://www.a-w.com/software/cantor-iquote/",
+      "title": "Cantor iQuote",
+      "uses": [
+        "cantor:A04"
+      ]
+    },
+    {
+      "url": "https://news.a-w.com/hubfs/AW_English_NA_files/GlassBuild%202022%20Flyers/20220609_us_Messeflyer_AW_Cantor_Smart_Companion.pdf?hsLang=en-us",
+      "title": "A+W Cantor Smart Companion flyer",
+      "uses": [
+        "cantor:A05"
+      ]
+    },
+    {
+      "url": "https://blog.a-w.com/us/smart-scanning-at-a-window-company",
+      "title": "Smart scanning at a window company",
+      "uses": [
+        "cantor:A06"
+      ]
+    },
+    {
+      "url": "https://www.a-w.com/wp-content/uploads/2024/03/TMP-Artikel_Dialog_DEZ_2022_en.pdf",
+      "title": "TMP customer report",
+      "uses": [
+        "cantor:A07"
+      ]
+    },
+    {
+      "url": "https://www.a-w.com/wp-content/uploads/2024/03/E-Schlotterer_Website.pdf",
+      "title": "Schlotterer/iQuote customer report",
+      "uses": [
+        "cantor:A08"
+      ]
+    },
+    {
+      "url": "https://blog.a-w.com/uk/online-configurator-for-dealers-and-end-customers",
+      "title": "Online configurator for dealers and end customers",
+      "uses": [
+        "cantor:A09"
+      ]
+    },
+    {
+      "url": "https://www.cyncly.com/products/fenevision/modules",
+      "title": "FeneVision — módulos oficiales",
+      "uses": [
+        "fenevision:F1"
+      ]
+    },
+    {
+      "url": "https://fenevision.support.cyncly.com/hc/en-us/articles/41527250125585-WEB-User-Manual",
+      "title": "FeneVision WEB User Manual — índice",
+      "uses": [
+        "fenevision:F2"
+      ]
+    },
+    {
+      "url": "https://fenevision.support.cyncly.com/hc/en-us/article_attachments/41527278040721",
+      "title": "FeneVision WEB User Manual, versión 18.1, junio de 2023, 109 páginas",
+      "uses": [
+        "fenevision:F3"
+      ]
+    },
+    {
+      "url": "https://fenevision.support.cyncly.com/hc/en-us/article_attachments/42166279093521",
+      "title": "Opening Designer Continuous Frame Best Practices, 22-12-2025",
+      "uses": [
+        "fenevision:F5"
+      ]
+    },
+    {
+      "url": "https://fenevision.support.cyncly.com/hc/en-us/articles/33620584716689-Price-and-Cost-in-WEB-Understanding-Types-of-WEB-Users",
+      "title": "Price and Cost in WEB: Understanding Types of WEB Users",
+      "uses": [
+        "fenevision:F6"
+      ]
+    },
+    {
+      "url": "https://fenevision.support.cyncly.com/hc/en-us/articles/33380224362641-Managing-User-Permissions-in-FeneVision",
+      "title": "Managing User Permissions in FeneVision",
+      "uses": [
+        "fenevision:F7"
+      ]
+    },
+    {
+      "url": "https://fenevision.support.cyncly.com/hc/en-us/articles/28412158988177-Configuration-and-Attribute-Scripting-Guides",
+      "title": "Configuration and Attribute Scripting Guides",
+      "uses": [
+        "fenevision:F8"
+      ]
+    },
+    {
+      "url": "https://fenevision.support.cyncly.com/hc/en-us/articles/31779065667473-Creating-Inventory-Adjustments",
+      "title": "Creating Inventory Adjustments",
+      "uses": [
+        "fenevision:F9"
+      ]
+    },
+    {
+      "url": "https://fenevision.support.cyncly.com/hc/en-us/articles/45616224342289-How-is-Daily-Average-Usage-DAU-Calculated",
+      "title": "How is Daily Average Usage (DAU) Calculated?",
+      "uses": [
+        "fenevision:F10"
+      ]
+    },
+    {
+      "url": "https://fenevision.support.cyncly.com/hc/en-us/articles/45201059625873-Unposting-Documents-in-FeneVision",
+      "title": "Unposting Documents in FeneVision",
+      "uses": [
+        "fenevision:F11"
+      ]
+    },
+    {
+      "url": "https://fenevision.support.cyncly.com/hc/en-us/articles/29268386351505-FeneVision-Training-Options",
+      "title": "FeneVision Training Options",
+      "uses": [
+        "fenevision:F12"
+      ]
+    },
+    {
+      "url": "https://www.cyncly.com/products/fenevision-opti",
+      "title": "FeneVision OPTI",
+      "uses": [
+        "fenevision:F13"
+      ]
+    },
+    {
+      "url": "https://fenevision.support.cyncly.com/hc/en-us/articles/46037769534481-OPTI-User-Manuals",
+      "title": "OPTI User Manuals — índice",
+      "uses": [
+        "fenevision:F14"
+      ]
+    },
+    {
+      "url": "https://www.cyncly.com/contentassets/37c87ee3501a4047bb9708e991dd005b/web-contractor.png",
+      "title": "Captura publicada: FeneVision WEB contractor",
+      "uses": [
+        "fenevision:F15"
+      ]
+    },
+    {
+      "url": "https://www.matrix-software.com/windowframe/plasticalu",
+      "title": "Matrix Plastic/Aluminium overview",
+      "uses": [
+        "matrix:M1"
+      ]
+    },
+    {
+      "url": "https://www.matrix-software.com/windowframe/matrix-windows-pvc",
+      "title": "Matrix Windows PVC",
+      "uses": [
+        "matrix:M2"
+      ]
+    },
+    {
+      "url": "https://www.matrix-software.com/windowframe/matrix-windows-project",
+      "title": "Matrix Windows Project",
+      "uses": [
+        "matrix:M3"
+      ]
+    },
+    {
+      "url": "https://www.matrix-software.com/windowframe/matrix-windows-cnc",
+      "title": "Matrix Windows CNC",
+      "uses": [
+        "matrix:M4"
+      ]
+    },
+    {
+      "url": "https://www.matrix-software.com/nl/windowframe/matrix-windows-web",
+      "title": "Matrix WebKozijn / Windows Web",
+      "uses": [
+        "matrix:M5"
+      ]
+    },
+    {
+      "url": "https://knowledge-base.matrix-software.com/nl/help/matrix-windows/manual-and-use/supplier-import",
+      "title": "Supplier Import — manual",
+      "uses": [
+        "matrix:M6"
+      ]
+    },
+    {
+      "url": "https://knowledge-base.matrix-software.com/nl/help/matrix-windows/webkozijn/api",
+      "title": "WebKozijn API",
+      "uses": [
+        "matrix:M7"
+      ]
+    },
+    {
+      "url": "https://knowledge-base.matrix-software.com/node/1693",
+      "title": "Matrix Windows SP30, 17-03-2026",
+      "uses": [
+        "matrix:M8"
+      ]
+    },
+    {
+      "url": "https://knowledge-base.matrix-software.com/nl/node/1503",
+      "title": "Matrix Windows SP24",
+      "uses": [
+        "matrix:M9"
+      ]
+    },
+    {
+      "url": "https://knowledge-base.matrix-software.com/nl/node/1606",
+      "title": "WebManager SP26",
+      "uses": [
+        "matrix:M10"
+      ]
+    },
+    {
+      "url": "https://www.matrix-software.com/nl/training",
+      "title": "Matrix training",
+      "uses": [
+        "matrix:M11"
+      ]
+    },
+    {
+      "url": "https://www.matrix-software.com/themes/matrix/images/monitors/monitor2_MatrixKozijn_Kunststof_NL.png",
+      "title": "Captura publicada del editor MatrixKozijn Kunststof",
+      "uses": [
+        "matrix:M14"
+      ]
+    },
+    {
+      "url": "https://windowmaker.com/windowmaker-web/",
+      "title": "Windowmaker Web",
+      "uses": [
+        "windowmaker:W1"
+      ]
+    },
+    {
+      "url": "https://windowmaker.com/configurator/",
+      "title": "Windowmaker Configurator",
+      "uses": [
+        "windowmaker:W2"
+      ]
+    },
+    {
+      "url": "https://windowmaker.com/operations/",
+      "title": "Windowmaker Operations",
+      "uses": [
+        "windowmaker:W3"
+      ]
+    },
+    {
+      "url": "https://windowmaker.com/manufacturing-solution/",
+      "title": "Windowmaker Manufacturing Solution",
+      "uses": [
+        "windowmaker:W4"
+      ]
+    },
+    {
+      "url": "https://windowmaker.com/e-catalog/",
+      "title": "Windowmaker e-Catalog",
+      "uses": [
+        "windowmaker:W5"
+      ]
+    },
+    {
+      "url": "https://windowmaker.com/wp-content/uploads/2026/02/WINDOWMAKER-2025-R4-0-0-Release-Document.pdf",
+      "title": "Windowmaker 2025 R4.0.0 Release Document, 29-12-2025",
+      "uses": [
+        "windowmaker:W6"
+      ]
+    },
+    {
+      "url": "https://windowmaker.com/windomaker-measure/",
+      "title": "Windowmaker Measure",
+      "uses": [
+        "windowmaker:W7"
+      ]
+    },
+    {
+      "url": "https://windowmaker.com/windowmaker-cloud/",
+      "title": "Windowmaker Cloud y planes",
+      "uses": [
+        "windowmaker:W8"
+      ]
+    },
+    {
+      "url": "https://windowmaker.com/webinars/",
+      "title": "Windowmaker webinars",
+      "uses": [
+        "windowmaker:W9"
+      ]
+    },
+    {
+      "url": "https://windowmaker.com/category/uncategorized/",
+      "title": "Archivo oficial con anuncio REST API/webhooks, 27-09-2025",
+      "uses": [
+        "windowmaker:W11"
+      ]
+    },
+    {
+      "url": "https://windowmaker.com/wp-content/uploads/2026/09/AI-Assistant.gif",
+      "title": "Demo publicada: AI Assistant",
+      "uses": [
+        "windowmaker:W12"
+      ]
+    },
+    {
+      "url": "https://windowmaker.com/wp-content/uploads/2026/09/3D-Visualisation.gif",
+      "title": "Demo publicada: 3D Visualisation",
+      "uses": [
+        "windowmaker:W13"
+      ]
+    },
+    {
+      "url": "https://windowcc.com/",
+      "title": "WindowCC — página principal",
+      "uses": [
+        "windowcc:C1"
+      ]
+    },
+    {
+      "url": "https://windowcc.com/develop-platform",
+      "title": "WindowCC Developer Platform",
+      "uses": [
+        "windowcc:C2"
+      ]
+    },
+    {
+      "url": "https://windowcc.com/gallery",
+      "title": "WindowCC Gallery",
+      "uses": [
+        "windowcc:C3"
+      ]
+    },
+    {
+      "url": "https://windowcc.com/privacy?locale=en-US",
+      "title": "WindowCC Privacy Policy",
+      "uses": [
+        "windowcc:C4"
+      ]
+    },
+    {
+      "url": "https://moxisys.com/window-design-software/",
+      "title": "Moxisys Window Design Software — tutorial de 19 capítulos",
+      "uses": [
+        "moxisys:X1"
+      ]
+    },
+    {
+      "url": "https://moxisys.com/window-door-software/",
+      "title": "Moxisys Window Door Software — funciones y planes",
+      "uses": [
+        "moxisys:X2"
+      ]
+    },
+    {
+      "url": "https://moxisys.com/windoorsoftware/",
+      "title": "Moxisys Windoor Software — contenedor",
+      "uses": [
+        "moxisys:X3"
+      ]
+    },
+    {
+      "url": "https://moxisys.com/wp-content/uploads/2022/05/Aluminum-Machine-Catalog.pdf",
+      "title": "Moxisys Aluminum Machine Catalog",
+      "uses": [
+        "moxisys:X5"
+      ]
+    },
+    {
+      "url": "https://moxisys.com/wp-content/uploads/2022/01/window-manufacturing-software-details-info-1024x512.jpg",
+      "title": "Moxisys: inspector de detalles",
+      "uses": [
+        "moxisys:X6"
+      ]
+    },
+    {
+      "url": "https://moxisys.com/wp-content/uploads/2022/01/timber-window-design-software-parameters-1024x633.jpg",
+      "title": "Moxisys: parámetros",
+      "uses": [
+        "moxisys:X7"
+      ]
+    },
+    {
+      "url": "https://moxisys.com/wp-content/uploads/2022/01/3d-window-design-software-menu.jpg",
+      "title": "Moxisys: menú 3D",
+      "uses": [
+        "moxisys:X8"
+      ]
+    },
+    {
+      "url": "https://moxisys.com/wp-content/uploads/2022/01/window-software-system-print-share-1024x173.jpg",
+      "title": "Moxisys: print/share",
+      "uses": [
+        "moxisys:X9"
+      ]
+    },
+    {
+      "url": "https://moxisys.com/wp-content/uploads/2022/01/window-software-system-printing-1024x782.jpg",
+      "title": "Moxisys: plantilla impresa",
+      "uses": [
+        "moxisys:X10"
+      ]
+    },
+    {
+      "url": "https://www.3e-it.com/en/window-design-software/3e-look-erp",
+      "title": "3E LOOK ERP",
+      "uses": [
+        "3e_look:T1"
+      ]
+    },
+    {
+      "url": "https://www.3e-it.com/en/window-design-software/order-handling",
+      "title": "3E order handling",
+      "uses": [
+        "3e_look:T2"
+      ]
+    },
+    {
+      "url": "https://www.3e-it.com/en/window-design-software/look-trade",
+      "title": "3E LOOK Trade",
+      "uses": [
+        "3e_look:T3"
+      ]
+    },
+    {
+      "url": "https://www.3e-it.com/en/window-design-software/e-procurement",
+      "title": "3E e-procurement",
+      "uses": [
+        "3e_look:T4"
+      ]
+    },
+    {
+      "url": "https://www.3e-it.com/en/window-design-software/digital-production",
+      "title": "3E digital production",
+      "uses": [
+        "3e_look:T5"
+      ]
+    },
+    {
+      "url": "https://www.3e-it.com/en/window-design-software/mobile-solutions",
+      "title": "3E mobile solutions",
+      "uses": [
+        "3e_look:T6"
+      ]
+    },
+    {
+      "url": "https://www.3e-it.com/en/window-design-software/web-sales",
+      "title": "3E web sales",
+      "uses": [
+        "3e_look:T7"
+      ]
+    },
+    {
+      "url": "https://www.3e-it.com/en/window-design-software/workflows-and-dashboards",
+      "title": "3E workflows and dashboards",
+      "uses": [
+        "3e_look:T8"
+      ]
+    },
+    {
+      "url": "https://www.3e-it.com/en/window-design-software/time-tracking-and-post-calculation",
+      "title": "3E time tracking and post-calculation",
+      "uses": [
+        "3e_look:T9"
+      ]
+    },
+    {
+      "url": "https://www.3e-it.com/en/window-design-software/flexible-planning",
+      "title": "3E flexible planning",
+      "uses": [
+        "3e_look:T10"
+      ]
+    },
+    {
+      "url": "https://www.3e-it.com/en/magazine-and-news/3e-and-stemeseder-ensure-end-to-end-digital-processes",
+      "title": "3E y Stemeseder: procesos digitales conectados",
+      "uses": [
+        "3e_look:T11"
+      ]
+    },
+    {
+      "url": "https://www.3e-it.com/uploads/fact/image/133/large_Dashboard_%C3%9Cbersicht_Produktion.png",
+      "title": "Captura publicada: dashboard de producción 3E",
+      "uses": [
+        "3e_look:T12"
+      ]
+    },
+    {
+      "url": "https://nuverapro.com/cotizadorpvcaluminio/primeros-pasos.html",
+      "title": "Primeros pasos",
+      "uses": [
+        "nuverapro:N1"
+      ]
+    },
+    {
+      "url": "https://nuverapro.com/cotizadorpvcaluminio/Marcas.html",
+      "title": "Marcas y series",
+      "uses": [
+        "nuverapro:N2"
+      ]
+    },
+    {
+      "url": "https://nuverapro.com/cotizadorpvcaluminio/index.html",
+      "title": "Producto e informes",
+      "uses": [
+        "nuverapro:N3"
+      ]
+    },
+    {
+      "url": "https://nuverapro.com/cotizadorpvcaluminio/img/SeleccionaItem.jpg",
+      "title": "Captura selección de ítem",
+      "uses": [
+        "nuverapro:N4"
+      ]
+    },
+    {
+      "url": "https://www.youtube.com/@nuverapro/videos",
+      "title": "Canal de tutoriales",
+      "uses": [
+        "nuverapro:N5"
+      ]
+    },
+    {
+      "url": "https://haustek.cl/winart/",
+      "title": "Producto, condiciones e informes",
+      "uses": [
+        "winart:H1"
+      ]
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=26qVxUTQP3A",
+      "title": "Tutorial oficial Winart",
+      "uses": [
+        "winart:H2"
+      ]
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=Ifu3mTq3jPg",
+      "title": "Presentación oficial",
+      "uses": [
+        "winart:H3"
+      ]
+    },
+    {
+      "url": "https://haustek.cl/wp-content/uploads/2026/06/software-winart-haustek-gestion-ventanas-pvc-768x597.webp",
+      "title": "Imagen de acceso Winart",
+      "uses": [
+        "winart:H4"
+      ]
+    },
+    {
+      "url": "https://www.lepton.com.ar/web/productos/software-para-carpinteria-de-aluminio-y-pvc",
+      "title": "WinMaker 10",
+      "uses": [
+        "winmaker10:WM1",
+        "winmaker10:WM4"
+      ]
+    },
+    {
+      "url": "https://www.lepton.com.ar/web/productos/winmaker-starter",
+      "title": "WinMaker Starter",
+      "uses": [
+        "winmaker10:WM2"
+      ]
+    },
+    {
+      "url": "https://www.lepton.com.ar/web/soporte/tutoriales-ayuda",
+      "title": "Tutoriales y ayuda",
+      "uses": [
+        "winmaker10:WM3"
+      ]
+    }
+  ]
+}

@@ -107,11 +107,9 @@
   cursor: pointer;
   font-size: var(--type-dense);
   font-weight: 600;
-  letter-spacing: 0.06em;
   list-style: none;
   margin-top: 0.4rem;
   padding: 0.3rem 0;
-  text-transform: uppercase;
   user-select: none;
 }
 .inspector-section > summary::before {
@@ -191,22 +189,7 @@
   margin: 0;
   padding: 0;
 }
-.issue-chip {
-  background: var(--theme-surface-panel);
-  border: 1px solid var(--theme-border-subtle);
-  border-left-width: 3px;
-  color: var(--theme-text-secondary);
-  font-size: var(--type-body);
-  padding: 0.35rem 0.5rem;
-  text-align: left;
-  width: 100%;
-}
-.issue-chip--error {
-  border-left-color: var(--theme-danger);
-}
-.issue-chip--warning {
-  border-left-color: var(--theme-warning);
-}
+
 .plan-angle {
   cursor: pointer;
   fill: var(--theme-text-primary);

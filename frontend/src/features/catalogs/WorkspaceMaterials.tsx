@@ -3,7 +3,7 @@ import { inventorySheetFormats, pricingAdminList } from "../../api/generated/dek
 import type { SheetFormatList, WorkspaceGlass } from "../../api/generated/models";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { fmtMm } from "../../format";
-import { DemoBadge, DimLoader } from "../../ui";
+import { DemoBadge, Loading } from "../../ui";
 
 export function WorkspaceGlasses({ glasses = [] }: { glasses?: WorkspaceGlass[] }) {
   const [formats, setFormats] = useState<SheetFormatList | null>(null);
@@ -42,7 +42,7 @@ export function WorkspaceGlasses({ glasses = [] }: { glasses?: WorkspaceGlass[] 
               <p className="mono">{glass.notation ?? "Composición: Sin dato"}</p>
               <p>Fuente: {glass.source ?? "Sin dato; revisa la ficha del proveedor"}</p>
               {error ? null : !formats ? (
-                <DimLoader label="Cargando formatos…" />
+                <Loading label="Cargando formatos…" />
               ) : (
                 <ul>
                   {formats.items
@@ -132,7 +132,7 @@ export function WorkspaceCosts() {
               </button>
             </>
           ) : data === null ? (
-            <DimLoader label="Cargando cobertura de costos…" />
+            <Loading label="Cargando cobertura de costos…" />
           ) : data.length === 0 ? (
             <p>No hay materiales con costos registrados.</p>
           ) : (

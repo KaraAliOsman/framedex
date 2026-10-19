@@ -17,6 +17,11 @@ import type {
   AiAskResponse,
   AiAskThreadParams,
   AiAskTurn,
+  AiAttachment,
+  AiAttachmentDetail,
+  AiAttachmentList,
+  AiAttachmentMatrix,
+  AiAttachmentUploadRequest,
   AiConnectionResult,
   AiConnectionTestRequest,
   AiInvokeRequestRequest,
@@ -34,6 +39,12 @@ import type {
   AiPresenceGetParams,
   AiSettings,
   AiSettingsSaveRequest,
+  AiThread,
+  AiThreadCreateRequest,
+  AiThreadList,
+  AiThreadTimelineParams,
+  AiThreadsListParams,
+  AiTimeline,
   AiUsageListParams,
   AiUsageWork,
   AllocationRequestRequest,
@@ -58,6 +69,7 @@ import type {
   BeadResponse,
   BeadWriteRequest,
   Billing,
+  CapabilitiesResponse,
   CatalogArticleListParams,
   CatalogBeadListParams,
   CatalogEvidenceListParams,
@@ -114,12 +126,15 @@ import type {
   CollectionSettingsRequestRequest,
   Commerce,
   Company,
+  CompanyDesignDefaults,
+  CompanyDesignDefaultsWriteRequest,
   CompanyPreviewRequest,
   CompanyUserWriteRequest,
   CompanyUsers,
   CompanyWriteRequest,
   ConfirmBatchRequestRequest,
   ConfirmChangeRequest,
+  CutDraft,
   DecideRequestRequest,
   DeliveryConfirmRequestRequest,
   DeliveryConfirmResponse,
@@ -175,6 +190,10 @@ import type {
   FieldWorkspace,
   FinishPreviewRequestRequest,
   FinishPreviewResponse,
+  FinishReference,
+  FinishReferenceList,
+  FinishReferencesCreateBody,
+  FinishReferencesImageParams,
   FiscalSimulation,
   FiscalSimulationRequestRequest,
   FiscalSimulations,
@@ -251,11 +270,13 @@ import type {
   OrganizationBrandingLogoUploadBody,
   PackingLabels,
   PackingManifest,
+  PatchedAiThreadUpdateRequest,
   PatchedArticleWriteRequest,
   PatchedBeadWriteRequest,
   PatchedClientUpdateRequest,
   PatchedCncMachinePatchRequest,
   PatchedCncToolPatchRequest,
+  PatchedFinishReferenceUpdateRequest,
   PatchedKitWriteRequest,
   PatchedProjectUpdateRequest,
   PatchedQuotationCustomerRequestRequest,
@@ -308,6 +329,7 @@ import type {
   ProjectInvoice,
   ProjectInvoiceAccess,
   ProjectListResponse,
+  ProjectMaterials,
   ProjectOperationsStateParams,
   ProjectOpsApplyRequest,
   ProjectOpsPreviewRequest,
@@ -328,10 +350,15 @@ import type {
   QuotationIndexResponse,
   QuotationIssue,
   QuotationIssueRequestRequest,
+  QuotationLayoutRequest,
+  QuotationLayoutResponse,
+  QuotationNumberingRequest,
+  QuotationNumberingResponse,
   QuotationPreview,
   QuotationPreviewRequestRequest,
   RectificationRequest,
   RectificationResponse,
+  ReferenceRegistry,
   RemakeRequestRequest,
   Remnant,
   RemnantActionRequest,
@@ -652,6 +679,302 @@ export const aiAsk = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(aiAskRequestRequest),
+  });
+};
+
+export type aiAttachmentsFormatsResponse200 = {
+  data: AiAttachmentMatrix;
+  status: 200;
+};
+
+export type aiAttachmentsFormatsResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type aiAttachmentsFormatsResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type aiAttachmentsFormatsResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type aiAttachmentsFormatsResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type aiAttachmentsFormatsResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type aiAttachmentsFormatsResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type aiAttachmentsFormatsResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type aiAttachmentsFormatsResponseSuccess = aiAttachmentsFormatsResponse200 & {
+  headers: Headers;
+};
+export type aiAttachmentsFormatsResponseError = (
+  | aiAttachmentsFormatsResponse400
+  | aiAttachmentsFormatsResponse401
+  | aiAttachmentsFormatsResponse403
+  | aiAttachmentsFormatsResponse404
+  | aiAttachmentsFormatsResponse409
+  | aiAttachmentsFormatsResponse422
+  | aiAttachmentsFormatsResponse503
+) & {
+  headers: Headers;
+};
+
+export type aiAttachmentsFormatsResponse =
+  aiAttachmentsFormatsResponseSuccess | aiAttachmentsFormatsResponseError;
+
+export const getAiAttachmentsFormatsUrl = () => {
+  return `/api/v1/ai/attachments/`;
+};
+
+export const aiAttachmentsFormats = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<aiAttachmentsFormatsResponse> => {
+  return apiMutator<aiAttachmentsFormatsResponse>(getAiAttachmentsFormatsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type aiAttachmentsUploadResponse201 = {
+  data: AiAttachment;
+  status: 201;
+};
+
+export type aiAttachmentsUploadResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type aiAttachmentsUploadResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type aiAttachmentsUploadResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type aiAttachmentsUploadResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type aiAttachmentsUploadResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type aiAttachmentsUploadResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type aiAttachmentsUploadResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type aiAttachmentsUploadResponseSuccess = aiAttachmentsUploadResponse201 & {
+  headers: Headers;
+};
+export type aiAttachmentsUploadResponseError = (
+  | aiAttachmentsUploadResponse400
+  | aiAttachmentsUploadResponse401
+  | aiAttachmentsUploadResponse403
+  | aiAttachmentsUploadResponse404
+  | aiAttachmentsUploadResponse409
+  | aiAttachmentsUploadResponse422
+  | aiAttachmentsUploadResponse503
+) & {
+  headers: Headers;
+};
+
+export type aiAttachmentsUploadResponse =
+  aiAttachmentsUploadResponseSuccess | aiAttachmentsUploadResponseError;
+
+export const getAiAttachmentsUploadUrl = () => {
+  return `/api/v1/ai/attachments/`;
+};
+
+export const aiAttachmentsUpload = async (
+  aiAttachmentUploadRequest: AiAttachmentUploadRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<aiAttachmentsUploadResponse> => {
+  const formData = new FormData();
+  formData.append(`file`, aiAttachmentUploadRequest.file);
+  if (
+    aiAttachmentUploadRequest.thread_id !== undefined &&
+    aiAttachmentUploadRequest.thread_id !== null
+  ) {
+    formData.append(`thread_id`, aiAttachmentUploadRequest.thread_id);
+  }
+
+  return apiMutator<aiAttachmentsUploadResponse>(getAiAttachmentsUploadUrl(), {
+    ...options,
+    method: "POST",
+    body: formData,
+  });
+};
+
+export type aiAttachmentGetResponse200 = {
+  data: AiAttachmentDetail;
+  status: 200;
+};
+
+export type aiAttachmentGetResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type aiAttachmentGetResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type aiAttachmentGetResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type aiAttachmentGetResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type aiAttachmentGetResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type aiAttachmentGetResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type aiAttachmentGetResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type aiAttachmentGetResponseSuccess = aiAttachmentGetResponse200 & {
+  headers: Headers;
+};
+export type aiAttachmentGetResponseError = (
+  | aiAttachmentGetResponse400
+  | aiAttachmentGetResponse401
+  | aiAttachmentGetResponse403
+  | aiAttachmentGetResponse404
+  | aiAttachmentGetResponse409
+  | aiAttachmentGetResponse422
+  | aiAttachmentGetResponse503
+) & {
+  headers: Headers;
+};
+
+export type aiAttachmentGetResponse = aiAttachmentGetResponseSuccess | aiAttachmentGetResponseError;
+
+export const getAiAttachmentGetUrl = (attachmentId: string) => {
+  return `/api/v1/ai/attachments/${attachmentId}/`;
+};
+
+export const aiAttachmentGet = async (
+  attachmentId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<aiAttachmentGetResponse> => {
+  return apiMutator<aiAttachmentGetResponse>(getAiAttachmentGetUrl(attachmentId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type aiAttachmentContentResponse200 = {
+  data: Blob;
+  status: 200;
+};
+
+export type aiAttachmentContentResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type aiAttachmentContentResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type aiAttachmentContentResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type aiAttachmentContentResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type aiAttachmentContentResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type aiAttachmentContentResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type aiAttachmentContentResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type aiAttachmentContentResponseSuccess = aiAttachmentContentResponse200 & {
+  headers: Headers;
+};
+export type aiAttachmentContentResponseError = (
+  | aiAttachmentContentResponse400
+  | aiAttachmentContentResponse401
+  | aiAttachmentContentResponse403
+  | aiAttachmentContentResponse404
+  | aiAttachmentContentResponse409
+  | aiAttachmentContentResponse422
+  | aiAttachmentContentResponse503
+) & {
+  headers: Headers;
+};
+
+export type aiAttachmentContentResponse =
+  aiAttachmentContentResponseSuccess | aiAttachmentContentResponseError;
+
+export const getAiAttachmentContentUrl = (attachmentId: string) => {
+  return `/api/v1/ai/attachments/${attachmentId}/content/`;
+};
+
+export const aiAttachmentContent = async (
+  attachmentId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<aiAttachmentContentResponse> => {
+  return apiMutator<aiAttachmentContentResponse>(getAiAttachmentContentUrl(attachmentId), {
+    ...options,
+    method: "GET",
   });
 };
 
@@ -1049,6 +1372,88 @@ export const aiJobCancel = async (
   return apiMutator<aiJobCancelResponse>(getAiJobCancelUrl(jobId), {
     ...options,
     method: "DELETE",
+  });
+};
+
+export type aiJobApproveResponse200 = {
+  data: AiJobDetail;
+  status: 200;
+};
+
+export type aiJobApproveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type aiJobApproveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type aiJobApproveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type aiJobApproveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type aiJobApproveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type aiJobApproveResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type aiJobApproveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type aiJobApproveResponseSuccess = aiJobApproveResponse200 & {
+  headers: Headers;
+};
+export type aiJobApproveResponseError = (
+  | aiJobApproveResponse400
+  | aiJobApproveResponse401
+  | aiJobApproveResponse403
+  | aiJobApproveResponse404
+  | aiJobApproveResponse409
+  | aiJobApproveResponse422
+  | aiJobApproveResponse503
+) & {
+  headers: Headers;
+};
+
+export type aiJobApproveResponse = aiJobApproveResponseSuccess | aiJobApproveResponseError;
+
+export const getAiJobApproveUrl = (jobId: string) => {
+  return `/api/v1/ai/jobs/${jobId}/approve/`;
+};
+
+/**
+ * «Con aprobación»: one approval applies the prepared coherent set of the
+ * latest round through the same idempotent project services the manual
+ * review uses. Each change keeps its undo. Consequential actions (emit,
+ * send, buy, release, pay, publish) are never part of this set.
+ *
+ * The quote step of flow A11 (price + «Borrador» PDF) runs after the
+ * positions, outside the job transaction and with the person's own session
+ * — price authority and owner MFA are the person's, never the worker's.
+ * «Omitir todo» continues the delegated chain through this same endpoint.
+ */
+export const aiJobApprove = async (
+  jobId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<aiJobApproveResponse> => {
+  return apiMutator<aiJobApproveResponse>(getAiJobApproveUrl(jobId), {
+    ...options,
+    method: "POST",
   });
 };
 
@@ -1697,6 +2102,480 @@ export const aiSettingsSave = async (
     method: "PUT",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(aiSettingsSaveRequest),
+  });
+};
+
+export type aiThreadsListResponse200 = {
+  data: AiThreadList;
+  status: 200;
+};
+
+export type aiThreadsListResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type aiThreadsListResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type aiThreadsListResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type aiThreadsListResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type aiThreadsListResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type aiThreadsListResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type aiThreadsListResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type aiThreadsListResponseSuccess = aiThreadsListResponse200 & {
+  headers: Headers;
+};
+export type aiThreadsListResponseError = (
+  | aiThreadsListResponse400
+  | aiThreadsListResponse401
+  | aiThreadsListResponse403
+  | aiThreadsListResponse404
+  | aiThreadsListResponse409
+  | aiThreadsListResponse422
+  | aiThreadsListResponse503
+) & {
+  headers: Headers;
+};
+
+export type aiThreadsListResponse = aiThreadsListResponseSuccess | aiThreadsListResponseError;
+
+export const getAiThreadsListUrl = (params?: AiThreadsListParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/ai/threads/?${stringifiedParams}`
+    : `/api/v1/ai/threads/`;
+};
+
+export const aiThreadsList = async (
+  params?: AiThreadsListParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<aiThreadsListResponse> => {
+  return apiMutator<aiThreadsListResponse>(getAiThreadsListUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type aiThreadsCreateResponse201 = {
+  data: AiThread;
+  status: 201;
+};
+
+export type aiThreadsCreateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type aiThreadsCreateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type aiThreadsCreateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type aiThreadsCreateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type aiThreadsCreateResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type aiThreadsCreateResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type aiThreadsCreateResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type aiThreadsCreateResponseSuccess = aiThreadsCreateResponse201 & {
+  headers: Headers;
+};
+export type aiThreadsCreateResponseError = (
+  | aiThreadsCreateResponse400
+  | aiThreadsCreateResponse401
+  | aiThreadsCreateResponse403
+  | aiThreadsCreateResponse404
+  | aiThreadsCreateResponse409
+  | aiThreadsCreateResponse422
+  | aiThreadsCreateResponse503
+) & {
+  headers: Headers;
+};
+
+export type aiThreadsCreateResponse = aiThreadsCreateResponseSuccess | aiThreadsCreateResponseError;
+
+export const getAiThreadsCreateUrl = () => {
+  return `/api/v1/ai/threads/`;
+};
+
+export const aiThreadsCreate = async (
+  aiThreadCreateRequest?: AiThreadCreateRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<aiThreadsCreateResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<aiThreadsCreateResponse>(getAiThreadsCreateUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(aiThreadCreateRequest),
+  });
+};
+
+export type aiThreadGetResponse200 = {
+  data: AiThread;
+  status: 200;
+};
+
+export type aiThreadGetResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type aiThreadGetResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type aiThreadGetResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type aiThreadGetResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type aiThreadGetResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type aiThreadGetResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type aiThreadGetResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type aiThreadGetResponseSuccess = aiThreadGetResponse200 & {
+  headers: Headers;
+};
+export type aiThreadGetResponseError = (
+  | aiThreadGetResponse400
+  | aiThreadGetResponse401
+  | aiThreadGetResponse403
+  | aiThreadGetResponse404
+  | aiThreadGetResponse409
+  | aiThreadGetResponse422
+  | aiThreadGetResponse503
+) & {
+  headers: Headers;
+};
+
+export type aiThreadGetResponse = aiThreadGetResponseSuccess | aiThreadGetResponseError;
+
+export const getAiThreadGetUrl = (threadId: string) => {
+  return `/api/v1/ai/threads/${threadId}/`;
+};
+
+export const aiThreadGet = async (
+  threadId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<aiThreadGetResponse> => {
+  return apiMutator<aiThreadGetResponse>(getAiThreadGetUrl(threadId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type aiThreadUpdateResponse200 = {
+  data: AiThread;
+  status: 200;
+};
+
+export type aiThreadUpdateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type aiThreadUpdateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type aiThreadUpdateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type aiThreadUpdateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type aiThreadUpdateResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type aiThreadUpdateResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type aiThreadUpdateResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type aiThreadUpdateResponseSuccess = aiThreadUpdateResponse200 & {
+  headers: Headers;
+};
+export type aiThreadUpdateResponseError = (
+  | aiThreadUpdateResponse400
+  | aiThreadUpdateResponse401
+  | aiThreadUpdateResponse403
+  | aiThreadUpdateResponse404
+  | aiThreadUpdateResponse409
+  | aiThreadUpdateResponse422
+  | aiThreadUpdateResponse503
+) & {
+  headers: Headers;
+};
+
+export type aiThreadUpdateResponse = aiThreadUpdateResponseSuccess | aiThreadUpdateResponseError;
+
+export const getAiThreadUpdateUrl = (threadId: string) => {
+  return `/api/v1/ai/threads/${threadId}/`;
+};
+
+export const aiThreadUpdate = async (
+  threadId: string,
+  patchedAiThreadUpdateRequest?: PatchedAiThreadUpdateRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<aiThreadUpdateResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<aiThreadUpdateResponse>(getAiThreadUpdateUrl(threadId), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(patchedAiThreadUpdateRequest),
+  });
+};
+
+export type aiThreadAttachmentsResponse200 = {
+  data: AiAttachmentList;
+  status: 200;
+};
+
+export type aiThreadAttachmentsResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type aiThreadAttachmentsResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type aiThreadAttachmentsResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type aiThreadAttachmentsResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type aiThreadAttachmentsResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type aiThreadAttachmentsResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type aiThreadAttachmentsResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type aiThreadAttachmentsResponseSuccess = aiThreadAttachmentsResponse200 & {
+  headers: Headers;
+};
+export type aiThreadAttachmentsResponseError = (
+  | aiThreadAttachmentsResponse400
+  | aiThreadAttachmentsResponse401
+  | aiThreadAttachmentsResponse403
+  | aiThreadAttachmentsResponse404
+  | aiThreadAttachmentsResponse409
+  | aiThreadAttachmentsResponse422
+  | aiThreadAttachmentsResponse503
+) & {
+  headers: Headers;
+};
+
+export type aiThreadAttachmentsResponse =
+  aiThreadAttachmentsResponseSuccess | aiThreadAttachmentsResponseError;
+
+export const getAiThreadAttachmentsUrl = (threadId: string) => {
+  return `/api/v1/ai/threads/${threadId}/attachments/`;
+};
+
+export const aiThreadAttachments = async (
+  threadId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<aiThreadAttachmentsResponse> => {
+  return apiMutator<aiThreadAttachmentsResponse>(getAiThreadAttachmentsUrl(threadId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type aiThreadTimelineResponse200 = {
+  data: AiTimeline;
+  status: 200;
+};
+
+export type aiThreadTimelineResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type aiThreadTimelineResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type aiThreadTimelineResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type aiThreadTimelineResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type aiThreadTimelineResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type aiThreadTimelineResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type aiThreadTimelineResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type aiThreadTimelineResponseSuccess = aiThreadTimelineResponse200 & {
+  headers: Headers;
+};
+export type aiThreadTimelineResponseError = (
+  | aiThreadTimelineResponse400
+  | aiThreadTimelineResponse401
+  | aiThreadTimelineResponse403
+  | aiThreadTimelineResponse404
+  | aiThreadTimelineResponse409
+  | aiThreadTimelineResponse422
+  | aiThreadTimelineResponse503
+) & {
+  headers: Headers;
+};
+
+export type aiThreadTimelineResponse =
+  aiThreadTimelineResponseSuccess | aiThreadTimelineResponseError;
+
+export const getAiThreadTimelineUrl = (threadId: string, params?: AiThreadTimelineParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/ai/threads/${threadId}/timeline/?${stringifiedParams}`
+    : `/api/v1/ai/threads/${threadId}/timeline/`;
+};
+
+export const aiThreadTimeline = async (
+  threadId: string,
+  params?: AiThreadTimelineParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<aiThreadTimelineResponse> => {
+  return apiMutator<aiThreadTimelineResponse>(getAiThreadTimelineUrl(threadId, params), {
+    ...options,
+    method: "GET",
   });
 };
 
@@ -3834,6 +4713,81 @@ export const walletRetrieve = async (
   });
 };
 
+export type capabilitiesRetrieveResponse200 = {
+  data: CapabilitiesResponse;
+  status: 200;
+};
+
+export type capabilitiesRetrieveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type capabilitiesRetrieveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type capabilitiesRetrieveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type capabilitiesRetrieveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type capabilitiesRetrieveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type capabilitiesRetrieveResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type capabilitiesRetrieveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type capabilitiesRetrieveResponseSuccess = capabilitiesRetrieveResponse200 & {
+  headers: Headers;
+};
+export type capabilitiesRetrieveResponseError = (
+  | capabilitiesRetrieveResponse400
+  | capabilitiesRetrieveResponse401
+  | capabilitiesRetrieveResponse403
+  | capabilitiesRetrieveResponse404
+  | capabilitiesRetrieveResponse409
+  | capabilitiesRetrieveResponse422
+  | capabilitiesRetrieveResponse503
+) & {
+  headers: Headers;
+};
+
+export type capabilitiesRetrieveResponse =
+  capabilitiesRetrieveResponseSuccess | capabilitiesRetrieveResponseError;
+
+export const getCapabilitiesRetrieveUrl = () => {
+  return `/api/v1/capabilities/`;
+};
+
+/**
+ * Pure read of the organization's AI rights, support, permission and
+ * availability for the active member. Never calls the provider.
+ */
+export const capabilitiesRetrieve = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<capabilitiesRetrieveResponse> => {
+  return apiMutator<capabilitiesRetrieveResponse>(getCapabilitiesRetrieveUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
 export type catalogImportsListResponse200 = {
   data: CatalogImportListResponse;
   status: 200;
@@ -4221,6 +5175,83 @@ export const catalogImportExport = async (
   });
 };
 
+export type catalogImportPageResponse200 = {
+  data: Blob;
+  status: 200;
+};
+
+export type catalogImportPageResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogImportPageResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogImportPageResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogImportPageResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogImportPageResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogImportPageResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type catalogImportPageResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogImportPageResponseSuccess = catalogImportPageResponse200 & {
+  headers: Headers;
+};
+export type catalogImportPageResponseError = (
+  | catalogImportPageResponse400
+  | catalogImportPageResponse401
+  | catalogImportPageResponse403
+  | catalogImportPageResponse404
+  | catalogImportPageResponse409
+  | catalogImportPageResponse422
+  | catalogImportPageResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogImportPageResponse =
+  catalogImportPageResponseSuccess | catalogImportPageResponseError;
+
+export const getCatalogImportPageUrl = (importId: string, page: number) => {
+  return `/api/v1/catalog-imports/${importId}/pages/${page}/`;
+};
+
+/**
+ * One page of the source PDF, rendered, to review an exception beside
+ * the region it came from.
+ */
+export const catalogImportPage = async (
+  importId: string,
+  page: number,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogImportPageResponse> => {
+  return apiMutator<catalogImportPageResponse>(getCatalogImportPageUrl(importId, page), {
+    ...options,
+    method: "GET",
+  });
+};
+
 export type catalogImportPublishResponse200 = {
   data: CatalogImportConfirmResponse;
   status: 200;
@@ -4301,6 +5332,81 @@ export const catalogImportPublish = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(catalogPublishRequestRequest),
+  });
+};
+
+export type catalogImportRetryResponse200 = {
+  data: CatalogImportDetailResponse;
+  status: 200;
+};
+
+export type catalogImportRetryResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogImportRetryResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogImportRetryResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogImportRetryResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogImportRetryResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogImportRetryResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type catalogImportRetryResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogImportRetryResponseSuccess = catalogImportRetryResponse200 & {
+  headers: Headers;
+};
+export type catalogImportRetryResponseError = (
+  | catalogImportRetryResponse400
+  | catalogImportRetryResponse401
+  | catalogImportRetryResponse403
+  | catalogImportRetryResponse404
+  | catalogImportRetryResponse409
+  | catalogImportRetryResponse422
+  | catalogImportRetryResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogImportRetryResponse =
+  catalogImportRetryResponseSuccess | catalogImportRetryResponseError;
+
+export const getCatalogImportRetryUrl = (importId: string) => {
+  return `/api/v1/catalog-imports/${importId}/retry/`;
+};
+
+/**
+ * Re-run only the page batches that failed; finished pages are kept.
+ */
+export const catalogImportRetry = async (
+  importId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogImportRetryResponse> => {
+  return apiMutator<catalogImportRetryResponse>(getCatalogImportRetryUrl(importId), {
+    ...options,
+    method: "POST",
   });
 };
 
@@ -6670,6 +7776,39 @@ export const catalogProcessProfileList = async (
   });
 };
 
+export type catalogReferenceSeriesResponse200 = {
+  data: ReferenceRegistry;
+  status: 200;
+};
+
+export type catalogReferenceSeriesResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogReferenceSeriesResponseSuccess = catalogReferenceSeriesResponse200 & {
+  headers: Headers;
+};
+export type catalogReferenceSeriesResponseError = catalogReferenceSeriesResponse403 & {
+  headers: Headers;
+};
+
+export type catalogReferenceSeriesResponse =
+  catalogReferenceSeriesResponseSuccess | catalogReferenceSeriesResponseError;
+
+export const getCatalogReferenceSeriesUrl = () => {
+  return `/api/v1/catalogs/references/`;
+};
+
+export const catalogReferenceSeries = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogReferenceSeriesResponse> => {
+  return apiMutator<catalogReferenceSeriesResponse>(getCatalogReferenceSeriesUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
 export type catalogSectionImportCreateResponse200 = {
   data: SectionImportResponse;
   status: 200;
@@ -8485,6 +9624,165 @@ export const documentaryArtifactAccess = async (
   );
 };
 
+export type quotationNumberingGetResponse200 = {
+  data: QuotationNumberingResponse;
+  status: 200;
+};
+
+export type quotationNumberingGetResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type quotationNumberingGetResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type quotationNumberingGetResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type quotationNumberingGetResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type quotationNumberingGetResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type quotationNumberingGetResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type quotationNumberingGetResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type quotationNumberingGetResponseSuccess = quotationNumberingGetResponse200 & {
+  headers: Headers;
+};
+export type quotationNumberingGetResponseError = (
+  | quotationNumberingGetResponse400
+  | quotationNumberingGetResponse401
+  | quotationNumberingGetResponse403
+  | quotationNumberingGetResponse404
+  | quotationNumberingGetResponse409
+  | quotationNumberingGetResponse422
+  | quotationNumberingGetResponse503
+) & {
+  headers: Headers;
+};
+
+export type quotationNumberingGetResponse =
+  quotationNumberingGetResponseSuccess | quotationNumberingGetResponseError;
+
+export const getQuotationNumberingGetUrl = () => {
+  return `/api/v1/documents/organization/quotation-numbering/`;
+};
+
+/**
+ * Company quotation numbering: N.º 1 by default, editable prefix/next.
+ */
+export const quotationNumberingGet = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<quotationNumberingGetResponse> => {
+  return apiMutator<quotationNumberingGetResponse>(getQuotationNumberingGetUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type quotationNumberingSaveResponse200 = {
+  data: QuotationNumberingResponse;
+  status: 200;
+};
+
+export type quotationNumberingSaveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type quotationNumberingSaveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type quotationNumberingSaveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type quotationNumberingSaveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type quotationNumberingSaveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type quotationNumberingSaveResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type quotationNumberingSaveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type quotationNumberingSaveResponseSuccess = quotationNumberingSaveResponse200 & {
+  headers: Headers;
+};
+export type quotationNumberingSaveResponseError = (
+  | quotationNumberingSaveResponse400
+  | quotationNumberingSaveResponse401
+  | quotationNumberingSaveResponse403
+  | quotationNumberingSaveResponse404
+  | quotationNumberingSaveResponse409
+  | quotationNumberingSaveResponse422
+  | quotationNumberingSaveResponse503
+) & {
+  headers: Headers;
+};
+
+export type quotationNumberingSaveResponse =
+  quotationNumberingSaveResponseSuccess | quotationNumberingSaveResponseError;
+
+export const getQuotationNumberingSaveUrl = () => {
+  return `/api/v1/documents/organization/quotation-numbering/`;
+};
+
+/**
+ * Company quotation numbering: N.º 1 by default, editable prefix/next.
+ */
+export const quotationNumberingSave = async (
+  quotationNumberingRequest: QuotationNumberingRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<quotationNumberingSaveResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<quotationNumberingSaveResponse>(getQuotationNumberingSaveUrl(), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(quotationNumberingRequest),
+  });
+};
+
 export type documentaryListArtifactsResponse200 = {
   data: ArtifactListResponse;
   status: 200;
@@ -8974,6 +10272,254 @@ export const quotationSaveCustomer = async (
     method: "PATCH",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(patchedQuotationCustomerRequestRequest),
+  });
+};
+
+export type quotationDraftPreviewResponse200 = {
+  data: Blob;
+  status: 200;
+};
+
+export type quotationDraftPreviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type quotationDraftPreviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type quotationDraftPreviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type quotationDraftPreviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type quotationDraftPreviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type quotationDraftPreviewResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type quotationDraftPreviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type quotationDraftPreviewResponseSuccess = quotationDraftPreviewResponse200 & {
+  headers: Headers;
+};
+export type quotationDraftPreviewResponseError = (
+  | quotationDraftPreviewResponse400
+  | quotationDraftPreviewResponse401
+  | quotationDraftPreviewResponse403
+  | quotationDraftPreviewResponse404
+  | quotationDraftPreviewResponse409
+  | quotationDraftPreviewResponse422
+  | quotationDraftPreviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type quotationDraftPreviewResponse =
+  quotationDraftPreviewResponseSuccess | quotationDraftPreviewResponseError;
+
+export const getQuotationDraftPreviewUrl = (projectId: string) => {
+  return `/api/v1/documents/projects/${projectId}/quotation-draft/`;
+};
+
+/**
+ * The real document early: «Borrador», no number consumed, not stored.
+ * An optional unsaved layout lets the editor show a change before saving.
+ */
+export const quotationDraftPreview = async (
+  projectId: string,
+  quotationLayoutRequest?: QuotationLayoutRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<quotationDraftPreviewResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<quotationDraftPreviewResponse>(getQuotationDraftPreviewUrl(projectId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(quotationLayoutRequest),
+  });
+};
+
+export type quotationLayoutGetResponse200 = {
+  data: QuotationLayoutResponse;
+  status: 200;
+};
+
+export type quotationLayoutGetResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type quotationLayoutGetResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type quotationLayoutGetResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type quotationLayoutGetResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type quotationLayoutGetResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type quotationLayoutGetResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type quotationLayoutGetResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type quotationLayoutGetResponseSuccess = quotationLayoutGetResponse200 & {
+  headers: Headers;
+};
+export type quotationLayoutGetResponseError = (
+  | quotationLayoutGetResponse400
+  | quotationLayoutGetResponse401
+  | quotationLayoutGetResponse403
+  | quotationLayoutGetResponse404
+  | quotationLayoutGetResponse409
+  | quotationLayoutGetResponse422
+  | quotationLayoutGetResponse503
+) & {
+  headers: Headers;
+};
+
+export type quotationLayoutGetResponse =
+  quotationLayoutGetResponseSuccess | quotationLayoutGetResponseError;
+
+export const getQuotationLayoutGetUrl = (projectId: string) => {
+  return `/api/v1/documents/projects/${projectId}/quotation-layout/`;
+};
+
+/**
+ * This work's quotation composition (template, blocks, texts).
+ */
+export const quotationLayoutGet = async (
+  projectId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<quotationLayoutGetResponse> => {
+  return apiMutator<quotationLayoutGetResponse>(getQuotationLayoutGetUrl(projectId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type quotationLayoutSaveResponse200 = {
+  data: QuotationLayoutResponse;
+  status: 200;
+};
+
+export type quotationLayoutSaveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type quotationLayoutSaveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type quotationLayoutSaveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type quotationLayoutSaveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type quotationLayoutSaveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type quotationLayoutSaveResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type quotationLayoutSaveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type quotationLayoutSaveResponseSuccess = quotationLayoutSaveResponse200 & {
+  headers: Headers;
+};
+export type quotationLayoutSaveResponseError = (
+  | quotationLayoutSaveResponse400
+  | quotationLayoutSaveResponse401
+  | quotationLayoutSaveResponse403
+  | quotationLayoutSaveResponse404
+  | quotationLayoutSaveResponse409
+  | quotationLayoutSaveResponse422
+  | quotationLayoutSaveResponse503
+) & {
+  headers: Headers;
+};
+
+export type quotationLayoutSaveResponse =
+  quotationLayoutSaveResponseSuccess | quotationLayoutSaveResponseError;
+
+export const getQuotationLayoutSaveUrl = (projectId: string) => {
+  return `/api/v1/documents/projects/${projectId}/quotation-layout/`;
+};
+
+/**
+ * This work's quotation composition (template, blocks, texts).
+ */
+export const quotationLayoutSave = async (
+  projectId: string,
+  quotationLayoutRequest?: QuotationLayoutRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<quotationLayoutSaveResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<quotationLayoutSaveResponse>(getQuotationLayoutSaveUrl(projectId), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(quotationLayoutRequest),
   });
 };
 
@@ -11789,6 +13335,165 @@ export const companySave = async (
   });
 };
 
+export type companyDesignDefaultsResponse200 = {
+  data: CompanyDesignDefaults;
+  status: 200;
+};
+
+export type companyDesignDefaultsResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type companyDesignDefaultsResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type companyDesignDefaultsResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type companyDesignDefaultsResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type companyDesignDefaultsResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type companyDesignDefaultsResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type companyDesignDefaultsResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type companyDesignDefaultsResponseSuccess = companyDesignDefaultsResponse200 & {
+  headers: Headers;
+};
+export type companyDesignDefaultsResponseError = (
+  | companyDesignDefaultsResponse400
+  | companyDesignDefaultsResponse401
+  | companyDesignDefaultsResponse403
+  | companyDesignDefaultsResponse404
+  | companyDesignDefaultsResponse409
+  | companyDesignDefaultsResponse422
+  | companyDesignDefaultsResponse503
+) & {
+  headers: Headers;
+};
+
+export type companyDesignDefaultsResponse =
+  companyDesignDefaultsResponseSuccess | companyDesignDefaultsResponseError;
+
+export const getCompanyDesignDefaultsUrl = () => {
+  return `/api/v1/organization/design-defaults/`;
+};
+
+/**
+ * Usual series, finish and glass that seed new windows (company level).
+ */
+export const companyDesignDefaults = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<companyDesignDefaultsResponse> => {
+  return apiMutator<companyDesignDefaultsResponse>(getCompanyDesignDefaultsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type companyDesignDefaultsSaveResponse200 = {
+  data: CompanyDesignDefaults;
+  status: 200;
+};
+
+export type companyDesignDefaultsSaveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type companyDesignDefaultsSaveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type companyDesignDefaultsSaveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type companyDesignDefaultsSaveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type companyDesignDefaultsSaveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type companyDesignDefaultsSaveResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type companyDesignDefaultsSaveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type companyDesignDefaultsSaveResponseSuccess = companyDesignDefaultsSaveResponse200 & {
+  headers: Headers;
+};
+export type companyDesignDefaultsSaveResponseError = (
+  | companyDesignDefaultsSaveResponse400
+  | companyDesignDefaultsSaveResponse401
+  | companyDesignDefaultsSaveResponse403
+  | companyDesignDefaultsSaveResponse404
+  | companyDesignDefaultsSaveResponse409
+  | companyDesignDefaultsSaveResponse422
+  | companyDesignDefaultsSaveResponse503
+) & {
+  headers: Headers;
+};
+
+export type companyDesignDefaultsSaveResponse =
+  companyDesignDefaultsSaveResponseSuccess | companyDesignDefaultsSaveResponseError;
+
+export const getCompanyDesignDefaultsSaveUrl = () => {
+  return `/api/v1/organization/design-defaults/`;
+};
+
+/**
+ * Usual series, finish and glass that seed new windows (company level).
+ */
+export const companyDesignDefaultsSave = async (
+  companyDesignDefaultsWriteRequest: CompanyDesignDefaultsWriteRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<companyDesignDefaultsSaveResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<companyDesignDefaultsSaveResponse>(getCompanyDesignDefaultsSaveUrl(), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(companyDesignDefaultsWriteRequest),
+  });
+};
+
 export type companyDocumentPreviewResponse200 = {
   data: Blob;
   status: 200;
@@ -12022,6 +13727,428 @@ export const organizationExtraPolicySave = async (
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(policyWriteRequest),
   });
+};
+
+export type finishReferencesListResponse200 = {
+  data: FinishReferenceList;
+  status: 200;
+};
+
+export type finishReferencesListResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type finishReferencesListResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type finishReferencesListResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type finishReferencesListResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type finishReferencesListResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type finishReferencesListResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type finishReferencesListResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type finishReferencesListResponseSuccess = finishReferencesListResponse200 & {
+  headers: Headers;
+};
+export type finishReferencesListResponseError = (
+  | finishReferencesListResponse400
+  | finishReferencesListResponse401
+  | finishReferencesListResponse403
+  | finishReferencesListResponse404
+  | finishReferencesListResponse409
+  | finishReferencesListResponse422
+  | finishReferencesListResponse503
+) & {
+  headers: Headers;
+};
+
+export type finishReferencesListResponse =
+  finishReferencesListResponseSuccess | finishReferencesListResponseError;
+
+export const getFinishReferencesListUrl = () => {
+  return `/api/v1/organization/finish-references/`;
+};
+
+/**
+ * Private library of the company's own material samples.
+ */
+export const finishReferencesList = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<finishReferencesListResponse> => {
+  return apiMutator<finishReferencesListResponse>(getFinishReferencesListUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type finishReferencesCreateResponse201 = {
+  data: FinishReference;
+  status: 201;
+};
+
+export type finishReferencesCreateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type finishReferencesCreateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type finishReferencesCreateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type finishReferencesCreateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type finishReferencesCreateResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type finishReferencesCreateResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type finishReferencesCreateResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type finishReferencesCreateResponseSuccess = finishReferencesCreateResponse201 & {
+  headers: Headers;
+};
+export type finishReferencesCreateResponseError = (
+  | finishReferencesCreateResponse400
+  | finishReferencesCreateResponse401
+  | finishReferencesCreateResponse403
+  | finishReferencesCreateResponse404
+  | finishReferencesCreateResponse409
+  | finishReferencesCreateResponse422
+  | finishReferencesCreateResponse503
+) & {
+  headers: Headers;
+};
+
+export type finishReferencesCreateResponse =
+  finishReferencesCreateResponseSuccess | finishReferencesCreateResponseError;
+
+export const getFinishReferencesCreateUrl = () => {
+  return `/api/v1/organization/finish-references/`;
+};
+
+/**
+ * Private library of the company's own material samples.
+ */
+export const finishReferencesCreate = async (
+  finishReferencesCreateBody?: FinishReferencesCreateBody,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<finishReferencesCreateResponse> => {
+  const formData = new FormData();
+  if (finishReferencesCreateBody?.file !== undefined) {
+    formData.append(`file`, finishReferencesCreateBody.file);
+  }
+  if (finishReferencesCreateBody?.name !== undefined) {
+    formData.append(`name`, finishReferencesCreateBody.name);
+  }
+  if (finishReferencesCreateBody?.finish_code !== undefined) {
+    formData.append(`finish_code`, finishReferencesCreateBody.finish_code);
+  }
+  if (finishReferencesCreateBody?.tile_mm !== undefined) {
+    formData.append(`tile_mm`, finishReferencesCreateBody.tile_mm);
+  }
+  if (finishReferencesCreateBody?.grain !== undefined) {
+    formData.append(`grain`, finishReferencesCreateBody.grain);
+  }
+  if (finishReferencesCreateBody?.x !== undefined) {
+    formData.append(`x`, finishReferencesCreateBody.x);
+  }
+  if (finishReferencesCreateBody?.y !== undefined) {
+    formData.append(`y`, finishReferencesCreateBody.y);
+  }
+  if (finishReferencesCreateBody?.size !== undefined) {
+    formData.append(`size`, finishReferencesCreateBody.size);
+  }
+
+  return apiMutator<finishReferencesCreateResponse>(getFinishReferencesCreateUrl(), {
+    ...options,
+    method: "POST",
+    body: formData,
+  });
+};
+
+export type finishReferencesUpdateResponse200 = {
+  data: FinishReference;
+  status: 200;
+};
+
+export type finishReferencesUpdateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type finishReferencesUpdateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type finishReferencesUpdateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type finishReferencesUpdateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type finishReferencesUpdateResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type finishReferencesUpdateResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type finishReferencesUpdateResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type finishReferencesUpdateResponseSuccess = finishReferencesUpdateResponse200 & {
+  headers: Headers;
+};
+export type finishReferencesUpdateResponseError = (
+  | finishReferencesUpdateResponse400
+  | finishReferencesUpdateResponse401
+  | finishReferencesUpdateResponse403
+  | finishReferencesUpdateResponse404
+  | finishReferencesUpdateResponse409
+  | finishReferencesUpdateResponse422
+  | finishReferencesUpdateResponse503
+) & {
+  headers: Headers;
+};
+
+export type finishReferencesUpdateResponse =
+  finishReferencesUpdateResponseSuccess | finishReferencesUpdateResponseError;
+
+export const getFinishReferencesUpdateUrl = (referenceId: string) => {
+  return `/api/v1/organization/finish-references/${referenceId}/`;
+};
+
+export const finishReferencesUpdate = async (
+  referenceId: string,
+  patchedFinishReferenceUpdateRequest?: PatchedFinishReferenceUpdateRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<finishReferencesUpdateResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<finishReferencesUpdateResponse>(getFinishReferencesUpdateUrl(referenceId), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(patchedFinishReferenceUpdateRequest),
+  });
+};
+
+export type finishReferencesArchiveResponse200 = {
+  data: FinishReferenceList;
+  status: 200;
+};
+
+export type finishReferencesArchiveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type finishReferencesArchiveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type finishReferencesArchiveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type finishReferencesArchiveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type finishReferencesArchiveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type finishReferencesArchiveResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type finishReferencesArchiveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type finishReferencesArchiveResponseSuccess = finishReferencesArchiveResponse200 & {
+  headers: Headers;
+};
+export type finishReferencesArchiveResponseError = (
+  | finishReferencesArchiveResponse400
+  | finishReferencesArchiveResponse401
+  | finishReferencesArchiveResponse403
+  | finishReferencesArchiveResponse404
+  | finishReferencesArchiveResponse409
+  | finishReferencesArchiveResponse422
+  | finishReferencesArchiveResponse503
+) & {
+  headers: Headers;
+};
+
+export type finishReferencesArchiveResponse =
+  finishReferencesArchiveResponseSuccess | finishReferencesArchiveResponseError;
+
+export const getFinishReferencesArchiveUrl = (referenceId: string) => {
+  return `/api/v1/organization/finish-references/${referenceId}/`;
+};
+
+export const finishReferencesArchive = async (
+  referenceId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<finishReferencesArchiveResponse> => {
+  return apiMutator<finishReferencesArchiveResponse>(getFinishReferencesArchiveUrl(referenceId), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export type finishReferencesImageResponse200 = {
+  data: Blob;
+  status: 200;
+};
+
+export type finishReferencesImageResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type finishReferencesImageResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type finishReferencesImageResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type finishReferencesImageResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type finishReferencesImageResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type finishReferencesImageResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type finishReferencesImageResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type finishReferencesImageResponseSuccess = finishReferencesImageResponse200 & {
+  headers: Headers;
+};
+export type finishReferencesImageResponseError = (
+  | finishReferencesImageResponse400
+  | finishReferencesImageResponse401
+  | finishReferencesImageResponse403
+  | finishReferencesImageResponse404
+  | finishReferencesImageResponse409
+  | finishReferencesImageResponse422
+  | finishReferencesImageResponse503
+) & {
+  headers: Headers;
+};
+
+export type finishReferencesImageResponse =
+  finishReferencesImageResponseSuccess | finishReferencesImageResponseError;
+
+export const getFinishReferencesImageUrl = (
+  referenceId: string,
+  params?: FinishReferencesImageParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/organization/finish-references/${referenceId}/image/?${stringifiedParams}`
+    : `/api/v1/organization/finish-references/${referenceId}/image/`;
+};
+
+export const finishReferencesImage = async (
+  referenceId: string,
+  params?: FinishReferencesImageParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<finishReferencesImageResponse> => {
+  return apiMutator<finishReferencesImageResponse>(
+    getFinishReferencesImageUrl(referenceId, params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
 };
 
 export type companyInviteResponse201 = {
@@ -20549,6 +22676,81 @@ export const projectCreditNoteDteEnvioSend = async (
   );
 };
 
+export type projectCutDraftResponse200 = {
+  data: CutDraft;
+  status: 200;
+};
+
+export type projectCutDraftResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectCutDraftResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectCutDraftResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectCutDraftResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectCutDraftResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectCutDraftResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectCutDraftResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectCutDraftResponseSuccess = projectCutDraftResponse200 & {
+  headers: Headers;
+};
+export type projectCutDraftResponseError = (
+  | projectCutDraftResponse400
+  | projectCutDraftResponse401
+  | projectCutDraftResponse403
+  | projectCutDraftResponse404
+  | projectCutDraftResponse409
+  | projectCutDraftResponse422
+  | projectCutDraftResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectCutDraftResponse = projectCutDraftResponseSuccess | projectCutDraftResponseError;
+
+export const getProjectCutDraftUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/cut-draft/`;
+};
+
+/**
+ * Draft cut of the whole work with declared stock and cutting profile, or
+ * the exact missing authorities. Reading it never releases an order.
+ */
+export const projectCutDraft = async (
+  projectId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectCutDraftResponse> => {
+  return apiMutator<projectCutDraftResponse>(getProjectCutDraftUrl(projectId), {
+    ...options,
+    method: "GET",
+  });
+};
+
 export type fiscalSimulationsResponse200 = {
   data: FiscalSimulations;
   status: 200;
@@ -21732,6 +23934,81 @@ export const projectInvoiceDteEnvioSend = async (
       body: JSON.stringify(siiEnvioSendRequest),
     },
   );
+};
+
+export type projectMaterialsResponse200 = {
+  data: ProjectMaterials;
+  status: 200;
+};
+
+export type projectMaterialsResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectMaterialsResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectMaterialsResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectMaterialsResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectMaterialsResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectMaterialsResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectMaterialsResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectMaterialsResponseSuccess = projectMaterialsResponse200 & {
+  headers: Headers;
+};
+export type projectMaterialsResponseError = (
+  | projectMaterialsResponse400
+  | projectMaterialsResponse401
+  | projectMaterialsResponse403
+  | projectMaterialsResponse404
+  | projectMaterialsResponse409
+  | projectMaterialsResponse422
+  | projectMaterialsResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectMaterialsResponse =
+  projectMaterialsResponseSuccess | projectMaterialsResponseError;
+
+export const getProjectMaterialsUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/materials/`;
+};
+
+/**
+ * What the work's saved design consumes, per window and consolidated.
+ */
+export const projectMaterials = async (
+  projectId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectMaterialsResponse> => {
+  return apiMutator<projectMaterialsResponse>(getProjectMaterialsUrl(projectId), {
+    ...options,
+    method: "GET",
+  });
 };
 
 export type projectOperationsUndoResponse200 = {

@@ -1,0 +1,252 @@
+/* Mesa de obra / Estudio (dirección final 02). One work tree; the editing
+ * session is presented in Estudio, in the wide editor or kept hidden. */
+
+.work-view-switch {
+  align-self: center;
+  flex-shrink: 0;
+}
+
+.project-head__revision,
+.project-head__lock {
+  color: var(--text-secondary);
+  font-size: var(--type-dense);
+}
+
+.project-head__lock {
+  color: var(--state-warning-ink);
+}
+
+/* Full-height work area only while a session is visibly presented. */
+.app-shell:has(.project-studio:is([data-presentation="studio"], [data-presentation="expanded"])) {
+  height: 100dvh;
+  min-height: 0;
+}
+
+.app-body:has(.project-studio:is([data-presentation="studio"], [data-presentation="expanded"])) {
+  min-height: 0;
+}
+
+.workspace:has(.project-studio:is([data-presentation="studio"], [data-presentation="expanded"])) {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+}
+
+.projects-page:has(
+  > .project-studio:is([data-presentation="studio"], [data-presentation="expanded"])
+) {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  margin: 0;
+  max-width: none;
+  min-height: 0;
+  width: 100%;
+}
+
+.projects-page:has(> .project-studio[data-presentation="studio"]) > .project-chrome {
+  flex-shrink: 0;
+  padding: var(--space-12px) var(--space-24px) 0;
+}
+
+.project-studio:is([data-presentation="studio"], [data-presentation="expanded"]) {
+  display: grid;
+  flex: 1;
+  min-height: 0;
+}
+
+.project-studio[data-presentation="studio"] {
+  border-top: 1px solid var(--border-subtle);
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.project-studio[data-presentation="expanded"] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.project-studio__editor {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+.project-studio__editor > .position-editor,
+.project-studio__editor .position-body,
+.project-studio__editor .position-workspace {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.project-studio__editor .assembly-editor {
+  flex: 1;
+  height: auto;
+}
+
+.studio-empty {
+  align-self: center;
+  justify-self: center;
+}
+
+/* Estudio's band of positions: 160 px open, 56 px folded. */
+.studio-strip {
+  background: var(--surface-panel);
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8px);
+  min-height: 0;
+  padding: var(--space-8px);
+  width: 160px;
+}
+
+.studio-strip[data-collapsed] {
+  align-items: center;
+  width: 56px;
+}
+
+.studio-strip__head {
+  align-items: center;
+  display: flex;
+  gap: var(--space-6px);
+  min-height: 32px;
+}
+
+.studio-strip__head strong {
+  font-size: var(--type-label);
+}
+
+.studio-strip__nav {
+  display: flex;
+  gap: var(--space-4px);
+}
+
+.studio-strip[data-collapsed] .studio-strip__nav {
+  flex-direction: column;
+}
+
+.studio-strip__list {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-4px);
+  list-style: none;
+  margin: 0;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0;
+}
+
+.studio-strip__item {
+  align-items: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--r-2);
+  color: var(--text-primary);
+  cursor: pointer;
+  display: grid;
+  font: inherit;
+  gap: var(--space-6px);
+  grid-template-columns: 48px minmax(0, 1fr);
+  padding: var(--space-4px);
+  text-align: left;
+  width: 100%;
+}
+
+.studio-strip__item:hover {
+  background: var(--surface-hover);
+}
+
+.studio-strip__item[aria-current="true"] {
+  background: var(--surface-selected);
+  border-color: var(--interactive);
+}
+
+.studio-strip__thumb {
+  aspect-ratio: 1;
+  display: block;
+  width: 48px;
+}
+
+.studio-strip__thumb svg {
+  height: 100%;
+  width: 100%;
+}
+
+.studio-strip__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.studio-strip__text strong {
+  font-size: var(--type-dense);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.studio-strip__dims {
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: var(--type-micro);
+}
+
+.studio-strip__add {
+  justify-content: center;
+}
+
+.editor-lock {
+  align-self: center;
+  justify-self: center;
+  max-width: 560px;
+}
+
+@media (max-width: 1100px) {
+  .studio-strip {
+    width: 56px;
+    align-items: center;
+  }
+
+  .studio-strip .studio-strip__list,
+  .studio-strip .studio-strip__head strong,
+  .studio-strip .studio-strip__add span {
+    display: none;
+  }
+}
+
+/* Estudio keeps the work header compact so the canvas owns the height. */
+.projects-page:has(> .project-studio[data-presentation="studio"]) .project-head {
+  gap: var(--space-8px);
+  margin-bottom: var(--space-8px);
+}
+
+.projects-page:has(> .project-studio[data-presentation="studio"]) .commercial-track {
+  display: none;
+}
+
+.projects-page:has(> .project-studio[data-presentation="studio"]) .project-head__identity {
+  flex: 1;
+  min-width: 0;
+}
+
+.projects-page:has(> .project-studio[data-presentation="studio"]) .project-head__title {
+  font-size: var(--type-title-m);
+  line-height: var(--line-title-m);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-studio__editor .assembly-tools {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.project-studio__editor .editor-bottom {
+  flex-shrink: 0;
+}

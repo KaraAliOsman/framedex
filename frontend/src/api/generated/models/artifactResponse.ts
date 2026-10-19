@@ -13,6 +13,7 @@ export interface ArtifactResponse {
   artifact_scope_id: string;
   document_type: string;
   format: string;
+  layout?: string;
   /** @pattern ^[0-9a-f]{64}$ */
   bom_hash: string;
   /** @pattern ^[0-9a-f]{64}$ */

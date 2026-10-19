@@ -392,7 +392,9 @@ def test_agent_ops_step_validated_through_design_contract(monkeypatch):
         operation_key="goal-9",
     )
     assert result["steps"] == [
-        {"kind": "ops", "tool": "preview_commands", "ops": validated_ops, "label": "Ajustar ancho"}
+        {"kind": "ops", "tool": "preview_commands", "ops": validated_ops, "label": "Ajustar ancho",
+         # Not an encargo in a draft run: it stays a proposal (v1 04).
+         "apply_requested": False}
     ]
     assert result["rejected"] == dropped
     # The provider sees the live product wire — without it the model has no

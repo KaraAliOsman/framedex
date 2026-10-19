@@ -5,7 +5,7 @@ import type {
   DocumentPreferencesPatchRequest,
 } from "../../api/generated/models";
 import { ValidatedForm } from "../../ui/FormValidation";
-import { DimLoader, useConfirm } from "../../ui";
+import { Loading, useConfirm } from "../../ui";
 import { actionErrorDetail } from "../errors";
 import { CommercialTermsEditor, validCommercialTerms } from "./CommercialTermsEditor";
 import "./document-settings.css";
@@ -76,7 +76,7 @@ export function DocumentSettings({
           de la empresa.
         </p>
       )}
-      {!value && !error && <DimLoader label="Cargando preferencias de documentos" />}
+      {!value && !error && <Loading label="Cargando preferencias de documentos" />}
       {status && <p role={error ? "alert" : "status"}>{status}</p>}
       {error && (
         <button type="button" onClick={() => void load()}>
@@ -153,6 +153,8 @@ export function DocumentSettings({
                           legal_footer: value.legal_footer,
                           quotation_preview_minutes: value.quotation_preview_minutes,
                           portal_successor_link: value.portal_successor_link,
+                          quotation_template: value.quotation_template,
+                          acceptance_mode: value.acceptance_mode,
                         }
                       : value;
               const response = await organizationBrandingSave(
@@ -283,6 +285,46 @@ export function DocumentSettings({
                   </select>
                 </label>
                 <label>
+                  Diseño de cotización por defecto
+                  <select
+                    aria-label="Diseño de cotización por defecto"
+                    value={value.quotation_template ?? "ESENCIAL"}
+                    onChange={(event) =>
+                      setValue({
+                        ...value,
+                        quotation_template: event.target
+                          .value as DocumentPreferences["quotation_template"],
+                      })
+                    }
+                  >
+                    <option value="ESENCIAL">Esencial · breve y directa</option>
+                    <option value="PROYECTO">Proyecto · obras grandes, dibujos grandes</option>
+                    <option value="ALTERNATIVAS">Alternativas · compara opciones</option>
+                  </select>
+                  <small>Cada obra puede cambiarlo en su documento.</small>
+                </label>
+                <label>
+                  Aceptación en la cotización
+                  <select
+                    aria-label="Aceptación en la cotización"
+                    value={value.acceptance_mode ?? "NONE"}
+                    onChange={(event) =>
+                      setValue({
+                        ...value,
+                        acceptance_mode: event.target
+                          .value as DocumentPreferences["acceptance_mode"],
+                      })
+                    }
+                  >
+                    <option value="NONE">Sin aceptación · solo enlace para consultar</option>
+                    <option value="PORTAL">Aceptación en línea</option>
+                    <option value="SIGNATURE">Firma impresa y aceptación en línea</option>
+                  </select>
+                  <small>
+                    Se sella con cada versión emitida. La política vale para las próximas versiones.
+                  </small>
+                </label>
+                <label>
                   Texto legal del pie
                   <textarea
                     aria-label="Texto legal del pie"
@@ -330,7 +372,8 @@ export function DocumentSettings({
               </>
             )}
             {(section === "all" || section === "documents") && (
-              <>
+              <details className="document-settings__advanced">
+                <summary>Opciones avanzadas</summary>
                 <label>
                   Vigencia de la revisión del PDF (minutos)
                   <input
@@ -348,7 +391,7 @@ export function DocumentSettings({
                     comercial se declara por cotización.
                   </small>
                 </label>
-              </>
+              </details>
             )}
           </fieldset>
           {(section === "all" || section === "commercial") && (

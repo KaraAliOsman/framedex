@@ -1,9 +1,10 @@
 import { compatibleCouplers } from "../canvas/couplerAuthority";
 import { sourcedStarter } from "../canvas/starterAuthority";
-import type { DesignOptions } from "../../api/generated/models";
+import type { DesignOptions, ProjectResponse } from "../../api/generated/models";
 import { fmtMm } from "../../format";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Link } from "react-router-dom";
+import { formatMoney } from "../money";
 import { useQuery } from "@tanstack/react-query";
 import {
   engineSystems,
@@ -63,66 +64,128 @@ import {
 import "./projects.css";
 import "./editor.css";
 import { FinishSelector } from "./FinishSelector";
+import { Icon } from "../../ui/Icon";
+import { usePresentedOptions } from "../canvas/finishReferences";
 import { MeasurementPanel } from "./MeasurementPanel";
 import type { MeasurementRecord } from "./mountingModel";
 import { mountingGeometryChanged } from "./mountingModel";
 import { actionErrorDetail } from "../errors";
 
-export function ProjectPositionEditor(): JSX.Element {
-  const { id = "", posId = "" } = useParams();
-  const [query] = useSearchParams();
-  const copyId = posId ? "" : (query.get("copy") ?? "");
-  const preferredSystem = posId || copyId ? null : query.get("system");
-  const org = useAuthSession().me?.active_organization;
+/** Why the work's current revision cannot be edited, by cause (server
+ * `editable()`: phase ≠ DRAFT, sealed version of the current revision, or
+ * applied price). Each cause names its own valid path. */
+export function editLockCause(
+  project: ProjectResponse | undefined | null,
+): { title: string; body: string; action: { label: string; section: string } } | null {
+  if (!project) return null;
+  if (project.status !== "DRAFT")
+    return {
+      title: "Revisión emitida: solo lectura",
+      body: "Esta cotización ya se emitió. Para cambiar ventanas, crea una revisión sucesora desde Cotización; la revisión emitida se conserva intacta.",
+      action: { label: "Ir a Cotización", section: "quote" },
+    };
+  if (project.versions?.some((version) => version.revision_code === project.current_revision))
+    return {
+      title: "Revisión sellada: solo lectura",
+      body: "La revisión actual quedó sellada al preparar su emisión. Revisa su estado en Cotización o crea una sucesora.",
+      action: { label: "Ir a Cotización", section: "quote" },
+    };
+  if (project.current_pricing_operation_id)
+    return {
+      title: "Precio aplicado: ventanas bloqueadas",
+      body: "El precio de la obra está aplicado y congela el diseño. Para editar, retira el precio borrador en Precio y margen; después vuelve a calcularlo.",
+      action: { label: "Ir a Precio y margen", section: "pricing" },
+    };
+  return null;
+}
+
+export function PositionEditorHost({
+  projectId,
+  positionId,
+  copyId,
+  creationId,
+  preferredSystem,
+  presentation,
+  onBack,
+  onOpenPosition,
+  onCreated,
+  onOpenSection,
+  allowNavigation,
+}: {
+  projectId: string;
+  /** null while creating a new window (or a copy). */
+  positionId: string | null;
+  copyId: string;
+  creationId: string;
+  preferredSystem: string | null;
+  presentation: "studio" | "expanded" | "hidden";
+  onBack(): void;
+  onOpenPosition(id: string): void;
+  onCreated(id: string): void;
+  onOpenSection(section: string): void;
+  allowNavigation(next: { pathname: string; search: string }): boolean;
+}): JSX.Element {
+  const session = useAuthSession();
+  const org = session.me?.active_organization;
+  const userId = session.me?.user?.id ?? "";
   const canEdit = Boolean(org && ["OWNER", "ESTIMATOR"].includes(org.role));
   // The editor must not mount on a closed revision — the backend's editable()
   // gate would 409 every save, so check BEFORE the canvas store and dirty
   // tracking initialize (review: the «Nuevo vano» dead-end on quoted deals).
-  const projectQuery = useProject(canEdit && id ? id : null);
-  if (!canEdit) return <DeniedState reason={t("projects.denied")} />;
+  const projectQuery = useProject(canEdit && projectId ? projectId : null);
+  if (!canEdit)
+    return (
+      <DeniedState reason="El dueño o un estimador edita ventanas. Puedes consultar cada ventana desde Mesa de obra." />
+    );
   if (projectQuery.isPending) return <LoadingState label="Cargando el proyecto" />;
   if (projectQuery.isError)
     return (
       <ErrorState
         title="No se pudo abrir el proyecto"
-        titleAs="h1"
+        titleAs="h2"
         onRetry={() => void projectQuery.refetch()}
       />
     );
-  const project = projectQuery.data;
-  // Mirrors backend editable(): a closed revision is status≠DRAFT, a sealed
-  // version row for current_revision, or an applied pricing authority.
-  const locked = Boolean(
-    project &&
-    (project.status !== "DRAFT" ||
-      project.versions?.some((version) => version.revision_code === project.current_revision) ||
-      project.current_pricing_operation_id),
-  );
-  if (locked) {
+  const lock = editLockCause(projectQuery.data);
+  if (lock) {
     return (
-      <div className="ui-empty ui-empty--denied">
+      <div className="ui-empty ui-empty--denied editor-lock" role="status">
         <svg className="ui-empty__glyph" aria-hidden="true" viewBox="0 0 16 16">
           <rect x="3" y="7" width="10" height="7" rx="1.5" />
           <path d="M5.5 7V5.5a2.5 2.5 0 0 1 5 0V7" />
         </svg>
-        <p className="ui-empty__title">{t("projects.editorLockedTitle")}</p>
-        <p className="ui-empty__body">{t("projects.editorLockedBody")}</p>
+        <p className="ui-empty__title">{lock.title}</p>
+        <p className="ui-empty__body">{lock.body}</p>
         <div className="ui-empty__action">
-          <Link className="ui-button" to={`/projects/${id}`}>
-            {t("projects.editorLockedBack")}
-          </Link>
+          <button
+            type="button"
+            className="ui-button"
+            onClick={() => onOpenSection(lock.action.section)}
+          >
+            {lock.action.label}
+          </button>
+          <button type="button" className="ui-button ui-button--ghost" onClick={onBack}>
+            Volver a la obra
+          </button>
         </div>
       </div>
     );
   }
   return (
     <PositionWorkspace
-      key={`${org!.id}:${id}:${posId}:${copyId}`}
+      key={`${org!.id}:${projectId}:${positionId ?? `create:${creationId}`}:${copyId}`}
+      userId={userId}
       orgId={org!.id}
       preferredSystem={preferredSystem}
-      projectId={id}
-      positionId={posId}
+      projectId={projectId}
+      positionId={positionId ?? ""}
       copyId={copyId}
+      creationId={creationId}
+      presentation={presentation}
+      onBack={onBack}
+      onOpenPosition={onOpenPosition}
+      onCreated={onCreated}
+      allowNavigation={allowNavigation}
     />
   );
 }
@@ -325,20 +388,39 @@ function canonicalize(value: unknown): string {
   return JSON.stringify(order(value));
 }
 
+/** Quote-ready series of the company — synthetic DEMO lives in Laboratorio. */
+function isCompanySeries(system: { quote_ready: boolean; is_demo: boolean }): boolean {
+  return system.quote_ready && system.is_demo === false;
+}
+
 function PositionWorkspace({
+  userId,
   orgId,
   projectId,
   positionId,
   copyId,
+  creationId,
   preferredSystem,
+  presentation,
+  onBack,
+  onOpenPosition,
+  onCreated,
+  allowNavigation,
 }: {
+  userId: string;
   orgId: string;
   projectId: string;
   positionId: string;
   copyId: string;
+  creationId: string;
   preferredSystem: string | null;
+  presentation: "studio" | "expanded" | "hidden";
+  onBack(): void;
+  onOpenPosition(id: string): void;
+  onCreated(id: string): void;
+  allowNavigation(next: { pathname: string; search: string }): boolean;
 }): JSX.Element {
-  const navigate = useNavigate();
+  const visible = presentation !== "hidden";
   const readOnly = useEditorMedia("(max-width: 1023px)");
   const [loaded, setLoaded] = useState(false);
   const [loadAttempt, setLoadAttempt] = useState(0);
@@ -348,7 +430,7 @@ function PositionWorkspace({
   const [quantity, setQuantity] = useState("1");
   // The breadcrumb leaf is the estimator's own tag («Dormitorio») — the
   // shell falls back to «Vano» while the field is blank.
-  useShellLeaf(location.trim() || null);
+  useShellLeaf(visible ? location.trim() || null : null);
   // null baseline = nothing persisted yet for this route (copy) → always dirty.
   const [baseline, setBaseline] = useState<{
     design: string;
@@ -359,6 +441,9 @@ function PositionWorkspace({
   const mutationLock = useRef(false);
   const [message, setMessage] = useState("");
   const [uncertainCreate, setUncertainCreate] = useState(false);
+  // 409: someone else saved this window. The local edit stays (draft buffer);
+  // the person loads the saved version and decides whether to restore.
+  const [conflict, setConflict] = useState(false);
   const [assemblyEval, setAssemblyEval] = useState<EngineAssemblyCalculateResponse | null>(null);
   const [calculationState, setCalculationState] = useState<{
     pending: boolean;
@@ -370,7 +455,17 @@ function PositionWorkspace({
   const [viewEpoch, setViewEpoch] = useState(0);
   // Unsaved-draft buffer: a reload used to silently discard the design.
   // A pending draft is offered back explicitly — never auto-applied.
-  const draftKey = positionDraftKey(orgId, positionId || null, copyId || null);
+  const draftIdentity = useMemo(
+    () => ({
+      userId,
+      orgId,
+      projectId,
+      positionId: positionId || null,
+      creationId: positionId ? null : `${copyId ? `copy-${copyId}` : "new"}:${creationId}`,
+    }),
+    [userId, orgId, projectId, positionId, copyId, creationId],
+  );
+  const draftKey = positionDraftKey(draftIdentity);
   const [pendingDraft, setPendingDraft] = useState<PositionDraft | null>(null);
   // When opened via ?copy=<id>, the source vano's index for the banner that
   // explains what's conserved — the copy is intent, not identity.
@@ -390,7 +485,7 @@ function PositionWorkspace({
   // keys threads on stable refs).
   const canvasSelection = useCanvasStore((s) => s.selection);
   useAssistantSurface(
-    positionId ? "position" : null,
+    positionId && visible ? "position" : null,
     positionId
       ? {
           project_id: projectId,
@@ -421,6 +516,9 @@ function PositionWorkspace({
     enabled: !!systemId,
     retry: false,
   });
+  // The company's own sample photos dress the catalog finishes in the drawing
+  // (presentation only; codes, price and authority stay with the catalog).
+  const presentedOptions = usePresentedOptions(orgId, options.data);
   // Finishes the series declares. A stored finish it stopped offering still
   // displays — the picker lists it once — but can't save: the engine's color
   // contract is the authority, not this list's length.
@@ -438,7 +536,7 @@ function PositionWorkspace({
       baselineLocation: string,
       baselineQuantity: string,
     ) => {
-      const draft = readPositionDraft(draftKey);
+      const draft = readPositionDraft(draftIdentity);
       if (!draft) return;
       if (
         designIdentity(draft.inputs) !== baselineDesign ||
@@ -446,12 +544,15 @@ function PositionWorkspace({
         draft.quantity !== baselineQuantity
       )
         setPendingDraft(draft);
-      else clearPositionDraft(draftKey);
+      else clearPositionDraft(draftIdentity);
     };
     if (!positionId && !copyId) {
       const blank = initial();
-      // Onboarding hands its picked system over via ?system= so the first
-      // position opens on the catalog context the user already chose.
+      // A new window starts from the usual values (company → project); the
+      // onboarding's explicit ?system= choice still wins.
+      const usual = project.data?.effective_design_defaults;
+      if (usual?.system_id?.value) blank.systemId = usual.system_id.value;
+      if (usual?.color?.value) blank.color = usual.color.value;
       if (preferredSystem) blank.systemId = preferredSystem;
       useCanvasStore.getState().loadDesign(blank);
       const baselineDesign = designIdentity(blank);
@@ -537,6 +638,19 @@ function PositionWorkspace({
   useEffect(() => {
     const product = inputs.product;
     if (!product || !options.data) return;
+    // The usual glass fills empty bays when the series accepts it; otherwise
+    // only a uniquely determined catalog value is filled.
+    const usualSku = project.data?.effective_design_defaults?.glass_article_sku?.value;
+    const usualGlass = usualSku
+      ? options.data.glass_specs.find(
+          (glass) => glass.sku === usualSku && glass.compatible !== false,
+        )
+      : undefined;
+    const usualThickness =
+      usualGlass?.total_thickness_mm &&
+      options.data.glazing_thicknesses.includes(usualGlass.total_thickness_mm)
+        ? usualGlass.total_thickness_mm
+        : undefined;
     const resolved = resolveDefaults(
       product,
       options.data.coupler_profiles,
@@ -544,18 +658,23 @@ function PositionWorkspace({
         SPLIT_V: options.data.profiles.find((profile) => profile.role === "MULLION_V")?.sku,
         SPLIT_H: options.data.profiles.find((profile) => profile.role === "MULLION_H")?.sku,
       },
-      options.data.glazing_thicknesses.length === 1
-        ? options.data.glazing_thicknesses[0]
-        : undefined,
+      usualThickness ??
+        (options.data.glazing_thicknesses.length === 1
+          ? options.data.glazing_thicknesses[0]
+          : undefined),
       options.data.panel_skus.length === 1 ? options.data.panel_skus[0] : undefined,
-      options.data.glass_skus.length === 1 ? options.data.glass_skus[0] : undefined,
+      usualThickness && usualGlass
+        ? usualGlass.sku
+        : options.data.glass_skus.length === 1
+          ? options.data.glass_skus[0]
+          : undefined,
     );
     if (resolved !== product) {
       // Deterministic normalization is not a user step: folding it into
       // history would make the preceding change un-undoable.
       useCanvasStore.getState().replaceInputs({ ...inputs, product: resolved });
     }
-  }, [inputs, options.data]);
+  }, [inputs, options.data, project.data?.effective_design_defaults]);
 
   function applyHistory(direction: "undo" | "redo"): void {
     const store = useCanvasStore.getState();
@@ -574,8 +693,8 @@ function PositionWorkspace({
 
   useEffect(() => {
     if (createdId === null) return;
-    navigate(`/projects/${projectId}/positions/${createdId}/edit`, { replace: true });
-  }, [createdId, navigate, projectId]);
+    onCreated(createdId);
+  }, [createdId, onCreated]);
 
   const onAssemblyEvaluation = useCallback(
     (
@@ -609,15 +728,34 @@ function PositionWorkspace({
   useEffect(() => {
     if (!loaded) return;
     if (!isDirty) {
-      clearPositionDraft(draftKey);
+      clearPositionDraft(draftIdentity);
       return;
     }
     const timer = setTimeout(
-      () => writePositionDraft(draftKey, { inputs, location, quantity, savedAt: Date.now() }),
+      () =>
+        writePositionDraft(draftIdentity, {
+          inputs,
+          location,
+          quantity,
+          savedAt: Date.now(),
+          baseline: baseline?.design ?? null,
+          revision: project.data?.current_revision ?? null,
+        }),
       600,
     );
     return () => clearTimeout(timer);
-  }, [loaded, isDirty, identity, location, quantity, draftKey, inputs]);
+  }, [
+    loaded,
+    isDirty,
+    identity,
+    location,
+    quantity,
+    draftKey,
+    draftIdentity,
+    inputs,
+    baseline,
+    project.data?.current_revision,
+  ]);
 
   const assemblyUnsaveable =
     assemblyEval?.status === "INVALID" ||
@@ -651,7 +789,7 @@ function PositionWorkspace({
               )
             : null;
 
-  async function save(): Promise<void> {
+  async function save(): Promise<boolean> {
     if (
       uncertainCreate ||
       readOnly ||
@@ -668,7 +806,7 @@ function PositionWorkspace({
       !/^[1-9]\d*$/.test(quantity) ||
       Number(quantity) > 2147483647
     )
-      return;
+      return false;
     mutationLock.current = true;
     const epoch = ++generation.current;
     setBusy(true);
@@ -697,7 +835,7 @@ function PositionWorkspace({
             requestOptions,
           )
         : await positionsCreate(projectId, body, requestOptions);
-      if (epoch !== generation.current) return;
+      if (epoch !== generation.current) return false;
       if (response.status !== 200 && response.status !== 201)
         throw new ApiError(response.status, response.data);
       const value = response.data as PositionResponse;
@@ -709,16 +847,30 @@ function PositionWorkspace({
       // The unsaved-changes blocker still sees dirty=true until the baseline
       // commits, so the post-create navigation must wait for the next render.
       if (!positionId) setCreatedId(value.id);
+      return true;
     } catch (error) {
       if (epoch === generation.current) {
         const uncertain = !saved && (!(error instanceof ApiError) || error.status >= 500);
         setUncertainCreate(uncertain);
+        if (saved && error instanceof ApiError && error.status === 409) {
+          // Keep the edit in the draft buffer before anything reloads.
+          writePositionDraft(draftIdentity, {
+            inputs,
+            location,
+            quantity,
+            savedAt: Date.now(),
+            baseline: baseline?.design ?? null,
+            revision: project.data?.current_revision ?? null,
+          });
+          setConflict(true);
+        }
         setMessage(
           uncertain
             ? t("projects.uncertainPosition")
             : actionErrorDetail(error, t("projects.saveError")),
         );
       }
+      return false;
     } finally {
       mutationLock.current = false;
       if (epoch === generation.current) setBusy(false);
@@ -731,15 +883,16 @@ function PositionWorkspace({
   const saveRef = useRef(save);
   saveRef.current = save;
   useEffect(() => {
+    if (!visible) return;
     const onKey = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s") {
         event.preventDefault();
-        void saveRef.current();
+        if (!readOnly) void saveRef.current();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [visible, readOnly]);
 
   if (!loaded)
     return message ? (
@@ -821,25 +974,36 @@ function PositionWorkspace({
     </section>
   );
   return (
-    <section className="projects-page position-editor">
-      <UnsavedChangesGuard dirty={dirty} message={t("projects.leaveUnsaved")} />
+    <section
+      className={`projects-page position-editor position-editor--${presentation}`}
+      hidden={!visible}
+    >
+      <UnsavedChangesGuard
+        dirty={dirty}
+        message="Esta ventana tiene cambios sin guardar"
+        allow={allowNavigation}
+        onSave={() => saveRef.current()}
+        onDiscard={() => clearPositionDraft(draftIdentity)}
+      />
       <header className="position-strip">
-        <h1 className="visually-hidden">{location || t("projects.position")}</h1>
-        <Link
+        <h2 className="visually-hidden">{location || t("projects.position")}</h2>
+        <button
+          type="button"
           className="editor-project-link"
-          aria-label="Volver al proyecto"
-          to={projectId ? `/projects/${projectId}` : "/projects"}
+          aria-label={presentation === "studio" ? "Volver a Mesa de obra" : "Volver a la obra"}
           title={project.data?.name ?? t("projects.back")}
+          onClick={onBack}
         >
-          ‹ Proyecto
-        </Link>
+          <Icon name="chevronLeft" size={16} />
+          <span>{presentation === "studio" ? "Mesa de obra" : project.data?.name || "Obra"}</span>
+        </button>
         <span className="editor-position-code">
-          {saved ? `Pos. ${saved.position_index}` : "Nuevo vano"}
+          {saved ? `Ventana ${saved.position_index}` : "Ventana nueva"}
         </span>
         <input
           className="editor-location"
           aria-label={t("projects.location")}
-          placeholder="Ubicación del vano"
+          placeholder="Nombre o ubicación · p. ej. Dormitorio"
           value={location}
           disabled={busy || readOnly}
           onChange={(e) => setLocation(e.target.value)}
@@ -859,6 +1023,7 @@ function PositionWorkspace({
           label="Serie de perfiles"
           trigger={
             <button type="button" className="editor-chip editor-system-chip" title={systemName}>
+              <Icon name="catalogs" size={16} />
               {systemId ? systemName : "Elegir serie"}
             </button>
           }
@@ -887,14 +1052,26 @@ function PositionWorkspace({
                     Catálogo histórico del producto{options.data?.is_demo ? " · DEMO" : ""}
                   </option>
                 )}
-              {systems.data
-                ?.filter((system) => system.quote_ready)
-                .map((system) => (
-                  <option key={system.id} value={system.id}>
-                    {system.is_demo ? system.name.replace(/\s*·\s*DEMO\s*$/u, "") : system.name}
-                    {system.is_demo ? " · DEMO · sintético, sin certificación" : ""}
-                  </option>
-                ))}
+              {systems.data?.some(isCompanySeries) ? (
+                <optgroup label="Series de la empresa">
+                  {systems.data?.filter(isCompanySeries).map((system) => (
+                    <option key={system.id} value={system.id}>
+                      {system.name}
+                    </option>
+                  ))}
+                </optgroup>
+              ) : null}
+              {systems.data?.some((system) => system.quote_ready && system.is_demo) ? (
+                <optgroup label="Laboratorio · DEMO sintético, sin certificación">
+                  {systems.data
+                    ?.filter((system) => system.quote_ready && system.is_demo)
+                    .map((system) => (
+                      <option key={system.id} value={system.id}>
+                        {system.name.replace(/\s*·\s*DEMO\s*$/u, "")} · DEMO
+                      </option>
+                    ))}
+                </optgroup>
+              ) : null}
             </select>
           </label>
           {(systems.isError || options.isError) && (
@@ -920,8 +1097,14 @@ function PositionWorkspace({
         <Popover
           label="Acabado"
           trigger={
-            <button type="button" className="editor-chip" title={finishName}>
-              Acabado · {finishName}
+            <button
+              type="button"
+              className="editor-chip"
+              title={finishName}
+              aria-label={`Acabado: ${finishName}`}
+            >
+              <Icon name="swatch" size={16} />
+              {finishName}
             </button>
           }
         >
@@ -951,7 +1134,7 @@ function PositionWorkspace({
           )}
           {options.data?.finish_authority && (
             <FinishSelector
-              authority={options.data.finish_authority}
+              authority={presentedOptions?.finish_authority ?? options.data.finish_authority}
               value={inputs.color}
               design={designPayload(inputs, declaredColors)}
               organizationId={orgId}
@@ -960,6 +1143,17 @@ function PositionWorkspace({
             />
           )}
         </Popover>
+        {project.data && projectId ? (
+          <Link
+            className="editor-chip editor-price"
+            to={`/projects/${projectId}?section=pricing`}
+            title="Precio de la obra con el último cálculo aplicado"
+          >
+            {project.data.pricing_current
+              ? `Obra ${formatMoney(project.data.total_price_gross, project.data.currency)}`
+              : "Calcular precio de la obra"}
+          </Link>
+        ) : null}
         <span className="editor-save-state" role="status">
           {busy
             ? "Guardando…"
@@ -977,7 +1171,7 @@ function PositionWorkspace({
           disabled={!canUndo || busy || readOnly}
           onClick={() => applyHistory("undo")}
         >
-          <span aria-hidden="true">↶</span>
+          <Icon name="undo" />
         </button>
         <button
           type="button"
@@ -987,7 +1181,7 @@ function PositionWorkspace({
           disabled={!canRedo || busy || readOnly}
           onClick={() => applyHistory("redo")}
         >
-          <span aria-hidden="true">↷</span>
+          <Icon name="redo" />
         </button>
         <EditorPriceChip
           organizationId={orgId}
@@ -1021,7 +1215,8 @@ function PositionWorkspace({
                       : "Válido"}
         </button>
         <button
-          className="primary-action"
+          type="button"
+          className="ui-button ui-button--primary editor-save"
           disabled={
             readOnly ||
             uncertainCreate ||
@@ -1056,6 +1251,24 @@ function PositionWorkspace({
           {message}
         </output>
       )}
+      {conflict && (
+        <div className="draft-banner" role="alert">
+          <span>
+            Otra persona guardó esta ventana después de que la abriste. Tus cambios siguen aquí y en
+            el borrador de esta pestaña; no se enviaron.
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              setConflict(false);
+              setMessage("");
+              setLoadAttempt((attempt) => attempt + 1);
+            }}
+          >
+            Cargar la versión guardada
+          </button>
+        </div>
+      )}
       {copyId && loaded && copiedFrom && (
         <div className="draft-banner" role="status">
           <span>{t("projects.copyNotice").replace("{src}", copiedFrom)}</span>
@@ -1072,13 +1285,19 @@ function PositionWorkspace({
               }),
             )}
           </span>
+          {pendingDraft.baseline && baseline && pendingDraft.baseline !== baseline.design ? (
+            <span className="draft-banner__warn">
+              Se tomó sobre otra versión guardada de esta ventana: al restaurarlo reemplaza la
+              versión actual en el editor (sin guardar) y se vuelve a calcular.
+            </span>
+          ) : null}
           <button type="button" onClick={() => restoreDraft(pendingDraft)}>
             {t("projects.restoreDraft")}
           </button>
           <button
             type="button"
             onClick={() => {
-              clearPositionDraft(draftKey);
+              clearPositionDraft(draftIdentity);
               setPendingDraft(null);
             }}
           >
@@ -1096,7 +1315,7 @@ function PositionWorkspace({
             couplerSkus={options.data?.coupler_skus ?? []}
             glassSkus={options.data?.glass_skus ?? []}
             panelSkus={options.data?.panel_skus ?? []}
-            options={options.data}
+            options={presentedOptions}
             optionsReady={options.data !== undefined || options.isError}
             disabled={busy || readOnly}
             quantity={quantityInvalid ? 1 : Number(quantity)}
@@ -1140,20 +1359,25 @@ function PositionWorkspace({
         </div>
       </div>
       <footer className="editor-bottom">
-        <EditorBottomPanel title="Posiciones del proyecto">
-          <nav className="editor-position-list" aria-label="Posiciones del proyecto">
-            {project.data?.positions?.map((item) => (
-              <Link
-                key={item.id}
-                to={`/projects/${projectId}/positions/${item.id}/edit`}
-                aria-current={item.id === positionId ? "page" : undefined}
-              >
-                Pos. {item.position_index} · {item.location_tag || "Sin ubicación"}
+        {presentation === "expanded" ? (
+          <EditorBottomPanel title="Ventanas de la obra">
+            <nav className="editor-position-list" aria-label="Ventanas de la obra">
+              {project.data?.positions?.map((item) => (
+                <button
+                  type="button"
+                  key={item.id}
+                  aria-current={item.id === positionId ? "page" : undefined}
+                  onClick={() => onOpenPosition(item.id)}
+                >
+                  {item.location_tag || `Ventana ${item.position_index}`}
+                </button>
+              ))}
+              <Link to={`/projects/${projectId}/positions/new`}>
+                <Icon name="plus" size={16} /> Agregar ventana
               </Link>
-            ))}
-            <Link to={`/projects/${projectId}/positions/new`}>Nuevo vano</Link>
-          </nav>
-        </EditorBottomPanel>
+            </nav>
+          </EditorBottomPanel>
+        ) : null}
         {saved && (
           <EditorBottomPanel title="Medidas para producción">
             <MeasurementPanel

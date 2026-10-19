@@ -21,6 +21,7 @@ specification and the linked domain pages, then inspect current code.
 | Purchasing and inventory | `backend/{purchasing,inventory}/`, `frontend/src/features/purchasing/` | `backend/tests/`, colocated UI tests | [Purchasing / inventory](product/purchasing-inventory.md); [PRD-16](../PRD/PRD-16.md) |
 | Payments, company, roles and security | `backend/{billing,authentication}/`, `frontend/src/features/{billing,settings}/`, `supabase/migrations/` | `backend/tests/`, `supabase/tests/`, colocated UI tests | [Collections](product/collections.md), [company / customers](product/company-customers.md); [PRD-03](../PRD/PRD-03.md), [PRD-02](../PRD/PRD-02.md), [PRD-19](../PRD/PRD-19.md) |
 | Dispatch, installation and post-sale | `backend/production/`, `frontend/src/features/field/` | `backend/tests/integration/test_field_work.py`, colocated UI tests | [Field work](product/field-work.md) |
+| SaaS subscription, AI credits and usage | `engine/src/dekopen_engine/billing.py`, `backend/billing/`, `backend/ai_gateway/{service,usage}.py` | `backend/tests/integration/test_shot11_lifecycle.py`, `backend/tests/integration/test_ai_provider_operations.py` | [Subscription / credits](product/subscription-credits.md), [latest owner clarification](sources/owner-credits-and-grokbot-2026-10-18.md); [PRD-03](../PRD/PRD-03.md) |
 | Analytics, Today and search | `backend/{analytics,search}/`, `frontend/src/features/analytics/`, `frontend/src/app/navigation.ts` | `backend/tests/`, colocated UI tests | [Analytics](product/decision-analytics.md), [Today](product/today-workflow.md) |
 | Local stack and repository maintenance | `scripts/review_stack.py`, `scripts/local_gates.py`, `scripts/dev_fixture.py` | Inspect affected script and ownership guards | [Stack skill](../../.agents/skills/testing-framedex/SKILL.md), [workspace](../operations/WORKSPACE.md), [review guide](../GUIA-REVISION.md) |
 
@@ -51,6 +52,7 @@ acceptance claims keep separate refs; newer code always requires verification.
 ## Product direction
 
 - [Owner decisions](decisions/owner-decisions.md) — durable product and engineering decisions extracted from project conversations.
+- [Dirección final · 18-10-2026](research/final-direction-2026-10-18.md) — Mesa + Estudio, base manual completa y copiloto opcional en popup; [encargo vigente para Claude](../research/2026-10-18-direccion-final/prompt-maestro.md).
 - [Product vision](product/vision.md) — what DEKOPEN is trying to become and what it is explicitly not.
 - [Fenestration + UX principles](product/fenestration-and-ux.md) — domain/interaction rules that prevent visually plausible but physically wrong software.
 - [Catalog authority by family](product/catalog-authority.md) — exact rules, historical migration, reviewed import and synthetic authority boundaries.
@@ -106,6 +108,10 @@ acceptance claims keep separate refs; newer code always requires verification.
 
 ## Quality
 
+- [Conexiones de producción](quality/production-connections.md) — dominio/Cloudflare, Railway/Redis, Supabase, Flow, MiMo, SMTP y recuperación de archivos; inventario estático y condiciones verificadas de proveedores.
+
+- [Suscripción SaaS y créditos](product/subscription-credits.md) — MiMo común, cupos/paquetes/presupuesto, divergencia PRD/código y propuesta de límites sin activación comercial.
+
 - [AI provider and authority](product/ai-provider.md) — real transport, tenant settings, budget, physical usage and verified limits.
 
 - [Known risks and audit targets](quality/known-risks.md) — recurring failure modes and areas that require paranoid testing.
@@ -113,12 +119,25 @@ acceptance claims keep separate refs; newer code always requires verification.
 
 ## Research
 
+- [Innovación y oportunidades · 18-10-2026](research/innovation-2026-10-18.md) — veinte fuentes, capacidades actuales contrastadas, veinticuatro mejoras y seis apuestas; recomendaciones exploratorias, no ampliación aprobada del lanzamiento.
+- [Dirección final y prompts · 18-10-2026](research/final-direction-2026-10-18.md) — corrección posterior del dueño e integración de tres revisiones especializadas; [paquete final](../research/2026-10-18-direccion-final/README.md).
+- [Revisión profunda y tres direcciones · 18-10-2026](research/revision-profunda-2026-10-18.md) — quince familias, rúbrica común, evidencia visual/REA y auditoría local; la elección posterior sustituye la propuesta acoplada; [dossier](../research/2026-10-18-revision-profunda/README.md).
 - [Competitor capability map](research/competitor-map.md) — sector references and what DEKOPEN should learn from them.
+- [Research and Claude handoff · 17-10-2026](../research/2026-10-17-claude/README.md) — dated source audit, public competitor research, proposed UX/AI/catalog/PDF reconstruction and unexecuted staged prompts.
 
 ## Sources
 
+- [Adjuntos y criterio de innovación · 18-10-2026](sources/owner-attachments-and-innovation-2026-10-18.md) — documentos e imágenes en el popup como requisito; refinamientos con valor, sin inflar el lanzamiento. [Análisis adicional](../research/2026-10-18-innovacion/06-archivos-y-mejoras-con-sentido.md).
+
+- [Encargo de innovación · 18-10-2026](sources/owner-innovation-review-2026-10-18.md) — investigar mejoras y adiciones con criterio gerencial y pensamiento abierto.
+- [Versión definitiva y conexiones finales · 18-10-2026](sources/owner-launch-boundary-2026-10-18.md) — todo el alcance funcional listo; solo Railway, Supabase y pagos de producción pendientes, con pruebas de lanzamiento después de la aprobación.
+- [Créditos, MiMo y personaje Grok Bot · 18-10-2026](sources/owner-credits-and-grokbot-2026-10-18.md) — aclaración posterior de modelo común, límites, referencias profesionales y fidelidad centrada en el personaje animado.
+
+- [Dirección final del dueño · 18-10-2026](sources/owner-final-direction-2026-10-18.md) — conserva Mesa/Estudio, IA popup opcional, base sin IA, delegación y desarrollo primero con pruebas al final.
+- [Nueva revisión del dueño · 18-10-2026](sources/owner-revision-profunda-2026-10-18.md) — rechazo de la experiencia actual, Chat/Trabajo, Omitir todo, catálogos reales e investigación previa a elegir diseño.
 - [Karpathy — LLM Wiki](sources/karpathy-llm-wiki.md) — canonical pattern used for this knowledge system.
 - [Owner context — September 2026](sources/owner-context-2026-09.md) — durable synthesis of owner instructions and project direction from recent conversations.
+- [Owner research handoff — October 2026](sources/owner-research-handoff-2026-10.md) — latest research-only scope, simplification, AI worker, editable documents and final-test preference after rollback.
 
 ## Pages to add as knowledge accumulates
 

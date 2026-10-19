@@ -245,6 +245,280 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/ai/attachments/:
+    get:
+      operationId: ai_attachments_formats
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - ai
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiAttachmentMatrix'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    post:
+      operationId: ai_attachments_upload
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - ai
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AiAttachmentUploadRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiAttachment'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/ai/attachments/{attachment_id}/:
+    get:
+      operationId: ai_attachment_get
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: attachment_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ai
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiAttachmentDetail'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/ai/attachments/{attachment_id}/content/:
+    get:
+      operationId: ai_attachment_content
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: attachment_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ai
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/ai/connection-test/:
     post:
       operationId: ai_connection_test
@@ -555,6 +829,86 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AiJob'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/ai/jobs/{job_id}/approve/:
+    post:
+      operationId: ai_job_approve
+      description: |-
+        «Con aprobación»: one approval applies the prepared coherent set of the
+        latest round through the same idempotent project services the manual
+        review uses. Each change keeps its undo. Consequential actions (emit,
+        send, buy, release, pay, publish) are never part of this set.
+
+        The quote step of flow A11 (price + «Borrador» PDF) runs after the
+        positions, outside the job transaction and with the person's own session
+        — price authority and owner MFA are the person's, never the worker's.
+        «Omitir todo» continues the delegated chain through this same endpoint.
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: job_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ai
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiJobDetail'
           description: ''
         '400':
           content:
@@ -1135,6 +1489,450 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AiSettings'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/ai/threads/:
+    get:
+      operationId: ai_threads_list
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: query
+        name: archived
+        schema:
+          type: boolean
+      - in: query
+        name: cursor
+        schema:
+          type: string
+      - in: query
+        name: q
+        schema:
+          type: string
+      tags:
+      - ai
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiThreadList'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    post:
+      operationId: ai_threads_create
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - ai
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiThreadCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AiThreadCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AiThreadCreateRequest'
+      security:
+      - SupabaseBearer: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiThread'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/ai/threads/{thread_id}/:
+    get:
+      operationId: ai_thread_get
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: thread_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ai
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiThread'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    patch:
+      operationId: ai_thread_update
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: thread_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ai
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAiThreadUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAiThreadUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAiThreadUpdateRequest'
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiThread'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/ai/threads/{thread_id}/attachments/:
+    get:
+      operationId: ai_thread_attachments
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: thread_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ai
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiAttachmentList'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/ai/threads/{thread_id}/timeline/:
+    get:
+      operationId: ai_thread_timeline
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: query
+        name: cursor
+        schema:
+          type: string
+      - in: path
+        name: thread_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ai
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiTimeline'
           description: ''
         '400':
           content:
@@ -3122,6 +3920,73 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/capabilities/:
+    get:
+      operationId: capabilities_retrieve
+      description: |-
+        Pure read of the organization's AI rights, support, permission and
+        availability for the active member. Never calls the provider.
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - billing
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CapabilitiesResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/catalog-imports/:
     get:
       operationId: catalog_imports_list
@@ -3493,6 +4358,85 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/catalog-imports/{import_id}/pages/{page}/:
+    get:
+      operationId: catalog_import_page
+      description: |-
+        One page of the source PDF, rendered, to review an exception beside
+        the region it came from.
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: import_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: page
+        schema:
+          type: integer
+        required: true
+      tags:
+      - catalogs
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/catalog-imports/{import_id}/publish/:
     post:
       operationId: catalog_import_publish
@@ -3526,6 +4470,77 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CatalogImportConfirmResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/catalog-imports/{import_id}/retry/:
+    post:
+      operationId: catalog_import_retry
+      description: Re-run only the page batches that failed; finished pages are kept.
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: import_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - catalogs
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogImportDetailResponse'
           description: ''
         '400':
           content:
@@ -5729,6 +6744,34 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/catalogs/references/:
+    get:
+      operationId: catalog_reference_series
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - catalogs
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferenceRegistry'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/catalogs/section-imports/:
     post:
       operationId: catalog_section_import_create
@@ -7446,6 +8489,147 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/documents/organization/quotation-numbering/:
+    get:
+      operationId: quotation_numbering_get
+      description: 'Company quotation numbering: N.º 1 by default, editable prefix/next.'
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - documents
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuotationNumberingResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    put:
+      operationId: quotation_numbering_save
+      description: 'Company quotation numbering: N.º 1 by default, editable prefix/next.'
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuotationNumberingRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/QuotationNumberingRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/QuotationNumberingRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuotationNumberingResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/documents/projects/{project_id}/artifacts/:
     get:
       operationId: documentary_list_artifacts
@@ -7881,6 +9065,243 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/QuotationCustomer'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/documents/projects/{project_id}/quotation-draft/:
+    post:
+      operationId: quotation_draft_preview
+      description: |-
+        The real document early: «Borrador», no number consumed, not stored.
+        An optional unsaved layout lets the editor show a change before saving.
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuotationLayoutRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/QuotationLayoutRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/QuotationLayoutRequest'
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/documents/projects/{project_id}/quotation-layout/:
+    get:
+      operationId: quotation_layout_get
+      description: This work's quotation composition (template, blocks, texts).
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - documents
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuotationLayoutResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    put:
+      operationId: quotation_layout_save
+      description: This work's quotation composition (template, blocks, texts).
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuotationLayoutRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/QuotationLayoutRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/QuotationLayoutRequest'
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuotationLayoutResponse'
           description: ''
         '400':
           content:
@@ -10578,6 +11999,141 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/organization/design-defaults/:
+    get:
+      operationId: company_design_defaults
+      description: Usual series, finish and glass that seed new windows (company level).
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - projects
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyDesignDefaults'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    put:
+      operationId: company_design_defaults_save
+      description: Usual series, finish and glass that seed new windows (company level).
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyDesignDefaultsWriteRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyDesignDefaults'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/organization/document-preview/:
     post:
       operationId: company_document_preview
@@ -10751,6 +12307,388 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PolicyResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/organization/finish-references/:
+    get:
+      operationId: finish_references_list
+      description: Private library of the company's own material samples.
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - projects
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinishReferenceList'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    post:
+      operationId: finish_references_create
+      description: Private library of the company's own material samples.
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - projects
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                name:
+                  type: string
+                finish_code:
+                  type: string
+                tile_mm:
+                  type: string
+                grain:
+                  type: string
+                  enum:
+                  - ALONG
+                  - ACROSS
+                  - NONE
+                x:
+                  type: string
+                y:
+                  type: string
+                size:
+                  type: string
+              required:
+              - file
+              - name
+              - finish_code
+      security:
+      - SupabaseBearer: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinishReference'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/organization/finish-references/{reference_id}/:
+    patch:
+      operationId: finish_references_update
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: reference_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedFinishReferenceUpdateRequest'
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinishReference'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    delete:
+      operationId: finish_references_archive
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: reference_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - projects
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinishReferenceList'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/organization/finish-references/{reference_id}/image/:
+    get:
+      operationId: finish_references_image
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: reference_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: query
+        name: variant
+        schema:
+          type: string
+          enum:
+          - original
+          - prepared
+      tags:
+      - projects
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
           description: ''
         '400':
           content:
@@ -18677,6 +20615,79 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/projects/{project_id}/cut-draft/:
+    get:
+      operationId: project_cut_draft
+      description: |-
+        Draft cut of the whole work with declared stock and cutting profile, or
+        the exact missing authorities. Reading it never releases an order.
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - projects
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CutDraft'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/projects/{project_id}/fiscal-simulations/:
     get:
       operationId: fiscal_simulations
@@ -19783,6 +21794,77 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SiiEnvio'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/projects/{project_id}/materials/:
+    get:
+      operationId: project_materials
+      description: What the work's saved design consumes, per window and consolidated.
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - projects
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectMaterials'
           description: ''
         '400':
           content:
@@ -24199,6 +26281,16 @@ components:
         * `TEAL` - TEAL
         * `TEAL_DARK` - TEAL_DARK
         * `GRAPHITE` - GRAPHITE
+    AcceptanceModeEnum:
+      enum:
+      - NONE
+      - PORTAL
+      - SIGNATURE
+      type: string
+      description: |-
+        * `NONE` - NONE
+        * `PORTAL` - PORTAL
+        * `SIGNATURE` - SIGNATURE
     AccessoryLine:
       type: object
       properties:
@@ -24526,6 +26618,10 @@ components:
           format: uuid
         state:
           type: string
+        thread_id:
+          type: string
+          format: uuid
+          nullable: true
       required:
       - job_id
       - state
@@ -24600,6 +26696,24 @@ components:
           type: string
           minLength: 8
           maxLength: 120
+        thread_id:
+          type: string
+          format: uuid
+          nullable: true
+        interaction_mode:
+          allOf:
+          - $ref: '#/components/schemas/InteractionModeEnum'
+          default: work
+        attachment_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          maxItems: 6
+        autonomy:
+          allOf:
+          - $ref: '#/components/schemas/AutonomyEnum'
+          default: propose
       required:
       - goal
       - operation_key
@@ -24695,6 +26809,15 @@ components:
             type: object
             additionalProperties: {}
         simulation: {}
+        apply_requested:
+          type: boolean
+        applied: {}
+        apply_error:
+          type: string
+        layout: {}
+        project_id:
+          type: string
+          format: uuid
       required:
       - kind
       - label
@@ -24776,6 +26899,203 @@ components:
       - answer
       - created_at
       - question
+    AiAttachment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        file_name:
+          type: string
+        media_type:
+          type: string
+        kind:
+          type: string
+        byte_size:
+          type: integer
+        file_sha256:
+          type: string
+        status:
+          $ref: '#/components/schemas/AiAttachmentStatusEnum'
+        thread_id:
+          type: string
+          format: uuid
+          nullable: true
+        coverage:
+          $ref: '#/components/schemas/AiAttachmentCoverage'
+        preview:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiAttachmentPart'
+        created_at:
+          type: string
+          format: date-time
+      required:
+      - byte_size
+      - coverage
+      - created_at
+      - file_name
+      - file_sha256
+      - id
+      - kind
+      - media_type
+      - preview
+      - status
+      - thread_id
+    AiAttachmentCoverage:
+      type: object
+      properties:
+        unit:
+          type: string
+        total:
+          type: integer
+        processed:
+          type: integer
+        unprocessed_count:
+          type: integer
+        visual_count:
+          type: integer
+      required:
+      - processed
+      - total
+      - unit
+      - unprocessed_count
+      - visual_count
+    AiAttachmentDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        file_name:
+          type: string
+        media_type:
+          type: string
+        kind:
+          type: string
+        byte_size:
+          type: integer
+        file_sha256:
+          type: string
+        status:
+          $ref: '#/components/schemas/AiAttachmentStatusEnum'
+        thread_id:
+          type: string
+          format: uuid
+          nullable: true
+        coverage:
+          $ref: '#/components/schemas/AiAttachmentCoverage'
+        preview:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiAttachmentPart'
+        created_at:
+          type: string
+          format: date-time
+        parts:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiAttachmentPart'
+        visual:
+          type: array
+          items:
+            type: string
+        unprocessed:
+          type: array
+          items:
+            type: string
+      required:
+      - byte_size
+      - coverage
+      - created_at
+      - file_name
+      - file_sha256
+      - id
+      - kind
+      - media_type
+      - parts
+      - preview
+      - status
+      - thread_id
+      - unprocessed
+      - visual
+    AiAttachmentFormat:
+      type: object
+      properties:
+        kind:
+          type: string
+        label:
+          type: string
+        extensions:
+          type: array
+          items:
+            type: string
+        reading:
+          type: string
+        max_bytes:
+          type: integer
+      required:
+      - extensions
+      - kind
+      - label
+      - max_bytes
+      - reading
+    AiAttachmentList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiAttachment'
+      required:
+      - items
+    AiAttachmentMatrix:
+      type: object
+      properties:
+        formats:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiAttachmentFormat'
+        max_per_turn:
+          type: integer
+        max_file_bytes:
+          type: integer
+      required:
+      - formats
+      - max_file_bytes
+      - max_per_turn
+    AiAttachmentPart:
+      type: object
+      properties:
+        ref:
+          type: string
+        text:
+          type: string
+      required:
+      - ref
+      - text
+    AiAttachmentStatusEnum:
+      enum:
+      - READY
+      - PARTIAL
+      - UNREADABLE
+      type: string
+      description: |-
+        * `READY` - READY
+        * `PARTIAL` - PARTIAL
+        * `UNREADABLE` - UNREADABLE
+    AiAttachmentUploadRequest:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+        thread_id:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+      - file
     AiConnectionResult:
       type: object
       properties:
@@ -24810,6 +27130,26 @@ components:
           maxLength: 120
       required:
       - operation_key
+    AiEntitlement:
+      type: object
+      properties:
+        granted:
+          type: boolean
+        origin:
+          $ref: '#/components/schemas/AiEntitlementOriginEnum'
+      required:
+      - granted
+      - origin
+    AiEntitlementOriginEnum:
+      enum:
+      - plan
+      - trial
+      - none
+      type: string
+      description: |-
+        * `plan` - plan
+        * `trial` - trial
+        * `none` - none
     AiInvokeRequestRequest:
       type: object
       properties:
@@ -24915,6 +27255,20 @@ components:
           type: string
           format: date-time
           nullable: true
+        thread_id:
+          type: string
+          format: uuid
+          nullable: true
+        interaction_mode:
+          type: string
+          nullable: true
+        autonomy:
+          type: string
+          nullable: true
+        receipt:
+          allOf:
+          - $ref: '#/components/schemas/AiReceipt'
+          nullable: true
       required:
       - artifacts
       - created_at
@@ -24976,6 +27330,20 @@ components:
           type: string
           format: date-time
           nullable: true
+        thread_id:
+          type: string
+          format: uuid
+          nullable: true
+        interaction_mode:
+          type: string
+          nullable: true
+        autonomy:
+          type: string
+          nullable: true
+        receipt:
+          allOf:
+          - $ref: '#/components/schemas/AiReceipt'
+          nullable: true
         transcript:
           type: array
           items: {}
@@ -24998,6 +27366,16 @@ components:
           type: string
           minLength: 1
           maxLength: 2000
+        interaction_mode:
+          allOf:
+          - $ref: '#/components/schemas/InteractionModeEnum'
+          default: work
+        attachment_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          maxItems: 6
         product:
           type: object
           additionalProperties: {}
@@ -25007,6 +27385,10 @@ components:
         product_sig:
           type: string
           maxLength: 64
+        autonomy:
+          allOf:
+          - $ref: '#/components/schemas/AutonomyEnum'
+          default: propose
       required:
       - message
     AiJobOutcomeActionEnum:
@@ -25159,6 +27541,121 @@ components:
       - context_label
       - context_url
       - job
+    AiReceipt:
+      type: object
+      description: |-
+        Final receipt of a run: the outcome is decided by typed postconditions
+        over saved objects — never by having received provider text.
+      properties:
+        outcome:
+          $ref: '#/components/schemas/AiReceiptOutcomeEnum'
+        summary:
+          type: string
+        autonomy:
+          type: string
+        interaction_mode:
+          type: string
+        objects:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiReceiptObject'
+        checks:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiReceiptCheck'
+        attachments:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        credits:
+          type: integer
+          nullable: true
+        checkpoint:
+          type: string
+          nullable: true
+      required:
+      - attachments
+      - autonomy
+      - checkpoint
+      - checks
+      - credits
+      - interaction_mode
+      - objects
+      - outcome
+      - summary
+    AiReceiptCheck:
+      type: object
+      properties:
+        name:
+          type: string
+        label:
+          type: string
+        passed:
+          type: boolean
+        detail:
+          type: string
+      required:
+      - detail
+      - label
+      - name
+      - passed
+    AiReceiptObject:
+      type: object
+      properties:
+        kind:
+          type: string
+        id:
+          type: string
+        label:
+          type: string
+        url:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/AiReceiptObjectStatusEnum'
+        cause:
+          type: string
+          nullable: true
+        operation_id:
+          type: string
+          nullable: true
+      required:
+      - cause
+      - id
+      - kind
+      - label
+      - operation_id
+      - status
+      - url
+    AiReceiptObjectStatusEnum:
+      enum:
+      - applied
+      - proposed
+      - pending
+      - blocked
+      - undone
+      type: string
+      description: |-
+        * `applied` - applied
+        * `proposed` - proposed
+        * `pending` - pending
+        * `blocked` - blocked
+        * `undone` - undone
+    AiReceiptOutcomeEnum:
+      enum:
+      - complete
+      - partial
+      - proposal
+      - blocked
+      - answer
+      type: string
+      description: |-
+        * `complete` - complete
+        * `partial` - partial
+        * `proposal` - proposal
+        * `blocked` - blocked
+        * `answer` - answer
     AiRouteSettingsRequest:
       type: object
       properties:
@@ -25307,6 +27804,143 @@ components:
       - expected_revision
       - monthly_budget_credits
       - routes
+    AiThread:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        interaction_mode:
+          type: string
+        autonomy:
+          type: string
+        origin:
+          type: string
+        archived:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        last_activity_at:
+          type: string
+          format: date-time
+      required:
+      - archived
+      - autonomy
+      - created_at
+      - id
+      - interaction_mode
+      - last_activity_at
+      - origin
+      - title
+      - updated_at
+    AiThreadCreateRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          default: ''
+          maxLength: 120
+        interaction_mode:
+          allOf:
+          - $ref: '#/components/schemas/InteractionModeEnum'
+          default: chat
+        autonomy:
+          allOf:
+          - $ref: '#/components/schemas/AutonomyEnum'
+          default: approve
+    AiThreadList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiThread'
+        next_cursor:
+          type: string
+          nullable: true
+      required:
+      - items
+      - next_cursor
+    AiTimeline:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiTimelineEntry'
+        next_cursor:
+          type: string
+          nullable: true
+      required:
+      - items
+      - next_cursor
+    AiTimelineEntry:
+      type: object
+      properties:
+        kind:
+          $ref: '#/components/schemas/AiTimelineEntryKindEnum'
+        id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        goal:
+          type: string
+          nullable: true
+        state:
+          type: string
+          nullable: true
+        surface:
+          type: string
+        refs:
+          type: object
+          additionalProperties: {}
+        interaction_mode:
+          type: string
+        autonomy:
+          type: string
+        receipt:
+          allOf:
+          - $ref: '#/components/schemas/AiReceipt'
+          nullable: true
+        error_code:
+          type: string
+          nullable: true
+        question:
+          type: string
+          nullable: true
+        answer:
+          type: string
+          nullable: true
+      required:
+      - answer
+      - autonomy
+      - created_at
+      - error_code
+      - goal
+      - id
+      - interaction_mode
+      - kind
+      - question
+      - receipt
+      - refs
+      - state
+      - surface
+    AiTimelineEntryKindEnum:
+      enum:
+      - job
+      - ask
+      type: string
+      description: |-
+        * `job` - job
+        * `ask` - ask
     AiUsageWork:
       type: object
       properties:
@@ -25961,6 +28595,8 @@ components:
         created_at:
           type: string
           format: date-time
+        layout:
+          type: string
       required:
       - artifact_scope
       - byte_size
@@ -25995,6 +28631,10 @@ components:
           type: string
           format: uuid
           nullable: true
+        layout:
+          allOf:
+          - $ref: '#/components/schemas/LayoutEnum'
+          default: STANDARD
       required:
       - document_type
       - format
@@ -26013,6 +28653,8 @@ components:
         document_type:
           type: string
         format:
+          type: string
+        layout:
           type: string
         bom_hash:
           type: string
@@ -26173,6 +28815,16 @@ components:
         * `profile_articles` - profile_articles
         * `profile_systems` - profile_systems
         * `reinforcement_cut_policies` - reinforcement_cut_policies
+    AutonomyEnum:
+      enum:
+      - propose
+      - approve
+      - draft
+      type: string
+      description: |-
+        * `propose` - propose
+        * `approve` - approve
+        * `draft` - draft
     AxisEnum:
       enum:
       - V
@@ -26194,6 +28846,21 @@ components:
       - half
       - one_third
       - two_thirds
+    BalanceOrigin:
+      type: object
+      properties:
+        origin:
+          type: string
+          nullable: true
+        remaining:
+          type: integer
+        expires_at:
+          type: string
+          nullable: true
+      required:
+      - expires_at
+      - origin
+      - remaining
     BarActualRequest:
       type: object
       properties:
@@ -26416,6 +29083,134 @@ components:
       - plan
       - subscription
       - trial_ends_at
+    CapabilitiesResponse:
+      type: object
+      properties:
+        terms_version:
+          type: string
+        quota_policy_version:
+          type: string
+        consumption_policy_version:
+          type: string
+        plan:
+          $ref: '#/components/schemas/CapabilityPlan'
+        ai_entitlement:
+          $ref: '#/components/schemas/AiEntitlement'
+        model_selection:
+          type: string
+          nullable: true
+        capabilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/Capability'
+        extras:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        plans:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlanQuota'
+        limits:
+          $ref: '#/components/schemas/CapabilityLimits'
+        balances:
+          $ref: '#/components/schemas/CapabilityBalances'
+        budget:
+          $ref: '#/components/schemas/CapabilityBudget'
+        ai_available:
+          type: boolean
+        reason_code:
+          $ref: '#/components/schemas/ReasonCodeEnum'
+        reason:
+          type: string
+        role:
+          type: string
+      required:
+      - ai_available
+      - ai_entitlement
+      - balances
+      - budget
+      - capabilities
+      - consumption_policy_version
+      - extras
+      - limits
+      - model_selection
+      - plan
+      - plans
+      - quota_policy_version
+      - reason
+      - reason_code
+      - role
+      - terms_version
+    Capability:
+      type: object
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        supported:
+          type: boolean
+        permitted:
+          type: boolean
+        available:
+          type: boolean
+        reason_code:
+          $ref: '#/components/schemas/ReasonCodeEnum'
+        reason:
+          type: string
+        credits_per_exchange:
+          type: integer
+          nullable: true
+      required:
+      - available
+      - credits_per_exchange
+      - id
+      - label
+      - permitted
+      - reason
+      - reason_code
+      - supported
+    CapabilityBalances:
+      type: object
+      properties:
+        by_origin:
+          type: array
+          items:
+            $ref: '#/components/schemas/BalanceOrigin'
+        usable:
+          type: integer
+          nullable: true
+        reserved:
+          type: integer
+          nullable: true
+        spendable:
+          type: integer
+          nullable: true
+      required:
+      - by_origin
+      - reserved
+      - spendable
+      - usable
+    CapabilityBudget:
+      type: object
+      properties:
+        monthly_limit:
+          type: integer
+          nullable: true
+        used:
+          type: integer
+          nullable: true
+        window_start:
+          type: string
+        timezone:
+          type: string
+      required:
+      - monthly_limit
+      - timezone
+      - used
+      - window_start
     CapabilityEnum:
       enum:
       - design_assist
@@ -26428,6 +29223,56 @@ components:
         * `agent` - agent
         * `context_assist` - context_assist
         * `catalog_import` - catalog_import
+    CapabilityLimits:
+      type: object
+      properties:
+        included_credits:
+          type: integer
+        unit:
+          type: string
+        window_kind:
+          type: string
+        policy_version:
+          type: string
+        unit_credits:
+          type: integer
+          nullable: true
+        multiplier:
+          type: integer
+          nullable: true
+        source:
+          type: string
+        window:
+          allOf:
+          - $ref: '#/components/schemas/ServiceWindow'
+          nullable: true
+      required:
+      - included_credits
+      - multiplier
+      - policy_version
+      - source
+      - unit
+      - unit_credits
+      - window
+      - window_kind
+    CapabilityPlan:
+      type: object
+      properties:
+        code:
+          type: string
+        cycle:
+          type: string
+          nullable: true
+        active:
+          type: boolean
+        trial_ends_at:
+          type: string
+          nullable: true
+      required:
+      - active
+      - code
+      - cycle
+      - trial_ends_at
     CatalogChange:
       type: object
       properties:
@@ -26623,6 +29468,9 @@ components:
         error_code:
           type: string
           nullable: true
+        progress:
+          type: object
+          additionalProperties: {}
         created_at:
           type: string
           format: date-time
@@ -28505,6 +31353,24 @@ components:
       - require_mfa
       - tax_id
       - updated_at
+    CompanyDesignDefaults:
+      type: object
+      properties:
+        values:
+          $ref: '#/components/schemas/DesignDefaults'
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - values
+    CompanyDesignDefaultsWriteRequest:
+      type: object
+      properties:
+        values:
+          $ref: '#/components/schemas/DesignDefaultsRequest'
+      required:
+      - values
     CompanyPreviewRequest:
       type: object
       properties:
@@ -28874,6 +31740,51 @@ components:
       - waste_mm
       - waste_pct
       - yield_pct
+    CutDraft:
+      type: object
+      properties:
+        state:
+          $ref: '#/components/schemas/CutDraftStateEnum'
+        missing:
+          type: array
+          items:
+            $ref: '#/components/schemas/CutMissing'
+        profile:
+          $ref: '#/components/schemas/CutProfile'
+        stock_source:
+          type: string
+        bars:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        purchase:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        unplaced:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        metrics:
+          type: object
+          additionalProperties: {}
+          nullable: true
+      required:
+      - missing
+      - state
+    CutDraftStateEnum:
+      enum:
+      - READY
+      - MISSING
+      - EMPTY
+      type: string
+      description: |-
+        * `READY` - READY
+        * `MISSING` - MISSING
+        * `EMPTY` - EMPTY
     CutMaterialEnum:
       enum:
       - PVC
@@ -28884,6 +31795,23 @@ components:
         * `PVC` - PVC
         * `ALUMINIUM` - ALUMINIUM
         * `STEEL` - STEEL
+    CutMissing:
+      type: object
+      properties:
+        cause:
+          type: string
+        action:
+          type: string
+        path:
+          type: string
+        window:
+          type: string
+        detail:
+          type: string
+      required:
+      - action
+      - cause
+      - path
     CutPlacement:
       type: object
       properties:
@@ -28935,6 +31863,22 @@ components:
       - source_position_id
       - unit_index
       - workshop_sku
+    CutProfile:
+      type: object
+      properties:
+        code:
+          type: string
+        kerf_mm:
+          type: string
+        head_trim_mm:
+          type: string
+        tail_trim_mm:
+          type: string
+      required:
+      - code
+      - head_trim_mm
+      - kerf_mm
+      - tail_trim_mm
     DataProvenanceEnum:
       enum:
       - SEED_SYNTHETIC
@@ -29468,6 +32412,48 @@ components:
       - costs_visible
       - currency
       - items
+    DesignDefaultValue:
+      type: object
+      properties:
+        value:
+          type: string
+        source:
+          $ref: '#/components/schemas/DesignDefaultValueSourceEnum'
+      required:
+      - source
+      - value
+    DesignDefaultValueSourceEnum:
+      enum:
+      - company
+      - project
+      type: string
+      description: |-
+        * `company` - company
+        * `project` - project
+    DesignDefaults:
+      type: object
+      properties:
+        system_id:
+          type: string
+          maxLength: 80
+        color:
+          type: string
+          maxLength: 80
+        glass_article_sku:
+          type: string
+          maxLength: 80
+    DesignDefaultsRequest:
+      type: object
+      properties:
+        system_id:
+          type: string
+          maxLength: 80
+        color:
+          type: string
+          maxLength: 80
+        glass_article_sku:
+          type: string
+          maxLength: 80
     DesignOperation:
       oneOf:
       - $ref: '#/components/schemas/OperationSplitBay'
@@ -30021,6 +33007,12 @@ components:
           maxLength: 240
         commercial_terms:
           $ref: '#/components/schemas/CommercialTerms'
+        quotation_template:
+          $ref: '#/components/schemas/QuotationTemplateEnum'
+        acceptance_mode:
+          $ref: '#/components/schemas/AcceptanceModeEnum'
+        quotation_layout:
+          $ref: '#/components/schemas/QuotationLayout'
       required:
       - accent
       - commercial_terms
@@ -30059,6 +33051,12 @@ components:
           maxLength: 240
         commercial_terms:
           $ref: '#/components/schemas/CommercialTermsRequest'
+        quotation_template:
+          $ref: '#/components/schemas/QuotationTemplateEnum'
+        acceptance_mode:
+          $ref: '#/components/schemas/AcceptanceModeEnum'
+        quotation_layout:
+          $ref: '#/components/schemas/QuotationLayoutRequest'
     DocumentTypeEnum:
       enum:
       - DOC-01
@@ -30483,6 +33481,16 @@ components:
       - bottom_mm
       - height_from_bottom_mm
       - y_mm
+    DrawingSizeEnum:
+      enum:
+      - S
+      - M
+      - L
+      type: string
+      description: |-
+        * `S` - S
+        * `M` - M
+        * `L` - L
     DueEventEnum:
       enum:
       - APPROVAL
@@ -30526,6 +33534,15 @@ components:
       - files
       - order_code
       - order_id
+    EffectiveDesignDefaults:
+      type: object
+      properties:
+        system_id:
+          $ref: '#/components/schemas/DesignDefaultValue'
+        color:
+          $ref: '#/components/schemas/DesignDefaultValue'
+        glass_article_sku:
+          $ref: '#/components/schemas/DesignDefaultValue'
     EligibilityEvidenceRequest:
       type: object
       properties:
@@ -31802,6 +34819,49 @@ components:
       - description
       - reason
       - source
+    FinishReference:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        finish_code:
+          type: string
+        original_type:
+          type: string
+        tile_mm:
+          type: string
+        grain:
+          $ref: '#/components/schemas/GrainEnum'
+        version:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+      - created_at
+      - finish_code
+      - grain
+      - id
+      - name
+      - original_type
+      - tile_mm
+      - updated_at
+      - version
+    FinishReferenceList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/FinishReference'
+      required:
+      - items
     FinishSurcharge:
       type: object
       properties:
@@ -31978,6 +35038,14 @@ components:
       - simulated
       type: string
       description: '* `simulated` - simulated'
+    FlowSimulationRequestOutcomeEnum:
+      enum:
+      - PAID
+      - FAILED
+      type: string
+      description: |-
+        * `PAID` - PAID
+        * `FAILED` - FAILED
     FlowSimulationRequestRequest:
       type: object
       properties:
@@ -31986,7 +35054,7 @@ components:
           minLength: 20
           maxLength: 100
         outcome:
-          $ref: '#/components/schemas/OutcomeEnum'
+          $ref: '#/components/schemas/FlowSimulationRequestOutcomeEnum'
       required:
       - outcome
       - token
@@ -32550,6 +35618,16 @@ components:
       - bead_width_mm
       - glass_thickness_mm
       - sku
+    GrainEnum:
+      enum:
+      - ALONG
+      - ACROSS
+      - NONE
+      type: string
+      description: |-
+        * `ALONG` - ALONG
+        * `ACROSS` - ACROSS
+        * `NONE` - NONE
     HandleIntent:
       type: object
       properties:
@@ -33338,6 +36416,14 @@ components:
       description: |-
         * `VERIFIED` - VERIFIED
         * `MISMATCH` - MISMATCH
+    InteractionModeEnum:
+      enum:
+      - chat
+      - work
+      type: string
+      description: |-
+        * `chat` - chat
+        * `work` - work
     InternalApprovalRequest:
       type: object
       properties:
@@ -34065,6 +37151,50 @@ components:
       - hourly_rate
       - hours
       - id
+    LayoutEnum:
+      enum:
+      - STANDARD
+      - ESENCIAL
+      - PROYECTO
+      - ALTERNATIVAS
+      - PLANO
+      - COMPACTA
+      - VENTANA
+      - OBRA
+      type: string
+      description: |-
+        * `STANDARD` - STANDARD
+        * `ESENCIAL` - ESENCIAL
+        * `PROYECTO` - PROYECTO
+        * `ALTERNATIVAS` - ALTERNATIVAS
+        * `PLANO` - PLANO
+        * `COMPACTA` - COMPACTA
+        * `VENTANA` - VENTANA
+        * `OBRA` - OBRA
+    LayoutTexts:
+      type: object
+      properties:
+        intro:
+          type: string
+          maxLength: 2000
+        closing:
+          type: string
+          maxLength: 2000
+        notes:
+          type: string
+          maxLength: 2000
+    LayoutTextsRequest:
+      type: object
+      properties:
+        intro:
+          type: string
+          maxLength: 2000
+        closing:
+          type: string
+          maxLength: 2000
+        notes:
+          type: string
+          maxLength: 2000
     LeafWeight:
       type: object
       properties:
@@ -34395,6 +37525,35 @@ components:
       description: |-
         * `PVC` - PVC
         * `ALUMINIUM` - ALUMINIUM
+    MaterialGroups:
+      type: object
+      properties:
+        profiles:
+          type: array
+          items:
+            $ref: '#/components/schemas/MaterialRow'
+        reinforcements:
+          type: array
+          items:
+            $ref: '#/components/schemas/MaterialRow'
+        glass:
+          type: array
+          items:
+            $ref: '#/components/schemas/MaterialRow'
+        hardware:
+          type: array
+          items:
+            $ref: '#/components/schemas/MaterialRow'
+        other:
+          type: array
+          items:
+            $ref: '#/components/schemas/MaterialRow'
+      required:
+      - glass
+      - hardware
+      - other
+      - profiles
+      - reinforcements
     MaterialRecheck:
       type: object
       properties:
@@ -34415,6 +37574,57 @@ components:
       - order_id
       - shortage
       - stock_reservations
+    MaterialRow:
+      type: object
+      properties:
+        reference:
+          type: string
+        name:
+          type: string
+        finish:
+          type: string
+          nullable: true
+        unit:
+          type: string
+        count:
+          type: integer
+        length_mm:
+          type: string
+          nullable: true
+        length_m:
+          type: string
+          nullable: true
+        area_m2:
+          type: string
+          nullable: true
+        windows:
+          type: array
+          items:
+            type: string
+      required:
+      - area_m2
+      - count
+      - finish
+      - length_m
+      - length_mm
+      - name
+      - reference
+      - unit
+      - windows
+    MaterialsFreshness:
+      type: object
+      properties:
+        latest_revision:
+          type: string
+          nullable: true
+        latest_version_id:
+          type: string
+          format: uuid
+        design_changed:
+          type: boolean
+      required:
+      - design_changed
+      - latest_revision
     MeasurementConfirmRequest:
       type: object
       properties:
@@ -38879,14 +42089,6 @@ components:
           type: string
           nullable: true
           maxLength: 255
-    OutcomeEnum:
-      enum:
-      - PAID
-      - FAILED
-      type: string
-      description: |-
-        * `PAID` - PAID
-        * `FAILED` - FAILED
     PackingLabel:
       type: object
       properties:
@@ -39033,6 +42235,19 @@ components:
         * `PERSON` - PERSON
         * `COMPANY` - COMPANY
         * `UNKNOWN` - UNKNOWN
+    PatchedAiThreadUpdateRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 120
+        archived:
+          type: boolean
+        interaction_mode:
+          $ref: '#/components/schemas/InteractionModeEnum'
+        autonomy:
+          $ref: '#/components/schemas/AutonomyEnum'
     PatchedArticleWriteRequest:
       type: object
       properties:
@@ -39305,6 +42520,19 @@ components:
           nullable: true
         active:
           type: boolean
+    PatchedFinishReferenceUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        tile_mm:
+          type: string
+          minLength: 1
+          maxLength: 12
+        grain:
+          $ref: '#/components/schemas/GrainEnum'
     PatchedKitWriteRequest:
       type: object
       properties:
@@ -39379,7 +42607,7 @@ components:
           maxLength: 255
         client_name:
           type: string
-          minLength: 1
+          default: ''
           maxLength: 255
         client_rut:
           type: string
@@ -39416,6 +42644,8 @@ components:
           type: string
         notes_internal:
           type: string
+        design_defaults:
+          $ref: '#/components/schemas/DesignDefaultsRequest'
         expected_updated_at:
           type: string
           format: date-time
@@ -40238,6 +43468,22 @@ components:
       required:
       - x_mm
       - y_mm
+    PlanQuota:
+      type: object
+      properties:
+        code:
+          type: string
+        ai:
+          type: boolean
+        included_credits:
+          type: integer
+        window_kind:
+          type: string
+      required:
+      - ai
+      - code
+      - included_credits
+      - window_kind
     PolicyResponse:
       type: object
       properties:
@@ -41846,6 +45092,9 @@ components:
           allOf:
           - $ref: '#/components/schemas/ProfileSection'
           nullable: true
+        corner_cut_deg:
+          type: integer
+          nullable: true
       required:
       - face_width_mm
       - material
@@ -42445,6 +45694,21 @@ components:
             $ref: '#/components/schemas/ProjectResponse'
       required:
       - items
+    ProjectMaterials:
+      type: object
+      properties:
+        consolidated:
+          $ref: '#/components/schemas/MaterialGroups'
+        windows:
+          type: array
+          items:
+            $ref: '#/components/schemas/WindowMaterials'
+        freshness:
+          $ref: '#/components/schemas/MaterialsFreshness'
+      required:
+      - consolidated
+      - freshness
+      - windows
     ProjectOpsApplyRequest:
       type: object
       properties:
@@ -42650,6 +45914,10 @@ components:
           type: string
         notes_internal:
           type: string
+        design_defaults:
+          $ref: '#/components/schemas/DesignDefaults'
+        effective_design_defaults:
+          $ref: '#/components/schemas/EffectiveDesignDefaults'
         accepted_version_id:
           type: string
           format: uuid
@@ -42791,7 +46059,7 @@ components:
           maxLength: 255
         client_name:
           type: string
-          minLength: 1
+          default: ''
           maxLength: 255
         client_rut:
           type: string
@@ -42828,8 +46096,9 @@ components:
           type: string
         notes_internal:
           type: string
+        design_defaults:
+          $ref: '#/components/schemas/DesignDefaultsRequest'
       required:
-      - client_name
       - name
     ProviderEnum:
       enum:
@@ -43250,6 +46519,32 @@ components:
       description: |-
         * `PASS` - PASS
         * `FAIL` - FAIL
+    QuotationBlockEnum:
+      enum:
+      - intro
+      - client
+      - hero
+      - summary
+      - positions
+      - alternatives
+      - commercial
+      - terms
+      - services
+      - acceptance
+      - closing
+      type: string
+      description: |-
+        * `intro` - intro
+        * `client` - client
+        * `hero` - hero
+        * `summary` - summary
+        * `positions` - positions
+        * `alternatives` - alternatives
+        * `commercial` - commercial
+        * `terms` - terms
+        * `services` - services
+        * `acceptance` - acceptance
+        * `closing` - closing
     QuotationCustomer:
       type: object
       properties:
@@ -43424,6 +46719,97 @@ components:
       - expected_recipient
       - expected_snapshot_sha256
       - preview_id
+    QuotationLayout:
+      type: object
+      description: |-
+        Editable composition of a quotation: family, block order/visibility,
+        editorial texts and presentation. Never numbers: those come sealed from
+        the calculation.
+      properties:
+        template:
+          $ref: '#/components/schemas/QuotationTemplateEnum'
+        order:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuotationBlockEnum'
+          maxItems: 20
+        hidden:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuotationBlockEnum'
+          maxItems: 20
+        texts:
+          $ref: '#/components/schemas/LayoutTexts'
+        drawing_size:
+          $ref: '#/components/schemas/DrawingSizeEnum'
+        unit_prices:
+          type: boolean
+    QuotationLayoutRequest:
+      type: object
+      description: |-
+        Editable composition of a quotation: family, block order/visibility,
+        editorial texts and presentation. Never numbers: those come sealed from
+        the calculation.
+      properties:
+        template:
+          $ref: '#/components/schemas/QuotationTemplateEnum'
+        order:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuotationBlockEnum'
+          maxItems: 20
+        hidden:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuotationBlockEnum'
+          maxItems: 20
+        texts:
+          $ref: '#/components/schemas/LayoutTextsRequest'
+        drawing_size:
+          $ref: '#/components/schemas/DrawingSizeEnum'
+        unit_prices:
+          type: boolean
+    QuotationLayoutResponse:
+      type: object
+      properties:
+        layout:
+          $ref: '#/components/schemas/QuotationLayout'
+        prepared:
+          type: boolean
+      required:
+      - layout
+      - prepared
+    QuotationNumberingRequest:
+      type: object
+      properties:
+        prefix:
+          type: string
+          maxLength: 20
+        next_number:
+          type: integer
+          maximum: 999999999
+          minimum: 1
+      required:
+      - next_number
+      - prefix
+    QuotationNumberingResponse:
+      type: object
+      properties:
+        prefix:
+          type: string
+        next_number:
+          type: integer
+        highest_assigned:
+          type: integer
+          nullable: true
+        example:
+          type: string
+          nullable: true
+      required:
+      - example
+      - highest_assigned
+      - next_number
+      - prefix
     QuotationPreview:
       type: object
       properties:
@@ -43490,6 +46876,16 @@ components:
           format: uuid
       required:
       - pricing_operation_id
+    QuotationTemplateEnum:
+      enum:
+      - ESENCIAL
+      - PROYECTO
+      - ALTERNATIVAS
+      type: string
+      description: |-
+        * `ESENCIAL` - ESENCIAL
+        * `PROYECTO` - PROYECTO
+        * `ALTERNATIVAS` - ALTERNATIVAS
     RailTypeEnum:
       enum:
       - dual
@@ -43557,6 +46953,26 @@ components:
       - label
       - resource
       - row_id
+    ReasonCodeEnum:
+      enum:
+      - ok
+      - no_ai_entitlement
+      - plan_inactive
+      - not_supported
+      - role_not_permitted
+      - provider_missing
+      - insufficient_credits
+      - budget_exhausted
+      type: string
+      description: |-
+        * `ok` - ok
+        * `no_ai_entitlement` - no_ai_entitlement
+        * `plan_inactive` - plan_inactive
+        * `not_supported` - not_supported
+        * `role_not_permitted` - role_not_permitted
+        * `provider_missing` - provider_missing
+        * `insufficient_credits` - insufficient_credits
+        * `budget_exhausted` - budget_exhausted
     ReceiptLineRequestRequest:
       type: object
       properties:
@@ -43642,12 +47058,168 @@ components:
       - price_change
       - proposal_token
       - revision_code
+    ReferenceArticle:
+      type: object
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+        source:
+          type: string
+        pages:
+          type: string
+          nullable: true
+      required:
+      - code
+      - name
+      - role
+      - source
+    ReferenceCapabilities:
+      type: object
+      properties:
+        reference:
+          type: boolean
+        quotable:
+          type: boolean
+        manufacturable:
+          type: boolean
+        cnc:
+          type: boolean
+      required:
+      - cnc
+      - manufacturable
+      - quotable
+      - reference
     ReferenceEnum:
       type: string
       enum:
       - LEAF_TOP
       - LEAF_BOTTOM
       - FLOOR
+    ReferenceFact:
+      type: object
+      properties:
+        label:
+          type: string
+        value:
+          type: string
+        source:
+          type: string
+        pages:
+          type: string
+          nullable: true
+      required:
+      - label
+      - source
+      - value
+    ReferenceRegistry:
+      type: object
+      properties:
+        version:
+          type: string
+        note:
+          type: string
+        series:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReferenceSeries'
+        sources:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ReferenceSource'
+      required:
+      - note
+      - series
+      - sources
+      - version
+    ReferenceSeries:
+      type: object
+      properties:
+        id:
+          type: string
+        manufacturer:
+          type: string
+        series_code:
+          type: string
+        series_name:
+          type: string
+        material:
+          type: string
+        family:
+          type: string
+        uses:
+          type: array
+          items:
+            type: string
+        facts:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReferenceFact'
+        articles:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReferenceArticle'
+        sources:
+          type: array
+          items:
+            type: string
+        capabilities:
+          $ref: '#/components/schemas/ReferenceCapabilities'
+        missing:
+          type: array
+          items:
+            type: string
+        incidents:
+          type: array
+          items:
+            type: string
+        seed:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - articles
+      - capabilities
+      - facts
+      - family
+      - id
+      - incidents
+      - manufacturer
+      - material
+      - missing
+      - seed
+      - series_code
+      - series_name
+      - sources
+      - uses
+    ReferenceSource:
+      type: object
+      properties:
+        title:
+          type: string
+        holder:
+          type: string
+        kind:
+          type: string
+        sha256:
+          type: string
+          nullable: true
+        pages_total:
+          type: integer
+          nullable: true
+        url:
+          type: string
+          nullable: true
+      required:
+      - holder
+      - kind
+      - pages_total
+      - sha256
+      - title
+      - url
     Reinforcement:
       type: object
       properties:
@@ -44509,6 +48081,23 @@ components:
           maxLength: 200
       required:
       - confirmed
+    ServiceWindow:
+      type: object
+      properties:
+        start:
+          type: string
+        end:
+          type: string
+        next_grant_at:
+          type: string
+          nullable: true
+        cycle:
+          type: string
+      required:
+      - cycle
+      - end
+      - next_grant_at
+      - start
     ServicesResponse:
       type: object
       properties:
@@ -46532,6 +50121,23 @@ components:
         * `APPROVAL` - APPROVAL
         * `DELIVERY` - DELIVERY
         * `INSTALLATION` - INSTALLATION
+    WindowMaterials:
+      type: object
+      properties:
+        position_id:
+          type: string
+          format: uuid
+        label:
+          type: string
+        quantity:
+          type: integer
+        materials:
+          $ref: '#/components/schemas/MaterialGroups'
+      required:
+      - label
+      - materials
+      - position_id
+      - quantity
     WithdrawRequest:
       type: object
       properties:

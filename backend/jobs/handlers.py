@@ -67,6 +67,7 @@ def generate_artifact_job(
                 order_id=payload.get("order_id"),
                 document_type=payload["document_type"],
                 file_format=payload["format"],
+                layout=payload.get("layout") or "STANDARD",
             )
         except DocumentaryError as error:
             raise JobPermanentError(error.code) from error

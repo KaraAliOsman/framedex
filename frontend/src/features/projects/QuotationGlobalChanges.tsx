@@ -16,7 +16,7 @@ import type {
 import { ApiError } from "../../api/apiMutator";
 import { actionErrorDetail } from "../errors";
 import { SimulationPreview } from "../assistant/SimulationPreview";
-import { DimLoader } from "../../ui/Signature";
+import { Loading } from "../../ui/Signature";
 import { formatMoney } from "../money";
 import { domainLabel } from "../../i18n/domainLabels";
 import { ThermalDelta } from "./ThermalDelta";
@@ -288,7 +288,7 @@ export function QuotationGlobalChanges({
             ) : null}
             {systems.isPending || (kind !== "system" && kind !== "handle" && catalog.isPending) ? (
               <p>
-                <DimLoader label="Cargando el catálogo" /> Cargando el catálogo…
+                <Loading label="Cargando el catálogo" />
               </p>
             ) : systems.isError || catalog.isError ? (
               <div>
@@ -393,7 +393,7 @@ export function QuotationGlobalChanges({
       )}
       {busy ? (
         <p>
-          <DimLoader label="Revisando cambios globales" /> Revisando el cambio…
+          <Loading label="Revisando cambios globales" />
         </p>
       ) : null}
       {error ? <p role="alert">{error}</p> : null}

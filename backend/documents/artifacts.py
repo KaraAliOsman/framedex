@@ -23,6 +23,11 @@ logger = logging.getLogger(__name__)
 
 _REVISION_DOCUMENTS = {"DOC-01", "DOC-03", "DOC-05", "DOC-06", "DOC-07"}
 _ORDER_DOCUMENTS = {"DOC-02", "DOC-04", "DOC-08"}
+_LAYOUTS = {
+    "DOC-01": {"STANDARD", "ESENCIAL", "PROYECTO", "ALTERNATIVAS"},
+    "DOC-03": {"STANDARD", "PLANO"},
+    "DOC-05": {"STANDARD", "COMPACTA", "VENTANA", "OBRA"},
+}
 _DOCUMENT_ROLES = {
     "DOC-01": {"OWNER", "ESTIMATOR"},
     "DOC-02": {"OWNER", "WORKSHOP_MANAGER"},
@@ -47,6 +52,7 @@ def _metadata(row: dict[str, object]) -> dict[str, object]:
         "artifact_scope_id": str(row["artifact_scope_id"]),
         "document_type": row["document_type"],
         "format": row["format"],
+        "layout": row.get("layout", "STANDARD"),
         "bom_hash": row["bom_hash"],
         "file_sha256": row["file_sha256"],
         "byte_size": row["byte_size"],
@@ -109,9 +115,11 @@ def _order_snapshot(order_id: UUID, project_version_id: UUID, org_id: UUID) -> t
 
 def generate_artifact(
     *, org_id: UUID, actor_id: UUID, role: str, project_version_id: UUID,
-    order_id: UUID | None, document_type: str, file_format: str,
+    order_id: UUID | None, document_type: str, file_format: str, layout: str = "STANDARD",
 ) -> tuple[dict[str, object], bool]:
     _require_document_role(document_type, role)
+    if layout != "STANDARD" and (layout not in _LAYOUTS.get(document_type, set()) or file_format != "PDF"):
+        raise DocumentaryError("document_layout_invalid")
     if document_type in _REVISION_DOCUMENTS:
         if order_id is not None or file_format != "PDF":
             raise DocumentaryError("document_scope_mismatch")
@@ -125,7 +133,7 @@ def generate_artifact(
     else:
         raise DocumentaryError("document_type_invalid")
 
-    slot = f"{scope_id}:{document_type}:{file_format}"
+    slot = f"{scope_id}:{document_type}:{file_format}:{layout}"
     storage: SupabaseDocumentStorage | None = None
     object_key: str | None = None
     try:
@@ -151,8 +159,8 @@ def generate_artifact(
             existing = rows(
                 "SELECT * FROM public.document_artifacts "
                 "WHERE org_id=%s AND project_version_id=%s AND artifact_scope=%s "
-                "AND artifact_scope_id=%s AND document_type=%s AND format=%s",
-                [org_id, project_version_id, scope, scope_id, document_type, file_format],
+                "AND artifact_scope_id=%s AND document_type=%s AND format=%s AND layout=%s",
+                [org_id, project_version_id, scope, scope_id, document_type, file_format, layout],
             )
             if existing:
                 if len(existing) != 1:
@@ -168,7 +176,8 @@ def generate_artifact(
                     from portal.document_links import document_portal_url
                     render_options["portal_url"] = document_portal_url(org_id=org_id, version=version, actor_id=actor_id)
                 content, media_type = render_pdf_document(
-                    document_type, frozen, pdf_identifier=identifier, **render_options
+                    document_type, frozen, pdf_identifier=identifier,
+                    layout=None if layout == "STANDARD" else layout, **render_options
                 )
                 extension = "pdf"
             else:
@@ -177,7 +186,7 @@ def generate_artifact(
             content_hash = file_sha256(content)
             object_key = (
                 f"org_{org_id}/projects/{version['project_id']}/{version['revision_code']}/"
-                f"{document_type.lower()}_{file_format.lower()}_{content_hash}.{extension}"
+                f"{document_type.lower()}_{file_format.lower()}_{layout.lower()}_{content_hash}.{extension}"
             )
             storage = SupabaseDocumentStorage()
             storage.upload_immutable(object_key, content, media_type)
@@ -185,13 +194,13 @@ def generate_artifact(
                 "INSERT INTO public.document_artifacts("
                 "org_id,project_id,project_version_id,order_id,order_type,artifact_scope,"
                 "artifact_scope_id,document_type,format,bom_hash,revision_snapshot_sha256,"
-                "storage_bucket,storage_object_key,file_sha256,media_type,byte_size,created_by) "
-                "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'documents',%s,%s,%s,%s,%s) "
+                "storage_bucket,storage_object_key,file_sha256,media_type,byte_size,created_by,layout) "
+                "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'documents',%s,%s,%s,%s,%s,%s) "
                 "RETURNING *",
                 [org_id, version["project_id"], project_version_id, order_id,
                  None if order is None else order["order_type"], scope, scope_id,
                  document_type, file_format, version["bom_hash"], version["snapshot_sha256"],
-                 object_key, content_hash, media_type, len(content), actor_id],
+                 object_key, content_hash, media_type, len(content), actor_id, layout],
             )
             return _metadata(artifact), True
     except Exception:
@@ -249,7 +258,7 @@ def list_artifacts(
         found = rows(
             "SELECT a.id, a.document_type, a.format, a.artifact_scope,"
             " a.project_version_id, a.order_id, a.order_type::text,"
-            " a.byte_size, a.created_at, v.revision_code"
+            " a.byte_size, a.created_at, a.layout, v.revision_code"
             " FROM public.document_artifacts a"
             " JOIN public.project_versions v ON v.id = a.project_version_id"
             " WHERE a.org_id=%s AND a.project_id=%s"
@@ -268,6 +277,7 @@ def list_artifacts(
             "revision_code": item["revision_code"],
             "byte_size": item["byte_size"],
             "created_at": item["created_at"],
+            "layout": item.get("layout") or "STANDARD",
         }
         for item in found
         if role in _DOCUMENT_ROLES.get(str(item["document_type"]), set())

@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 import { t } from "../i18n/es-CL";
 import { Wordmark } from "../brand/Brand";
-import { DimLoader } from "../ui/Signature";
+import { Loading } from "../ui/Signature";
 
 import { useAuthSession } from "./AuthSessionProvider";
 import { consumeReturnTo } from "./returnTo";
@@ -60,7 +60,7 @@ export function AuthCallbackPage(): JSX.Element {
     <main className="auth-screen" data-density="office" data-testid="auth-callback">
       <section className="auth-card" aria-label="Comprobando acceso">
         <Wordmark width={176} />
-        <DimLoader label={t("auth.callback")} />
+        <Loading label={t("auth.callback")} />
       </section>
     </main>
   );

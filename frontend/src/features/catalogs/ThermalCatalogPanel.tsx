@@ -10,7 +10,7 @@ import { ApiError } from "../../api/apiMutator";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { formatDate, formatDecimal, fmtMm, parseDecimalInput } from "../../format";
 import { domainLabel } from "../../i18n/domainLabels";
-import { Button, DemoBadge, DimLoader, ValidatedForm, useConfirm } from "../../ui";
+import { Button, DemoBadge, Loading, ValidatedForm, useConfirm } from "../../ui";
 import { actionErrorDetail } from "../errors";
 import type { ThermalSource } from "../projects/thermalModel";
 import "../projects/thermal.css";
@@ -156,7 +156,7 @@ export function ThermalCatalogPanel({ systemId }: { systemId: string }) {
       setBusy(false);
     }
   }
-  if (query.isPending) return <DimLoader label="Leyendo informes térmicos" />;
+  if (query.isPending) return <Loading label="Leyendo informes térmicos" />;
   if (query.isError)
     return (
       <section role="alert">
@@ -229,7 +229,7 @@ export function ThermalCatalogPanel({ systemId }: { systemId: string }) {
         </p>
       )}
       {error && <p role="alert">{error}</p>}
-      {busy && <DimLoader label="Guardando evidencia revisada" />}
+      {busy && <Loading label="Guardando evidencia revisada" />}
       {draft && (
         <ValidatedForm
           noValidate

@@ -7,7 +7,9 @@ import type {
 } from "../../api/generated/models";
 import { fmtMm, formatMoney, parseDecimalInput } from "../../format";
 import { domainLabel } from "../../i18n/domainLabels";
-import { StatusBadge, EmptyState, useConfirm } from "../../ui";
+import { StatusBadge, EmptyState, Loading, useConfirm } from "../../ui";
+import { Icon } from "../../ui/Icon";
+import { Menu } from "../../ui/Overlays";
 import { PositionThumb } from "./PositionThumb";
 import { VirtualPositionRows, type PositionRowEntry } from "./VirtualPositionRows";
 import { ProjectOpsReview, useProjectOperations } from "./ProjectOpsReview";
@@ -26,12 +28,7 @@ export function positionGlass(position: PositionResponse): string {
       position.bom.glasses.map((glass) => glass.glass_spec || glass.article_sku).filter(Boolean),
     ),
   ];
-  return (
-    values.join(" · ") ||
-    (position.bom.panels.length
-      ? "Panel declarado en el motor"
-      : "Sin dato · asigna el vidrio en el editor")
-  );
+  return values.join(" · ") || (position.bom.panels.length ? "Panel" : "Sin vidrio");
 }
 export function positionReadiness(position: PositionResponse): {
   label: string;
@@ -40,28 +37,28 @@ export function positionReadiness(position: PositionResponse): {
 } {
   if (!position.bom)
     return {
-      label: "Bloqueada",
+      label: "Sin cálculo",
       cause: "Falta un cálculo guardado. Abre el editor y revisa el diseño.",
       tone: "danger",
     };
   const measurement = position.measurements as { current?: boolean; state?: string } | null;
   if (measurement && (!measurement.current || measurement.state !== "CONFIRMED"))
     return {
-      label: "Avisos",
+      label: "Confirmar medidas",
       cause:
         "Revisa y confirma las medidas del vano antes de fabricar. El precio usa la fabricación guardada.",
       tone: "warning",
     };
   if (!position.location_tag)
     return {
-      label: "Avisos",
-      cause: "Falta la ubicación de la posición. Declárala antes de emitir.",
+      label: "Falta ubicación",
+      cause: "Indica dónde va esta ventana (por ejemplo, «Dormitorio») antes de emitir.",
       tone: "warning",
     };
   return {
-    label: "Geometría válida",
+    label: "Lista",
     cause:
-      "Fuente: cálculo guardado del motor. La preparación de emisión comprueba la autoridad de fabricación.",
+      "Fuente: cálculo guardado del motor. Al preparar la emisión se comprueba que cada ventana se pueda fabricar.",
     tone: "success",
   };
 }
@@ -88,8 +85,8 @@ function Dimensions({
       <button
         type="button"
         className="project-dimension"
-        aria-label={`Editar medidas de la posición ${position.position_index}`}
-        title="Fuente: fabricación guardada del motor"
+        aria-label={`Editar medidas de la ventana ${position.position_index}`}
+        title="Cambiar medidas"
         onClick={(event) => {
           event.stopPropagation();
           setWidth(position.design.nominal_width_mm);
@@ -145,10 +142,18 @@ function Dimensions({
           aria-invalid={!h || undefined}
         />
       </label>
-      <button type="submit" disabled={!w || !h || busy}>
-        Revisar medidas
+      <button
+        type="submit"
+        className="ui-button ui-button--primary ui-button--compact"
+        disabled={!w || !h || busy}
+      >
+        Revisar
       </button>
-      <button type="button" onClick={() => setEditing(false)}>
+      <button
+        type="button"
+        className="ui-button ui-button--compact"
+        onClick={() => setEditing(false)}
+      >
         Cancelar
       </button>
     </form>
@@ -162,6 +167,7 @@ export function PositionCollection({
   disabled,
   selectedId,
   onSelected,
+  onOpen,
   onChanged,
   onImport,
   onDetails,
@@ -172,13 +178,18 @@ export function PositionCollection({
   disabled: boolean;
   selectedId: string | null;
   onSelected(id: string): void;
+  /** Opens the wide editor of a position (the host keeps view and return). */
+  onOpen?(id: string): void;
   onChanged(): Promise<unknown>;
   onImport(): void;
   onDetails(): void;
 }): JSX.Element {
   const navigate = useNavigate(),
     confirm = useConfirm();
-  const [view, setView] = useState<"list" | "grid">("list");
+  const [view, setView] = useState<"list" | "grid">(() =>
+    (project.positions?.length ?? 0) > 24 ? "list" : "grid",
+  );
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [group, setGroup] = useState<Group>("none");
   const [search, setSearch] = useState("");
   const [typology, setTypology] = useState("");
@@ -281,14 +292,29 @@ export function PositionCollection({
     groups.set(key, [...(groups.get(key) ?? []), position]);
   }
   const rowForPosition = new Map<string, string>();
+  function positionName(position: PositionResponse): string {
+    return position.location_tag || `Ventana ${position.position_index}`;
+  }
+  function finishLabel(position: PositionResponse): string {
+    const finish = position.bom?.finish;
+    if (!finish) return domainLabel(position.design.color);
+    return finish.interior.name === finish.exterior.name
+      ? finish.interior.name
+      : `${finish.interior.name} / ${finish.exterior.name}`;
+  }
   function positionCard(position: PositionResponse): JSX.Element {
     const state = positionReadiness(position),
       sale = position.commercial as Commercial | null;
-    const finish = position.bom.finish;
+    const open = () =>
+      editable
+        ? onOpen
+          ? onOpen(position.id)
+          : navigate(`/projects/${project.id}/positions/${position.id}/edit`)
+        : (onSelected(position.id), onDetails());
     return (
       <div
         role="listitem"
-        aria-label={`Posición ${position.position_index} · ${position.location_tag || "Sin ubicación"}`}
+        aria-label={`${positionName(position)} · ${domainLabel(position.typology)}`}
         aria-current={activeId === position.id ? "true" : undefined}
         aria-keyshortcuts="Enter Space Delete ArrowDown ArrowUp Home End"
         aria-posinset={visible.indexOf(position) + 1}
@@ -303,15 +329,12 @@ export function PositionCollection({
           else refs.current.delete(position.id);
         }}
         onClick={() => onSelected(position.id)}
-        onDoubleClick={() =>
-          editable && navigate(`/projects/${project.id}/positions/${position.id}/edit`)
-        }
+        onDoubleClick={open}
         onKeyDown={(event) => {
           if (event.target !== event.currentTarget) return;
           if (event.key === "Enter") {
             event.preventDefault();
-            if (editable) navigate(`/projects/${project.id}/positions/${position.id}/edit`);
-            else onDetails();
+            open();
           } else if (event.key === " ") {
             event.preventDefault();
             toggle(position.id);
@@ -345,90 +368,114 @@ export function PositionCollection({
         <label className="project-position-check" onClick={(event) => event.stopPropagation()}>
           <input
             type="checkbox"
-            aria-label={`Seleccionar posición ${position.position_index}`}
+            aria-label={`Seleccionar ${positionName(position)}`}
             checked={checked.includes(position.id)}
             onChange={() => toggle(position.id)}
           />
-          <span className="project-number">{position.position_index}</span>
+          <span className="position-row__index">{position.position_index}</span>
         </label>
-        <div className="position-row__thumb">
+        <button
+          type="button"
+          className="position-row__thumb"
+          aria-label={
+            editable
+              ? `Abrir ${positionName(position)} en el editor`
+              : `Ver ${positionName(position)}`
+          }
+          onClick={(event) => {
+            event.stopPropagation();
+            open();
+          }}
+        >
           <PositionThumb
             design={position.design}
-            openingLeaves={position.bom.opening_leaves as OpeningLeafFact[] | undefined}
+            openingLeaves={position.bom?.opening_leaves as OpeningLeafFact[] | undefined}
           />
-          <span>Vista interior</span>
-        </div>
+        </button>
         <div className="position-row__identity">
-          <strong>{position.location_tag || "Sin ubicación · declárala antes de emitir"}</strong>
-          <span>{domainLabel(position.typology)}</span>
+          <strong className="position-row__name">{positionName(position)}</strong>
+          <span className="position-row__type">
+            {domainLabel(position.typology)}
+            {position.system_name ? ` · ${position.system_name}` : ""}
+            {position.system_demo && !position.system_name?.includes("DEMO") ? " · DEMO" : ""}
+          </span>
           <Dimensions
             position={position}
             editable={editable}
             busy={busy}
             onPropose={operations.propose}
           />
-          <StatusBadge tone={state.tone} title={state.cause}>
-            {state.label}
-          </StatusBadge>
-          <span className="position-row__cause">{state.cause}</span>
         </div>
         <dl className="position-row__specs">
           <div>
-            <dt>Serie</dt>
-            <dd>
-              {position.system_name || "Sin dato · revisa Catálogo"}
-              {position.system_demo && !position.system_name?.includes("DEMO") ? " · DEMO" : ""}
-            </dd>
-          </div>
-          <div>
-            <dt>Color int. / ext.</dt>
-            <dd>
-              {finish
-                ? `${finish.interior.name} / ${finish.exterior.name}`
-                : domainLabel(position.design.color)}
-            </dd>
+            <dt>Acabado</dt>
+            <dd>{finishLabel(position)}</dd>
           </div>
           <div>
             <dt>Vidrio</dt>
             <dd>{positionGlass(position)}</dd>
           </div>
           <div>
-            <dt>Vano / fabricación</dt>
-            <dd className="project-number">
-              {position.measurements
-                ? "Medición declarada · ver ficha"
-                : "Vano sin dato · medir antes de fabricar"}{" "}
-              / {fmtMm(position.design.nominal_width_mm)} ×{" "}
-              {fmtMm(position.design.nominal_height_mm)} mm
-            </dd>
-          </div>
-          <div>
             <dt>Cantidad</dt>
-            <dd className="project-number">{position.quantity}</dd>
-          </div>
-          <div>
-            <dt>P. unitario neto</dt>
-            <dd className="project-number" title={sale?.source}>
-              {sale?.unit_net != null
-                ? formatMoney(sale.unit_net, project.currency)
-                : "Sin dato · calcula el precio"}
-            </dd>
+            <dd className="is-numeric">{position.quantity}</dd>
           </div>
           <div>
             <dt>Total neto</dt>
-            <dd className="project-number" title={sale?.source}>
-              {sale?.line_net != null
-                ? formatMoney(sale.line_net, project.currency)
-                : "Sin dato · calcula el precio"}
+            <dd className="is-numeric" title={sale?.source}>
+              {sale?.line_net != null ? formatMoney(sale.line_net, project.currency) : "Sin precio"}
             </dd>
           </div>
           {group !== "none" && (
             <div>
               <dt>{group === "floor" ? "Piso" : group === "room" ? "Recinto" : "Eje"}</dt>
-              <dd>{position.placement?.[group] || "Sin dato · declara la ubicación"}</dd>
+              <dd>{position.placement?.[group] || "Sin dato"}</dd>
             </div>
           )}
         </dl>
+        <div className="position-row__state">
+          {state.tone !== "success" ? (
+            <StatusBadge tone={state.tone} title={state.cause}>
+              {state.label}
+            </StatusBadge>
+          ) : null}
+        </div>
+        {editable ? (
+          <div className="position-row__actions" onClick={(event) => event.stopPropagation()}>
+            <button
+              type="button"
+              className="ui-button ui-button--compact position-row__open"
+              aria-label={`Abrir ${positionName(position)} en el editor`}
+              onClick={open}
+            >
+              Abrir editor
+            </button>
+            <button
+              type="button"
+              className="ui-icon-button"
+              aria-label={`Duplicar ${positionName(position)}`}
+              title="Duplicar"
+              disabled={busy}
+              onClick={() =>
+                void operations.run(
+                  [{ op: "duplicate_positions", position_ids: [position.id] }],
+                  `${positionName(position)} duplicada al final de la obra.`,
+                )
+              }
+            >
+              <Icon name="copy" />
+            </button>
+            <button
+              type="button"
+              className="ui-icon-button"
+              aria-label={`Eliminar ${positionName(position)}`}
+              title="Eliminar"
+              disabled={busy}
+              onClick={() => void remove([position.id])}
+            >
+              <Icon name="trash" />
+            </button>
+          </div>
+        ) : null}
       </div>
     );
   }
@@ -439,7 +486,7 @@ export function PositionCollection({
         estimate: 40,
         content: (
           <h3 className="project-position-group">
-            {title} · {entries.length} posiciones
+            {title} · {entries.length === 1 ? "1 ventana" : `${entries.length} ventanas`}
           </h3>
         ),
       });
@@ -450,7 +497,7 @@ export function PositionCollection({
       chunk.forEach((position) => rowForPosition.set(position.id, key));
       rows.push({
         key,
-        estimate: view === "grid" ? 480 : 180,
+        estimate: view === "grid" ? 360 : 76,
         content: (
           <div className="project-position-row-group" data-view={view}>
             {chunk.map(positionCard)}
@@ -459,139 +506,202 @@ export function PositionCollection({
       });
     }
   }
+  const filtered = Boolean(search || typology || glassFilter);
   return (
     <div ref={host} className="project-position-collection" data-view={view}>
       <div className="project-positions-toolbar">
         <h2>
-          Posiciones · <span className="project-number">{positions.length}</span>
+          Ventanas <span className="project-positions-count">{positions.length}</span>
         </h2>
-        <label>
-          Vista
-          <select
-            aria-label="Vista"
-            value={view}
-            onChange={(event) => {
-              setView(event.target.value as "list" | "grid");
-              setScrollTo(null);
-            }}
+        <div className="project-positions-tools">
+          <label className="project-positions-search">
+            <Icon name="search" size={16} />
+            <span className="sr-only">Buscar por ubicación, piso, vidrio o tipología</span>
+            <input
+              type="search"
+              placeholder="Buscar ventana"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
+          </label>
+          <button
+            type="button"
+            className="ui-button ui-button--compact"
+            aria-expanded={filtersOpen}
+            onClick={() => setFiltersOpen((value) => !value)}
           >
-            <option value="list">Lista</option>
-            <option value="grid">Grilla</option>
-          </select>
-        </label>
-        <label>
-          Agrupar
-          <select
-            aria-label="Agrupar"
-            value={group}
-            onChange={(event) => setGroup(event.target.value as Group)}
-          >
-            <option value="none">Orden del proyecto</option>
-            <option value="floor">Piso</option>
-            <option value="room">Recinto</option>
-            <option value="axis">Eje</option>
-          </select>
-        </label>
-        {editable && (
-          <button type="button" disabled={busy} onClick={() => setLibrary(true)}>
-            Agregar desde biblioteca
+            <Icon name="filter" size={16} />
+            Filtros{filtered ? " · activos" : ""}
           </button>
-        )}
-        <button type="button" onClick={onImport}>
-          Importar documento o plano
-        </button>
-        {selectedId && (
-          <button type="button" onClick={onDetails}>
-            Ficha de posición
-          </button>
-        )}
+          <div className="ui-segmented project-positions-view" role="radiogroup" aria-label="Vista">
+            <button
+              type="button"
+              role="radio"
+              aria-checked={view === "grid"}
+              aria-label="Galería"
+              title="Galería"
+              onClick={() => {
+                setView("grid");
+                setScrollTo(null);
+              }}
+            >
+              <Icon name="grid" size={16} />
+            </button>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={view === "list"}
+              aria-label="Tabla"
+              title="Tabla"
+              onClick={() => {
+                setView("list");
+                setScrollTo(null);
+              }}
+            >
+              <Icon name="list" size={16} />
+            </button>
+          </div>
+          {editable ? (
+            <>
+              <Menu
+                label="Más"
+                items={[
+                  {
+                    id: "library",
+                    label: "Agregar varias desde la biblioteca",
+                    onSelect: () => setLibrary(true),
+                  },
+                  { id: "import", label: "Importar planilla o plano", onSelect: onImport },
+                  ...(selectedId
+                    ? [{ id: "details", label: "Ficha técnica de la ventana", onSelect: onDetails }]
+                    : []),
+                ]}
+              />
+              <Link
+                className="ui-button ui-button--primary"
+                to={`/projects/${project.id}/positions/new`}
+              >
+                <Icon name="plus" />
+                Añadir ventana
+              </Link>
+            </>
+          ) : selectedId ? (
+            <button type="button" className="ui-button" onClick={onDetails}>
+              Ficha técnica
+            </button>
+          ) : null}
+        </div>
       </div>
-      <div className="project-positions-filters">
-        <label>
-          Filtrar piso, recinto, eje o ubicación
-          <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} />
-        </label>
-        <label>
-          Tipología
-          <select
-            aria-label="Tipología"
-            value={typology}
-            onChange={(event) => setTypology(event.target.value)}
-          >
-            <option value="">Todas</option>
-            {[...new Set(positions.map((position) => position.typology))].map((value) => (
-              <option key={value} value={value}>
-                {domainLabel(value)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Vidrio
-          <select
-            aria-label="Vidrio"
-            value={glassFilter}
-            onChange={(event) => setGlassFilter(event.target.value)}
-          >
-            <option value="">Todos</option>
-            {choices.map((value) => (
-              <option key={value} value={value}>
-                {value}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            aria-label="Seleccionar posiciones filtradas"
-            checked={visible.length > 0 && visible.every((position) => ids.includes(position.id))}
-            onChange={(event) =>
-              setChecked(
-                event.target.checked
-                  ? [...new Set([...ids, ...visible.map((position) => position.id)])]
-                  : ids.filter((id) => !visible.some((position) => position.id === id)),
-              )
-            }
-          />
-          Seleccionar filtradas ({visible.length})
-        </label>
-      </div>
+      {filtersOpen ? (
+        <div className="project-positions-filters">
+          <label>
+            Agrupar
+            <select
+              aria-label="Agrupar"
+              value={group}
+              onChange={(event) => setGroup(event.target.value as Group)}
+            >
+              <option value="none">Orden de la obra</option>
+              <option value="floor">Piso</option>
+              <option value="room">Recinto</option>
+              <option value="axis">Eje</option>
+            </select>
+          </label>
+          <label>
+            Tipología
+            <select
+              aria-label="Tipología"
+              value={typology}
+              onChange={(event) => setTypology(event.target.value)}
+            >
+              <option value="">Todas</option>
+              {[...new Set(positions.map((position) => position.typology))].map((value) => (
+                <option key={value} value={value}>
+                  {domainLabel(value)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Vidrio
+            <select
+              aria-label="Vidrio"
+              value={glassFilter}
+              onChange={(event) => setGlassFilter(event.target.value)}
+            >
+              <option value="">Todos</option>
+              {choices.map((value) => (
+                <option key={value} value={value}>
+                  {value}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="project-positions-all">
+            <input
+              type="checkbox"
+              aria-label="Seleccionar ventanas filtradas"
+              checked={visible.length > 0 && visible.every((position) => ids.includes(position.id))}
+              onChange={(event) =>
+                setChecked(
+                  event.target.checked
+                    ? [...new Set([...ids, ...visible.map((position) => position.id)])]
+                    : ids.filter((id) => !visible.some((position) => position.id === id)),
+                )
+              }
+            />
+            Seleccionar las {visible.length} visibles
+          </label>
+        </div>
+      ) : null}
       {ids.length > 0 && (
         <section
           className="project-batch-actions"
-          aria-label="Acciones sobre posiciones seleccionadas"
+          aria-label="Acciones sobre las ventanas elegidas"
         >
-          <strong>{ids.length} seleccionadas</strong>
+          <strong>
+            {ids.length === 1 ? "1 ventana elegida" : `${ids.length} ventanas elegidas`}
+          </strong>
+          {(() => {
+            const hidden = ids.filter(
+              (id) => !visible.some((position) => position.id === id),
+            ).length;
+            return hidden > 0 ? (
+              <span className="project-batch-hidden" role="status">
+                {hidden === 1
+                  ? "1 está fuera del filtro y también se incluye"
+                  : `${hidden} están fuera del filtro y también se incluyen`}
+              </span>
+            ) : null;
+          })()}
           {editable ? (
             <>
               <button
+                type="button"
+                className="ui-button ui-button--compact"
+                disabled={busy}
+                onClick={() => setGlobal(true)}
+              >
+                <Icon name="swatch" size={16} />
+                Cambiar acabado o vidrio
+              </button>
+              <button
+                type="button"
+                className="ui-button ui-button--compact"
                 disabled={busy}
                 onClick={() =>
-                  void operations.propose(
+                  void operations.run(
                     [{ op: "duplicate_positions", position_ids: ids }],
-                    "Duplicar lote de posiciones",
+                    `${ids.length === 1 ? "Ventana duplicada" : `${ids.length} ventanas duplicadas`} al final de la obra.`,
                   )
                 }
               >
-                Duplicar lote
+                <Icon name="copy" size={16} />
+                Duplicar
               </button>
-              <button disabled={busy} onClick={() => void remove(ids)}>
-                Eliminar lote
-              </button>
-              <button disabled={busy} onClick={() => setGlobal(true)}>
-                Cambio global
-              </button>
-              <button disabled={busy} onClick={() => reorder(-1)}>
-                Subir lote
-              </button>
-              <button disabled={busy} onClick={() => reorder(1)}>
-                Bajar lote
-              </button>
-              <label>
-                Cambiar
+              <label className="project-batch-set">
                 <select
-                  aria-label="Cambiar"
+                  aria-label="Dato a cambiar"
                   value={batch}
                   onChange={(event) => {
                     setBatch(event.target.value as typeof batch);
@@ -604,59 +714,83 @@ export function PositionCollection({
                   <option value="location">Ubicación</option>
                   <option value="quantity">Cantidad</option>
                 </select>
-              </label>
-              <label>
-                Nuevo valor
                 <input
+                  aria-label="Nuevo valor"
+                  placeholder="Nuevo valor"
                   inputMode={batch === "quantity" ? "numeric" : "text"}
                   maxLength={batch === "location" ? 120 : 80}
                   value={batchValue}
                   onChange={(event) => setBatchValue(event.target.value)}
                 />
+                <button
+                  type="button"
+                  className="ui-button ui-button--compact"
+                  disabled={
+                    busy ||
+                    !batchValue.trim() ||
+                    (batch === "quantity" &&
+                      (!/^\d+$/.test(batchValue) ||
+                        Number(batchValue) < 1 ||
+                        Number(batchValue) > 2147483647))
+                  }
+                  onClick={() =>
+                    void operations.propose(
+                      [
+                        {
+                          op: "set_positions",
+                          position_ids: ids,
+                          ...(batch === "quantity"
+                            ? { quantity: Number(batchValue) }
+                            : batch === "location"
+                              ? { location: batchValue }
+                              : { placement: { [batch]: batchValue } }),
+                        },
+                      ],
+                      "Cambiar ubicación o cantidad de las ventanas elegidas",
+                    )
+                  }
+                >
+                  Revisar
+                </button>
               </label>
-              <button
-                disabled={
-                  busy ||
-                  (batch === "quantity" &&
-                    (!/^\d+$/.test(batchValue) ||
-                      Number(batchValue) < 1 ||
-                      Number(batchValue) > 2147483647))
-                }
-                onClick={() =>
-                  void operations.propose(
-                    [
-                      {
-                        op: "set_positions",
-                        position_ids: ids,
-                        ...(batch === "quantity"
-                          ? { quantity: Number(batchValue) }
-                          : batch === "location"
-                            ? { location: batchValue }
-                            : { placement: { [batch]: batchValue } }),
-                      },
-                    ],
-                    "Cambiar ubicación o cantidad del lote",
-                  )
-                }
-              >
-                Revisar lote
-              </button>
+              <Menu
+                label="Más"
+                items={[
+                  { id: "up", label: "Subir en el orden", onSelect: () => reorder(-1) },
+                  { id: "down", label: "Bajar en el orden", onSelect: () => reorder(1) },
+                  {
+                    id: "remove",
+                    label: "Eliminar",
+                    danger: true,
+                    onSelect: () => void remove(ids),
+                  },
+                ]}
+              />
             </>
           ) : (
             <p>
-              Revisión cerrada o rol de consulta. Crea una revisión o solicita acceso para cambiar
-              posiciones.
+              La revisión está cerrada o tu rol es de consulta; crea una revisión para cambiar
+              ventanas.
             </p>
           )}
-          <button onClick={() => setChecked([])}>Limpiar selección</button>
+          <button
+            type="button"
+            className="ui-button ui-button--ghost ui-button--compact"
+            onClick={() => setChecked([])}
+          >
+            Quitar selección
+          </button>
         </section>
       )}
       <ProjectOpsReview operations={operations} orgId={orgId} currency={project.currency} />
       {global && (
-        <div>
-          <button type="button" onClick={() => setGlobal(false)}>
-            Cerrar cambio global
-          </button>
+        <div className="project-global-change">
+          <div className="project-section-head">
+            <h3>Cambiar acabado o vidrio</h3>
+            <button type="button" className="ui-button" onClick={() => setGlobal(false)}>
+              Cerrar
+            </button>
+          </div>
           <QuotationGlobalChanges
             project={project}
             orgId={orgId}
@@ -670,11 +804,16 @@ export function PositionCollection({
       {!positions.length ? (
         <EmptyState
           kind="positions"
-          title="Agrega la primera posición"
-          body="Elige una tipología de la biblioteca o importa un plano para comenzar la obra."
+          title="Agrega la primera ventana"
+          body="Elige una tipología y ajusta sus medidas sobre el dibujo."
           action={
             editable ? (
-              <button onClick={() => setLibrary(true)}>Abrir biblioteca</button>
+              <Link
+                className="ui-button ui-button--primary"
+                to={`/projects/${project.id}/positions/new`}
+              >
+                Añadir ventana
+              </Link>
             ) : (
               <Link to="/projects">Volver a proyectos</Link>
             )
@@ -682,10 +821,12 @@ export function PositionCollection({
         />
       ) : visible.length === 0 ? (
         <EmptyState
-          title="Sin posiciones para estos filtros"
-          body="Revisa piso, tipología y vidrio; las posiciones del proyecto se conservan."
+          title="Ninguna ventana coincide"
+          body="Cambia la búsqueda o los filtros; las ventanas de la obra se conservan."
           action={
             <button
+              type="button"
+              className="ui-button"
               onClick={() => {
                 setSearch("");
                 setTypology("");
@@ -697,7 +838,7 @@ export function PositionCollection({
           }
         />
       ) : (
-        <div role="list" aria-label="Posiciones">
+        <div role="list" aria-label="Ventanas">
           <VirtualPositionRows
             key={`${view}:${group}:${search}:${typology}:${glassFilter}:${columns}`}
             rows={rows}
@@ -707,7 +848,7 @@ export function PositionCollection({
         </div>
       )}
       {library && (
-        <Suspense fallback={<p role="status">Cargando biblioteca de posiciones…</p>}>
+        <Suspense fallback={<Loading label="Cargando la biblioteca" />}>
           <ProjectPositionLibrary
             orgId={orgId}
             initialSystem={positions[0]?.design.system_id}

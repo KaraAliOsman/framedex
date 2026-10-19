@@ -1,3 +1,4 @@
+import { clearOtherSessions } from "../features/assistant/copilotPrefs";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Session } from "@supabase/supabase-js";
 import {
@@ -389,6 +390,8 @@ export function AuthSessionProvider({ children }: PropsWithChildren): JSX.Elemen
           }
         }
         transitionCanvasIdentity(null, null);
+        // A new sign-in starts with the copilot closed.
+        clearOtherSessions(null, null);
         telemetry.reset();
       },
     }),

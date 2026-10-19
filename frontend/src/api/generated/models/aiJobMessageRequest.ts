@@ -7,6 +7,8 @@
  */
 import type { AiJobMessageRequestProduct } from "./aiJobMessageRequestProduct";
 import type { AiJobMessageRequestRefs } from "./aiJobMessageRequestRefs";
+import type { AutonomyEnum } from "./autonomyEnum";
+import type { InteractionModeEnum } from "./interactionModeEnum";
 
 export interface AiJobMessageRequest {
   /**
@@ -14,8 +16,12 @@ export interface AiJobMessageRequest {
    * @maxLength 2000
    */
   message: string;
+  interaction_mode?: InteractionModeEnum;
+  /** @maxItems 6 */
+  attachment_ids?: string[];
   product?: AiJobMessageRequestProduct;
   refs?: AiJobMessageRequestRefs;
   /** @maxLength 64 */
   product_sig?: string;
+  autonomy?: AutonomyEnum;
 }

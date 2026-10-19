@@ -14,8 +14,10 @@ import type {
   ProjectOpsPreviewResponse,
 } from "../../api/generated/models";
 import { fmtMm } from "../../format";
-import { DimLoader } from "../../ui/Signature";
+import { Loading } from "../../ui/Signature";
 import { SimulationPreview } from "./SimulationPreview";
+import { Link } from "react-router-dom";
+import { Icon } from "../../ui/Icon";
 import "./operations.css";
 
 type Position = {
@@ -37,9 +39,10 @@ export function operationIntent(op: Record<string, unknown>): DesignOperationReq
 }
 
 function summary(position: Position | null | undefined): string {
-  if (!position) return "Sin posición";
+  if (!position) return "Sin ventana";
   const design = position.design;
-  return `${position.location_tag || "Sin ubicación"} · ${position.quantity} unidades${design ? ` · ${fmtMm(design.nominal_width_mm)} × ${fmtMm(design.nominal_height_mm)} mm` : ""}`;
+  const units = Number(position.quantity) === 1 ? "1 unidad" : `${position.quantity} unidades`;
+  return `${position.location_tag || `Ventana ${position.position_index}`} · ${units}${design ? ` · ${fmtMm(design.nominal_width_mm)} × ${fmtMm(design.nominal_height_mm)} mm` : ""}`;
 }
 
 export function ProjectOpsStep({
@@ -48,6 +51,7 @@ export function ProjectOpsStep({
   projectId,
   operationKey,
   declined = false,
+  linkToProject = false,
   onSettled,
 }: {
   step: AiAgentStep;
@@ -55,6 +59,8 @@ export function ProjectOpsStep({
   projectId: string;
   operationKey: string;
   declined?: boolean;
+  /** The assistant worked on a different work than the current page. */
+  linkToProject?: boolean;
   onSettled(
     action: "applied" | "declined" | "apply_failed" | "undone",
     ops: { op?: string }[],
@@ -178,13 +184,17 @@ export function ProjectOpsStep({
   }
 
   return (
-    <section className="ask-dock__ops operation-project" aria-label="Propuesta para el proyecto">
-      <p>{step.label}</p>
+    <section
+      className="ask-dock__ops operation-project"
+      data-state={state}
+      aria-label={state === "applied" ? "Cambios guardados en la obra" : "Propuesta para la obra"}
+    >
+      <p className="operation-project__label">
+        {state === "applied" ? <Icon name="check" size={16} /> : null}
+        {step.label}
+      </p>
       {busy ? (
-        <p>
-          <DimLoader label={state === "proposed" ? "Simulando cambios" : "Guardando cambios"} />{" "}
-          {state === "proposed" ? "Simulando cambios…" : "Guardando cambios…"}
-        </p>
+        <Loading label={state === "proposed" ? "Calculando la propuesta" : "Guardando"} />
       ) : null}
       {message ? (
         <div>
@@ -204,11 +214,15 @@ export function ProjectOpsStep({
           {(preview.diff as Change[]).map((change, index) => (
             <li key={index}>
               <strong>
-                Posición {change.index} ·{" "}
-                {change.kind === "add" ? "Crear" : change.kind === "remove" ? "Quitar" : "Cambiar"}
+                {change.kind === "add" ? "Nueva" : change.kind === "remove" ? "Quitar" : "Cambia"} ·
+                ventana {change.index}
               </strong>
-              <p>Antes: {summary(change.before)}</p>
-              <p>Propuesta: {summary(change.after)}</p>
+              {change.before ? <p>Antes: {summary(change.before)}</p> : null}
+              {change.after ? (
+                <p>
+                  {state === "applied" ? "Ahora" : "Queda"}: {summary(change.after)}
+                </p>
+              ) : null}
               {preview.simulations
                 .filter(
                   (simulation) =>
@@ -238,11 +252,11 @@ export function ProjectOpsStep({
         <div className="ask-dock__ops-actions">
           <button
             type="button"
-            className="ask-dock__action"
+            className="ask-dock__action ask-dock__action--primary"
             disabled={busy || !preview?.valid || !preview.diff.length}
             onClick={() => void apply()}
           >
-            Aplicar cambios al proyecto
+            Aplicar
           </button>
           <button
             type="button"
@@ -257,12 +271,14 @@ export function ProjectOpsStep({
           </button>
         </div>
       ) : (
-        <p role="status">
-          {state === "applied"
-            ? "Cambios aplicados"
-            : state === "undone"
-              ? "Cambios deshechos"
-              : "Propuesta descartada"}
+        <div className="operation-project__receipt" role="status">
+          <span>
+            {state === "applied"
+              ? "Guardado en la obra"
+              : state === "undone"
+                ? "Deshecho"
+                : "Propuesta descartada"}
+          </span>
           {state === "applied" ? (
             <button
               type="button"
@@ -270,10 +286,16 @@ export function ProjectOpsStep({
               disabled={busy}
               onClick={() => void undo()}
             >
-              Deshacer cambios
+              <Icon name="undo" size={16} />
+              Deshacer
             </button>
           ) : null}
-        </p>
+          {linkToProject && state !== "declined" ? (
+            <Link className="ask-dock__action" to={`/projects/${projectId}`}>
+              Abrir obra
+            </Link>
+          ) : null}
+        </div>
       )}
     </section>
   );

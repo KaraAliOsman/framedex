@@ -9,7 +9,7 @@ import type {
 } from "../../api/generated/models";
 import { fmtMm } from "../../format";
 import { parseDecimalInput } from "../../decimal";
-import { Button, DeniedState, DimLoader, PageHeader } from "../../ui";
+import { Button, DeniedState, Loading, PageHeader } from "../../ui";
 import { ValidatedForm } from "../../ui/FormValidation";
 import "./catalogs.css";
 
@@ -24,7 +24,7 @@ function errorText(error: unknown): string {
 export function SheetFormatsPage(): JSX.Element {
   const { status, me } = useAuthSession();
   const role = me?.active_organization?.role;
-  if (status !== "ready") return <DimLoader label="Cargando formatos de lámina…" />;
+  if (status !== "ready") return <Loading label="Cargando formatos de lámina…" />;
   if (!role || !["OWNER", "WORKSHOP_MANAGER", "ESTIMATOR", "OPERATOR"].includes(role))
     return <DeniedState reason="Tu rol no permite consultar formatos de lámina." />;
   return (
@@ -87,7 +87,7 @@ function SheetFormats({ canWrite }: { canWrite: boolean }): JSX.Element {
       <a className="ui-button ui-button--ghost" href="/production">
         Volver a Producción
       </a>
-      {loading ? <DimLoader label="Cargando formatos de lámina…" /> : null}
+      {loading ? <Loading label="Cargando formatos de lámina…" /> : null}
       {error ? (
         <div>
           <p role="alert">{error}</p>

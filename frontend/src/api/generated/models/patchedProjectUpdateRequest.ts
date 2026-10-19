@@ -5,6 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { DesignDefaultsRequest } from "./designDefaultsRequest";
 
 export interface PatchedProjectUpdateRequest {
   /**
@@ -12,10 +13,7 @@ export interface PatchedProjectUpdateRequest {
    * @maxLength 255
    */
   name?: string;
-  /**
-   * @minLength 1
-   * @maxLength 255
-   */
+  /** @maxLength 255 */
   client_name?: string;
   /** @maxLength 50 */
   client_rut?: string;
@@ -35,5 +33,6 @@ export interface PatchedProjectUpdateRequest {
   delivery_address?: string;
   notes_commercial?: string;
   notes_internal?: string;
+  design_defaults?: DesignDefaultsRequest;
   expected_updated_at?: string;
 }

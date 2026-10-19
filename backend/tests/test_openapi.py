@@ -11,6 +11,19 @@ OPENAPI = ROOT / "backend" / "openapi.yaml"
 def test_openapi_contains_only_authorized_shot_11_paths_and_bearer_security() -> None:
     schema = yaml.safe_load(OPENAPI.read_text(encoding="utf-8"))
     assert set(schema["paths"]) == {
+        # v1 (2026-10): design defaults, finish samples, catalog batches,
+        # quotation numbering/layout/draft, materials and cut draft.
+        "/api/v1/catalog-imports/{import_id}/pages/{page}/",
+        "/api/v1/catalog-imports/{import_id}/retry/",
+        "/api/v1/documents/organization/quotation-numbering/",
+        "/api/v1/documents/projects/{project_id}/quotation-draft/",
+        "/api/v1/documents/projects/{project_id}/quotation-layout/",
+        "/api/v1/organization/design-defaults/",
+        "/api/v1/organization/finish-references/",
+        "/api/v1/organization/finish-references/{reference_id}/",
+        "/api/v1/organization/finish-references/{reference_id}/image/",
+        "/api/v1/projects/{project_id}/cut-draft/",
+        "/api/v1/projects/{project_id}/materials/",
         "/api/v1/projects/{project_id}/thermal/",
         "/api/v1/projects/{project_id}/thermal/{position_id}/alternatives/",
         "/api/v1/catalogs/systems/{system_id}/thermal/",
@@ -199,6 +212,18 @@ def test_openapi_contains_only_authorized_shot_11_paths_and_bearer_security() ->
         "/api/v1/ai/jobs/{job_id}/outcome/",
         "/api/v1/ai/jobs/{job_id}/retry/",
         "/api/v1/ai/metrics/",
+        # Dirección final 05–06: copilot threads, attachments, single approval,
+        # capability resolution and the manufacturer reference registry.
+        "/api/v1/ai/threads/",
+        "/api/v1/ai/threads/{thread_id}/",
+        "/api/v1/ai/threads/{thread_id}/timeline/",
+        "/api/v1/ai/threads/{thread_id}/attachments/",
+        "/api/v1/ai/attachments/",
+        "/api/v1/ai/attachments/{attachment_id}/",
+        "/api/v1/ai/attachments/{attachment_id}/content/",
+        "/api/v1/ai/jobs/{job_id}/approve/",
+        "/api/v1/capabilities/",
+        "/api/v1/catalogs/references/",
         "/api/v1/projects/{project_id}/imports/",
         "/api/v1/projects/{project_id}/imports/{import_id}/",
         "/api/v1/projects/{project_id}/imports/{import_id}/confirm/",

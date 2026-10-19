@@ -1,5 +1,13 @@
 from django.urls import path
-from documents.issuance_views import QuotationIssueView, QuotationPreviewView, QuotationPreviewAccessView, QuotationCustomerView
+from documents.issuance_views import (
+    QuotationCustomerView,
+    QuotationDraftPreviewView,
+    QuotationIssueView,
+    QuotationLayoutView,
+    QuotationNumberingView,
+    QuotationPreviewAccessView,
+    QuotationPreviewView,
+)
 
 from documents.views import (
     ArtifactAccessView,
@@ -15,6 +23,9 @@ urlpatterns = [
     path("projects/<uuid:project_id>/quotation-preview/", QuotationPreviewView.as_view(), name="quotation-preview"),
     path("projects/<uuid:project_id>/quotation-previews/<uuid:preview_id>/", QuotationPreviewAccessView.as_view(), name="quotation-preview-access"),
     path("projects/<uuid:project_id>/issue/", QuotationIssueView.as_view(), name="quotation-issue"),
+    path("projects/<uuid:project_id>/quotation-layout/", QuotationLayoutView.as_view(), name="quotation-layout"),
+    path("projects/<uuid:project_id>/quotation-draft/", QuotationDraftPreviewView.as_view(), name="quotation-draft"),
+    path("organization/quotation-numbering/", QuotationNumberingView.as_view(), name="quotation-numbering"),
     path("artifacts/", ArtifactGenerateView.as_view(), name="documentary-artifact-generate"),
     path(
         "artifacts/<uuid:artifact_id>/access/",

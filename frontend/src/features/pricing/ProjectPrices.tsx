@@ -14,7 +14,7 @@ import {
   formatRevision,
   fmtMm,
 } from "../../format";
-import { DemoBadge, DimLoader, Drawer, TraceButton } from "../../ui";
+import { DemoBadge, Loading, Drawer, TraceButton } from "../../ui";
 import type { ValueTrace } from "../../ui/Signature";
 import { ValidatedForm } from "../../ui/FormValidation";
 import { actionErrorDetail } from "../errors";
@@ -383,8 +383,7 @@ export function Projection({
           {formatRevision(operation.revision_code)} · {labels[operation.state]}
         </h2>
         <p>
-          Sin dato: esta operación histórica no guardó la cascada ni las autoridades necesarias para
-          explicar cada impulsor.
+          Sin dato: este precio antiguo no guardó el desglose necesario para explicar cada impulsor.
         </p>
         <PriceCascade
           reading={{
@@ -406,7 +405,7 @@ export function Projection({
       <div className="price-reading__heading">
         <h2>Actual y propuesto</h2>
         {value.demo && (
-          <DemoBadge source="El cálculo utiliza autoridades sintéticas del catálogo DEMO." />
+          <DemoBadge source="El cálculo usa costos y reglas sintéticos del catálogo DEMO." />
         )}
       </div>
       <p className="price-reading__context">
@@ -477,7 +476,7 @@ export function Projection({
                         currency={currency}
                         sources={sources}
                         trace={row.traces?.current}
-                        formula="Autoridad de la última operación aplicada"
+                        formula="Último precio aplicado"
                       />
                     </td>
                     <td data-label="Propuesto">
@@ -820,7 +819,7 @@ export function Projection({
         </details>
       )}
       <details>
-        <summary>Autoridades del cálculo</summary>
+        <summary>Fuentes del cálculo</summary>
         <ul>
           {sources.map((source) => (
             <li key={source}>{source}</li>
@@ -937,7 +936,7 @@ export function ProjectPrices({
       .then(([available, [operations, requestedOperation], projectResult]) => {
         if (!active) return;
         if (!Array.isArray(available.fx) || !Array.isArray(available.commercial_lists))
-          throw new Error("Las autoridades comerciales no están disponibles.");
+          throw new Error("Las listas de costos y monedas no están disponibles.");
         setOptions(available);
         setHistory(operations);
         if (requestedOperation) chooseOperation(requestedOperation);
@@ -961,7 +960,7 @@ export function ProjectPrices({
           setError(
             actionErrorDetail(
               failure,
-              "No se pudieron cargar las autoridades de precios. Vuelve a intentar.",
+              "No se pudieron cargar las listas de costos. Vuelve a intentar.",
             ),
           );
       })
@@ -1012,7 +1011,7 @@ export function ProjectPrices({
             setError(
               actionErrorDetail(
                 failure,
-                "No se pudo calcular. Revisa las autoridades y los costos de las posiciones.",
+                "No se pudo calcular. Revisa que cada ventana tenga costo en la lista vigente.",
               ),
             );
           }
@@ -1073,7 +1072,9 @@ export function ProjectPrices({
           JSON.stringify(projection?.workspace?.comparison)
         ) {
           setReview(operation);
-          setNotice("Las autoridades cambiaron. Revisa el precio actualizado antes de aplicar.");
+          setNotice(
+            "Cambiaron costos o reglas de precio. Revisa el precio actualizado antes de aplicar.",
+          );
         } else if (operation.state === "PENDING" && !owner) {
           setReview(operation);
           setNotice("Solicitud enviada al dueño. Puedes retirarla mientras espera aprobación.");
@@ -1160,8 +1161,8 @@ export function ProjectPrices({
       )}
       {loading && (
         <p className="price-loading" role="status">
-          <DimLoader label="Cargando precios y autoridades" />
-          Cargando precios y autoridades…
+          <Loading label="Cargando precios" />
+          Cargando precios…
         </p>
       )}
       {emptyProject && (
@@ -1180,7 +1181,7 @@ export function ProjectPrices({
         <div className="price-error" role="alert">
           <p>{error}</p>
           {owner ? (
-            <Link to="/pricing/cost-lists">Completar costos y autoridades</Link>
+            <Link to="/pricing/cost-lists">Completar costos</Link>
           ) : (
             <p>Si falta un costo vigente, el dueño debe completarlo antes de aplicar.</p>
           )}
@@ -1201,7 +1202,7 @@ export function ProjectPrices({
           <section aria-label="Lectura de precios" aria-busy={calculating || undefined}>
             {calculating && (
               <p className="price-loading" role="status">
-                <DimLoader label="Recalculando precios" />
+                <Loading label="Recalculando precios" />
                 El motor está recalculando la propuesta…
               </p>
             )}
@@ -1219,7 +1220,7 @@ export function ProjectPrices({
               <section>
                 <h2>{labels[review.state]}</h2>
                 <p>
-                  {review.project_code} · {review.project_name} ·{" "}
+                  {review.project_name} · {review.project_code} ·{" "}
                   {formatRevision(review.revision_code)}
                 </p>
                 <p>
@@ -1423,7 +1424,7 @@ export function ProjectPrices({
                   </select>
                 </label>
                 <details>
-                  <summary>Moneda y autoridades</summary>
+                  <summary>Moneda y listas de costos</summary>
                   <label>
                     Moneda
                     <select
@@ -1532,7 +1533,7 @@ export function ProjectPrices({
                 )}
                 <Link to={`/projects/${projectId}`}>Revisar servicios del proyecto</Link>
                 {owner && (
-                  <Link to="/pricing/cost-lists?section=rules">Ajustar banda y autoridades</Link>
+                  <Link to="/pricing/cost-lists?section=rules">Ajustar banda de margen</Link>
                 )}
               </ValidatedForm>
             )}

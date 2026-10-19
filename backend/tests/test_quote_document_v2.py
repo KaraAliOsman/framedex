@@ -47,7 +47,7 @@ def test_pdf_pages_have_content_exact_totals_and_no_text_collisions(count, curre
             words = [word for word in page.get_text("words") if 35 < word[1] and word[3] < page.rect.height - 70]
             assert len(words) > 10, (page_index, page.get_text())
             body_text = " ".join(word[4] for word in words)
-            assert any(marker in body_text for marker in ("Cotización", "Resumen", "Posición", "Aceptación", "$")), (page_index, body_text)
+            assert any(marker in body_text for marker in ("Cotización", "Resumen", "Posición", "Aceptación", "Condiciones", "en línea", "$")), (page_index, body_text)
             assert not re.search(r"\b[0-9a-fA-F]{10,}\b", body_text)
             assert "costo" not in body_text.casefold() and "margen" not in body_text.casefold()
             # Test monetary columns and wrapped names in actual table words.

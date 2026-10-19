@@ -100,7 +100,8 @@ def _dump(value: Any) -> str:
 _JOB_COLUMNS = (
     "id, org_id, user_id, surface, refs, goal, state, plan,"
     " transcript, artifacts, warnings, result, error_code, outcomes,"
-    " operation_key, created_at, updated_at, completed_at"
+    " operation_key, created_at, updated_at, completed_at,"
+    " thread_id, interaction_mode, autonomy, receipt"
 )
 
 
@@ -249,7 +250,8 @@ def job_state(*, job_id: UUID) -> str | None:
 MAX_ERROR_TURNS = 3
 
 
-def fail_queued_job(*, job_id: UUID, goal: str, error_code: str) -> dict | None:
+def fail_queued_job(*, job_id: UUID, goal: str, error_code: str,
+                    turn_extra: dict | None = None) -> dict | None:
     """Failure bookkeeping for a first run whose transaction rolled back the
     claim — the row is still QUEUED; mark it FAILED_RETRYABLE so the
     workspace can resume it instead of showing a stuck queue entry."""
@@ -259,7 +261,7 @@ def fail_queued_job(*, job_id: UUID, goal: str, error_code: str) -> dict | None:
             " transcript = %s::jsonb, error_code = %s, updated_at = NOW()"
             " WHERE id = %s AND state IN ('QUEUED','PLANNING','RUNNING')"
             " RETURNING id",
-            [_dump(_failure_turns(goal, error_code)), error_code[:120],
+            [_dump(_failure_turns(goal, error_code, turn_extra)), error_code[:120],
              str(job_id)],
         )
     return {"id": str(record[0]["id"])} if record else None
@@ -386,7 +388,7 @@ def get_job(*, org_id: UUID, user_id: UUID, job_id: UUID) -> dict | None:
     found = rows(
         "SELECT id, org_id, user_id, surface, refs, goal, state, plan,"
         " transcript, artifacts, warnings, result, error_code, outcomes,"
-        " created_at, updated_at, completed_at"
+        " created_at, updated_at, completed_at, thread_id, interaction_mode, autonomy, receipt"
         " FROM public.ai_jobs WHERE id = %s AND org_id = %s AND user_id = %s",
         [str(job_id), str(org_id), str(user_id)],
     )
@@ -549,9 +551,11 @@ def resume_job(*, job_id: UUID, transcript: list, org_id: UUID, user_id: UUID) -
     raise ValueError("ai_job_running")
 
 
-def _failure_turns(goal: str, error_code: str) -> list[dict]:
+def _failure_turns(goal: str, error_code: str, turn_extra: dict | None = None) -> list[dict]:
+    # The failed round keeps its sealed mode/policy/attachments so a retry
+    # replays exactly what was sent.
     return [
-        {"role": "user", "text": goal[:MAX_GOAL]},
+        {"role": "user", "text": goal[:MAX_GOAL], **(turn_extra or {})},
         {"role": "error", "code": error_code[:120]},
     ]
 
@@ -578,7 +582,7 @@ def create_failed_job(*, org_id: UUID, user_id: UUID, surface: str,
 
 
 def record_failure(*, job_id: UUID, transcript_before: list, goal: str,
-                   error_code: str) -> dict | None:
+                   error_code: str, turn_extra: dict | None = None) -> dict | None:
     """A failed follow-up lands on the existing job after its round rolled
     back: the user turn stays in the transcript and the row goes
     FAILED_RETRYABLE. The WHERE clause binds the write to the generation
@@ -604,8 +608,8 @@ def record_failure(*, job_id: UUID, transcript_before: list, goal: str,
         " WHERE id = %s AND state IN ('PLANNING','RUNNING')"
         " AND transcript = %s::jsonb"
         " RETURNING id",
-        [_dump(_failure_turns(goal, error_code)), MAX_ERROR_TURNS,
-         _dump(_failure_turns(goal, error_code)), error_code[:120],
+        [_dump(_failure_turns(goal, error_code, turn_extra)), MAX_ERROR_TURNS,
+         _dump(_failure_turns(goal, error_code, turn_extra)), error_code[:120],
          str(job_id), _dump(transcript_before)],
     )
     return {"id": str(found[0]["id"])} if found else None
@@ -678,7 +682,7 @@ def record_outcome(
                 if 0 <= recorded["step_index"] < len(steps)
                 else None
             )
-            if step is None or step.get("kind") not in ("ops", "batch_ops", "prepare", "project_ops"):
+            if step is None or step.get("kind") not in ("ops", "batch_ops", "prepare", "project_ops", "document_layout"):
                 return None
             if recorded["action"] == "undone" and not any(
                 outcome.get("turn_index") == recorded["turn_index"]
@@ -721,7 +725,7 @@ def record_outcome(
                     (turn_index, step_index)
                     for turn_index, turn_row in enumerate(transcript)
                     for step_index, step_row in enumerate(turn_row.get("steps") or [])
-                    if step_row.get("kind") in ("ops", "batch_ops", "prepare", "project_ops")
+                    if step_row.get("kind") in ("ops", "batch_ops", "prepare", "project_ops", "document_layout")
                 ]
                 resolved = {
                     (outcome["turn_index"], outcome["step_index"])
@@ -738,6 +742,61 @@ def record_outcome(
                         [str(job_id)],
                     )
     return {"id": str(found[0]["id"]), "recorded": True} if found else {"id": str(job_id), "recorded": False}
+
+
+def record_assistant_outcomes(*, job_id: UUID, entries: list[dict]) -> None:
+    """Drafts the assistant saved itself (reversible, with undo) are recorded
+    like a human «applied», attributed to the assistant."""
+    now = datetime.now(timezone.utc).isoformat()
+    stamped = [{**entry, "recorded_at": now} for entry in entries]
+    with _ai_backend():
+        write(
+            "UPDATE public.ai_jobs SET outcomes = outcomes || %s::jsonb, updated_at = NOW() WHERE id = %s",
+            [_dump(stamped), str(job_id)],
+        )
+
+
+def store_approval(*, job_id: UUID, transcript: list, entries: list[dict]) -> None:
+    """One human approval of the prepared set: the applied markers land on
+    the round's steps, the outcomes are appended (attributed to the person)
+    and the job settles when no gated change is left waiting."""
+    now = datetime.now(timezone.utc).isoformat()
+    stamped = [{**entry, "recorded_at": now} for entry in entries]
+    gated = ("prepare", "ops", "batch_ops", "project_ops", "document_layout", "quote_draft")
+    agent_turns = [index for index, turn in enumerate(transcript)
+                   if isinstance(turn, dict) and turn.get("role") == "agent"]
+    latest = transcript[agent_turns[-1]] if agent_turns else {}
+    waiting = any(
+        isinstance(step, dict) and step.get("kind") in gated and not step.get("applied")
+        for step in latest.get("steps") or []
+    )
+    with _ai_backend():
+        write(
+            "UPDATE public.ai_jobs SET transcript = %s::jsonb, outcomes = outcomes || %s::jsonb,"
+            " state = %s, updated_at = NOW() WHERE id = %s"
+            " AND state NOT IN ('QUEUED','PLANNING','RUNNING')",
+            [_dump(transcript), _dump(stamped), "WAITING_FOR_APPROVAL" if waiting else "SUCCEEDED", str(job_id)],
+        )
+
+
+def set_receipt(*, job_id: UUID, receipt: dict | None) -> None:
+    """The run's verified receipt (postconditions over saved objects)."""
+    if connection.vendor != "postgresql":
+        return
+    with _ai_backend():
+        write(
+            "UPDATE public.ai_jobs SET receipt = %s::jsonb, updated_at = NOW() WHERE id = %s",
+            [_dump(receipt) if receipt is not None else None, str(job_id)],
+        )
+
+
+def update_refs(*, job_id: UUID, refs: dict) -> None:
+    """Point the conversation at the work the assistant created for it."""
+    with _ai_backend():
+        write(
+            "UPDATE public.ai_jobs SET refs = %s::jsonb, updated_at = NOW() WHERE id = %s",
+            [_dump({key: str(value) for key, value in refs.items()}), str(job_id)],
+        )
 
 
 # ----------------------------------------------------------------- contract
@@ -815,7 +874,7 @@ def _decode(record: dict[str, object]) -> dict[str, object]:
     out = dict(record)
     for name in (
         "refs", "plan", "transcript", "artifacts", "warnings", "result",
-        "outcomes",
+        "outcomes", "receipt",
     ):
         value = out.get(name)
         if isinstance(value, str):
@@ -823,7 +882,7 @@ def _decode(record: dict[str, object]) -> dict[str, object]:
             # Decimal integers render as floats in DRF and become invalid when
             # a restored proposal is sent back to the strict apply endpoint.
             out[name] = json.loads(value, parse_float=Decimal)
-    for name in ("id", "org_id", "user_id"):
+    for name in ("id", "org_id", "user_id", "thread_id"):
         if out.get(name) is not None:
             out[name] = str(out[name])
     return out

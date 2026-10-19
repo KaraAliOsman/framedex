@@ -343,6 +343,7 @@ class HttpProvider:
         client: httpx.Client | None = None,
         operation_key: str | None = None,
         document_path: str | None = None,
+        attachment_parts: list | None = None,
     ) -> dict[str, Any]:
         started = time.monotonic()
         options = dict(provider_options or {})
@@ -394,12 +395,33 @@ class HttpProvider:
                             }
                     except (DocumentaryError, httpx.HTTPError):
                         pass
+                elif input_payload.get("kind") == "PDF" and isinstance(input_payload.get("page_range"), dict):
+                    # One internal batch of a long catalog: only its pages are
+                    # rendered, scanned/mixed pages also as images.
+                    from ingest.catalog_pages import page_parts
+                    page_range = input_payload["page_range"]
+                    raw = SupabaseDocumentStorage().download_bounded(document_path, 50 * 1024 * 1024)
+                    if raw is None:
+                        raise ProviderError("ai_source_page_limit")
+                    try:
+                        wire_input["_document_pages"] = page_parts(
+                            raw,
+                            int(page_range["first"]),
+                            int(page_range["last"]),
+                            {int(page) for page in page_range.get("visual") or []},
+                        )
+                    except (KeyError, TypeError, ValueError) as error:
+                        raise ProviderError("ai_source_unreadable") from error
                 elif input_payload.get("kind") == "PDF":
                     from ai_gateway.multimodal import pdf_page_parts
                     raw = SupabaseDocumentStorage().download_bounded(document_path, 20 * 1024 * 1024)
                     if raw is None:
                         raise ProviderError("ai_source_page_limit")
                     wire_input["_document_pages"] = pdf_page_parts(raw)
+            if attachment_parts:
+                # Composer attachments: text parts keep «archivo · página/
+                # hoja!celda/párrafo»; visual pages and images go as images.
+                wire_input["_document_pages"] = [*attachment_parts, *(wire_input.get("_document_pages") or [])]
             deadline = started + options["timeout_s"]
             options["_deadline"] = deadline
             retries = min(2, max(0, int(route.get("retries", 2))))
@@ -1042,6 +1064,7 @@ class MockProvider:
         # Mock performs no fetch — the parameter exists so the service passes
         # the resolved document path uniformly across providers.
         document_path: str | None = None,
+        attachment_parts: list | None = None,
     ) -> dict[str, Any]:
         started = time.monotonic()
         digest = hashlib.sha256(

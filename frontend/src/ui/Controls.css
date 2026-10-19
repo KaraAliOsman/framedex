@@ -1,54 +1,93 @@
+/* Control grammar (constitution §3.4): the primary action is solid teal, a
+   secondary action is white with a visible control border, a link navigates.
+   Every control reads as a control without hover. */
 .ui-button,
-button.ui-button {
+button.ui-button,
+a.ui-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-6px);
-  height: var(--control-height);
-  padding: 0 var(--space-12px);
-  border: 1px solid var(--border-default);
+  gap: var(--space-8px);
+  min-height: var(--control-height);
+  height: auto;
+  padding: 0 var(--space-16px);
+  border: 1px solid var(--border-control);
   border-radius: var(--r-1);
   background: var(--surface-panel);
   color: var(--text-primary);
   font: inherit;
   font-weight: 500;
+  line-height: 1.2;
+  text-decoration: none;
   cursor: pointer;
   white-space: nowrap;
-  transition: background var(--t-micro) var(--ease-in);
+  transition:
+    background var(--t-micro) var(--ease-in),
+    border-color var(--t-micro) var(--ease-in),
+    transform var(--t-micro) var(--ease-in);
 }
 .ui-button:hover:not(:disabled) {
   background: var(--surface-hover);
-  border-color: var(--border-strong);
+  border-color: var(--text-secondary);
+  color: var(--text-primary);
+}
+.ui-button:active:not(:disabled) {
+  background: var(--surface-active);
+  transform: translateY(1px);
 }
 .ui-button--primary,
-button.ui-button--primary {
+button.ui-button--primary,
+a.ui-button--primary {
   background: var(--interactive-fill);
   border-color: var(--interactive-fill);
   color: var(--text-on-fill);
+  font-weight: 600;
 }
 .ui-button--primary:hover:not(:disabled) {
   background: var(--interactive-hover);
+  border-color: var(--interactive-hover);
+  color: var(--text-on-fill);
 }
 .ui-button--primary:active:not(:disabled) {
   background: var(--interactive-pressed);
+  border-color: var(--interactive-pressed);
 }
 .ui-button--danger,
 button.ui-button--danger {
-  background: var(--state-danger);
+  background: var(--surface-panel);
   border-color: var(--state-danger);
-  color: var(--text-on-danger);
+  color: var(--state-danger-ink);
 }
-.ui-button--ghost {
+.ui-button--danger:hover:not(:disabled) {
+  background: var(--state-danger-soft);
+  border-color: var(--state-danger);
+  color: var(--state-danger-ink);
+}
+/* Ghost = a quiet in-context action (toolbar, row menu); it still shows the
+   interactive color so it never reads as plain text. */
+.ui-button--ghost,
+button.ui-button--ghost {
   background: transparent;
   border-color: transparent;
   color: var(--interactive);
 }
+.ui-button--ghost:hover:not(:disabled) {
+  background: var(--surface-selected);
+  border-color: transparent;
+  color: var(--state-info-ink);
+}
 .ui-button--compact {
-  height: var(--density-compact);
-  padding-inline: var(--space-8px);
+  min-height: var(--density-compact);
+  padding-inline: var(--space-12px);
+  font-size: var(--type-dense);
 }
 .ui-button--touch {
   min-height: var(--density-loose);
+  padding-inline: var(--space-24px);
+}
+.ui-button__icon {
+  display: inline-flex;
+  margin-inline-start: calc(var(--space-4px) * -1);
 }
 .ui-button:disabled,
 button:disabled {
@@ -56,6 +95,7 @@ button:disabled {
   border-color: var(--border-default);
   color: var(--text-disabled);
   cursor: not-allowed;
+  transform: none;
 }
 .ui-icon-button {
   display: inline-flex;
@@ -71,41 +111,67 @@ button:disabled {
   background: transparent;
   cursor: pointer;
 }
+.ui-icon-button:hover:not(:disabled) {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+.ui-link {
+  color: var(--interactive);
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
+  text-underline-offset: 0.2em;
+}
+.ui-link:hover {
+  text-decoration-color: currentColor;
+}
 :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
   box-shadow: none;
   outline: 2px solid var(--border-focus);
-  outline-offset: 1px;
+  outline-offset: 2px;
 }
 ::selection {
-  background: var(--surface-selected);
+  background: var(--teal-100);
 }
 .ui-field,
 .ui-number-field {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4px);
+  gap: var(--space-6px);
   min-width: 0;
 }
+/* Labels speak in sentence case (constitution §3.2), never forced capitals. */
 .ui-field__label,
 .ui-spec-label {
-  color: var(--text-secondary);
+  color: var(--text-primary);
   font-size: var(--type-label);
   font-weight: 500;
   line-height: var(--line-label);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
 }
 .ui-field__input,
 .ui-code__fallback input {
   width: 100%;
   min-width: 0;
-  height: var(--control-height);
-  padding: 0 var(--space-8px);
-  border: 1px solid var(--border-default);
+  min-height: var(--control-height);
+  padding: 0 var(--space-12px);
+  border: 1px solid var(--border-control);
   border-radius: var(--r-1);
   background: var(--surface-sheet);
   color: var(--text-primary);
   font: inherit;
+  transition: border-color var(--t-micro) var(--ease-in);
+}
+textarea.ui-field__input {
+  padding-block: var(--space-8px);
+}
+.ui-field__input:hover:not(:disabled) {
+  border-color: var(--text-secondary);
+}
+.ui-field__input:focus-visible {
+  border-color: var(--border-focus);
+}
+.ui-field__input::placeholder {
+  color: var(--text-muted);
 }
 .ui-field__input[aria-invalid="true"],
 .ui-input-affix.is-invalid {
@@ -129,7 +195,7 @@ button:disabled {
   min-width: 0;
 }
 .ui-input-affix {
-  border: 1px solid var(--border-default);
+  border: 1px solid var(--border-control);
   border-radius: var(--r-1);
   background: var(--surface-sheet);
 }
@@ -174,23 +240,28 @@ button:disabled {
   cursor: pointer;
 }
 .ui-switch__track {
-  width: var(--space-32px);
-  height: var(--space-16px);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--r-1);
+  width: 36px;
+  height: 20px;
+  border: 1px solid var(--border-control);
+  border-radius: var(--r-pill);
   background: var(--surface-card);
 }
 .ui-switch__track::before {
   content: "";
   display: block;
-  width: var(--space-12px);
-  height: var(--space-12px);
-  margin: 1px;
+  width: 14px;
+  height: 14px;
+  margin: 2px;
+  border-radius: var(--r-pill);
   background: var(--text-secondary);
   transition: transform var(--t-state) var(--ease-in);
 }
+.ui-switch input:checked + .ui-switch__track {
+  background: var(--interactive-fill);
+  border-color: var(--interactive-fill);
+}
 .ui-switch input:checked + .ui-switch__track::before {
-  background: var(--interactive);
+  background: var(--paper);
   transform: translateX(16px);
 }
 .ui-switch input:focus-visible + .ui-switch__track {

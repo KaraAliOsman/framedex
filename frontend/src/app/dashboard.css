@@ -176,14 +176,7 @@
   display: inline-block;
   margin-top: var(--space-3);
 }
-.dashboard-row-code {
-  color: var(--theme-text-muted);
-  font-family: var(--font-mono);
-  font-size: var(--type-dense);
-}
-.dashboard-row-name {
-  font-weight: 600;
-}
+
 @media (max-width: 760px) {
   .today-action {
     grid-template-columns: minmax(0, 1fr);

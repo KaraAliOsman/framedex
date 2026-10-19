@@ -1527,7 +1527,8 @@ def compose_revision(
         organization = one(
             "SELECT name, tax_id, commercial_name, giro, brand_address,"
             " brand_phone, brand_email, brand_logo_key, brand_logo_sha256,"
-            " brand_primary_color, document_attribution, portal_attribution, document_preferences"
+            " brand_primary_color, document_attribution, portal_attribution, document_preferences,"
+            " quotation_number_prefix"
             " FROM public.tenancy_organizations WHERE id = %s",
             [str(org_id)],
             "organization_not_found",
@@ -1578,6 +1579,13 @@ def compose_revision(
                 "total_price_net": D(str(project["total_price_net"])),
                 "total_price_tax": D(str(project["total_price_tax"])),
                 "total_price_gross": D(str(project["total_price_gross"])),
+                # Commercial identity and editable composition sealed with the
+                # revision; absent on revisions issued before they existed.
+                **({"commercial_number": int(project["commercial_number"]),
+                    "commercial_label": f'{organization["quotation_number_prefix"]}{int(project["commercial_number"])}'}
+                   if project.get("commercial_number") else {}),
+                **({"document_layout": decoded(project_input["document_layout"])}
+                   if project_input.get("document_layout") and decoded(project_input["document_layout"]) else {}),
             },
             "positions": position_inputs,
             "alternatives": _sealed_alternatives(project_input["alternative_version_ids"], project_id, org_id),

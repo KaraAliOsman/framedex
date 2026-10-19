@@ -9,7 +9,7 @@ import { formatDateTime, formatDecimal } from "../../format";
 import {
   Button,
   DeniedState,
-  DimLoader,
+  Loading,
   EmptyState,
   ErrorState,
   Skeleton,
@@ -75,7 +75,7 @@ export function AiWorkList({
     return (
       <>
         <Skeleton lines={4} />
-        <DimLoader label="Consultando las llamadas del proveedor" />
+        <Loading label="Consultando las llamadas del proveedor" />
       </>
     );
   if (query.error instanceof ApiError && query.error.status === 403)
@@ -131,7 +131,7 @@ export function AiWorkList({
             <time className="ai-number" dateTime={work.created_at}>
               {formatDateTime(work.created_at)}
             </time>
-            {work.job_state && work.ai_job_id && work.user_id === me?.user.id && (
+            {work.job_state && work.ai_job_id && work.user_id === me?.user?.id && (
               <Link
                 className="ui-button ui-button--small ui-button--ghost"
                 to={`/assistant?job=${work.ai_job_id}`}

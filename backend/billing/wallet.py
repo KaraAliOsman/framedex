@@ -95,7 +95,8 @@ def debit(org, credits: int, audit_id: UUID):
                      'AND points_debited=%s', [org, audit_id, credits])
         if not audit:
             raise contract_error(409, 'wallet_audit_required', 'Falta la auditoría del consumo.')
-        if organization['subscription_tier'] == 'STARTER' or not organization['subscription_active']:
+        from billing.capabilities import entitled
+        if not entitled(organization):
             raise contract_error(409, 'ai_entitlement_required', 'Tu plan conserva todas las funciones manuales.')
         if organization['credits_balance'] < credits:
             raise contract_error(409, 'insufficient_credits', 'No quedan créditos suficientes para esta operación de IA.')

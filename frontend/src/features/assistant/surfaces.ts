@@ -40,7 +40,7 @@ export const SURFACE_LABELS: Record<string, string> = {
   dashboard: "panel",
   projects: "proyectos",
   project: "proyecto",
-  position: "vano",
+  position: "ventana en edición",
   quotation: "cotización",
   catalog: "catálogo",
   production: "producción",

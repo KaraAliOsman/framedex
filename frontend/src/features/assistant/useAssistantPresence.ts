@@ -4,7 +4,7 @@ import { ApiError } from "../../api/apiMutator";
 import type { AiJob, AiPresence } from "../../api/generated/models";
 import type { QueryClient } from "@tanstack/react-query";
 import { stableRefs, type AssistantContextValue } from "./assistantContext";
-import { orbStateFor, type OrbState } from "./Orb";
+import { companionStateFor, type CompanionState } from "./Companion";
 
 export type PresenceContext = AssistantContextValue & {
   organizationId: string | null;
@@ -26,7 +26,7 @@ export function presenceKey(context: PresenceContext): readonly unknown[] {
 }
 
 /** Worker progress commits independently of the provider's transaction. */
-export function presenceState(job?: Pick<AiJob, "state" | "live"> | null): OrbState {
+export function presenceState(job?: Pick<AiJob, "state" | "live"> | null): CompanionState {
   if (job && ["QUEUED", "PLANNING", "RUNNING"].includes(job.state)) {
     if (job.live?.state === "RUNNING") {
       return ["queued", "context", "CONSULTING_PROJECT", "CALCULATING_ENGINE"].includes(
@@ -36,7 +36,7 @@ export function presenceState(job?: Pick<AiJob, "state" | "live"> | null): OrbSt
         : "working";
     }
   }
-  return orbStateFor(job?.state);
+  return companionStateFor(job?.state);
 }
 
 export function useAssistantPresence(context: PresenceContext) {

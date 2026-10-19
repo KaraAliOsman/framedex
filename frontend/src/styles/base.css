@@ -8,39 +8,70 @@ body,
   margin: 0;
 }
 body {
-  background: var(--theme-bg-canvas);
-  color: var(--theme-text-primary);
+  background: var(--bg-app);
+  color: var(--text-primary);
   font-family: var(--font-sans);
   font-size: var(--type-body);
   line-height: var(--line-body);
-}
-button,
-input {
-  color: inherit;
-  font: inherit;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 button,
 input,
-a {
-  border-radius: var(--r-2);
+select,
+textarea {
+  color: inherit;
+  font: inherit;
 }
+/* An unclassed button still reads as a control without hover: a secondary
+   action with a visible boundary (constitution §3.4 / control grammar). */
 button {
-  border: 1px solid var(--theme-border-subtle);
-  background: var(--theme-surface-card);
-  padding: 0.5rem 0.75rem;
+  min-height: var(--density-compact);
+  padding: 0 var(--space-12px);
+  border: 1px solid var(--border-control);
+  border-radius: var(--r-1);
+  background: var(--surface-panel);
+  color: var(--text-primary);
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background var(--t-micro) var(--ease-in),
+    border-color var(--t-micro) var(--ease-in);
 }
-button:hover,
+button:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+button:active:not(:disabled) {
+  background: var(--surface-active);
+}
+a {
+  color: var(--interactive);
+  text-underline-offset: 0.18em;
+}
 a:hover {
-  background: var(--theme-surface-hover);
+  color: var(--interactive-hover);
 }
 button:focus-visible,
 input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
 a:focus-visible {
-  outline: 2px solid var(--theme-accent);
+  outline: 2px solid var(--border-focus);
   outline-offset: 2px;
 }
-:root[data-theme="dark"] button:focus-visible,
-:root[data-theme="dark"] input:focus-visible,
-:root[data-theme="dark"] a:focus-visible {
-  outline-color: var(--theme-accent-strong);
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+h1,
+h2,
+h3 {
+  letter-spacing: -0.005em;
 }

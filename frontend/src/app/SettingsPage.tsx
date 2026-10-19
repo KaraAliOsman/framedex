@@ -43,6 +43,7 @@ import {
   CompanyCard,
   UsersCard,
   NumberingCard,
+  QuotationNumberingCard,
   DocumentPreview,
 } from "../features/settings/AdminSections";
 import { PricingRulesSettings } from "../features/pricing/PricingPage";
@@ -53,9 +54,9 @@ import { useAuthSession } from "../auth/AuthSessionProvider";
 import { formatDate } from "../features/money";
 import { t, type TranslationKey } from "../i18n/es-CL";
 import { MOD_K_HINT, MOD_KEY_HINT } from "../platform";
-import { useTheme } from "../theme/ThemeProvider";
 import { ExtraPolicyEditor } from "../features/projects/ExtraPolicyEditor";
 import { DocumentSettings } from "../features/projects/DocumentSettings";
+import { CompanyDesignDefaults } from "../features/projects/DesignDefaults";
 import { MountingRulesSettings } from "../features/projects/MountingRulesSettings";
 import { GlassRulesSettings } from "../features/glass/GlassRulesSettings";
 import { AiSettingsSection } from "../features/assistant/AiSettingsSection";
@@ -805,6 +806,7 @@ function OrgBrandingCard({
 const SETTINGS_SECTIONS = [
   ["account", "Cuenta"],
   ["company", "Empresa"],
+  ["design", "Valores habituales"],
   ["users", "Usuarios y roles"],
   ["commercial", "Comercial"],
   ["documents", "Documentos"],
@@ -842,13 +844,11 @@ export function SettingsPage(): JSX.Element {
     (value: DocumentPreferences) => setDraft({ scope, value: { document_preferences: value } }),
     [scope],
   );
-  const { theme, toggleTheme } = useTheme();
   if (!org) return <DeniedState reason="Elige tu organización antes de configurar." />;
   return (
     <section
       className="settings"
       data-density={org.role === "OPERATOR" || org.role === "INSTALLER" ? "workshop" : "office"}
-      data-theme={theme}
       aria-labelledby="page-title"
     >
       <PageHeader title="Ajustes" headingId="page-title" context={org.name} />
@@ -886,9 +886,6 @@ export function SettingsPage(): JSX.Element {
                     <dd>{t(ROLE_KEYS[org.role])}</dd>
                   </div>
                 </dl>
-                <Button onClick={toggleTheme}>
-                  Cambiar a tema {theme === "light" ? "oscuro" : "claro"}
-                </Button>
                 <p>
                   Buscar: <kbd>{MOD_K_HINT}</kbd> · Deshacer: <kbd>{MOD_KEY_HINT}Z</kbd>
                 </p>
@@ -933,6 +930,7 @@ export function SettingsPage(): JSX.Element {
               {commercial && <DocumentPreview orgId={org.id} branding={branding} />}
             </div>
           )}
+          {section === "design" && <CompanyDesignDefaults orgId={org.id} canEdit={commercial} />}
           {section === "users" && <UsersCard orgId={org.id} canEdit={owner} />}
           {section === "commercial" && (
             <div className="settings-with-preview">
@@ -974,7 +972,12 @@ export function SettingsPage(): JSX.Element {
               {commercial && <DocumentPreview orgId={org.id} branding={branding} />}
             </div>
           )}
-          {section === "numbering" && <NumberingCard orgId={org.id} />}
+          {section === "numbering" && (
+            <>
+              <QuotationNumberingCard orgId={org.id} canEdit={owner} />
+              <NumberingCard orgId={org.id} />
+            </>
+          )}
           {section === "analytics" &&
             (workshop ? (
               <AnalyticsPreferences orgId={org.id} canEdit={owner} />

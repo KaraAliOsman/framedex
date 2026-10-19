@@ -6,6 +6,10 @@ import { useAssistantSurface } from "../assistant/assistantContext";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { fmtMm } from "../../format";
 import { t } from "../../i18n/es-CL";
+import { useQuery } from "@tanstack/react-query";
+import { catalogReferenceSeries } from "../../api/generated/dekopen";
+import type { ReferenceSeries as ReferenceSeriesRecord } from "../../api/generated/models";
+import { ReferenceSeriesPanel } from "./ReferenceSeries";
 import { CatalogImportsPanel } from "./CatalogImportsPanel";
 import { HardwareAuthorityView } from "./HardwareAuthorityView";
 import { ExtraAuthorityEditor } from "../projects/ExtraDefinitionEditor";
@@ -21,7 +25,7 @@ import { SystemWorkspaceView } from "./SystemWorkspace";
 import { SectionPreviewSvg } from "../canvas/SectionPreviewSvg";
 import { SectionImportPanel } from "./SectionImportPanel";
 import { CatalogProvenance, SectionReviewFacts } from "./CatalogProvenance";
-import { Button, DeniedState, DimLoader, PageHeader, Tabs, useConfirm } from "../../ui";
+import { Button, DeniedState, Loading, PageHeader, Tabs, useConfirm } from "../../ui";
 import type {
   FinishAuthority,
   ProcessProfileOption,
@@ -116,10 +120,35 @@ function systemReadinessLabel(system: Row<"systems">): string {
   return parts.join(" · ");
 }
 
+const UNKNOWN_BRAND = "Fabricante por identificar";
+
+/** Safe visual grouping only: trims, collapses spaces and ignores case. Two
+ * different spellings are never merged into one manufacturer by similarity. */
+function brandKey(name: string | null | undefined): string {
+  return (name ?? "").trim().replace(/\s+/g, " ").toLocaleLowerCase("es-CL");
+}
+
+type SeriesEntry = { key: string; versions: Row<"systems">[] };
+
+/** Versions of one series (same manufacturer and code) live inside the
+ * series, never as separate shelf entries. No authority is picked by
+ * max(version): every version keeps its own system id. */
+function groupSeries(systems: Row<"systems">[]): SeriesEntry[] {
+  const series = new Map<string, Row<"systems">[]>();
+  for (const system of systems) {
+    const key = `${brandKey(system.manufacturer)}|${system.code.toLocaleLowerCase("es-CL")}`;
+    series.set(key, [...(series.get(key) ?? []), system]);
+  }
+  return [...series.entries()].map(([key, versions]) => ({
+    key,
+    versions: [...versions].sort((a, b) => (b.version ?? 0) - (a.version ?? 0)),
+  }));
+}
+
 function CatalogLoading(): JSX.Element {
   return (
     <p className="catalog-loading">
-      <DimLoader label={ct("loading")} />
+      <Loading label={ct("loading")} />
       {ct("loading")}
     </p>
   );
@@ -162,6 +191,24 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
   const requestedRecord = useRef(requested.get("record"));
   const [importExpanded, setImportExpanded] = useState(false);
   const [search, setSearch] = useState("");
+  // Normal shelf by manufacturer; synthetic DEMO series live in Laboratorio.
+  const [shelf, setShelf] = useState<"brands" | "lab">(() =>
+    requested.get("shelf") === "lab" ? "lab" : "brands",
+  );
+  const [selectedRef, setSelectedRef] = useState<string | null>(null);
+  const [seed, setSeed] = useState<Record<string, string> | null>(null);
+  const references = useQuery({
+    queryKey: ["catalog-references", orgId],
+    staleTime: 5 * 60_000,
+    queryFn: async ({ signal }) => {
+      const response = await catalogReferenceSeries({
+        headers: { "X-Organization-ID": orgId },
+        signal,
+      });
+      if (response.status !== 200) throw new Error("references");
+      return response.data;
+    },
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -194,7 +241,7 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
         setSelected((previous) =>
           previous && systems.some((system) => system.id === previous)
             ? previous
-            : (systems[0]?.id ?? null),
+            : (systems.find((system) => !system.is_demo)?.id ?? null),
         );
         if (!systems.length) setResource("hardware-kits");
       })
@@ -206,6 +253,28 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
       });
     return () => controller.abort();
   }, [api, reload]);
+  // Without company series the shelf opens on the first manufacturer
+  // reference (registry order) instead of an empty kits pseudo-system.
+  const landingPicked = useRef(false);
+  const requestedSystem = requested.get("system");
+  useEffect(() => {
+    if (landingPicked.current || !data || !references.data) return;
+    landingPicked.current = true;
+    if (selected !== null || selectedRef !== null || shelf !== "brands" || requestedSystem) return;
+    if (data.systems.some((system) => !system.is_demo)) return;
+    const first = references.data.series[0];
+    if (first) {
+      setSelectedRef(first.id);
+      return;
+    }
+    // No company series and no references: open the laboratory on its
+    // first series rather than an empty kits pseudo-system.
+    const lab = data.systems.find((system) => system.is_demo);
+    if (lab) {
+      setShelf("lab");
+      setSelected(lab.id);
+    }
+  }, [data, references.data, selected, selectedRef, shelf, requestedSystem]);
   useEffect(() => {
     if (!data || !requestedRecord.current) return;
     const id = requestedRecord.current;
@@ -276,8 +345,13 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
   const currentSystem = data.systems.find((system) => system.id === selected);
   const term = search.trim().toLocaleLowerCase("es-CL");
   const visibleSystems = data.systems.filter((system) =>
-    `${system.name} ${system.code}`.toLocaleLowerCase("es-CL").includes(term),
+    `${system.manufacturer ?? ""} ${system.family ?? ""} ${system.name} ${system.code}`
+      .toLocaleLowerCase("es-CL")
+      .includes(term),
   );
+  const currentReference = selectedRef
+    ? references.data?.series.find((item) => item.id === selectedRef)
+    : undefined;
   const rows: Row<Resource>[] =
     resource === "systems"
       ? currentSystem
@@ -338,58 +412,200 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
       />
 
       <div className="catalog-layout" hidden={importExpanded}>
-        <aside className="catalog-master" aria-label={ct("systems")}>
+        <aside className="catalog-master" aria-label="Fabricantes y series">
+          <div className="catalog-shelf ui-segmented" role="radiogroup" aria-label="Biblioteca">
+            <button
+              type="button"
+              role="radio"
+              aria-checked={shelf === "brands"}
+              onClick={() => setShelf("brands")}
+            >
+              Fabricantes
+            </button>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={shelf === "lab"}
+              onClick={() => setShelf("lab")}
+            >
+              Laboratorio · {data.systems.filter((system) => system.is_demo).length}
+            </button>
+          </div>
           <label>
-            {ct("search")}
+            Buscar marca, serie o código
             <input
               type="search"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
           </label>
-          <ul>
-            {visibleSystems.map((system) => (
-              <li key={system.id}>
-                <button
-                  type="button"
-                  className="catalog-system"
-                  aria-current={selected === system.id ? "true" : undefined}
-                  disabled={editor !== null}
-                  onClick={() => {
-                    setSelected(system.id);
-                    setDetailTab("workspace");
-                    setNotice("");
-                  }}
-                >
-                  <strong>
-                    {system.manufacturer ? `${system.manufacturer} ` : ""}
-                    {system.name}
-                  </strong>
-                  <span title={system.code}>
-                    {system.family ? `${system.family} · ` : ""}
-                    {system.system_family
-                      ? `${ct(`option.${system.system_family}`)} · `
-                      : "Catálogo histórico · "}
-                    {ct(`option.${system.material}`)} · v{system.version}
-                  </span>
-                  <small>
-                    {system.is_global ? ct("global") : ct("own")}
-                    {system.is_demo ? ` · ${ct("demo")}` : ""}
-                    {system.review_pending ? ` · ${ct("reviewPending")}` : ""}
-                    {" · "}
-                    <span>{systemReadinessLabel(system)}</span>
-                  </small>
-                </button>
-              </li>
-            ))}
-          </ul>
-          {!visibleSystems.length && <p>{ct("noSystems")}</p>}
+          {shelf === "lab" ? (
+            <p className="catalog-lab-note">
+              Series sintéticas DEMO para pruebas y obras antiguas. No representan a un fabricante
+              real ni sirven para una cotización real.
+            </p>
+          ) : null}
+          {(() => {
+            const pool = visibleSystems.filter((system) =>
+              shelf === "lab" ? system.is_demo : !system.is_demo,
+            );
+            const refs: ReferenceSeriesRecord[] =
+              shelf === "brands"
+                ? (references.data?.series ?? []).filter((item) =>
+                    `${item.manufacturer} ${item.series_name} ${item.series_code} ${item.articles
+                      .map((article) => article.code)
+                      .join(" ")}`
+                      .toLocaleLowerCase("es-CL")
+                      .includes(term),
+                  )
+                : [];
+            const brands = new Map<
+              string,
+              { label: string; series: SeriesEntry[]; refs: ReferenceSeriesRecord[] }
+            >();
+            const brandOf = (name: string | null | undefined) => {
+              const key = brandKey(name) || brandKey(UNKNOWN_BRAND);
+              if (!brands.has(key))
+                brands.set(key, { label: name?.trim() || UNKNOWN_BRAND, series: [], refs: [] });
+              return brands.get(key)!;
+            };
+            for (const entry of groupSeries(pool))
+              brandOf(entry.versions[0]!.manufacturer).series.push(entry);
+            for (const ref of refs) brandOf(ref.manufacturer).refs.push(ref);
+            // Brands with prepared company series first (alphabetical); then
+            // reference-only brands in the curated registry order.
+            const ordered = [...brands.values()].sort((a, b) => {
+              if (a.label === UNKNOWN_BRAND) return 1;
+              if (b.label === UNKNOWN_BRAND) return -1;
+              const own = Number(b.series.length > 0) - Number(a.series.length > 0);
+              if (own !== 0) return own;
+              return a.series.length > 0 ? a.label.localeCompare(b.label, "es") : 0;
+            });
+            if (!ordered.length)
+              return (
+                <p>
+                  {term
+                    ? "Ninguna serie coincide con la búsqueda."
+                    : shelf === "lab"
+                      ? "No hay series de laboratorio."
+                      : "Todavía no hay series preparadas. Revisa las referencias de fabricantes o incorpora una serie."}
+                </p>
+              );
+            return (
+              <div className="catalog-brands">
+                {ordered.map((brand) => (
+                  <section key={brand.label} className="catalog-brand">
+                    <h3>
+                      {brand.label}
+                      <span>
+                        {brand.series.length + brand.refs.length}{" "}
+                        {brand.series.length + brand.refs.length === 1 ? "serie" : "series"}
+                      </span>
+                    </h3>
+                    <ul>
+                      {brand.series.map((entry) => {
+                        const current =
+                          entry.versions.find((version) => version.id === selected) ??
+                          entry.versions.find((version) => version.is_active) ??
+                          entry.versions[0]!;
+                        return (
+                          <li key={entry.key}>
+                            <button
+                              type="button"
+                              className="catalog-system"
+                              aria-current={
+                                entry.versions.some((version) => version.id === selected)
+                                  ? "true"
+                                  : undefined
+                              }
+                              disabled={editor !== null}
+                              onClick={() => {
+                                setSelected(current.id);
+                                setSelectedRef(null);
+                                setDetailTab("workspace");
+                                setNotice("");
+                              }}
+                            >
+                              <strong>{current.name}</strong>
+                              <span title={current.code}>
+                                {current.code}
+                                {current.system_family
+                                  ? ` · ${ct(`option.${current.system_family}`)}`
+                                  : " · Catálogo histórico"}
+                                {` · ${ct(`option.${current.material}`)}`}
+                              </span>
+                              <small>
+                                {current.is_global ? ct("global") : ct("own")}
+                                {current.is_demo ? ` · ${ct("demo")}` : ""}
+                                {current.review_pending ? ` · ${ct("reviewPending")}` : ""}
+                                {" · "}
+                                <span>{systemReadinessLabel(current)}</span>
+                              </small>
+                            </button>
+                            {entry.versions.length > 1 &&
+                            entry.versions.some((version) => version.id === selected) ? (
+                              <div className="catalog-versions" role="group" aria-label="Versiones">
+                                {entry.versions.map((version) => (
+                                  <button
+                                    key={version.id}
+                                    type="button"
+                                    aria-pressed={version.id === selected}
+                                    disabled={editor !== null}
+                                    onClick={() => {
+                                      setSelected(version.id);
+                                      setDetailTab("workspace");
+                                    }}
+                                  >
+                                    v{version.version}
+                                    {version.is_active ? "" : " · inactiva"}
+                                  </button>
+                                ))}
+                              </div>
+                            ) : null}
+                          </li>
+                        );
+                      })}
+                      {brand.refs.map((ref) => (
+                        <li key={ref.id}>
+                          <button
+                            type="button"
+                            className="catalog-system catalog-system--reference"
+                            aria-current={selectedRef === ref.id ? "true" : undefined}
+                            disabled={editor !== null}
+                            onClick={() => {
+                              setSelectedRef(ref.id);
+                              setSelected(null);
+                              setNotice("");
+                            }}
+                          >
+                            <strong>{ref.series_name}</strong>
+                            <span>
+                              {ref.material} · {ref.family}
+                            </span>
+                            <small>
+                              {ref.capabilities.reference
+                                ? "Referencia con fuente · no cotizable"
+                                : "Identidad sin resolver"}
+                            </small>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                ))}
+              </div>
+            );
+          })()}
+          {references.isError && shelf === "brands" ? (
+            <p role="alert">No se pudieron cargar las referencias de fabricantes.</p>
+          ) : null}
           <button
             type="button"
-            aria-current={selected === null ? "true" : undefined}
+            aria-current={selected === null && selectedRef === null ? "true" : undefined}
             disabled={editor !== null}
             onClick={() => {
               setSelected(null);
+              setSelectedRef(null);
               setResource("hardware-kits");
               setNotice("");
             }}
@@ -399,14 +615,26 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
         </aside>
 
         <section className="catalog-detail" aria-label={ct("detail")}>
-          {detailTab === "workspace" && currentSystem && editor === null ? (
+          {currentReference && references.data && editor === null ? (
+            <ReferenceSeriesPanel
+              series={currentReference}
+              registry={references.data}
+              canPrepare={canEdit}
+              onPrepare={(item) => {
+                setNotice("");
+                setSeed(item.seed);
+                setEditor({ resource: "systems" });
+              }}
+            />
+          ) : null}
+          {detailTab === "workspace" && currentSystem && editor === null && !currentReference ? (
             <div className="catalog-record-navigation">
               <button type="button" onClick={() => setDetailTab("records")}>
                 Abrir lista de registros
               </button>
             </div>
           ) : null}
-          {detailTab === "records" || !currentSystem ? (
+          {currentReference ? null : detailTab === "records" || !currentSystem ? (
             <>
               <header>
                 <h2>{currentSystem?.name ?? ct("unassignedKits")}</h2>
@@ -453,7 +681,7 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
             </>
           ) : null}
 
-          {currentSystem && detailTab === "workspace" ? (
+          {currentReference ? null : currentSystem && detailTab === "workspace" ? (
             <SystemWorkspaceView
               api={api}
               systemId={currentSystem.id}
@@ -587,6 +815,7 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
               key={`${editor.resource}:${editor.id ?? "new"}`}
               resource={editor.resource}
               row={editingRow}
+              seed={editor.id ? undefined : (seed ?? undefined)}
               data={data}
               systemId={selected}
               api={api}
@@ -595,7 +824,10 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
               onReviewed={(row) => reviewRow(editor.resource, row)}
               onSaved={(saved) => accept(editor.resource, saved)}
               onDeleted={(id) => removed(editor.resource, id)}
-              onClose={() => setEditor(null)}
+              onClose={() => {
+                setEditor(null);
+                setSeed(null);
+              }}
             />
           )}
         </section>
@@ -607,6 +839,8 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
 type EditorProps = {
   resource: Resource;
   row?: Row<Resource>;
+  /** Verified identity values from a reference series for a new record. */
+  seed?: Record<string, string>;
   data: CatalogData;
   systemId: string | null;
   api: ReturnType<typeof catalogApi>;
@@ -621,6 +855,7 @@ type EditorProps = {
 function CatalogEditor({
   resource,
   row,
+  seed,
   data,
   systemId,
   api,
@@ -631,7 +866,10 @@ function CatalogEditor({
   onDeleted,
   onClose,
 }: EditorProps): JSX.Element {
-  const [draft, setDraft] = useState(() => initialDraft(resource, row, systemId));
+  const [draft, setDraft] = useState<Record<string, string>>(() => ({
+    ...initialDraft(resource, row, systemId),
+    ...(row ? {} : (seed ?? {})),
+  }));
   const [contents, setContents] = useState<Array<HardwareComponent & { key: string }>>(() =>
     row && "contents" in row
       ? row.contents.map((component) => ({ ...component, key: crypto.randomUUID() }))

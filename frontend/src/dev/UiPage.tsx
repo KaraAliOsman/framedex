@@ -5,7 +5,6 @@ import { ApiError } from "../api/apiMutator";
 import { useAuthSession } from "../auth/AuthSessionProvider";
 import { useProject } from "../features/projects/useProject";
 import { domainLabel } from "../i18n/domainLabels";
-import { useTheme } from "../theme/ThemeProvider";
 import {
   Area,
   BlockedState,
@@ -21,7 +20,7 @@ import {
   DemoBadge,
   DeniedState,
   Dialog,
-  DimLoader,
+  Loading,
   Dims,
   Drawer,
   EmptyState,
@@ -66,12 +65,12 @@ import {
   useCommandRegistry,
   useConfirm,
   useToast,
-  type IconKind,
   type OpeningKind,
   type TableColumn,
   type TableState,
 } from "../ui";
 import type { ProjectResponse } from "../api/generated/models";
+import { ICON_NAMES } from "../ui/Icon";
 import "./ui.css";
 import { SymbolTable } from "./SymbolTable";
 import { DrawingTable } from "./DrawingTable";
@@ -138,7 +137,6 @@ export function UiPage(): JSX.Element {
 function Manual(): JSX.Element {
   const auth = useAuthSession();
   const orgId = auth.me?.active_organization?.id ?? "";
-  const { theme, toggleTheme } = useTheme();
   const [density, setDensity] = useState("office");
   const [tab, setTab] = useState("manual");
   const [number, setNumber] = useState("");
@@ -224,11 +222,10 @@ function Manual(): JSX.Element {
   useEffect(
     () =>
       register([
-        { id: "theme", label: "Cambiar tema", shortcut: "Ctrl+K", run: toggleTheme },
         { id: "drawer", label: "Abrir ficha de la obra", run: () => setOverlay("drawer") },
         { id: "document", label: "Usar densidad de documento", run: () => setDensity("document") },
       ]),
-    [register, toggleTheme],
+    [register],
   );
   const inspectorGroups = useMemo(
     () => [
@@ -289,7 +286,7 @@ function Manual(): JSX.Element {
     [project.data, position, glass, weight, system],
   );
   return (
-    <main className="ui-manual" data-density={density} data-theme={theme}>
+    <main className="ui-manual" data-density={density}>
       <header className="ui-manual__header" data-region="manual-configuracion">
         <div>
           <p className="ui-spec-label">DEKOPEN / MATERIAL DE INTERFAZ / V2</p>
@@ -303,7 +300,6 @@ function Manual(): JSX.Element {
             options={densities}
             onValueChange={setDensity}
           />
-          <Button onClick={toggleTheme}>Tema {theme === "light" ? "oscuro" : "claro"}</Button>
           <CommandPalette />
         </div>
       </header>
@@ -452,7 +448,7 @@ function Manual(): JSX.Element {
               <IconButton
                 label="Abrir diálogo"
                 shortcut="Enter"
-                icon={<Icon kind="info" />}
+                icon={<Icon name="info" />}
                 onClick={() => setOverlay("dialog")}
               />
               <Button size="sm" onClick={() => setFeedback("Control denso activado")}>
@@ -467,7 +463,7 @@ function Manual(): JSX.Element {
               <Button loading>Procesando</Button>
             </ButtonGroup>
             <p role="status">{feedback}</p>
-            <DimLoader progress={65} label="Avance de muestra: 65 por ciento" />
+            <Loading progress={65} label="Avance de muestra: 65 por ciento" />
           </Panel>
           <Section title="03 / Entradas de presentación">
             <ValidatedForm
@@ -619,18 +615,8 @@ function Manual(): JSX.Element {
               ))}
             </div>
             <div className="ui-manual__glyphs">
-              {[
-                "check",
-                "warning",
-                "stop",
-                "clock",
-                "profile",
-                "dimension",
-                "mullion",
-                "transom",
-                "cut",
-              ].map((kind) => (
-                <Icon key={kind} kind={kind as IconKind} />
+              {ICON_NAMES.map((name) => (
+                <Icon key={name} name={name} label={name} />
               ))}
             </div>
             <ButtonGroup region="manual-estados">

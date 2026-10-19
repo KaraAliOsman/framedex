@@ -1,11 +1,11 @@
+import { Icon } from "../ui/Icon";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { DateOnly, DimLoader } from "../ui";
+import { DateOnly, Loading } from "../ui";
 import { useAuthSession } from "../auth/AuthSessionProvider";
 import { useDismiss } from "./shellUtils";
 import { useToday } from "./useToday";
 import { consequenceLabels } from "./todayLabels";
-import { homeFor } from "./navigation";
 
 /** The bell and Hoy observe one tenant/user/role query; viewing a notification
  * never resolves or acknowledges a consequential domain action. */
@@ -32,17 +32,7 @@ export function AttentionBell(): JSX.Element | null {
           setOpen((value) => !value);
         }}
       >
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          aria-hidden="true"
-        >
-          <path d="M5 17h14l-2-3V9a5 5 0 0 0-10 0v5l-2 3ZM10 20h4" />
-        </svg>
+        <Icon name="bell" />
         {actions.length > 0 && (
           <span className="attention-bell__badge ui-value">{actions.length}</span>
         )}
@@ -54,7 +44,7 @@ export function AttentionBell(): JSX.Element | null {
         >
           <p className="shell-menu__title">Atención pendiente</p>
           {query.isPending ? (
-            <DimLoader label="Consultando pendientes" />
+            <Loading label="Consultando pendientes" />
           ) : query.isError ? (
             <div role="alert">
               <p>No se pudieron consultar los pendientes.</p>
@@ -89,8 +79,8 @@ export function AttentionBell(): JSX.Element | null {
               ))}
             </ul>
           )}
-          <Link className="shell-menu__all" to={homeFor(org.role)} onClick={() => setOpen(false)}>
-            Ver todo mi trabajo
+          <Link className="shell-menu__all" to="/dashboard" onClick={() => setOpen(false)}>
+            Ver todos los pendientes
           </Link>
         </div>
       )}

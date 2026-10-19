@@ -9,7 +9,7 @@ export function useToday() {
   const org = auth.me?.active_organization;
   const client = useQueryClient();
   const query = useQuery({
-    queryKey: ["today", org?.id, auth.me?.user.id, org?.role],
+    queryKey: ["today", org?.id, auth.me?.user?.id, org?.role],
     enabled: Boolean(org),
     staleTime: 30_000,
     refetchOnWindowFocus: "always",

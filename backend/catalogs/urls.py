@@ -3,6 +3,7 @@ from projects.thermal_views import ThermalCatalogView, ThermalReviewView
 
 from catalogs import views
 from catalogs.glass_views import GlassPreviewView, GlassRulesView, GlassVariantView
+from catalogs.reference_views import ReferenceSeriesView
 
 urlpatterns = [
     path("systems/<uuid:system_id>/thermal/", ThermalCatalogView.as_view()),
@@ -10,6 +11,7 @@ urlpatterns = [
     path("glass/preview/", GlassPreviewView.as_view(), name="catalog-glass-preview"),
     path("glass/rules/", GlassRulesView.as_view(), name="catalog-glass-rules"),
     path("glass/variants/", GlassVariantView.as_view(), name="catalog-glass-variants"),
+    path("references/", ReferenceSeriesView.as_view(), name="catalog-reference-series"),
     path("systems/", views.SystemCollectionView.as_view(), name="catalog-system-list"),
     path(
         "systems/<uuid:row_id>/",

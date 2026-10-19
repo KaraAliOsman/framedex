@@ -1,0 +1,3680 @@
+{
+  "title": "Referencias de ingeniería: Logikal, SchüCal, V6 Advantage y A+W Cantor",
+  "schema_version": "1.0",
+  "research_date": "2026-10-18",
+  "language": "es",
+  "markdown_companion": "competidores-ingenieria.md",
+  "scope": "Subinforme de cuatro suites; el informe principal integra al menos diez competidores y la evaluación actual de DEKOPEN.",
+  "method": {
+    "evidence": "Fuentes primarias oficiales: páginas, manuales, fichas, currículo y casos. Sin ejecución de estas aplicaciones.",
+    "observations": "No hay filas OBS. Los procedimientos leídos son DOC, nunca runtime observado.",
+    "visual_limit": "La herramienta screenshot devolvió marcador textual sin píxeles inspeccionables. Referencias visuales son candidatos/localizadores para captura, no evaluaciones estéticas.",
+    "video_limit": "Playlist SchüCal y MP4 V6 localizados pero no reproducidos. No se inventaron duración ni timestamps.",
+    "rea_boundary": "Este subinforme no decompiló estas suites ni accedió a datos privados. El informe principal gestiona REA/capturas.",
+    "source_dates": "null indica fecha editorial desconocida. Fecha de consulta no sustituye fecha de publicación. Fuentes históricas se marcan.",
+    "commercial_limit": "Sin tarifa ni costo total verificados. Módulos, países y licencias no se suman como licencia base.",
+    "numeric_authority": "Lecciones de UX/datos; no son autoridad para fórmulas ni compatibilidades de fabricación de DEKOPEN."
+  },
+  "status_legend": {
+    "OBS": "Observado directamente en ejecución identificada. No se usa en este subinforme.",
+    "DOC": "Documentado en fuente oficial consultada; no significa prueba funcional ni cobertura completa del eje.",
+    "NV": "No verificado con las fuentes reunidas; no significa que el competidor carezca de la función."
+  },
+  "rubric18_definition": [
+    {
+      "order": 1,
+      "id": "entrada_onboarding",
+      "title": "Entrada y onboarding",
+      "dimensions": [
+        "catalog_onboarding"
+      ],
+      "supplemental": []
+    },
+    {
+      "order": 2,
+      "id": "marcas_series_catalogos",
+      "title": "Marcas, series y catálogos",
+      "dimensions": [
+        "catalog_structure"
+      ],
+      "supplemental": []
+    },
+    {
+      "order": 3,
+      "id": "editor_aperturas",
+      "title": "Editor y aperturas",
+      "dimensions": [
+        "editor2d",
+        "openings",
+        "assemblies"
+      ],
+      "supplemental": []
+    },
+    {
+      "order": 4,
+      "id": "2d_3d",
+      "title": "2D y 3D",
+      "dimensions": [
+        "editor2d",
+        "render3d"
+      ],
+      "supplemental": []
+    },
+    {
+      "order": 5,
+      "id": "materiales",
+      "title": "Materiales",
+      "dimensions": [
+        "finishes",
+        "glass_hardware",
+        "takeoff"
+      ],
+      "supplemental": []
+    },
+    {
+      "order": 6,
+      "id": "precios",
+      "title": "Precios",
+      "dimensions": [
+        "pricing_private"
+      ],
+      "supplemental": []
+    },
+    {
+      "order": 7,
+      "id": "presupuestos_pdf",
+      "title": "Presupuestos y PDF",
+      "dimensions": [
+        "quote_documents",
+        "portal_customer"
+      ],
+      "supplemental": []
+    },
+    {
+      "order": 8,
+      "id": "corte_retazos",
+      "title": "Corte y retazos",
+      "dimensions": [
+        "cuts_optimization",
+        "stock_remnants"
+      ],
+      "supplemental": []
+    },
+    {
+      "order": 9,
+      "id": "compras_stock",
+      "title": "Compras y stock",
+      "dimensions": [
+        "purchasing",
+        "stock_remnants"
+      ],
+      "supplemental": []
+    },
+    {
+      "order": 10,
+      "id": "taller_cnc",
+      "title": "Taller y CNC",
+      "dimensions": [
+        "production",
+        "cnc"
+      ],
+      "supplemental": []
+    },
+    {
+      "order": 11,
+      "id": "qr_terreno",
+      "title": "QR y terreno",
+      "dimensions": [
+        "labels_qr",
+        "field_mobile"
+      ],
+      "supplemental": []
+    },
+    {
+      "order": 12,
+      "id": "ia",
+      "title": "IA",
+      "dimensions": [
+        "ai_execution"
+      ],
+      "supplemental": []
+    },
+    {
+      "order": 13,
+      "id": "historial_deshacer",
+      "title": "Historial y deshacer",
+      "dimensions": [
+        "ai_history_undo"
+      ],
+      "supplemental": []
+    },
+    {
+      "order": 14,
+      "id": "roles",
+      "title": "Roles",
+      "dimensions": [],
+      "supplemental": [
+        "roles"
+      ]
+    },
+    {
+      "order": 15,
+      "id": "claridad_visual",
+      "title": "Claridad visual",
+      "dimensions": [
+        "ux_hierarchy"
+      ],
+      "supplemental": []
+    },
+    {
+      "order": 16,
+      "id": "teclado_movil",
+      "title": "Teclado y móvil",
+      "dimensions": [],
+      "supplemental": [
+        "keyboard_mobile"
+      ]
+    },
+    {
+      "order": 17,
+      "id": "interoperabilidad",
+      "title": "Interoperabilidad",
+      "dimensions": [
+        "integrations"
+      ],
+      "supplemental": []
+    },
+    {
+      "order": 18,
+      "id": "madurez_precio",
+      "title": "Madurez y precio",
+      "dimensions": [],
+      "supplemental": [
+        "maturity_price"
+      ]
+    }
+  ],
+  "dimensions24": [
+    "catalog_structure",
+    "catalog_onboarding",
+    "editor2d",
+    "openings",
+    "assemblies",
+    "render3d",
+    "finishes",
+    "glass_hardware",
+    "pricing_private",
+    "quote_documents",
+    "takeoff",
+    "ai_execution",
+    "ai_history_undo",
+    "cuts_optimization",
+    "stock_remnants",
+    "purchasing",
+    "production",
+    "labels_qr",
+    "cnc",
+    "field_mobile",
+    "portal_customer",
+    "analytics",
+    "ux_hierarchy",
+    "integrations"
+  ],
+  "competitors": [
+    {
+      "id": "logikal",
+      "name": "Orgadata / Forterro Logikal",
+      "category": "Configuración técnica mult proveedor, estimación y preparación de fabricación",
+      "sources": [
+        {
+          "id": "L01",
+          "title": "Logikal FAQ",
+          "url": "https://www.logikal-software.com/en/faq",
+          "type": "official_page",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "official_text_read"
+        },
+        {
+          "id": "L02",
+          "title": "Input of elements: user interface",
+          "url": "https://help.orgadata.com/en/documentation/input-of-elements/user-interface/",
+          "type": "official_manual",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "official_text_read"
+        },
+        {
+          "id": "L03",
+          "title": "Insertion selection",
+          "url": "https://help.orgadata.com/en/documentation/input-of-elements/windows-and-doors/element/insertion-selection/",
+          "type": "official_manual",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "official_text_read"
+        },
+        {
+          "id": "L04",
+          "title": "3D view",
+          "url": "https://help.orgadata.com/en/documentation/input-of-elements/user-interface/3d-view/",
+          "type": "official_manual",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "official_text_read"
+        },
+        {
+          "id": "L05",
+          "title": "Couplings",
+          "url": "https://help.orgadata.com/en/documentation/input-of-elements/windows-and-doors/grid/couplings/",
+          "type": "official_manual",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "official_text_read"
+        },
+        {
+          "id": "L06",
+          "title": "Glazing",
+          "url": "https://help.orgadata.com/en/documentation/input-of-elements/windows-and-doors/glazing/glazing/",
+          "type": "official_manual",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "official_text_read"
+        },
+        {
+          "id": "L07",
+          "title": "System articles",
+          "url": "https://help.orgadata.com/en/documentation/database/system-articles/",
+          "type": "official_manual",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "official_text_read"
+        },
+        {
+          "id": "L08",
+          "title": "Commercial and technical article data",
+          "url": "https://help.orgadata.com/en/documentation/dataservices/customised-databases/commercial-and-technical-article-data/",
+          "type": "official_manual",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "official_text_read"
+        },
+        {
+          "id": "L09",
+          "title": "Customized databases: requirements",
+          "url": "https://help.orgadata.com/en/documentation/dataservices/customised-databases/requirements/",
+          "type": "official_manual",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "official_text_read"
+        },
+        {
+          "id": "L10",
+          "title": "Discount groups",
+          "url": "https://help.orgadata.com/en/documentation/estimation-and-labour-hours/estimation/estimation-data/discount-groups/",
+          "type": "official_manual",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "official_text_read"
+        },
+        {
+          "id": "L11",
+          "title": "Printouts",
+          "url": "https://help.orgadata.com/en/documentation/printouts/",
+          "type": "official_manual",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "official_text_read"
+        },
+        {
+          "id": "L12",
+          "title": "Material analysis",
+          "url": "https://help.orgadata.com/en/documentation/printouts/estimation-printouts/material-analysis/",
+          "type": "official_manual",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "official_text_read"
+        },
+        {
+          "id": "L13",
+          "title": "Residual lengths",
+          "url": "https://help.orgadata.com/en/documentation/project-centre/article-options/residual-lengths/",
+          "type": "official_manual",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "official_text_read"
+        },
+        {
+          "id": "L14",
+          "title": "Position history",
+          "url": "https://help.orgadata.com/en/documentation/project-centre/position-history/",
+          "type": "official_manual",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "official_text_read"
+        },
+        {
+          "id": "L15",
+          "title": "User settings",
+          "url": "https://help.orgadata.com/en/documentation/settings/user/",
+          "type": "official_manual",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "official_text_read"
+        },
+        {
+          "id": "L16",
+          "title": "Keyboard shortcuts and combinations",
+          "url": "https://help.orgadata.com/en/documentation/project-centre/keyboard-shortcuts-and-combinations/",
+          "type": "official_manual",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "official_text_read"
+        },
+        {
+          "id": "L17",
+          "title": "SimplyTag",
+          "url": "https://help.orgadata.com/en/documentation/simplytag/",
+          "type": "official_manual",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "official_text_read"
+        },
+        {
+          "id": "L18",
+          "title": "Saw setup",
+          "url": "https://help.orgadata.com/en/documentation/cnc/machine-setup/saw-setup/",
+          "type": "official_manual",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "official_text_read"
+        },
+        {
+          "id": "L19",
+          "title": "ERP export via MDB",
+          "url": "https://help.orgadata.com/en/documentation/interfaces/erp/erp-export-via-mdb/",
+          "type": "official_manual",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "official_text_read"
+        },
+        {
+          "id": "L20",
+          "title": "Create projects",
+          "url": "https://help.orgadata.com/en/documentation/project-centre/create-projects/",
+          "type": "official_manual",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "official_text_read"
+        }
+      ],
+      "dimensions": {
+        "catalog_structure": {
+          "status": "DOC",
+          "observation": "El manual parte de proveedor y muestra lista de artículos, dibujo y datos asociados. No se verificó una taxonomía exacta de todas las series ni cobertura de Proline/Vinhaus.",
+          "sources": [
+            "L07"
+          ],
+          "lesson": "Marca y serie como dueñas visibles de componentes, fuente y versión."
+        },
+        "catalog_onboarding": {
+          "status": "DOC",
+          "observation": "La preparación de base técnica delimita alcance y usa una plantilla con códigos, unidades, embalaje y largos. No se demostró publicación automática desde PDF.",
+          "sources": [
+            "L08",
+            "L09"
+          ],
+          "lesson": "Separar importar evidencia de aprobar un sistema fabricable."
+        },
+        "editor2d": {
+          "status": "DOC",
+          "observation": "Dibujo, cinta y timeline organizan la entrada por máscaras; se pueden ocultar controles. El manual no equivale a una sesión usada.",
+          "sources": [
+            "L02"
+          ],
+          "lesson": "Conservar orientación por fase y espacio de lienzo."
+        },
+        "openings": {
+          "status": "DOC",
+          "observation": "El selector de inserciones aparece tras la cuadrícula; contiene búsqueda y múltiples aperturas físicas, con selección de varios campos. No se probaron mano, compatibilidad ni geometría.",
+          "sources": [
+            "L03"
+          ],
+          "lesson": "La apertura debe ser un estado técnico verificable y su icono debe explicar el campo afectado."
+        },
+        "assemblies": {
+          "status": "DOC",
+          "observation": "El manual selecciona un perfil en la cuadrícula, elige un acople y lo muestra en elevación y sección. No se usó la operación.",
+          "sources": [
+            "L05"
+          ],
+          "lesson": "Acople con identidad y consecuencia geométrica, no simple agrupación visual."
+        },
+        "render3d": {
+          "status": "DOC",
+          "observation": "Vista 3D con orientaciones interior/exterior, rotación y acción abrir/cerrar para elevadora corredera. No se verificó animación de todas las tipologías.",
+          "sources": [
+            "L04"
+          ],
+          "lesson": "Inspección de la misma configuración con vista y movimiento explícitos."
+        },
+        "finishes": {
+          "status": "DOC",
+          "observation": "Artículos tienen colores/precios; en acristalamiento se puede definir acabado del junquillo, incluido bicolor. No se midió fidelidad del render.",
+          "sources": [
+            "L07",
+            "L06"
+          ],
+          "lesson": "Separar acabado comercial y representación, conservando caras y procedencia."
+        },
+        "glass_hardware": {
+          "status": "DOC",
+          "observation": "Rellenos por campo, espesor, junquillo e información de selección están documentados; informes incluyen herrajes. No se validaron recetas locales.",
+          "sources": [
+            "L06",
+            "L12"
+          ],
+          "lesson": "Compatibilidad y datos contextualizados; el motor conserva autoridad numérica."
+        },
+        "pricing_private": {
+          "status": "DOC",
+          "observation": "Existen factores/descuentos por grupos y permisos sobre estimación/proyectos protegidos. No se auditó la autorización efectiva ni aislamiento entre empresas.",
+          "sources": [
+            "L10",
+            "L15"
+          ],
+          "lesson": "Mostrar precio aplicado sin exponer costo/margen a roles no autorizados."
+        },
+        "quote_documents": {
+          "status": "DOC",
+          "observation": "Hay familias separadas de informes de venta, compras y fabricación; la FAQ enumera exportación PDF/Word/Excel. No se verificó emisión inmutable ni aceptación de cliente.",
+          "sources": [
+            "L11",
+            "L01"
+          ],
+          "lesson": "Entregables por destinatario y fase, ligados a una revisión."
+        },
+        "takeoff": {
+          "status": "DOC",
+          "observation": "Análisis de materiales con cantidades, artículos/dibujos, categorías y opciones de detalle/precio. No se comparó contra una fabricación.",
+          "sources": [
+            "L12"
+          ],
+          "lesson": "Lista de materiales rastreable hasta unidad, revisión y fuente."
+        },
+        "ai_execution": {
+          "status": "NV",
+          "observation": "No se estableció en estas fuentes un chat que navegue y ejecute tareas con política de aprobación. Cálculo/reglas automáticas no prueban LLM.",
+          "sources": [
+            "L01",
+            "L02"
+          ],
+          "lesson": "Documentar acciones tipadas, permisos y resultado observable de la IA."
+        },
+        "ai_history_undo": {
+          "status": "DOC",
+          "observation": "El historial de posición puede registrar cambios con comentario y recuperar un estado como nueva posición independiente. No prueba memoria de chat ni rollback de operaciones externas; frozen es un estado modificable.",
+          "sources": [
+            "L14"
+          ],
+          "lesson": "Preservar el original al recuperar y distinguir historia de diseño, acción y conversación."
+        },
+        "cuts_optimization": {
+          "status": "DOC",
+          "observation": "La FAQ declara optimización con barras y sobrantes. El artículo específico de cut optimisation está en construcción; algoritmo y resultado no probados.",
+          "sources": [
+            "L01",
+            "L13"
+          ],
+          "lesson": "Explicar entradas, disponibilidad y salida del plan, sin llamar stock a una simulación."
+        },
+        "stock_remnants": {
+          "status": "DOC",
+          "observation": "Se introducen artículo, cantidad y longitud residual del proyecto, con importación Excel. Reserva global, ubicación y retorno físico no verificados.",
+          "sources": [
+            "L13"
+          ],
+          "lesson": "Identidad física de retazo, longitud, ubicación, reserva y consumo."
+        },
+        "purchasing": {
+          "status": "DOC",
+          "observation": "Informes de pedido por tipo de material y exportación ERP están documentados. No se recorrió recepción/reserva/devolución en la licencia base.",
+          "sources": [
+            "L11",
+            "L19"
+          ],
+          "lesson": "Separar necesidad, orden, recepción y cantidad disponible."
+        },
+        "production": {
+          "status": "DOC",
+          "observation": "La FAQ presenta MES como extensión para información/estado de taller. No se instaló ni comprobó secuenciación real.",
+          "sources": [
+            "L01"
+          ],
+          "lesson": "Vista de puesto centrada en operación y revisión actual."
+        },
+        "labels_qr": {
+          "status": "DOC",
+          "observation": "La FAQ menciona códigos de fabricación; SimplyTag identifica unidad terminada, documentos y servicio. No son automáticamente el mismo flujo.",
+          "sources": [
+            "L01",
+            "L17"
+          ],
+          "lesson": "Diferenciar etiqueta de corte y pasaporte de unidad."
+        },
+        "cnc": {
+          "status": "DOC",
+          "observation": "El manual configura sierra y hay permiso para generar archivos CNC. No se validó postprocesador ni compatibilidad universal.",
+          "sources": [
+            "L18",
+            "L15"
+          ],
+          "lesson": "Solo enviar a máquina con adaptador y revisión validados."
+        },
+        "field_mobile": {
+          "status": "DOC",
+          "observation": "SimplyTag tiene acceso Android/iOS/web para información de unidad y servicio. No prueba editor móvil completo ni levantamiento de medidas.",
+          "sources": [
+            "L17"
+          ],
+          "lesson": "Móvil para tarea contextual; no comprimir la oficina completa."
+        },
+        "portal_customer": {
+          "status": "NV",
+          "observation": "Se documenta SimplyTag para datos/servicio de unidad, pero no un portal de aprobación de presupuesto con alternativas/pago en las fuentes revisadas.",
+          "sources": [
+            "L17",
+            "L11"
+          ],
+          "lesson": "Distinguir acceso a documentos de una aprobación comercial."
+        },
+        "analytics": {
+          "status": "NV",
+          "observation": "Los informes de estimación/material no establecen un cockpit analítico de costo real versus planificado o métricas de negocio verificadas.",
+          "sources": [
+            "L12",
+            "L01"
+          ],
+          "lesson": "No confundir una tabla de cantidades con analítica de decisiones."
+        },
+        "ux_hierarchy": {
+          "status": "DOC",
+          "observation": "Manual con fases de entrada, dibujo y controles que se pueden ocultar. Las imágenes se localizaron, pero sus píxeles no se inspeccionaron en este subinforme.",
+          "sources": [
+            "L02",
+            "L04"
+          ],
+          "lesson": "Evaluar orientación y foco con tareas; no copiar toda la cinta de escritorio."
+        },
+        "integrations": {
+          "status": "DOC",
+          "observation": "FAQ describe integraciones modulares; MDB documenta opciones y posible sobrescritura de dibujos consecutivos. No equivale a una API universal.",
+          "sources": [
+            "L01",
+            "L19"
+          ],
+          "lesson": "Cada exportación identifica formato, revisión, destino y artefacto único."
+        }
+      },
+      "supplemental": {
+        "roles": {
+          "status": "DOC",
+          "observation": "Perfiles heredados y permisos por usuario para estimación, bases, proyectos y CNC; parte del texto está en revisión. Seguridad real no auditada.",
+          "sources": [
+            "L15"
+          ],
+          "lesson": "Separar lectura/ejecución y comprobar permisos en servidor."
+        },
+        "keyboard_mobile": {
+          "status": "DOC",
+          "observation": "Manual de atajos para copiar, insertar, renombrar y entrada. SimplyTag es móvil; paridad táctil del editor completo no probada.",
+          "sources": [
+            "L16",
+            "L17"
+          ],
+          "lesson": "Teclado para diseño, móvil para consulta/registro contextual."
+        },
+        "maturity_price": {
+          "status": "DOC",
+          "observation": "Corpus público operativo extenso y modelo por módulos/catálogos. Tarifa, implantación chilena, mantenimiento y costo total no verificados.",
+          "sources": [
+            "L01",
+            "L02",
+            "L09"
+          ],
+          "lesson": "Comparar catálogo, parametrización, formación y conectores además de licencia."
+        }
+      },
+      "flows": [
+        {
+          "id": "L-F1",
+          "name": "Configurar y cotizar",
+          "status": "DOC",
+          "execution": "reconstructed_not_executed",
+          "steps": [
+            {
+              "action": "Crear proyecto y cliente",
+              "sources": [
+                "L20"
+              ]
+            },
+            {
+              "action": "Definir cuadrícula y elegir inserción por campo",
+              "sources": [
+                "L03"
+              ]
+            },
+            {
+              "action": "Añadir acople cuando corresponde",
+              "sources": [
+                "L05"
+              ]
+            },
+            {
+              "action": "Elegir rellenos y junquillos",
+              "sources": [
+                "L06"
+              ]
+            },
+            {
+              "action": "Aplicar condiciones y generar propuesta de venta",
+              "sources": [
+                "L10",
+                "L11"
+              ]
+            }
+          ],
+          "limits": [
+            "Dependencias cambian por sistema/módulo.",
+            "No se probaron cifras, compatibilidades o la emisión final."
+          ]
+        },
+        {
+          "id": "L-F2",
+          "name": "Preparar fabricación",
+          "status": "DOC",
+          "execution": "reconstructed_not_executed",
+          "steps": [
+            {
+              "action": "Introducir/importar sobrantes del proyecto",
+              "sources": [
+                "L13"
+              ]
+            },
+            {
+              "action": "Revisar análisis de materiales",
+              "sources": [
+                "L12"
+              ]
+            },
+            {
+              "action": "Optimizar con stock/retazos según alcance FAQ",
+              "sources": [
+                "L01"
+              ]
+            },
+            {
+              "action": "Emitir documentación y datos para máquina configurada",
+              "sources": [
+                "L11",
+                "L18"
+              ]
+            },
+            {
+              "action": "Usar MES de taller o SimplyTag de ciclo de vida según módulo/fase",
+              "sources": [
+                "L01",
+                "L17"
+              ]
+            }
+          ],
+          "limits": [
+            "Reserva/retorno físico no demostrado.",
+            "SimplyTag no se equipara a etiqueta de corte.",
+            "No se validó ninguna máquina."
+          ]
+        }
+      ],
+      "visual_references": [
+        {
+          "id": "L-V1",
+          "title": "Interfaz por fases",
+          "url": "https://help.orgadata.com/en/documentation/input-of-elements/user-interface/",
+          "sources": [
+            "L02"
+          ],
+          "kind": "manual_with_images",
+          "visual_inspection": "not_performed"
+        },
+        {
+          "id": "L-V2",
+          "title": "Selector de aperturas",
+          "url": "https://help.orgadata.com/en/documentation/input-of-elements/windows-and-doors/element/insertion-selection/",
+          "sources": [
+            "L03"
+          ],
+          "kind": "manual_with_images",
+          "visual_inspection": "not_performed"
+        },
+        {
+          "id": "L-V3",
+          "title": "Vista 3D oficial",
+          "url": "https://help.orgadata.com/en/wp-content/uploads/sites/2/2026/08/EN-2026-3D-Ansicht001.png.pagespeed.ce.MyVfsHuKPk.png",
+          "page_url": "https://help.orgadata.com/en/documentation/input-of-elements/user-interface/3d-view/",
+          "sources": [
+            "L04"
+          ],
+          "kind": "official_image",
+          "visual_inspection": "not_performed",
+          "date_limit": "Ruta con 2026/08; no se infiere versión instalada."
+        },
+        {
+          "id": "L-V4",
+          "title": "Proveedor y datos de artículo",
+          "url": "https://help.orgadata.com/en/documentation/database/system-articles/",
+          "sources": [
+            "L07"
+          ],
+          "kind": "manual_with_images",
+          "visual_inspection": "not_performed"
+        }
+      ],
+      "limits": [
+        "No ejecución instalada ni captura de píxeles inspeccionados.",
+        "No videos vistos con duración/timestamps verificables.",
+        "No catálogo local Proline/Vinhaus validado.",
+        "No precio o costo total confirmado.",
+        "No prueba de reserva/retorno físico de retazos.",
+        "No permisos reales auditados ni garantía de inmutabilidad deducida de frozen.",
+        "No evidencia de agente Chat/Work con memoria en estas fuentes.",
+        "Manual cut optimisation bajo construcción no usado como prueba de algoritmo."
+      ],
+      "rubric18": [
+        {
+          "order": 1,
+          "id": "entrada_onboarding",
+          "title": "Entrada y onboarding",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "catalog_onboarding"
+          ],
+          "supplemental": [],
+          "observation": "La preparación de base técnica delimita alcance y usa una plantilla con códigos, unidades, embalaje y largos. No se demostró publicación automática desde PDF.",
+          "sources": [
+            "L08",
+            "L09"
+          ],
+          "lesson": "Separar importar evidencia de aprobar un sistema fabricable."
+        },
+        {
+          "order": 2,
+          "id": "marcas_series_catalogos",
+          "title": "Marcas, series y catálogos",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "catalog_structure"
+          ],
+          "supplemental": [],
+          "observation": "El manual parte de proveedor y muestra lista de artículos, dibujo y datos asociados. No se verificó una taxonomía exacta de todas las series ni cobertura de Proline/Vinhaus.",
+          "sources": [
+            "L07"
+          ],
+          "lesson": "Marca y serie como dueñas visibles de componentes, fuente y versión."
+        },
+        {
+          "order": 3,
+          "id": "editor_aperturas",
+          "title": "Editor y aperturas",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "editor2d",
+            "openings",
+            "assemblies"
+          ],
+          "supplemental": [],
+          "observation": "Dibujo, cinta y timeline organizan la entrada por máscaras; se pueden ocultar controles. El manual no equivale a una sesión usada. El selector de inserciones aparece tras la cuadrícula; contiene búsqueda y múltiples aperturas físicas, con selección de varios campos. No se probaron mano, compatibilidad ni geometría. El manual selecciona un perfil en la cuadrícula, elige un acople y lo muestra en elevación y sección. No se usó la operación.",
+          "sources": [
+            "L02",
+            "L03",
+            "L05"
+          ],
+          "lesson": "Conservar orientación por fase y espacio de lienzo. La apertura debe ser un estado técnico verificable y su icono debe explicar el campo afectado. Acople con identidad y consecuencia geométrica, no simple agrupación visual."
+        },
+        {
+          "order": 4,
+          "id": "2d_3d",
+          "title": "2D y 3D",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "editor2d",
+            "render3d"
+          ],
+          "supplemental": [],
+          "observation": "Dibujo, cinta y timeline organizan la entrada por máscaras; se pueden ocultar controles. El manual no equivale a una sesión usada. Vista 3D con orientaciones interior/exterior, rotación y acción abrir/cerrar para elevadora corredera. No se verificó animación de todas las tipologías.",
+          "sources": [
+            "L02",
+            "L04"
+          ],
+          "lesson": "Conservar orientación por fase y espacio de lienzo. Inspección de la misma configuración con vista y movimiento explícitos."
+        },
+        {
+          "order": 5,
+          "id": "materiales",
+          "title": "Materiales",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "finishes",
+            "glass_hardware",
+            "takeoff"
+          ],
+          "supplemental": [],
+          "observation": "Artículos tienen colores/precios; en acristalamiento se puede definir acabado del junquillo, incluido bicolor. No se midió fidelidad del render. Rellenos por campo, espesor, junquillo e información de selección están documentados; informes incluyen herrajes. No se validaron recetas locales. Análisis de materiales con cantidades, artículos/dibujos, categorías y opciones de detalle/precio. No se comparó contra una fabricación.",
+          "sources": [
+            "L07",
+            "L06",
+            "L12"
+          ],
+          "lesson": "Separar acabado comercial y representación, conservando caras y procedencia. Compatibilidad y datos contextualizados; el motor conserva autoridad numérica. Lista de materiales rastreable hasta unidad, revisión y fuente."
+        },
+        {
+          "order": 6,
+          "id": "precios",
+          "title": "Precios",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "pricing_private"
+          ],
+          "supplemental": [],
+          "observation": "Existen factores/descuentos por grupos y permisos sobre estimación/proyectos protegidos. No se auditó la autorización efectiva ni aislamiento entre empresas.",
+          "sources": [
+            "L10",
+            "L15"
+          ],
+          "lesson": "Mostrar precio aplicado sin exponer costo/margen a roles no autorizados."
+        },
+        {
+          "order": 7,
+          "id": "presupuestos_pdf",
+          "title": "Presupuestos y PDF",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "quote_documents",
+            "portal_customer"
+          ],
+          "supplemental": [],
+          "observation": "Hay familias separadas de informes de venta, compras y fabricación; la FAQ enumera exportación PDF/Word/Excel. No se verificó emisión inmutable ni aceptación de cliente. Se documenta SimplyTag para datos/servicio de unidad, pero no un portal de aprobación de presupuesto con alternativas/pago en las fuentes revisadas.",
+          "sources": [
+            "L11",
+            "L01",
+            "L17"
+          ],
+          "lesson": "Entregables por destinatario y fase, ligados a una revisión. Distinguir acceso a documentos de una aprobación comercial."
+        },
+        {
+          "order": 8,
+          "id": "corte_retazos",
+          "title": "Corte y retazos",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "cuts_optimization",
+            "stock_remnants"
+          ],
+          "supplemental": [],
+          "observation": "La FAQ declara optimización con barras y sobrantes. El artículo específico de cut optimisation está en construcción; algoritmo y resultado no probados. Se introducen artículo, cantidad y longitud residual del proyecto, con importación Excel. Reserva global, ubicación y retorno físico no verificados.",
+          "sources": [
+            "L01",
+            "L13"
+          ],
+          "lesson": "Explicar entradas, disponibilidad y salida del plan, sin llamar stock a una simulación. Identidad física de retazo, longitud, ubicación, reserva y consumo."
+        },
+        {
+          "order": 9,
+          "id": "compras_stock",
+          "title": "Compras y stock",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "purchasing",
+            "stock_remnants"
+          ],
+          "supplemental": [],
+          "observation": "Informes de pedido por tipo de material y exportación ERP están documentados. No se recorrió recepción/reserva/devolución en la licencia base. Se introducen artículo, cantidad y longitud residual del proyecto, con importación Excel. Reserva global, ubicación y retorno físico no verificados.",
+          "sources": [
+            "L11",
+            "L19",
+            "L13"
+          ],
+          "lesson": "Separar necesidad, orden, recepción y cantidad disponible. Identidad física de retazo, longitud, ubicación, reserva y consumo."
+        },
+        {
+          "order": 10,
+          "id": "taller_cnc",
+          "title": "Taller y CNC",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "production",
+            "cnc"
+          ],
+          "supplemental": [],
+          "observation": "La FAQ presenta MES como extensión para información/estado de taller. No se instaló ni comprobó secuenciación real. El manual configura sierra y hay permiso para generar archivos CNC. No se validó postprocesador ni compatibilidad universal.",
+          "sources": [
+            "L01",
+            "L18",
+            "L15"
+          ],
+          "lesson": "Vista de puesto centrada en operación y revisión actual. Solo enviar a máquina con adaptador y revisión validados."
+        },
+        {
+          "order": 11,
+          "id": "qr_terreno",
+          "title": "QR y terreno",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "labels_qr",
+            "field_mobile"
+          ],
+          "supplemental": [],
+          "observation": "La FAQ menciona códigos de fabricación; SimplyTag identifica unidad terminada, documentos y servicio. No son automáticamente el mismo flujo. SimplyTag tiene acceso Android/iOS/web para información de unidad y servicio. No prueba editor móvil completo ni levantamiento de medidas.",
+          "sources": [
+            "L01",
+            "L17"
+          ],
+          "lesson": "Diferenciar etiqueta de corte y pasaporte de unidad. Móvil para tarea contextual; no comprimir la oficina completa."
+        },
+        {
+          "order": 12,
+          "id": "ia",
+          "title": "IA",
+          "status": "NV",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "ai_execution"
+          ],
+          "supplemental": [],
+          "observation": "No se estableció en estas fuentes un chat que navegue y ejecute tareas con política de aprobación. Cálculo/reglas automáticas no prueban LLM.",
+          "sources": [
+            "L01",
+            "L02"
+          ],
+          "lesson": "Documentar acciones tipadas, permisos y resultado observable de la IA."
+        },
+        {
+          "order": 13,
+          "id": "historial_deshacer",
+          "title": "Historial y deshacer",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "ai_history_undo"
+          ],
+          "supplemental": [],
+          "observation": "El historial de posición puede registrar cambios con comentario y recuperar un estado como nueva posición independiente. No prueba memoria de chat ni rollback de operaciones externas; frozen es un estado modificable.",
+          "sources": [
+            "L14"
+          ],
+          "lesson": "Preservar el original al recuperar y distinguir historia de diseño, acción y conversación."
+        },
+        {
+          "order": 14,
+          "id": "roles",
+          "title": "Roles",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [],
+          "supplemental": [
+            "roles"
+          ],
+          "observation": "Perfiles heredados y permisos por usuario para estimación, bases, proyectos y CNC; parte del texto está en revisión. Seguridad real no auditada.",
+          "sources": [
+            "L15"
+          ],
+          "lesson": "Separar lectura/ejecución y comprobar permisos en servidor."
+        },
+        {
+          "order": 15,
+          "id": "claridad_visual",
+          "title": "Claridad visual",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "ux_hierarchy"
+          ],
+          "supplemental": [],
+          "observation": "Manual con fases de entrada, dibujo y controles que se pueden ocultar. Las imágenes se localizaron, pero sus píxeles no se inspeccionaron en este subinforme.",
+          "sources": [
+            "L02",
+            "L04"
+          ],
+          "lesson": "Evaluar orientación y foco con tareas; no copiar toda la cinta de escritorio."
+        },
+        {
+          "order": 16,
+          "id": "teclado_movil",
+          "title": "Teclado y móvil",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [],
+          "supplemental": [
+            "keyboard_mobile"
+          ],
+          "observation": "Manual de atajos para copiar, insertar, renombrar y entrada. SimplyTag es móvil; paridad táctil del editor completo no probada.",
+          "sources": [
+            "L16",
+            "L17"
+          ],
+          "lesson": "Teclado para diseño, móvil para consulta/registro contextual."
+        },
+        {
+          "order": 17,
+          "id": "interoperabilidad",
+          "title": "Interoperabilidad",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "integrations"
+          ],
+          "supplemental": [],
+          "observation": "FAQ describe integraciones modulares; MDB documenta opciones y posible sobrescritura de dibujos consecutivos. No equivale a una API universal.",
+          "sources": [
+            "L01",
+            "L19"
+          ],
+          "lesson": "Cada exportación identifica formato, revisión, destino y artefacto único."
+        },
+        {
+          "order": 18,
+          "id": "madurez_precio",
+          "title": "Madurez y precio",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [],
+          "supplemental": [
+            "maturity_price"
+          ],
+          "observation": "Corpus público operativo extenso y modelo por módulos/catálogos. Tarifa, implantación chilena, mantenimiento y costo total no verificados.",
+          "sources": [
+            "L01",
+            "L02",
+            "L09"
+          ],
+          "lesson": "Comparar catálogo, parametrización, formación y conectores además de licencia."
+        }
+      ]
+    },
+    {
+      "id": "schuecal",
+      "name": "Schüco SchüCal y ecosistema",
+      "category": "Configuración de sistemas Schüco con oficina, taller y terreno modulares",
+      "sources": [
+        {
+          "id": "S01",
+          "title": "SchüCal — España",
+          "url": "https://www.schueco.com/es/fabricantes/soluciones-digitales/schuecal",
+          "type": "official_page",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "official_text_read"
+        },
+        {
+          "id": "S02",
+          "title": "SchüCal — DE-EN",
+          "url": "https://www.schueco.com/de-en/fabricators/digital-solutions/schuecal",
+          "type": "official_page",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "official_text_read"
+        },
+        {
+          "id": "S03",
+          "title": "Fabrication Data Center",
+          "url": "https://www.schueco.com/uk/fabricators/digital-solutions/fabrication-data-center",
+          "type": "official_page",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "official_text_read"
+        },
+        {
+          "id": "S04",
+          "title": "SchüCal MES",
+          "url": "https://www.schueco.com/de/verarbeiter/digitale-loesungen/schuecal-mes",
+          "type": "official_page",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "indexed_text_only_direct_open_failed"
+        },
+        {
+          "id": "S05",
+          "title": "SchüCal mobile",
+          "url": "https://www.schueco.com/de-en/fabricators/digital-solutions/schuecal-mobile",
+          "type": "official_page",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "official_text_read"
+        },
+        {
+          "id": "S06",
+          "title": "Docu Center",
+          "url": "https://www.schueco.com/uk/specifiers/digital-solutions/docu-center",
+          "type": "official_page",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "official_text_read"
+        },
+        {
+          "id": "S07",
+          "title": "PolyCal — España",
+          "url": "https://www.schueco.com/es/fabricantes/soluciones-digitales/polycal",
+          "type": "official_page",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "official_text_read",
+          "alternate_url": "https://www.schueco.com/de/verarbeiter/digitale-loesungen/polycal"
+        },
+        {
+          "id": "S08",
+          "title": "Digital Solutions in Construction",
+          "url": "https://www.schueco.com/resource/blob/4249866/bd6e3252f6b70a93524d9f7b7ab3d2d1/digital_solutions_brochure_en.pdf?domain=no",
+          "type": "official_pdf",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "pdf_text_read_images_not_visually_inspected",
+          "date_limit": "Fecha editorial no establecida; contiene referencias a 2023. No fechar como documento 2026."
+        },
+        {
+          "id": "S09",
+          "title": "The future of fabrication",
+          "url": "https://www.schueco.com/uk/fabricators/magazine/the-future-of-fabrication",
+          "type": "official_page",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "official_text_read"
+        },
+        {
+          "id": "S10",
+          "title": "VX 800",
+          "url": "https://www.schueco.com/de-en/fabricators/machinery/cnc-maschinen/cnc-machining/vx-800",
+          "type": "official_page",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "official_text_read"
+        },
+        {
+          "id": "S11",
+          "title": "SchüCal tutorials — official playlist",
+          "url": "https://youtube.com/playlist?list=PL1bRABLS_JWyI3pZJK_pcKyXL6v88PR6G",
+          "type": "official_video_playlist",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "link_from_official_page_not_watched"
+        },
+        {
+          "id": "S12",
+          "title": "Software licenses — My Workplace",
+          "url": "https://www.schueco.com/uk/fabricators/my-workplace/software",
+          "type": "authenticated_page",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "redirect_to_sso_no_license_detail"
+        },
+        {
+          "id": "S13",
+          "title": "JANIsoft/SchüCal training documentation",
+          "url": "https://www.jansen.com/servicepack/Homepage/KEY-USER/Template/JANIsoft-Schulung_Dokumentation_IT.pdf",
+          "type": "historical_official_pdf",
+          "published": "2013-06",
+          "accessed": "2026-10-18",
+          "retrieval": "indexed_text_only_direct_open_failed"
+        },
+        {
+          "id": "S14",
+          "title": "Jansen CNC AF 510",
+          "url": "https://www.jansen.com/en-us/building-systems-profile-systems-steel/services-steel-systems/processing/machine-range/detail/cnc-af-510.html",
+          "type": "official_page",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "official_text_read"
+        }
+      ],
+      "dimensions": {
+        "catalog_structure": {
+          "status": "DOC",
+          "observation": "SchüCal se apoya en sistemas Schüco y documentación de sistema. PolyCal es el producto específico para PVC; no se verificó importador genérico mult marca.",
+          "sources": [
+            "S01",
+            "S06",
+            "S07"
+          ],
+          "lesson": "Marca y familia material deben ser explícitas; no mezclar series sin dueño."
+        },
+        "catalog_onboarding": {
+          "status": "DOC",
+          "observation": "El fabricante publica actualizaciones por service packs. No se midió preparación técnica, onboarding autoservicio ni migración de empresa mult marca.",
+          "sources": [
+            "S01"
+          ],
+          "lesson": "Primera cotización y publicación de catálogo son recorridos distintos."
+        },
+        "editor2d": {
+          "status": "DOC",
+          "observation": "El alcance describe configuración/cálculo de ventanas, puertas y fachadas, y conexiones de CAD. Interacción de dibujo/selección actual no probada.",
+          "sources": [
+            "S01"
+          ],
+          "lesson": "Probar tareas concretas en el editor, no inferirlas por la lista comercial."
+        },
+        "openings": {
+          "status": "DOC",
+          "observation": "Ventanas, puertas, correderas y plegables están enumeradas. No se observaron cambios de mano, sentido, carril o manilla.",
+          "sources": [
+            "S01"
+          ],
+          "lesson": "Apertura correcta como primera prueba de confianza del producto."
+        },
+        "assemblies": {
+          "status": "NV",
+          "observation": "El alcance de fachadas/puertas plegables no demuestra por sí solo un editor de acoples con reglas y geometría que se haya consultado o ejecutado.",
+          "sources": [
+            "S01"
+          ],
+          "lesson": "Separar amplitud de catálogo de ensamblaje verificable."
+        },
+        "render3d": {
+          "status": "DOC",
+          "observation": "FDC usa 3D para asistencia de fabricación/mecanizado. No se verificó render comercial ni animación completa dentro de SchüCal base.",
+          "sources": [
+            "S03"
+          ],
+          "lesson": "Distinguir inspección técnica y visualización comercial con misma revisión."
+        },
+        "finishes": {
+          "status": "DOC",
+          "observation": "PolyCal documenta colores y componentes actuales para PVC; esta capacidad pertenece a PolyCal, no se atribuye universalmente a SchüCal.",
+          "sources": [
+            "S07"
+          ],
+          "lesson": "Opciones de acabado gobernadas por producto/serie y datos vigentes."
+        },
+        "glass_hardware": {
+          "status": "DOC",
+          "observation": "SchüCal calcula material/tiempos del sistema; PolyCal enumera herrajes/accesorios y comprobaciones. Recetas concretas de otros proveedores no verificadas.",
+          "sources": [
+            "S01",
+            "S07"
+          ],
+          "lesson": "Compatibilidad por familia y fuente; no trasladar reglas entre marcas."
+        },
+        "pricing_private": {
+          "status": "DOC",
+          "observation": "Cálculo/cotización y consulta mobile están documentados. No se verificó matriz de costos privados, márgenes y permisos de lectura.",
+          "sources": [
+            "S01",
+            "S05"
+          ],
+          "lesson": "El rol móvil/taller no hereda automáticamente visibilidad de costo."
+        },
+        "quote_documents": {
+          "status": "DOC",
+          "observation": "Hay cálculo/pedidos y documentación técnica; la página actual describe GWP/EPD. No se inspeccionó PDF comercial emitido ni su inmutabilidad.",
+          "sources": [
+            "S01",
+            "S02",
+            "S06"
+          ],
+          "lesson": "Documentos por destinatario y autoridad de cualquier cifra ambiental."
+        },
+        "takeoff": {
+          "status": "DOC",
+          "observation": "SchüCal calcula lista de material y tiempos; BOM puede transferirse a Connect. No se comparó contra una unidad real.",
+          "sources": [
+            "S01",
+            "S02"
+          ],
+          "lesson": "Una revisión común entre ingeniería, presupuesto y compra."
+        },
+        "ai_execution": {
+          "status": "NV",
+          "observation": "No se estableció agente LLM que navegue/edite con aprobación en las fuentes revisadas. Inteligencia/reglas no prueban conversación o autonomía.",
+          "sources": [
+            "S01",
+            "S02"
+          ],
+          "lesson": "Exigir función entregada y evidencia de ejecución."
+        },
+        "ai_history_undo": {
+          "status": "NV",
+          "observation": "Actualización FDC y sincronización mobile no acreditan versiones recuperables, deshacer transaccional ni conversación persistente.",
+          "sources": [
+            "S03",
+            "S05"
+          ],
+          "lesson": "Probar historial, versión y chat por separado de sincronización."
+        },
+        "cuts_optimization": {
+          "status": "DOC",
+          "observation": "Fuentes de fabricación/máquina describen optimización; PolyCal incluye documentación de corte. Algoritmo y caso de retazos no se probaron.",
+          "sources": [
+            "S07",
+            "S09",
+            "S10"
+          ],
+          "lesson": "Plan de corte con entradas y máquina explícitas."
+        },
+        "stock_remnants": {
+          "status": "NV",
+          "observation": "No se verificó inventario detallado de retazos con longitud, ubicación y reserva. Conectar máquina u optimizar no demuestra esa trazabilidad.",
+          "sources": [
+            "S09",
+            "S10"
+          ],
+          "lesson": "Identificar retazo físico, no solo rendimiento del corte."
+        },
+        "purchasing": {
+          "status": "DOC",
+          "observation": "La BOM pasa a Connect como carrito/marcador para revisión/procesamiento por el usuario. Almacén/recepción completo en SchüCal base no establecido.",
+          "sources": [
+            "S02"
+          ],
+          "lesson": "Preparar compra y emitir orden son eventos distintos."
+        },
+        "production": {
+          "status": "DOC",
+          "observation": "FDC entrega datos de puesto; MES describe precedencia de estaciones y fallos. MES solo consultado por texto indexado, sin apertura directa.",
+          "sources": [
+            "S03",
+            "S04"
+          ],
+          "lesson": "Trabajo de estación por estado, con evidencia actual y captura de incidencias."
+        },
+        "labels_qr": {
+          "status": "DOC",
+          "observation": "FDC identifica perfiles por barcode; IoF usa QR/NFC para identidad y ciclo de vida. Son contextos distintos.",
+          "sources": [
+            "S03",
+            "S08"
+          ],
+          "lesson": "QR debe tener propósito y fase visibles."
+        },
+        "cnc": {
+          "status": "DOC",
+          "observation": "MCo se ofrece adicionalmente; VX800 ejemplifica conexión de máquina. JANIsoft/AF510 es un caso Jansen separado. Compatibilidad universal no verificada.",
+          "sources": [
+            "S02",
+            "S10",
+            "S14"
+          ],
+          "lesson": "Adaptador validado por máquina y revisión, nunca un botón genérico sin soporte."
+        },
+        "field_mobile": {
+          "status": "DOC",
+          "observation": "SchüCal mobile registra cotas y fotos de situación y sincroniza con oficina; FDC mobile sirve a otras tareas. Licencia/detalles offline no comprobados.",
+          "sources": [
+            "S05",
+            "S03"
+          ],
+          "lesson": "Flujos móviles propios para medir, documentar y consultar."
+        },
+        "portal_customer": {
+          "status": "NV",
+          "observation": "Connect es canal de compra y mobile/FDC son operativos. No se estableció un portal de aceptación de presupuesto para cliente final.",
+          "sources": [
+            "S02",
+            "S05"
+          ],
+          "lesson": "Distinguir cliente final de fabricante/proveedor en cada canal."
+        },
+        "analytics": {
+          "status": "NV",
+          "observation": "GWP/EPD son salidas ambientales y MES registra producción. No se verificó cockpit de rentabilidad/costos reales comparable a analítica de negocio.",
+          "sources": [
+            "S02",
+            "S04"
+          ],
+          "lesson": "No equiparar certificado o estado con analítica de decisiones."
+        },
+        "ux_hierarchy": {
+          "status": "DOC",
+          "observation": "El folleto separa aplicaciones y transferencias; existen referencias de oficina/FDC/mobile. Píxeles y tareas no observados aquí.",
+          "sources": [
+            "S08"
+          ],
+          "lesson": "Arquitectura por rol/fase como referencia; evaluación visual pendiente."
+        },
+        "integrations": {
+          "status": "DOC",
+          "observation": "SchüCad next, FDC, E.R.Plus, IoF y Connect se nombran con ámbitos distintos. Contratos API y disponibilidad regional no probados.",
+          "sources": [
+            "S01",
+            "S02"
+          ],
+          "lesson": "Explicar dato, dirección y confirmación de cada integración."
+        }
+      },
+      "supplemental": {
+        "roles": {
+          "status": "DOC",
+          "observation": "Productos de oficina, estación y mobile están orientados a tareas diferentes. No se auditó autorización por usuario/campo o costo.",
+          "sources": [
+            "S03",
+            "S05"
+          ],
+          "lesson": "Separación funcional más permisos efectivos comprobados."
+        },
+        "keyboard_mobile": {
+          "status": "DOC",
+          "observation": "Mobile permite medición/fotos; FDC mobile tiene foco de taller/obra. Atajos de escritorio y paridad táctil del editor no verificados.",
+          "sources": [
+            "S03",
+            "S05"
+          ],
+          "lesson": "Móvil por tarea, escritorio por precisión."
+        },
+        "maturity_price": {
+          "status": "DOC",
+          "observation": "Ecosistema y niveles basic/advanced/enterprise documentados. Precio detallado no consultable tras SSO; disponibilidad por mercado/módulo pendiente.",
+          "sources": [
+            "S01",
+            "S08",
+            "S12"
+          ],
+          "lesson": "No sumar módulos de países distintos como licencia base única."
+        }
+      },
+      "flows": [
+        {
+          "id": "S-F1",
+          "name": "Oficina a compra",
+          "status": "DOC",
+          "execution": "reconstructed_not_executed",
+          "steps": [
+            {
+              "action": "Configurar elemento con sistema Schüco",
+              "sources": [
+                "S01"
+              ]
+            },
+            {
+              "action": "Calcular materiales/tiempos y propuesta",
+              "sources": [
+                "S01"
+              ]
+            },
+            {
+              "action": "Transferir BOM como carrito/marcador a Connect",
+              "sources": [
+                "S02"
+              ]
+            },
+            {
+              "action": "Usuario revisa y continúa el proceso de compra",
+              "sources": [
+                "S02"
+              ]
+            }
+          ],
+          "limits": [
+            "No se emitió compra.",
+            "Disponibilidad por licencia/mercado no comprobada."
+          ]
+        },
+        {
+          "id": "S-F2",
+          "name": "Oficina a taller y terreno",
+          "status": "DOC",
+          "execution": "reconstructed_not_executed",
+          "steps": [
+            {
+              "action": "Distribuir información actual de puesto en FDC",
+              "sources": [
+                "S03"
+              ]
+            },
+            {
+              "action": "Identificar perfil/elemento por barcode y consultar dibujo/mecanizado",
+              "sources": [
+                "S03"
+              ]
+            },
+            {
+              "action": "Secuenciar estaciones y registrar fallos en MES",
+              "sources": [
+                "S04"
+              ]
+            },
+            {
+              "action": "Registrar cotas/fotos y sincronizar con oficina desde mobile",
+              "sources": [
+                "S05"
+              ]
+            },
+            {
+              "action": "Mantener identidad/documentación de unidad mediante IoF cuando corresponde",
+              "sources": [
+                "S08"
+              ]
+            }
+          ],
+          "limits": [
+            "Flujo compuesto de varios productos.",
+            "MES consultado solo como texto indexado.",
+            "No se verificó circulación completa de una unidad."
+          ]
+        }
+      ],
+      "visual_references": [
+        {
+          "id": "S-V1",
+          "title": "SchüCal — folleto oficial",
+          "url": "https://www.schueco.com/resource/blob/4249866/bd6e3252f6b70a93524d9f7b7ab3d2d1/digital_solutions_brochure_en.pdf?domain=no",
+          "pdf_page": 15,
+          "pdf_page_base": 1,
+          "printed_pages": "23–24",
+          "sources": [
+            "S08"
+          ],
+          "kind": "official_pdf",
+          "visual_inspection": "not_performed"
+        },
+        {
+          "id": "S-V2",
+          "title": "Conexiones entre aplicaciones",
+          "url": "https://www.schueco.com/resource/blob/4249866/bd6e3252f6b70a93524d9f7b7ab3d2d1/digital_solutions_brochure_en.pdf?domain=no",
+          "pdf_page": 16,
+          "pdf_page_base": 1,
+          "printed_pages": "25–26",
+          "sources": [
+            "S08"
+          ],
+          "kind": "official_pdf",
+          "visual_inspection": "not_performed"
+        },
+        {
+          "id": "S-V3",
+          "title": "SchüCad next",
+          "url": "https://www.schueco.com/resource/blob/4249866/bd6e3252f6b70a93524d9f7b7ab3d2d1/digital_solutions_brochure_en.pdf?domain=no",
+          "pdf_page": 18,
+          "pdf_page_base": 1,
+          "printed_pages": "29–30",
+          "sources": [
+            "S08"
+          ],
+          "kind": "official_pdf",
+          "visual_inspection": "not_performed"
+        },
+        {
+          "id": "S-V4",
+          "title": "FDC",
+          "url": "https://www.schueco.com/resource/blob/4249866/bd6e3252f6b70a93524d9f7b7ab3d2d1/digital_solutions_brochure_en.pdf?domain=no",
+          "pdf_page": 25,
+          "pdf_page_base": 1,
+          "printed_pages": "43–44",
+          "sources": [
+            "S08"
+          ],
+          "kind": "official_pdf",
+          "visual_inspection": "not_performed"
+        },
+        {
+          "id": "S-V5",
+          "title": "FDC mobile",
+          "url": "https://www.schueco.com/resource/blob/4249866/bd6e3252f6b70a93524d9f7b7ab3d2d1/digital_solutions_brochure_en.pdf?domain=no",
+          "pdf_page": 26,
+          "pdf_page_base": 1,
+          "printed_pages": "45–46",
+          "sources": [
+            "S08"
+          ],
+          "kind": "official_pdf",
+          "visual_inspection": "not_performed"
+        },
+        {
+          "id": "S-V6",
+          "title": "MES",
+          "url": "https://www.schueco.com/resource/blob/4249866/bd6e3252f6b70a93524d9f7b7ab3d2d1/digital_solutions_brochure_en.pdf?domain=no",
+          "pdf_page": 27,
+          "pdf_page_base": 1,
+          "printed_pages": "47–48",
+          "sources": [
+            "S08"
+          ],
+          "kind": "official_pdf",
+          "visual_inspection": "not_performed"
+        },
+        {
+          "id": "S-V7",
+          "title": "IoF QR/NFC",
+          "url": "https://www.schueco.com/resource/blob/4249866/bd6e3252f6b70a93524d9f7b7ab3d2d1/digital_solutions_brochure_en.pdf?domain=no",
+          "pdf_page": 29,
+          "pdf_page_base": 1,
+          "printed_pages": "51–52",
+          "sources": [
+            "S08"
+          ],
+          "kind": "official_pdf",
+          "visual_inspection": "not_performed"
+        },
+        {
+          "id": "S-V8",
+          "title": "Playlist tutorial oficial",
+          "url": "https://youtube.com/playlist?list=PL1bRABLS_JWyI3pZJK_pcKyXL6v88PR6G",
+          "sources": [
+            "S11"
+          ],
+          "kind": "official_video_playlist",
+          "visual_inspection": "not_watched",
+          "duration_seconds": null,
+          "timestamps": []
+        }
+      ],
+      "limits": [
+        "No demo usada ni imágenes inspeccionadas en este subinforme.",
+        "SchüCal, PolyCal, FDC, MES, mobile e IoF no se consideran una licencia base única.",
+        "MES leído por índice; JANIsoft 2013 solo antecedente indexado.",
+        "Tutoriales localizados pero no vistos ni cronometrados.",
+        "Detalle de licencias/precios detrás de SSO.",
+        "Sin retazos individualizados ni matriz efectiva de permisos.",
+        "Sin evidencia de agente ejecutor/historial de conversación.",
+        "No inventario o portal de aprobación cliente final establecido."
+      ],
+      "rubric18": [
+        {
+          "order": 1,
+          "id": "entrada_onboarding",
+          "title": "Entrada y onboarding",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "catalog_onboarding"
+          ],
+          "supplemental": [],
+          "observation": "El fabricante publica actualizaciones por service packs. No se midió preparación técnica, onboarding autoservicio ni migración de empresa mult marca.",
+          "sources": [
+            "S01"
+          ],
+          "lesson": "Primera cotización y publicación de catálogo son recorridos distintos."
+        },
+        {
+          "order": 2,
+          "id": "marcas_series_catalogos",
+          "title": "Marcas, series y catálogos",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "catalog_structure"
+          ],
+          "supplemental": [],
+          "observation": "SchüCal se apoya en sistemas Schüco y documentación de sistema. PolyCal es el producto específico para PVC; no se verificó importador genérico mult marca.",
+          "sources": [
+            "S01",
+            "S06",
+            "S07"
+          ],
+          "lesson": "Marca y familia material deben ser explícitas; no mezclar series sin dueño."
+        },
+        {
+          "order": 3,
+          "id": "editor_aperturas",
+          "title": "Editor y aperturas",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "editor2d",
+            "openings",
+            "assemblies"
+          ],
+          "supplemental": [],
+          "observation": "El alcance describe configuración/cálculo de ventanas, puertas y fachadas, y conexiones de CAD. Interacción de dibujo/selección actual no probada. Ventanas, puertas, correderas y plegables están enumeradas. No se observaron cambios de mano, sentido, carril o manilla. El alcance de fachadas/puertas plegables no demuestra por sí solo un editor de acoples con reglas y geometría que se haya consultado o ejecutado.",
+          "sources": [
+            "S01"
+          ],
+          "lesson": "Probar tareas concretas en el editor, no inferirlas por la lista comercial. Apertura correcta como primera prueba de confianza del producto. Separar amplitud de catálogo de ensamblaje verificable."
+        },
+        {
+          "order": 4,
+          "id": "2d_3d",
+          "title": "2D y 3D",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "editor2d",
+            "render3d"
+          ],
+          "supplemental": [],
+          "observation": "El alcance describe configuración/cálculo de ventanas, puertas y fachadas, y conexiones de CAD. Interacción de dibujo/selección actual no probada. FDC usa 3D para asistencia de fabricación/mecanizado. No se verificó render comercial ni animación completa dentro de SchüCal base.",
+          "sources": [
+            "S01",
+            "S03"
+          ],
+          "lesson": "Probar tareas concretas en el editor, no inferirlas por la lista comercial. Distinguir inspección técnica y visualización comercial con misma revisión."
+        },
+        {
+          "order": 5,
+          "id": "materiales",
+          "title": "Materiales",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "finishes",
+            "glass_hardware",
+            "takeoff"
+          ],
+          "supplemental": [],
+          "observation": "PolyCal documenta colores y componentes actuales para PVC; esta capacidad pertenece a PolyCal, no se atribuye universalmente a SchüCal. SchüCal calcula material/tiempos del sistema; PolyCal enumera herrajes/accesorios y comprobaciones. Recetas concretas de otros proveedores no verificadas. SchüCal calcula lista de material y tiempos; BOM puede transferirse a Connect. No se comparó contra una unidad real.",
+          "sources": [
+            "S07",
+            "S01",
+            "S02"
+          ],
+          "lesson": "Opciones de acabado gobernadas por producto/serie y datos vigentes. Compatibilidad por familia y fuente; no trasladar reglas entre marcas. Una revisión común entre ingeniería, presupuesto y compra."
+        },
+        {
+          "order": 6,
+          "id": "precios",
+          "title": "Precios",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "pricing_private"
+          ],
+          "supplemental": [],
+          "observation": "Cálculo/cotización y consulta mobile están documentados. No se verificó matriz de costos privados, márgenes y permisos de lectura.",
+          "sources": [
+            "S01",
+            "S05"
+          ],
+          "lesson": "El rol móvil/taller no hereda automáticamente visibilidad de costo."
+        },
+        {
+          "order": 7,
+          "id": "presupuestos_pdf",
+          "title": "Presupuestos y PDF",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "quote_documents",
+            "portal_customer"
+          ],
+          "supplemental": [],
+          "observation": "Hay cálculo/pedidos y documentación técnica; la página actual describe GWP/EPD. No se inspeccionó PDF comercial emitido ni su inmutabilidad. Connect es canal de compra y mobile/FDC son operativos. No se estableció un portal de aceptación de presupuesto para cliente final.",
+          "sources": [
+            "S01",
+            "S02",
+            "S06",
+            "S05"
+          ],
+          "lesson": "Documentos por destinatario y autoridad de cualquier cifra ambiental. Distinguir cliente final de fabricante/proveedor en cada canal."
+        },
+        {
+          "order": 8,
+          "id": "corte_retazos",
+          "title": "Corte y retazos",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "cuts_optimization",
+            "stock_remnants"
+          ],
+          "supplemental": [],
+          "observation": "Fuentes de fabricación/máquina describen optimización; PolyCal incluye documentación de corte. Algoritmo y caso de retazos no se probaron. No se verificó inventario detallado de retazos con longitud, ubicación y reserva. Conectar máquina u optimizar no demuestra esa trazabilidad.",
+          "sources": [
+            "S07",
+            "S09",
+            "S10"
+          ],
+          "lesson": "Plan de corte con entradas y máquina explícitas. Identificar retazo físico, no solo rendimiento del corte."
+        },
+        {
+          "order": 9,
+          "id": "compras_stock",
+          "title": "Compras y stock",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "purchasing",
+            "stock_remnants"
+          ],
+          "supplemental": [],
+          "observation": "La BOM pasa a Connect como carrito/marcador para revisión/procesamiento por el usuario. Almacén/recepción completo en SchüCal base no establecido. No se verificó inventario detallado de retazos con longitud, ubicación y reserva. Conectar máquina u optimizar no demuestra esa trazabilidad.",
+          "sources": [
+            "S02",
+            "S09",
+            "S10"
+          ],
+          "lesson": "Preparar compra y emitir orden son eventos distintos. Identificar retazo físico, no solo rendimiento del corte."
+        },
+        {
+          "order": 10,
+          "id": "taller_cnc",
+          "title": "Taller y CNC",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "production",
+            "cnc"
+          ],
+          "supplemental": [],
+          "observation": "FDC entrega datos de puesto; MES describe precedencia de estaciones y fallos. MES solo consultado por texto indexado, sin apertura directa. MCo se ofrece adicionalmente; VX800 ejemplifica conexión de máquina. JANIsoft/AF510 es un caso Jansen separado. Compatibilidad universal no verificada.",
+          "sources": [
+            "S03",
+            "S04",
+            "S02",
+            "S10",
+            "S14"
+          ],
+          "lesson": "Trabajo de estación por estado, con evidencia actual y captura de incidencias. Adaptador validado por máquina y revisión, nunca un botón genérico sin soporte."
+        },
+        {
+          "order": 11,
+          "id": "qr_terreno",
+          "title": "QR y terreno",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "labels_qr",
+            "field_mobile"
+          ],
+          "supplemental": [],
+          "observation": "FDC identifica perfiles por barcode; IoF usa QR/NFC para identidad y ciclo de vida. Son contextos distintos. SchüCal mobile registra cotas y fotos de situación y sincroniza con oficina; FDC mobile sirve a otras tareas. Licencia/detalles offline no comprobados.",
+          "sources": [
+            "S03",
+            "S08",
+            "S05"
+          ],
+          "lesson": "QR debe tener propósito y fase visibles. Flujos móviles propios para medir, documentar y consultar."
+        },
+        {
+          "order": 12,
+          "id": "ia",
+          "title": "IA",
+          "status": "NV",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "ai_execution"
+          ],
+          "supplemental": [],
+          "observation": "No se estableció agente LLM que navegue/edite con aprobación en las fuentes revisadas. Inteligencia/reglas no prueban conversación o autonomía.",
+          "sources": [
+            "S01",
+            "S02"
+          ],
+          "lesson": "Exigir función entregada y evidencia de ejecución."
+        },
+        {
+          "order": 13,
+          "id": "historial_deshacer",
+          "title": "Historial y deshacer",
+          "status": "NV",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "ai_history_undo"
+          ],
+          "supplemental": [],
+          "observation": "Actualización FDC y sincronización mobile no acreditan versiones recuperables, deshacer transaccional ni conversación persistente.",
+          "sources": [
+            "S03",
+            "S05"
+          ],
+          "lesson": "Probar historial, versión y chat por separado de sincronización."
+        },
+        {
+          "order": 14,
+          "id": "roles",
+          "title": "Roles",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [],
+          "supplemental": [
+            "roles"
+          ],
+          "observation": "Productos de oficina, estación y mobile están orientados a tareas diferentes. No se auditó autorización por usuario/campo o costo.",
+          "sources": [
+            "S03",
+            "S05"
+          ],
+          "lesson": "Separación funcional más permisos efectivos comprobados."
+        },
+        {
+          "order": 15,
+          "id": "claridad_visual",
+          "title": "Claridad visual",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "ux_hierarchy"
+          ],
+          "supplemental": [],
+          "observation": "El folleto separa aplicaciones y transferencias; existen referencias de oficina/FDC/mobile. Píxeles y tareas no observados aquí.",
+          "sources": [
+            "S08"
+          ],
+          "lesson": "Arquitectura por rol/fase como referencia; evaluación visual pendiente."
+        },
+        {
+          "order": 16,
+          "id": "teclado_movil",
+          "title": "Teclado y móvil",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [],
+          "supplemental": [
+            "keyboard_mobile"
+          ],
+          "observation": "Mobile permite medición/fotos; FDC mobile tiene foco de taller/obra. Atajos de escritorio y paridad táctil del editor no verificados.",
+          "sources": [
+            "S03",
+            "S05"
+          ],
+          "lesson": "Móvil por tarea, escritorio por precisión."
+        },
+        {
+          "order": 17,
+          "id": "interoperabilidad",
+          "title": "Interoperabilidad",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "integrations"
+          ],
+          "supplemental": [],
+          "observation": "SchüCad next, FDC, E.R.Plus, IoF y Connect se nombran con ámbitos distintos. Contratos API y disponibilidad regional no probados.",
+          "sources": [
+            "S01",
+            "S02"
+          ],
+          "lesson": "Explicar dato, dirección y confirmación de cada integración."
+        },
+        {
+          "order": 18,
+          "id": "madurez_precio",
+          "title": "Madurez y precio",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [],
+          "supplemental": [
+            "maturity_price"
+          ],
+          "observation": "Ecosistema y niveles basic/advanced/enterprise documentados. Precio detallado no consultable tras SSO; disponibilidad por mercado/módulo pendiente.",
+          "sources": [
+            "S01",
+            "S08",
+            "S12"
+          ],
+          "lesson": "No sumar módulos de países distintos como licencia base única."
+        }
+      ]
+    },
+    {
+      "id": "v6",
+      "name": "Cyncly Soft Tech V6 / V6 Advantage",
+      "category": "Datos de proveedor, CPQ visual gobernado y ERP opcional de fabricación",
+      "sources": [
+        {
+          "id": "V01",
+          "title": "V6 Advantage X3D Visualizer award announcement",
+          "url": "https://www.cyncly.com/resources/news/v6-advantage-visualizer-award",
+          "type": "official_news",
+          "published": "2026-08-25",
+          "accessed": "2026-10-18",
+          "retrieval": "official_text_read"
+        },
+        {
+          "id": "V02",
+          "title": "Soft Tech V6 capabilities",
+          "url": "https://www.cyncly.com/pt-BR/products/soft-tech-v6/capabilities",
+          "type": "official_page",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "official_text_read"
+        },
+        {
+          "id": "V03",
+          "title": "Soft Tech V6 modules",
+          "url": "https://www.cyncly.com/en-GB/products/soft-tech-v6/modules",
+          "type": "official_page",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "official_text_read"
+        },
+        {
+          "id": "V04",
+          "title": "Soft Tech Academy",
+          "url": "https://www.cyncly.com/en-GB/products/soft-tech-v6/academy",
+          "type": "official_page",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "official_text_read"
+        },
+        {
+          "id": "V05",
+          "title": "Soft Tech Academy V6 Accreditation",
+          "url": "https://academy.softtech.com/img/Soft%20Tech%20Academy%20V6%20Accreditation.pdf",
+          "type": "historical_official_pdf",
+          "published": "2023",
+          "accessed": "2026-10-18",
+          "retrieval": "pdf_text_read_images_not_visually_inspected",
+          "date_limit": "Currículo 2023; algunas unidades estaban in development. No acredita entrega actual de cada módulo."
+        },
+        {
+          "id": "V06",
+          "title": "V6 datasheet — profile suppliers",
+          "url": "https://wnaymg.files.cmp.optimizely.com/download/assets/WDG%2B-%2BDatasheet%2B-%2BV6%2B-%2BProfile%2Bsuppliers%2B-%2BEN%2BUS.pdf/56b13f8ab5e011f09db95ac263d27420",
+          "type": "official_pdf",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "pdf_text_read_images_not_visually_inspected"
+        },
+        {
+          "id": "V07",
+          "title": "V6 Advantage datasheet — window and door fabricators",
+          "url": "https://wnaymg.files.cmp.optimizely.com/download/assets/DataSheet%2BV6%2BAdvantage%2B-%2BWindow%2Band%2BDoor%2BFabricators%2BAPAC%2BA4%2B%2B-%2BEN.pdf/29aa56227ec011f0970f5e1af917a384",
+          "type": "official_pdf",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "pdf_text_read_images_not_visually_inspected"
+        },
+        {
+          "id": "V08",
+          "title": "Cyncly at AusFenEx 2025",
+          "url": "https://www.cyncly.com/en-AU/resources/news/cyncly-ausfenex-2025",
+          "type": "official_news",
+          "published": "2025",
+          "accessed": "2026-10-18",
+          "retrieval": "official_text_read"
+        },
+        {
+          "id": "V09",
+          "title": "Cyncly at Fensterbau Frontale 2026",
+          "url": "https://www.cyncly.com/en-HU/resources/news/fensterbau-frontale-2026",
+          "type": "official_news",
+          "published": "2026-01-22",
+          "accessed": "2026-10-18",
+          "retrieval": "official_text_read"
+        },
+        {
+          "id": "V10",
+          "title": "V6 Overview — official MP4",
+          "url": "https://wnaymg.files.cmp.optimizely.com/download/assets/WDG%2B-%2BOverview%2B3%2B-%2BV6%2BOverview%2B-%2BEN.mp4/b23a65b4512911f09ad1f28d889ce8c1",
+          "type": "official_video",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "link_from_official_page_unsupported_video_not_watched"
+        }
+      ],
+      "dimensions": {
+        "catalog_structure": {
+          "status": "DOC",
+          "observation": "El proveedor centraliza reglas/catálogos/precios y los distribuye. No se verificó marca/serie local Proline/Vinhaus ni la galería actual de esas marcas.",
+          "sources": [
+            "V06",
+            "V03",
+            "V07"
+          ],
+          "lesson": "Marca/serie, versión, procedencia y cobertura técnica visibles."
+        },
+        "catalog_onboarding": {
+          "status": "DOC",
+          "observation": "Academy separa usuarios y desarrolladores de base técnica. El currículo 2023 contiene familias/ensamblajes; algunas unidades estaban en desarrollo.",
+          "sources": [
+            "V04",
+            "V05"
+          ],
+          "lesson": "Preparar datos es una disciplina distinta de usar un catálogo listo."
+        },
+        "editor2d": {
+          "status": "DOC",
+          "observation": "Product Designer y Shop Drawing están descritos como diseño/documentación. Interacción actual en lienzo y manipulación directa no observadas.",
+          "sources": [
+            "V02",
+            "V03"
+          ],
+          "lesson": "No inferir calidad de edición por una captura de salida."
+        },
+        "openings": {
+          "status": "DOC",
+          "observation": "La ficha enumera batientes, proyectantes, correderas, plegables, pivotantes y otras familias. No se ejecutó cambio de apertura.",
+          "sources": [
+            "V06"
+          ],
+          "lesson": "Aperturas tipadas con prueba de mano/carril/herraje por sistema."
+        },
+        "assemblies": {
+          "status": "DOC",
+          "observation": "X3D 2026 describe unidades y composiciones acopladas como bay/bow/storefront con reglas de producción compartidas. Es afirmación del proveedor, no prueba usada.",
+          "sources": [
+            "V01"
+          ],
+          "lesson": "Configuración compuesta y compatible, no composición visual arbitraria."
+        },
+        "render3d": {
+          "status": "DOC",
+          "observation": "X3D anunciado el 25-08-2026 actualiza selección de material, color, vidrio, retícula, herraje y unión en navegador. Rendimiento/fidelidad no medidos.",
+          "sources": [
+            "V01"
+          ],
+          "lesson": "Misma configuración para presentación comercial e ingeniería."
+        },
+        "finishes": {
+          "status": "DOC",
+          "observation": "X3D presenta cambios de material/color; el currículo contiene acabados. UI actual y fidelidad física no observadas.",
+          "sources": [
+            "V01",
+            "V05"
+          ],
+          "lesson": "Cambiar acabado con efecto visible y pertenencia técnica."
+        },
+        "glass_hardware": {
+          "status": "DOC",
+          "observation": "X3D incluye vidrio/herraje; proveedor mantiene reglas/componentes y BOM. No se validó combinación técnica local.",
+          "sources": [
+            "V01",
+            "V06"
+          ],
+          "lesson": "Selección visual compatible y rastreable hasta componentes."
+        },
+        "pricing_private": {
+          "status": "DOC",
+          "observation": "Capabilities documenta lista, descuentos, margen y reglas por cliente/grupo. La privacidad efectiva de costo y aislamiento por empresa no se auditó.",
+          "sources": [
+            "V02",
+            "V05"
+          ],
+          "lesson": "Separar precio de venta, costo y permiso comercial."
+        },
+        "quote_documents": {
+          "status": "DOC",
+          "observation": "Ficha de proveedor describe documentos con identidad y condiciones; Shop Drawing genera PDF. No se verificó emisión inmutable/aceptación cliente.",
+          "sources": [
+            "V06",
+            "V03"
+          ],
+          "lesson": "Entregables comerciales/técnicos distintos desde revisión común."
+        },
+        "takeoff": {
+          "status": "DOC",
+          "observation": "BOM dinámica bajo reglas del proveedor documentada. No se comparó resultado con fabricación.",
+          "sources": [
+            "V06"
+          ],
+          "lesson": "Explicar origen del componente y cambios de cantidad tras edición."
+        },
+        "ai_execution": {
+          "status": "NV",
+          "observation": "AusFenEx y Fensterbau anuncian dirección AI-ready/IA de portafolio. No prueban agente V6 con navegación, acciones, memoria y políticas.",
+          "sources": [
+            "V08",
+            "V09"
+          ],
+          "lesson": "Roadmap y capacidad entregada deben estar separados."
+        },
+        "ai_history_undo": {
+          "status": "NV",
+          "observation": "Publicar/actualizar catálogo no acredita conversación persistente, historial de usuario recuperable ni rollback de operaciones.",
+          "sources": [
+            "V03",
+            "V07"
+          ],
+          "lesson": "Diseñar recuperación y memoria como capacidades explícitas."
+        },
+        "cuts_optimization": {
+          "status": "DOC",
+          "observation": "Se describen algoritmos lineales y comparación de largos de stock antes de compra. No se observó algoritmo ni plan resultante.",
+          "sources": [
+            "V02"
+          ],
+          "lesson": "Escenarios de abastecimiento comparables antes de comprometer compra."
+        },
+        "stock_remnants": {
+          "status": "DOC",
+          "observation": "ERP describe reutilizar/devolver/descartar materiales y control de stock. Vínculo de retazo individual con optimizador, ubicación/reserva no verificado.",
+          "sources": [
+            "V02",
+            "V03"
+          ],
+          "lesson": "Consumo/retorno físico más identidad del retazo, no solo un cálculo."
+        },
+        "purchasing": {
+          "status": "DOC",
+          "observation": "ERP/WMS cubre material y movimientos, separado de CPQ; V6 Advantage ERP se presenta sobre Business Central. No se probó instalación concreta.",
+          "sources": [
+            "V02",
+            "V03"
+          ],
+          "lesson": "Expresar el módulo que aporta recepción, reserva y compra."
+        },
+        "production": {
+          "status": "DOC",
+          "observation": "Capabilities incluye estado y capacidad/programación de trabajos en ERP; no es garantía de alcance del CPQ base.",
+          "sources": [
+            "V02",
+            "V03"
+          ],
+          "lesson": "Trabajo de planta por estado, operación y capacidad real."
+        },
+        "labels_qr": {
+          "status": "DOC",
+          "observation": "ERP/WMS documenta etiquetas y escaneo de material/unidad. No se acreditó pasaporte QR de cliente ni servicio posventa.",
+          "sources": [
+            "V02"
+          ],
+          "lesson": "Cada código responde una tarea de almacén, planta o terreno."
+        },
+        "cnc": {
+          "status": "DOC",
+          "observation": "Automation contempla CNC, fresado y sierra como módulo. Máquinas/postprocesadores concretos no probados.",
+          "sources": [
+            "V03"
+          ],
+          "lesson": "Un adaptador y una revisión validados antes de exportar/enviar."
+        },
+        "field_mobile": {
+          "status": "DOC",
+          "observation": "WMS móvil para tareas de almacén; X3D funciona en navegador de cliente sin instalación de render. No prueba medición/instalación offline ni editor móvil completo.",
+          "sources": [
+            "V02",
+            "V01"
+          ],
+          "lesson": "Navegador y app de terreno son contextos distintos."
+        },
+        "portal_customer": {
+          "status": "DOC",
+          "observation": "Se documenta configuración web comercial X3D y distribución de producto al canal. No se verificó portal de aceptación/pago del cliente final.",
+          "sources": [
+            "V01",
+            "V06"
+          ],
+          "lesson": "Distinguir exploración/configuración de aceptación comercial."
+        },
+        "analytics": {
+          "status": "DOC",
+          "observation": "El ERP describe KPIs de costo real/planificado, rentabilidad y efectivo. No se observaron cálculos ni calidad de datos instalada.",
+          "sources": [
+            "V02"
+          ],
+          "lesson": "Indicador ligado a operación/revisión y explicación del desvío."
+        },
+        "ux_hierarchy": {
+          "status": "DOC",
+          "observation": "Existen artefactos de CPQ/X3D y módulos ERP/taller. No se inspeccionaron píxeles o tareas; premio comunicado por proveedor no es evaluación visual propia.",
+          "sources": [
+            "V01",
+            "V03"
+          ],
+          "lesson": "Evaluar pantallas por rol/fase y no mezclar generaciones de producto."
+        },
+        "integrations": {
+          "status": "DOC",
+          "observation": "Deployment, Automation, Shop Drawing y Business Central tienen responsabilidades explícitas; despliegue cloud/on-premise documentado.",
+          "sources": [
+            "V03",
+            "V07"
+          ],
+          "lesson": "Mapa de conexión con entrada/salida, estado y límite de licencia."
+        }
+      },
+      "supplemental": {
+        "roles": {
+          "status": "DOC",
+          "observation": "Canales proveedor/fabricante/distribuidor documentados; currículo 2023 menciona grupos. Matriz de seguridad actual no auditada.",
+          "sources": [
+            "V06",
+            "V07",
+            "V05"
+          ],
+          "lesson": "Roles de tarea y privacidad efectiva, sin deducir seguridad de una segmentación comercial."
+        },
+        "keyboard_mobile": {
+          "status": "DOC",
+          "observation": "X3D usa navegador y WMS usa móvil. Atajos, acceso táctil al editor completo y offline no verificados.",
+          "sources": [
+            "V01",
+            "V02"
+          ],
+          "lesson": "Comprobar interacción por dispositivo y tarea."
+        },
+        "maturity_price": {
+          "status": "DOC",
+          "observation": "Academy, fichas sectoriales y lanzamiento X3D 2026. Tarifa, consultoría, cobertura regional y costo total no confirmados.",
+          "sources": [
+            "V01",
+            "V04",
+            "V06",
+            "V07"
+          ],
+          "lesson": "Comparar CPQ y ERP opcional sin sumar toda la suite al precio base."
+        }
+      },
+      "flows": [
+        {
+          "id": "V-F1",
+          "name": "Proveedor a propuesta",
+          "status": "DOC",
+          "execution": "reconstructed_not_executed",
+          "steps": [
+            {
+              "action": "Preparar catálogo/reglas y distribuir con Deployment",
+              "sources": [
+                "V06",
+                "V03"
+              ]
+            },
+            {
+              "action": "Configurar unidad/conjunto y visualizar con X3D",
+              "sources": [
+                "V01"
+              ]
+            },
+            {
+              "action": "Aplicar política comercial y obtener BOM",
+              "sources": [
+                "V02",
+                "V06"
+              ]
+            },
+            {
+              "action": "Generar documentación comercial/plano PDF",
+              "sources": [
+                "V06",
+                "V03"
+              ]
+            }
+          ],
+          "limits": [
+            "El currículo 2023 no prueba interfaz 2026.",
+            "No configuración, cifra ni PDF usados en ejecución."
+          ]
+        },
+        {
+          "id": "V-F2",
+          "name": "Pedido a planta y salida",
+          "status": "DOC",
+          "execution": "reconstructed_not_executed",
+          "steps": [
+            {
+              "action": "Comparar largos de barra para planificar corte",
+              "sources": [
+                "V02"
+              ]
+            },
+            {
+              "action": "Generar salida para equipo compatible con Automation",
+              "sources": [
+                "V03"
+              ]
+            },
+            {
+              "action": "Recibir/asignar material y programar en ERP/WMS",
+              "sources": [
+                "V02",
+                "V03"
+              ]
+            },
+            {
+              "action": "Registrar avance y preparar expedición",
+              "sources": [
+                "V02"
+              ]
+            }
+          ],
+          "limits": [
+            "Requiere ERP/módulos opcionales.",
+            "Retazo individual/reserva no demostrado.",
+            "Máquina y despacho real no probados."
+          ]
+        }
+      ],
+      "visual_references": [
+        {
+          "id": "V-V1",
+          "title": "X3D 2026",
+          "url": "https://www.cyncly.com/siteassets/assets/cyncly/news/v6-advantage",
+          "page_url": "https://www.cyncly.com/resources/news/v6-advantage-visualizer-award",
+          "sources": [
+            "V01"
+          ],
+          "kind": "official_image",
+          "visual_inspection": "not_performed",
+          "date_limit": "Anuncio 2026-08-25; evitar usar solo antiguas capturas V6."
+        },
+        {
+          "id": "V-V2",
+          "title": "Shop Drawing",
+          "url": "https://www.cyncly.com/siteassets/assets/cyncly/products/soft-tech/v6-shop-drawing-module2.jpg",
+          "page_url": "https://www.cyncly.com/en-GB/products/soft-tech-v6/modules",
+          "sources": [
+            "V03"
+          ],
+          "kind": "official_image",
+          "visual_inspection": "not_performed"
+        },
+        {
+          "id": "V-V3",
+          "title": "Automation",
+          "url": "https://www.cyncly.com/siteassets/assets/cyncly/products/soft-tech/v6-automation-module2.jpg",
+          "page_url": "https://www.cyncly.com/en-GB/products/soft-tech-v6/modules",
+          "sources": [
+            "V03"
+          ],
+          "kind": "official_image",
+          "visual_inspection": "not_performed"
+        },
+        {
+          "id": "V-V4",
+          "title": "Business Central integration",
+          "url": "https://www.cyncly.com/siteassets/assets/cyncly/products/soft-tech/business-central-integration2.png",
+          "page_url": "https://www.cyncly.com/en-GB/products/soft-tech-v6/modules",
+          "sources": [
+            "V03"
+          ],
+          "kind": "official_image",
+          "visual_inspection": "not_performed"
+        },
+        {
+          "id": "V-V5",
+          "title": "V6 Advantage",
+          "url": "https://www.cyncly.com/siteassets/assets/cyncly/products/v6/vp-advantage.png",
+          "page_url": "https://www.cyncly.com/en-GB/products/soft-tech-v6/modules",
+          "sources": [
+            "V03"
+          ],
+          "kind": "official_image",
+          "visual_inspection": "not_performed"
+        },
+        {
+          "id": "V-V6",
+          "title": "Ficha proveedor",
+          "url": "https://wnaymg.files.cmp.optimizely.com/download/assets/WDG%2B-%2BDatasheet%2B-%2BV6%2B-%2BProfile%2Bsuppliers%2B-%2BEN%2BUS.pdf/56b13f8ab5e011f09db95ac263d27420",
+          "pdf_page": 2,
+          "pdf_page_base": 1,
+          "sources": [
+            "V06"
+          ],
+          "kind": "official_pdf",
+          "visual_inspection": "not_performed"
+        },
+        {
+          "id": "V-V7",
+          "title": "Ficha fabricante",
+          "url": "https://wnaymg.files.cmp.optimizely.com/download/assets/DataSheet%2BV6%2BAdvantage%2B-%2BWindow%2Band%2BDoor%2BFabricators%2BAPAC%2BA4%2B%2B-%2BEN.pdf/29aa56227ec011f0970f5e1af917a384",
+          "pdf_page": 2,
+          "pdf_page_base": 1,
+          "sources": [
+            "V07"
+          ],
+          "kind": "official_pdf",
+          "visual_inspection": "not_performed"
+        },
+        {
+          "id": "V-V8",
+          "title": "Overview V6 MP4",
+          "url": "https://wnaymg.files.cmp.optimizely.com/download/assets/WDG%2B-%2BOverview%2B3%2B-%2BV6%2BOverview%2B-%2BEN.mp4/b23a65b4512911f09ad1f28d889ce8c1",
+          "sources": [
+            "V10"
+          ],
+          "kind": "official_video",
+          "visual_inspection": "not_watched",
+          "duration_seconds": null,
+          "timestamps": []
+        }
+      ],
+      "limits": [
+        "No demo ni imágenes inspeccionadas en este subinforme.",
+        "X3D actual 2026 distinguido de interfaces anteriores.",
+        "CPQ base separado de ERP/Automation/Deployment y otros módulos.",
+        "Currículo 2023 parcialmente en desarrollo a esa fecha.",
+        "Anuncios AI-ready no prueban agente entregado.",
+        "No memoria/deshacer ni matriz actual de permisos comprobada.",
+        "No tarifa/costo total ni catálogo local verificado.",
+        "MP4 localizado pero no reproducido; sin timestamps."
+      ],
+      "rubric18": [
+        {
+          "order": 1,
+          "id": "entrada_onboarding",
+          "title": "Entrada y onboarding",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "catalog_onboarding"
+          ],
+          "supplemental": [],
+          "observation": "Academy separa usuarios y desarrolladores de base técnica. El currículo 2023 contiene familias/ensamblajes; algunas unidades estaban en desarrollo.",
+          "sources": [
+            "V04",
+            "V05"
+          ],
+          "lesson": "Preparar datos es una disciplina distinta de usar un catálogo listo."
+        },
+        {
+          "order": 2,
+          "id": "marcas_series_catalogos",
+          "title": "Marcas, series y catálogos",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "catalog_structure"
+          ],
+          "supplemental": [],
+          "observation": "El proveedor centraliza reglas/catálogos/precios y los distribuye. No se verificó marca/serie local Proline/Vinhaus ni la galería actual de esas marcas.",
+          "sources": [
+            "V06",
+            "V03",
+            "V07"
+          ],
+          "lesson": "Marca/serie, versión, procedencia y cobertura técnica visibles."
+        },
+        {
+          "order": 3,
+          "id": "editor_aperturas",
+          "title": "Editor y aperturas",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "editor2d",
+            "openings",
+            "assemblies"
+          ],
+          "supplemental": [],
+          "observation": "Product Designer y Shop Drawing están descritos como diseño/documentación. Interacción actual en lienzo y manipulación directa no observadas. La ficha enumera batientes, proyectantes, correderas, plegables, pivotantes y otras familias. No se ejecutó cambio de apertura. X3D 2026 describe unidades y composiciones acopladas como bay/bow/storefront con reglas de producción compartidas. Es afirmación del proveedor, no prueba usada.",
+          "sources": [
+            "V02",
+            "V03",
+            "V06",
+            "V01"
+          ],
+          "lesson": "No inferir calidad de edición por una captura de salida. Aperturas tipadas con prueba de mano/carril/herraje por sistema. Configuración compuesta y compatible, no composición visual arbitraria."
+        },
+        {
+          "order": 4,
+          "id": "2d_3d",
+          "title": "2D y 3D",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "editor2d",
+            "render3d"
+          ],
+          "supplemental": [],
+          "observation": "Product Designer y Shop Drawing están descritos como diseño/documentación. Interacción actual en lienzo y manipulación directa no observadas. X3D anunciado el 25-08-2026 actualiza selección de material, color, vidrio, retícula, herraje y unión en navegador. Rendimiento/fidelidad no medidos.",
+          "sources": [
+            "V02",
+            "V03",
+            "V01"
+          ],
+          "lesson": "No inferir calidad de edición por una captura de salida. Misma configuración para presentación comercial e ingeniería."
+        },
+        {
+          "order": 5,
+          "id": "materiales",
+          "title": "Materiales",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "finishes",
+            "glass_hardware",
+            "takeoff"
+          ],
+          "supplemental": [],
+          "observation": "X3D presenta cambios de material/color; el currículo contiene acabados. UI actual y fidelidad física no observadas. X3D incluye vidrio/herraje; proveedor mantiene reglas/componentes y BOM. No se validó combinación técnica local. BOM dinámica bajo reglas del proveedor documentada. No se comparó resultado con fabricación.",
+          "sources": [
+            "V01",
+            "V05",
+            "V06"
+          ],
+          "lesson": "Cambiar acabado con efecto visible y pertenencia técnica. Selección visual compatible y rastreable hasta componentes. Explicar origen del componente y cambios de cantidad tras edición."
+        },
+        {
+          "order": 6,
+          "id": "precios",
+          "title": "Precios",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "pricing_private"
+          ],
+          "supplemental": [],
+          "observation": "Capabilities documenta lista, descuentos, margen y reglas por cliente/grupo. La privacidad efectiva de costo y aislamiento por empresa no se auditó.",
+          "sources": [
+            "V02",
+            "V05"
+          ],
+          "lesson": "Separar precio de venta, costo y permiso comercial."
+        },
+        {
+          "order": 7,
+          "id": "presupuestos_pdf",
+          "title": "Presupuestos y PDF",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "quote_documents",
+            "portal_customer"
+          ],
+          "supplemental": [],
+          "observation": "Ficha de proveedor describe documentos con identidad y condiciones; Shop Drawing genera PDF. No se verificó emisión inmutable/aceptación cliente. Se documenta configuración web comercial X3D y distribución de producto al canal. No se verificó portal de aceptación/pago del cliente final.",
+          "sources": [
+            "V06",
+            "V03",
+            "V01"
+          ],
+          "lesson": "Entregables comerciales/técnicos distintos desde revisión común. Distinguir exploración/configuración de aceptación comercial."
+        },
+        {
+          "order": 8,
+          "id": "corte_retazos",
+          "title": "Corte y retazos",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "cuts_optimization",
+            "stock_remnants"
+          ],
+          "supplemental": [],
+          "observation": "Se describen algoritmos lineales y comparación de largos de stock antes de compra. No se observó algoritmo ni plan resultante. ERP describe reutilizar/devolver/descartar materiales y control de stock. Vínculo de retazo individual con optimizador, ubicación/reserva no verificado.",
+          "sources": [
+            "V02",
+            "V03"
+          ],
+          "lesson": "Escenarios de abastecimiento comparables antes de comprometer compra. Consumo/retorno físico más identidad del retazo, no solo un cálculo."
+        },
+        {
+          "order": 9,
+          "id": "compras_stock",
+          "title": "Compras y stock",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "purchasing",
+            "stock_remnants"
+          ],
+          "supplemental": [],
+          "observation": "ERP/WMS cubre material y movimientos, separado de CPQ; V6 Advantage ERP se presenta sobre Business Central. No se probó instalación concreta. ERP describe reutilizar/devolver/descartar materiales y control de stock. Vínculo de retazo individual con optimizador, ubicación/reserva no verificado.",
+          "sources": [
+            "V02",
+            "V03"
+          ],
+          "lesson": "Expresar el módulo que aporta recepción, reserva y compra. Consumo/retorno físico más identidad del retazo, no solo un cálculo."
+        },
+        {
+          "order": 10,
+          "id": "taller_cnc",
+          "title": "Taller y CNC",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "production",
+            "cnc"
+          ],
+          "supplemental": [],
+          "observation": "Capabilities incluye estado y capacidad/programación de trabajos en ERP; no es garantía de alcance del CPQ base. Automation contempla CNC, fresado y sierra como módulo. Máquinas/postprocesadores concretos no probados.",
+          "sources": [
+            "V02",
+            "V03"
+          ],
+          "lesson": "Trabajo de planta por estado, operación y capacidad real. Un adaptador y una revisión validados antes de exportar/enviar."
+        },
+        {
+          "order": 11,
+          "id": "qr_terreno",
+          "title": "QR y terreno",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "labels_qr",
+            "field_mobile"
+          ],
+          "supplemental": [],
+          "observation": "ERP/WMS documenta etiquetas y escaneo de material/unidad. No se acreditó pasaporte QR de cliente ni servicio posventa. WMS móvil para tareas de almacén; X3D funciona en navegador de cliente sin instalación de render. No prueba medición/instalación offline ni editor móvil completo.",
+          "sources": [
+            "V02",
+            "V01"
+          ],
+          "lesson": "Cada código responde una tarea de almacén, planta o terreno. Navegador y app de terreno son contextos distintos."
+        },
+        {
+          "order": 12,
+          "id": "ia",
+          "title": "IA",
+          "status": "NV",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "ai_execution"
+          ],
+          "supplemental": [],
+          "observation": "AusFenEx y Fensterbau anuncian dirección AI-ready/IA de portafolio. No prueban agente V6 con navegación, acciones, memoria y políticas.",
+          "sources": [
+            "V08",
+            "V09"
+          ],
+          "lesson": "Roadmap y capacidad entregada deben estar separados."
+        },
+        {
+          "order": 13,
+          "id": "historial_deshacer",
+          "title": "Historial y deshacer",
+          "status": "NV",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "ai_history_undo"
+          ],
+          "supplemental": [],
+          "observation": "Publicar/actualizar catálogo no acredita conversación persistente, historial de usuario recuperable ni rollback de operaciones.",
+          "sources": [
+            "V03",
+            "V07"
+          ],
+          "lesson": "Diseñar recuperación y memoria como capacidades explícitas."
+        },
+        {
+          "order": 14,
+          "id": "roles",
+          "title": "Roles",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [],
+          "supplemental": [
+            "roles"
+          ],
+          "observation": "Canales proveedor/fabricante/distribuidor documentados; currículo 2023 menciona grupos. Matriz de seguridad actual no auditada.",
+          "sources": [
+            "V06",
+            "V07",
+            "V05"
+          ],
+          "lesson": "Roles de tarea y privacidad efectiva, sin deducir seguridad de una segmentación comercial."
+        },
+        {
+          "order": 15,
+          "id": "claridad_visual",
+          "title": "Claridad visual",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "ux_hierarchy"
+          ],
+          "supplemental": [],
+          "observation": "Existen artefactos de CPQ/X3D y módulos ERP/taller. No se inspeccionaron píxeles o tareas; premio comunicado por proveedor no es evaluación visual propia.",
+          "sources": [
+            "V01",
+            "V03"
+          ],
+          "lesson": "Evaluar pantallas por rol/fase y no mezclar generaciones de producto."
+        },
+        {
+          "order": 16,
+          "id": "teclado_movil",
+          "title": "Teclado y móvil",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [],
+          "supplemental": [
+            "keyboard_mobile"
+          ],
+          "observation": "X3D usa navegador y WMS usa móvil. Atajos, acceso táctil al editor completo y offline no verificados.",
+          "sources": [
+            "V01",
+            "V02"
+          ],
+          "lesson": "Comprobar interacción por dispositivo y tarea."
+        },
+        {
+          "order": 17,
+          "id": "interoperabilidad",
+          "title": "Interoperabilidad",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "integrations"
+          ],
+          "supplemental": [],
+          "observation": "Deployment, Automation, Shop Drawing y Business Central tienen responsabilidades explícitas; despliegue cloud/on-premise documentado.",
+          "sources": [
+            "V03",
+            "V07"
+          ],
+          "lesson": "Mapa de conexión con entrada/salida, estado y límite de licencia."
+        },
+        {
+          "order": 18,
+          "id": "madurez_precio",
+          "title": "Madurez y precio",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [],
+          "supplemental": [
+            "maturity_price"
+          ],
+          "observation": "Academy, fichas sectoriales y lanzamiento X3D 2026. Tarifa, consultoría, cobertura regional y costo total no confirmados.",
+          "sources": [
+            "V01",
+            "V04",
+            "V06",
+            "V07"
+          ],
+          "lesson": "Comparar CPQ y ERP opcional sin sumar toda la suite al precio base."
+        }
+      ]
+    },
+    {
+      "id": "cantor",
+      "name": "A+W Cantor",
+      "category": "Continuidad ERP/CIM, canal distribuidor, producción y logística",
+      "sources": [
+        {
+          "id": "A01",
+          "title": "A+W Cantor",
+          "url": "https://www.a-w.com/aw-cantor/",
+          "type": "official_page",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "official_text_read"
+        },
+        {
+          "id": "A02",
+          "title": "A+W ERP/CIM",
+          "url": "https://www.a-w.com/aw-cantor/aw-erpcim/",
+          "type": "official_page",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "official_text_read"
+        },
+        {
+          "id": "A03",
+          "title": "A+W Dealer Cloud",
+          "url": "https://www.a-w.com/aw-cantor/aw-dealer-cloud/",
+          "type": "official_page",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "official_text_read"
+        },
+        {
+          "id": "A04",
+          "title": "Cantor iQuote",
+          "url": "https://www.a-w.com/software/cantor-iquote/",
+          "type": "official_page",
+          "published": null,
+          "accessed": "2026-10-18",
+          "retrieval": "official_text_read"
+        },
+        {
+          "id": "A05",
+          "title": "A+W Cantor Smart Companion flyer",
+          "url": "https://news.a-w.com/hubfs/AW_English_NA_files/GlassBuild%202022%20Flyers/20220609_us_Messeflyer_AW_Cantor_Smart_Companion.pdf?hsLang=en-us",
+          "type": "historical_official_pdf",
+          "published": "2022",
+          "accessed": "2026-10-18",
+          "retrieval": "pdf_text_read_images_not_visually_inspected"
+        },
+        {
+          "id": "A06",
+          "title": "Smart scanning at a window company",
+          "url": "https://blog.a-w.com/us/smart-scanning-at-a-window-company",
+          "type": "official_blog",
+          "published": "2023-02-01",
+          "accessed": "2026-10-18",
+          "retrieval": "official_text_read"
+        },
+        {
+          "id": "A07",
+          "title": "TMP customer report",
+          "url": "https://www.a-w.com/wp-content/uploads/2024/03/TMP-Artikel_Dialog_DEZ_2022_en.pdf",
+          "type": "historical_official_customer_report",
+          "published": "2022",
+          "accessed": "2026-10-18",
+          "retrieval": "pdf_text_read_images_not_visually_inspected",
+          "date_limit": "Subido al sitio en 2024; el relato y las pantallas son históricos, no una interfaz 2026 verificada."
+        },
+        {
+          "id": "A08",
+          "title": "Schlotterer/iQuote customer report",
+          "url": "https://www.a-w.com/wp-content/uploads/2024/03/E-Schlotterer_Website.pdf",
+          "type": "historical_official_customer_report",
+          "published": "2017",
+          "accessed": "2026-10-18",
+          "retrieval": "pdf_text_read_images_not_visually_inspected",
+          "date_limit": "Subido al sitio en 2024; el relato y las pantallas son históricos, no una interfaz 2026 verificada."
+        },
+        {
+          "id": "A09",
+          "title": "Online configurator for dealers and end customers",
+          "url": "https://blog.a-w.com/uk/online-configurator-for-dealers-and-end-customers",
+          "type": "historical_official_blog",
+          "published": "2022",
+          "accessed": "2026-10-18",
+          "retrieval": "official_text_read"
+        }
+      ],
+      "dimensions": {
+        "catalog_structure": {
+          "status": "DOC",
+          "observation": "Base técnica común entre ERP/CIM e iQuote. Navegación actual marca→serie e imágenes de catálogo local no verificadas.",
+          "sources": [
+            "A02",
+            "A04"
+          ],
+          "lesson": "Autoridad común con pertenencia visual clara de marca/serie."
+        },
+        "catalog_onboarding": {
+          "status": "DOC",
+          "observation": "iQuote reutiliza datos parametrizados de Cantor. El claim de poco/no entrenamiento no demuestra esfuerzo de preparar datos nuevos.",
+          "sources": [
+            "A04",
+            "A02"
+          ],
+          "lesson": "Separar preparación técnica y facilidad de uso comercial."
+        },
+        "editor2d": {
+          "status": "NV",
+          "observation": "Fuentes actuales describen configuración y chequeos, sin un procedimiento actual observado de dibujo/selección. Pantalla de TMP es histórica 2022.",
+          "sources": [
+            "A04",
+            "A07"
+          ],
+          "lesson": "No inferir editor bueno por alcance ERP o por una captura antigua."
+        },
+        "openings": {
+          "status": "NV",
+          "observation": "Chequeos de factibilidad no establecen selector actual ni cambio de mano/carril/manilla. No se observó ninguna apertura.",
+          "sources": [
+            "A03",
+            "A04"
+          ],
+          "lesson": "Ensayar aperturas como capacidad independiente."
+        },
+        "assemblies": {
+          "status": "NV",
+          "observation": "Datos técnicos y configuración están documentados, pero no se verificó un procedimiento actual de ensamblaje/acople.",
+          "sources": [
+            "A02",
+            "A04"
+          ],
+          "lesson": "Composición real requiere reglas/geométrica y no solo un conjunto visual."
+        },
+        "render3d": {
+          "status": "NV",
+          "observation": "Casos históricos iQuote hablan de comparación/configuración; no prueban render 3D actual ni animación física sincronizada.",
+          "sources": [
+            "A08",
+            "A09"
+          ],
+          "lesson": "No convertir referencia histórica en promesa de calidad 2026."
+        },
+        "finishes": {
+          "status": "NV",
+          "observation": "No se verificó selección actual de caras/acabados, bicolor o fidelidad material con las fuentes reunidas.",
+          "sources": [
+            "A02",
+            "A04"
+          ],
+          "lesson": "Evaluar acabado técnico y visual con catálogo aprobado."
+        },
+        "glass_hardware": {
+          "status": "DOC",
+          "observation": "ERP/CIM documenta datos técnicos de perfiles/herrajes que gobiernan pedido. No se verificó receta específica de vidrio o kit de proveedor local.",
+          "sources": [
+            "A02"
+          ],
+          "lesson": "Componentes compatibles y fuente por serie/revisión."
+        },
+        "pricing_private": {
+          "status": "DOC",
+          "observation": "iQuote comprueba precio/viabilidad; Dealer Cloud añade partidas propias e instalación. Matriz efectiva de costo privado/margen no comprobada.",
+          "sources": [
+            "A04",
+            "A03"
+          ],
+          "lesson": "Costo/margen con permisos; servicio añadido conserva procedencia."
+        },
+        "quote_documents": {
+          "status": "DOC",
+          "observation": "Dealer Cloud contempla propuesta, pedido, entrega y factura; hay archivo documental. Plantilla actual, emisión inmutable y aceptación final no probadas.",
+          "sources": [
+            "A03",
+            "A01"
+          ],
+          "lesson": "Documento con fase, destinatario y revisión identificables."
+        },
+        "takeoff": {
+          "status": "DOC",
+          "observation": "Caso TMP vincula BOM, disponibilidad y reposición durante pedido. Es instalación concreta histórica, no garantía universal de configuración.",
+          "sources": [
+            "A07",
+            "A02"
+          ],
+          "lesson": "Cantidad del motor y disponibilidad de almacén tienen autoridades distintas."
+        },
+        "ai_execution": {
+          "status": "NV",
+          "observation": "Smart Companion se documenta como escaneo/formularios. No se verificó agente Cantor conversacional ejecutor; anuncios de IA del portafolio no se transfieren por defecto.",
+          "sources": [
+            "A05",
+            "A06",
+            "A01"
+          ],
+          "lesson": "Mostrar acción real y no denominar agente a un formulario."
+        },
+        "ai_history_undo": {
+          "status": "NV",
+          "observation": "Archivo y vínculo de refabricación con pedido original no acreditan versiones recuperables del diseño, memoria de conversación ni rollback.",
+          "sources": [
+            "A01",
+            "A02"
+          ],
+          "lesson": "Conservar origen de la refabricación y probar recuperación por separado."
+        },
+        "cuts_optimization": {
+          "status": "DOC",
+          "observation": "ERP/CIM enumera lotes/optimización de corte. Algoritmo y plan concreto no observados.",
+          "sources": [
+            "A02"
+          ],
+          "lesson": "Plan rastreable a stock, revisión y trabajo liberado."
+        },
+        "stock_remnants": {
+          "status": "NV",
+          "observation": "Stock y movimientos están documentados, pero no retazo lineal individual con largo/ubicación/reserva ni conexión al optimizador.",
+          "sources": [
+            "A02",
+            "A05"
+          ],
+          "lesson": "No sustituir trazabilidad de sobrantes por etiqueta general de inventario."
+        },
+        "purchasing": {
+          "status": "DOC",
+          "observation": "ERP/CIM documenta orden de proveedor/openTRANS y movimientos; Smart Companion Stock incluye recepción/traslado/inventario. No se probó concurrencia o conciliación.",
+          "sources": [
+            "A02",
+            "A05"
+          ],
+          "lesson": "Recibir material y registrar ubicación con evidencia física."
+        },
+        "production": {
+          "status": "DOC",
+          "observation": "Puestos con información pertinente, etiquetas y continuidad ERP/CIM; TMP ejemplifica una implantación 2022. No se verificó estación actual del taller objetivo.",
+          "sources": [
+            "A02",
+            "A07"
+          ],
+          "lesson": "Operación actual, unidad y dato técnico correcto por estación."
+        },
+        "labels_qr": {
+          "status": "DOC",
+          "observation": "Smart Companion escanea múltiples códigos, consulta estado/ubicación y captura formularios/fotos. No se verificó pasaporte QR de consumidor.",
+          "sources": [
+            "A05",
+            "A06"
+          ],
+          "lesson": "Incidencia vinculada a unidad/pedido, no un QR aislado."
+        },
+        "cnc": {
+          "status": "DOC",
+          "observation": "ERP/CIM describe control de máquina. No se validaron adaptadores, equipos o postprocesadores del usuario.",
+          "sources": [
+            "A02"
+          ],
+          "lesson": "La compatibilidad concreta precede al envío de fabricación."
+        },
+        "field_mobile": {
+          "status": "DOC",
+          "observation": "Teléfonos Android/iOS se usan para escaneo; Smart Companion admite incidencia con foto. Offline/instalación completa y medición no comprobados.",
+          "sources": [
+            "A05",
+            "A06"
+          ],
+          "lesson": "Móvil para captura contextual y seguimiento de unidad."
+        },
+        "portal_customer": {
+          "status": "DOC",
+          "observation": "iQuote y casos históricos incluyen configurador para canal y cliente; no demuestra aceptación/pago o portal comercial sellado actual.",
+          "sources": [
+            "A04",
+            "A09"
+          ],
+          "lesson": "Configurar, pedir y aprobar presupuesto son acciones diferentes."
+        },
+        "analytics": {
+          "status": "DOC",
+          "observation": "ERP/CIM menciona cockpit personalizado y consultas SQL. Calidad de KPI/latencia/uso real no medidos.",
+          "sources": [
+            "A02"
+          ],
+          "lesson": "Indicador con causa y fuente operativa, no cifra sin explicación."
+        },
+        "ux_hierarchy": {
+          "status": "DOC",
+          "observation": "Hay referencias de puesto/pedido de 2022 y móvil de 2022, sin píxeles inspeccionados aquí. No se puntúa calidad visual 2026.",
+          "sources": [
+            "A07",
+            "A05"
+          ],
+          "lesson": "Comparar tareas/roles y fecha del artefacto antes de imitarlo."
+        },
+        "integrations": {
+          "status": "DOC",
+          "observation": "iQuote comparte base Cantor; ERP/CIM enumera openTRANS y conexiones de planificación/instalación. API pública y disponibilidad regional no confirmadas.",
+          "sources": [
+            "A04",
+            "A02"
+          ],
+          "lesson": "Identidad única de pedido y estado visible de transferencia."
+        }
+      },
+      "supplemental": {
+        "roles": {
+          "status": "DOC",
+          "observation": "Dealer Cloud sirve a actividad propia del distribuidor y Smart Companion a almacén/planta. No demuestra aislamiento técnico ni permisos por campo.",
+          "sources": [
+            "A03",
+            "A05"
+          ],
+          "lesson": "Roles comprensibles con autorización de servidor comprobada."
+        },
+        "keyboard_mobile": {
+          "status": "DOC",
+          "observation": "Android/iOS para escaneo y antecedente iQuote en tablet/web. Teclado actual, offline y paridad del editor no comprobados.",
+          "sources": [
+            "A06",
+            "A08"
+          ],
+          "lesson": "Móvil corto/contextual y escritorio para precisión cuando corresponda."
+        },
+        "maturity_price": {
+          "status": "DOC",
+          "observation": "Ecosistema y casos de varios años documentados. Tarifa, consultoría, migración, soporte local y ajuste pyme no comprobados.",
+          "sources": [
+            "A01",
+            "A07",
+            "A08",
+            "A09"
+          ],
+          "lesson": "Escalar alcance a la necesidad del taller y comparar costo total."
+        }
+      },
+      "flows": [
+        {
+          "id": "A-F1",
+          "name": "Distribuidor a entrega",
+          "status": "DOC",
+          "execution": "reconstructed_not_executed",
+          "steps": [
+            {
+              "action": "Configurar y valorar desde iQuote/Dealer Cloud",
+              "sources": [
+                "A03",
+                "A04"
+              ]
+            },
+            {
+              "action": "Comprobar técnica/comercialmente y confirmar pedido/fecha",
+              "sources": [
+                "A03"
+              ]
+            },
+            {
+              "action": "Coordinar compras, material y capacidad en ERP/CIM",
+              "sources": [
+                "A02"
+              ]
+            },
+            {
+              "action": "Identificar producción y gestionar salida/instalación",
+              "sources": [
+                "A02"
+              ]
+            }
+          ],
+          "limits": [
+            "Continuidad descrita por proveedor, no latencia medida.",
+            "No instalación o pedido real probado."
+          ]
+        },
+        {
+          "id": "A-F2",
+          "name": "Unidad a reclamación/refabricación",
+          "status": "DOC",
+          "execution": "reconstructed_not_executed",
+          "steps": [
+            {
+              "action": "Escanear unidad/ubicación y consultar estado",
+              "sources": [
+                "A05",
+                "A06"
+              ]
+            },
+            {
+              "action": "Registrar incidencia y foto en formulario",
+              "sources": [
+                "A05"
+              ]
+            },
+            {
+              "action": "Enviar información a CIM",
+              "sources": [
+                "A05"
+              ]
+            },
+            {
+              "action": "Preparar refabricación vinculada al pedido original cuando corresponde",
+              "sources": [
+                "A02"
+              ]
+            }
+          ],
+          "limits": [
+            "Aprobación/permisos exactos requieren demo.",
+            "No es deshacer de venta o producción.",
+            "No se ejecutó el circuito."
+          ]
+        }
+      ],
+      "visual_references": [
+        {
+          "id": "A-V1",
+          "title": "TMP — entrada de pedidos y puesto CIM",
+          "url": "https://www.a-w.com/wp-content/uploads/2024/03/TMP-Artikel_Dialog_DEZ_2022_en.pdf",
+          "pdf_page": 2,
+          "pdf_page_base": 1,
+          "sources": [
+            "A07"
+          ],
+          "kind": "historical_official_pdf",
+          "visual_inspection": "not_performed",
+          "date_limit": "Relato/pantallas 2022, upload 2024; no UI 2026 confirmada."
+        },
+        {
+          "id": "A-V2",
+          "title": "TMP — logística",
+          "url": "https://www.a-w.com/wp-content/uploads/2024/03/TMP-Artikel_Dialog_DEZ_2022_en.pdf",
+          "pdf_page": 3,
+          "pdf_page_base": 1,
+          "sources": [
+            "A07"
+          ],
+          "kind": "historical_official_pdf",
+          "visual_inspection": "not_performed"
+        },
+        {
+          "id": "A-V3",
+          "title": "Smart Companion móvil",
+          "url": "https://news.a-w.com/hubfs/AW_English_NA_files/GlassBuild%202022%20Flyers/20220609_us_Messeflyer_AW_Cantor_Smart_Companion.pdf?hsLang=en-us",
+          "pdf_page": 2,
+          "pdf_page_base": 1,
+          "sources": [
+            "A05"
+          ],
+          "kind": "historical_official_pdf",
+          "visual_inspection": "not_performed",
+          "date_limit": "Documento 2022."
+        },
+        {
+          "id": "A-V4",
+          "title": "Dealer Cloud — diagrama",
+          "url": "https://a-w.com/wp-content/uploads/2024/05/AW_Cantor_DealerCloud2_240515.png",
+          "page_url": "https://www.a-w.com/aw-cantor/aw-dealer-cloud/",
+          "sources": [
+            "A03"
+          ],
+          "kind": "official_diagram",
+          "visual_inspection": "not_performed",
+          "date_limit": "Diagrama de flujo; no afirmar que es captura UI."
+        },
+        {
+          "id": "A-V5",
+          "title": "iQuote Schlotterer",
+          "url": "https://www.a-w.com/wp-content/uploads/2024/03/E-Schlotterer_Website.pdf",
+          "sources": [
+            "A08"
+          ],
+          "kind": "historical_official_pdf",
+          "visual_inspection": "not_performed",
+          "date_limit": "Caso BAU 2017, subido 2024."
+        }
+      ],
+      "limits": [
+        "No demo ni píxeles inspeccionados en este subinforme.",
+        "Pantallas TMP/Smart Companion históricas 2022; iQuote Schlotterer histórico 2017.",
+        "Smart Companion no tratado como agente LLM.",
+        "Sin procedimiento actual verificado de editor/aperturas/3D.",
+        "Sin retazos lineales individualizados o privacidad de costo comprobada.",
+        "Archivo/refabricación no equivale a undo/conversación persistente.",
+        "No tarifa ni implantación pyme/local confirmada.",
+        "Sin tutorial reproducido con timestamps."
+      ],
+      "rubric18": [
+        {
+          "order": 1,
+          "id": "entrada_onboarding",
+          "title": "Entrada y onboarding",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "catalog_onboarding"
+          ],
+          "supplemental": [],
+          "observation": "iQuote reutiliza datos parametrizados de Cantor. El claim de poco/no entrenamiento no demuestra esfuerzo de preparar datos nuevos.",
+          "sources": [
+            "A04",
+            "A02"
+          ],
+          "lesson": "Separar preparación técnica y facilidad de uso comercial."
+        },
+        {
+          "order": 2,
+          "id": "marcas_series_catalogos",
+          "title": "Marcas, series y catálogos",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "catalog_structure"
+          ],
+          "supplemental": [],
+          "observation": "Base técnica común entre ERP/CIM e iQuote. Navegación actual marca→serie e imágenes de catálogo local no verificadas.",
+          "sources": [
+            "A02",
+            "A04"
+          ],
+          "lesson": "Autoridad común con pertenencia visual clara de marca/serie."
+        },
+        {
+          "order": 3,
+          "id": "editor_aperturas",
+          "title": "Editor y aperturas",
+          "status": "NV",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "editor2d",
+            "openings",
+            "assemblies"
+          ],
+          "supplemental": [],
+          "observation": "Fuentes actuales describen configuración y chequeos, sin un procedimiento actual observado de dibujo/selección. Pantalla de TMP es histórica 2022. Chequeos de factibilidad no establecen selector actual ni cambio de mano/carril/manilla. No se observó ninguna apertura. Datos técnicos y configuración están documentados, pero no se verificó un procedimiento actual de ensamblaje/acople.",
+          "sources": [
+            "A04",
+            "A07",
+            "A03",
+            "A02"
+          ],
+          "lesson": "No inferir editor bueno por alcance ERP o por una captura antigua. Ensayar aperturas como capacidad independiente. Composición real requiere reglas/geométrica y no solo un conjunto visual."
+        },
+        {
+          "order": 4,
+          "id": "2d_3d",
+          "title": "2D y 3D",
+          "status": "NV",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "editor2d",
+            "render3d"
+          ],
+          "supplemental": [],
+          "observation": "Fuentes actuales describen configuración y chequeos, sin un procedimiento actual observado de dibujo/selección. Pantalla de TMP es histórica 2022. Casos históricos iQuote hablan de comparación/configuración; no prueban render 3D actual ni animación física sincronizada.",
+          "sources": [
+            "A04",
+            "A07",
+            "A08",
+            "A09"
+          ],
+          "lesson": "No inferir editor bueno por alcance ERP o por una captura antigua. No convertir referencia histórica en promesa de calidad 2026."
+        },
+        {
+          "order": 5,
+          "id": "materiales",
+          "title": "Materiales",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "finishes",
+            "glass_hardware",
+            "takeoff"
+          ],
+          "supplemental": [],
+          "observation": "No se verificó selección actual de caras/acabados, bicolor o fidelidad material con las fuentes reunidas. ERP/CIM documenta datos técnicos de perfiles/herrajes que gobiernan pedido. No se verificó receta específica de vidrio o kit de proveedor local. Caso TMP vincula BOM, disponibilidad y reposición durante pedido. Es instalación concreta histórica, no garantía universal de configuración.",
+          "sources": [
+            "A02",
+            "A04",
+            "A07"
+          ],
+          "lesson": "Evaluar acabado técnico y visual con catálogo aprobado. Componentes compatibles y fuente por serie/revisión. Cantidad del motor y disponibilidad de almacén tienen autoridades distintas."
+        },
+        {
+          "order": 6,
+          "id": "precios",
+          "title": "Precios",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "pricing_private"
+          ],
+          "supplemental": [],
+          "observation": "iQuote comprueba precio/viabilidad; Dealer Cloud añade partidas propias e instalación. Matriz efectiva de costo privado/margen no comprobada.",
+          "sources": [
+            "A04",
+            "A03"
+          ],
+          "lesson": "Costo/margen con permisos; servicio añadido conserva procedencia."
+        },
+        {
+          "order": 7,
+          "id": "presupuestos_pdf",
+          "title": "Presupuestos y PDF",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "quote_documents",
+            "portal_customer"
+          ],
+          "supplemental": [],
+          "observation": "Dealer Cloud contempla propuesta, pedido, entrega y factura; hay archivo documental. Plantilla actual, emisión inmutable y aceptación final no probadas. iQuote y casos históricos incluyen configurador para canal y cliente; no demuestra aceptación/pago o portal comercial sellado actual.",
+          "sources": [
+            "A03",
+            "A01",
+            "A04",
+            "A09"
+          ],
+          "lesson": "Documento con fase, destinatario y revisión identificables. Configurar, pedir y aprobar presupuesto son acciones diferentes."
+        },
+        {
+          "order": 8,
+          "id": "corte_retazos",
+          "title": "Corte y retazos",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "cuts_optimization",
+            "stock_remnants"
+          ],
+          "supplemental": [],
+          "observation": "ERP/CIM enumera lotes/optimización de corte. Algoritmo y plan concreto no observados. Stock y movimientos están documentados, pero no retazo lineal individual con largo/ubicación/reserva ni conexión al optimizador.",
+          "sources": [
+            "A02",
+            "A05"
+          ],
+          "lesson": "Plan rastreable a stock, revisión y trabajo liberado. No sustituir trazabilidad de sobrantes por etiqueta general de inventario."
+        },
+        {
+          "order": 9,
+          "id": "compras_stock",
+          "title": "Compras y stock",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "purchasing",
+            "stock_remnants"
+          ],
+          "supplemental": [],
+          "observation": "ERP/CIM documenta orden de proveedor/openTRANS y movimientos; Smart Companion Stock incluye recepción/traslado/inventario. No se probó concurrencia o conciliación. Stock y movimientos están documentados, pero no retazo lineal individual con largo/ubicación/reserva ni conexión al optimizador.",
+          "sources": [
+            "A02",
+            "A05"
+          ],
+          "lesson": "Recibir material y registrar ubicación con evidencia física. No sustituir trazabilidad de sobrantes por etiqueta general de inventario."
+        },
+        {
+          "order": 10,
+          "id": "taller_cnc",
+          "title": "Taller y CNC",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "production",
+            "cnc"
+          ],
+          "supplemental": [],
+          "observation": "Puestos con información pertinente, etiquetas y continuidad ERP/CIM; TMP ejemplifica una implantación 2022. No se verificó estación actual del taller objetivo. ERP/CIM describe control de máquina. No se validaron adaptadores, equipos o postprocesadores del usuario.",
+          "sources": [
+            "A02",
+            "A07"
+          ],
+          "lesson": "Operación actual, unidad y dato técnico correcto por estación. La compatibilidad concreta precede al envío de fabricación."
+        },
+        {
+          "order": 11,
+          "id": "qr_terreno",
+          "title": "QR y terreno",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "labels_qr",
+            "field_mobile"
+          ],
+          "supplemental": [],
+          "observation": "Smart Companion escanea múltiples códigos, consulta estado/ubicación y captura formularios/fotos. No se verificó pasaporte QR de consumidor. Teléfonos Android/iOS se usan para escaneo; Smart Companion admite incidencia con foto. Offline/instalación completa y medición no comprobados.",
+          "sources": [
+            "A05",
+            "A06"
+          ],
+          "lesson": "Incidencia vinculada a unidad/pedido, no un QR aislado. Móvil para captura contextual y seguimiento de unidad."
+        },
+        {
+          "order": 12,
+          "id": "ia",
+          "title": "IA",
+          "status": "NV",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "ai_execution"
+          ],
+          "supplemental": [],
+          "observation": "Smart Companion se documenta como escaneo/formularios. No se verificó agente Cantor conversacional ejecutor; anuncios de IA del portafolio no se transfieren por defecto.",
+          "sources": [
+            "A05",
+            "A06",
+            "A01"
+          ],
+          "lesson": "Mostrar acción real y no denominar agente a un formulario."
+        },
+        {
+          "order": 13,
+          "id": "historial_deshacer",
+          "title": "Historial y deshacer",
+          "status": "NV",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "ai_history_undo"
+          ],
+          "supplemental": [],
+          "observation": "Archivo y vínculo de refabricación con pedido original no acreditan versiones recuperables del diseño, memoria de conversación ni rollback.",
+          "sources": [
+            "A01",
+            "A02"
+          ],
+          "lesson": "Conservar origen de la refabricación y probar recuperación por separado."
+        },
+        {
+          "order": 14,
+          "id": "roles",
+          "title": "Roles",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [],
+          "supplemental": [
+            "roles"
+          ],
+          "observation": "Dealer Cloud sirve a actividad propia del distribuidor y Smart Companion a almacén/planta. No demuestra aislamiento técnico ni permisos por campo.",
+          "sources": [
+            "A03",
+            "A05"
+          ],
+          "lesson": "Roles comprensibles con autorización de servidor comprobada."
+        },
+        {
+          "order": 15,
+          "id": "claridad_visual",
+          "title": "Claridad visual",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "ux_hierarchy"
+          ],
+          "supplemental": [],
+          "observation": "Hay referencias de puesto/pedido de 2022 y móvil de 2022, sin píxeles inspeccionados aquí. No se puntúa calidad visual 2026.",
+          "sources": [
+            "A07",
+            "A05"
+          ],
+          "lesson": "Comparar tareas/roles y fecha del artefacto antes de imitarlo."
+        },
+        {
+          "order": 16,
+          "id": "teclado_movil",
+          "title": "Teclado y móvil",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [],
+          "supplemental": [
+            "keyboard_mobile"
+          ],
+          "observation": "Android/iOS para escaneo y antecedente iQuote en tablet/web. Teclado actual, offline y paridad del editor no comprobados.",
+          "sources": [
+            "A06",
+            "A08"
+          ],
+          "lesson": "Móvil corto/contextual y escritorio para precisión cuando corresponda."
+        },
+        {
+          "order": 17,
+          "id": "interoperabilidad",
+          "title": "Interoperabilidad",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [
+            "integrations"
+          ],
+          "supplemental": [],
+          "observation": "iQuote comparte base Cantor; ERP/CIM enumera openTRANS y conexiones de planificación/instalación. API pública y disponibilidad regional no confirmadas.",
+          "sources": [
+            "A04",
+            "A02"
+          ],
+          "lesson": "Identidad única de pedido y estado visible de transferencia."
+        },
+        {
+          "order": 18,
+          "id": "madurez_precio",
+          "title": "Madurez y precio",
+          "status": "DOC",
+          "scope": "Evidencia documental con límites; no es una puntuación de calidad ni una prueba de ejecución.",
+          "dimensions": [],
+          "supplemental": [
+            "maturity_price"
+          ],
+          "observation": "Ecosistema y casos de varios años documentados. Tarifa, consultoría, migración, soporte local y ajuste pyme no comprobados.",
+          "sources": [
+            "A01",
+            "A07",
+            "A08",
+            "A09"
+          ],
+          "lesson": "Escalar alcance a la necesidad del taller y comparar costo total."
+        }
+      ]
+    }
+  ]
+}

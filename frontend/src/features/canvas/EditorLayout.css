@@ -491,7 +491,6 @@
 .starter-family h4 {
   margin: var(--space-3) 0 var(--space-2);
   font-size: var(--type-label);
-  text-transform: uppercase;
 }
 .starter-family > div {
   display: grid;
@@ -512,13 +511,6 @@
 .editor-library .starter-search input {
   width: 100%;
   box-sizing: border-box;
-}
-.editor-assistant {
-  padding: var(--space-3);
-  border-top: 1px solid var(--border-default);
-}
-.editor-assistant > summary {
-  cursor: pointer;
 }
 .editor-operation-message {
   position: absolute;

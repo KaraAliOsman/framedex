@@ -1,7 +1,7 @@
 ---
 type: state
 status: active
-updated: 2026-10-17
+updated: 2026-10-19
 volatility: high
 verified_ref: edcfd2844d2c2fc7cbb0d3b543b50e9089ab9b3f
 sources:
@@ -9,9 +9,44 @@ sources:
   - docs/cola/ESTADO.md
   - docs/redesign/acceptance-2026-10-12.md
   - docs/operations/ACTIVACION.md
+  - docs/redesign/2026-10-18-final/acceptance.md
+  - docs/redesign/2026-10-18-final/production-handoff.md
 ---
 
 # Estado vigente de DEKOPEN v1
+
+## Candidata definitiva · 19-10-2026 (sin commit, pendiente de aprobación del dueño)
+
+Verificado en el árbol de trabajo de `claude/v1-implementacion` (base `6f78e329`)
+y en REVIEW reconstruido desde ese árbol — **no** en un ref publicado:
+
+- Mesa de obra y Estudio presentan la misma sesión de edición; el cotizador
+  manual no depende de IA y el plan sin IA no monta asistente ni sondeo.
+- Copiloto global en popup no modal (Chat/Trabajo, Solo proponer / Con
+  aprobación / Omitir todo, hilos privados, adjuntos con cobertura y citas,
+  recibo por postcondiciones). Con MiMo real pasaron los recorridos de lote,
+  documento → posiciones (el PDF borrador queda bloqueado hasta que la persona
+  fija condiciones comerciales) y comparación de revisiones.
+- Créditos: retenciones duraderas por operación y política `legacy_route_v1`
+  sellada; cupos legado vigentes; política proporcional preparada e inactiva.
+- Bloqueos: puerta 6 sin autoridad de fabricante ni costos privados; `test-db`
+  no ejecutado (requiere stack limpio); dos golden del motor en rojo desde antes.
+
+Detalle y evidencia: [aceptación](../../redesign/2026-10-18-final/acceptance.md);
+conexiones finales: [traspaso](../../redesign/2026-10-18-final/production-handoff.md).
+
+## Investigación posterior a la reversión · 17-10-2026
+
+HEAD auditado: `6f78e3299d93816991fb7c2fe2a2044458fc5e7a`; no se modifica
+código de aplicación. El dueño encarga investigación y preparación para Claude.
+El [paquete](../../research/2026-10-17-claude/README.md) distingue hechos del
+código restaurado, capturas históricas, fuentes externas y propuestas pendientes.
+No es otro rediseño ejecutado ni una aceptación nueva.
+
+La conexión del navegador no funcionó tras la activación declarada; la revisión
+visual usa evidencia anterior identificada. Proline/Aluminios 2000 concretos y
+homologación de máquina continúan sin probar. El plan registra estas limitaciones
+y concentra la campaña de bugs/pruebas de la implementación futura al final.
 
 ## Reversión del rediseño · 17-10-2026
 

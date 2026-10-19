@@ -1,7 +1,7 @@
 ---
 type: concept
 status: active
-updated: 2026-10-08
+updated: 2026-10-18
 volatility: medium
 verified_ref: 97aea5dfec6e4dddcb429a48b421c7598e758a0d
 sources:
@@ -12,6 +12,38 @@ sources:
 ---
 
 # Propuesta comercial sellada
+
+## Árbol de trabajo v1 · 18-10-2026 (sin commit)
+
+Esto es un hecho del árbol de trabajo en la rama `claude/v1-implementacion`. No está en
+`main` ni se verificó en navegador.
+
+- `documents/numbering.py` asigna «N.º n» por empresa:
+  - el prefijo y el siguiente número son editables;
+  - el siguiente número no puede quedar por debajo del más alto ya asignado;
+  - el número se asigna una vez, en la primera vista previa emitible, dentro de la
+    transacción de preparación.
+- El snapshot sella `commercial_label` y `document_layout`. Las revisiones anteriores
+  conservan el folio `COT-<código>-<rev>`.
+- `documents/quotation.py` resuelve el diseño en este orden: empresa (preferencias) → obra
+  (borrador) → solicitud.
+  - Los bloques posiciones y resumen comercial no se pueden ocultar.
+  - Un preview borrador (`quotation-draft`) lleva «Borrador», no consume número y no se
+    guarda.
+- `document_artifacts.layout` separa cada composición en su propio artefacto inmutable:
+  ESENCIAL, PROYECTO, ALTERNATIVAS, COMPACTA, VENTANA y OBRA.
+
+## Intención de producto posterior · 17-10-2026
+
+El dueño pide firma/aceptación opcionales, numeración comercial sencilla y edición
+manual/IA de plantillas y borradores. El [plan documental](../../research/2026-10-17-claude/06-documentos-y-editor.md)
+concreta tres cotizaciones, dos pedidos y tres cortes. Propone originales
+estructurados versionados; no está implementado. En el ref restaurado
+`6f78e329`, `quotation.py:387` añade aceptación incondicional y el folio usa
+proyecto/revisión. La consulta de numeración actual no acredita configuración de
+folio comercial. Emitidos siguen inmutables: cambios posteriores crean revisión
+o documento relacionado, no reescriben el original. La evidencia P09 siguiente
+conserva su alcance histórico.
 
 La intención de P09 es un documento white-label que el fabricante pueda firmar:
 emisor, cliente, solución, dibujos acotados, condiciones y aceptación. La

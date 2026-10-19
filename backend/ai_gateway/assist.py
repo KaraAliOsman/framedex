@@ -52,7 +52,9 @@ MAX_WARNING = 240
 # or a javascript: URL.
 _ALLOWED_PATHS = re.compile(
     r"^/(dashboard|projects|production|purchasing|catalogs|clients|pricing|settings)"
-    r"(/[0-9a-zA-Z\-_/]*)?$|^/$"
+    r"(/[0-9a-zA-Z\-_/]*)?"
+    # A work's own views: a fixed set of sections, never free query text.
+    r"(\?section=(quote|pricing|production|documents)(&tab=cut)?)?$|^/$"
 )
 _PATH_UUID = re.compile(
     r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"

@@ -1794,3 +1794,231 @@ restaurado. El build web y el arranque API/worker pasan; se comprueba la respues
 HTTP y la igualdad de fuentes del producto con el ref anterior. El navegador
 local está deshabilitado en Work; no se afirma una inspección visual nueva.
 La PR #159 se retira sin merge ni despliegue productivo.
+
+## 2026-10-17 · Auditoría e investigación para Claude, sin implementación
+
+Por nueva instrucción del dueño se prepara el
+[paquete de investigación](../research/2026-10-17-claude/README.md): encargo
+trazable, auditoría con evidencia por archivo/ref, fuentes competitivas, recorridos,
+dirección visual, dibujos/texturas, documentos, IA trabajadora, catálogos/OCR,
+operación/CNC, plan de ejecución, criterios de cierre y once prompts no ejecutados.
+Se incorpora la [fuente de intención](sources/owner-research-handoff-2026-10.md)
+y se enlaza desde decisiones, dominios y mapa competitivo.
+
+Ref auditado `6f78e3299d93816991fb7c2fe2a2044458fc5e7a`, producto restaurado
+al estado `edcfd2844d2c2fc7cbb0d3b543b50e9089ab9b3f`. Se comprueban soporte
+existente de texturas/IA multimodal, límite de 20 páginas del helper, revisión
+tabular, folio/firma actuales y salida CNC neutra. Se conservan diferencias entre
+hecho de fuente, evidencia visual histórica, intención y propuesta futura.
+
+Se consultan fuentes públicas de nueve familias competitivas, Grok Bot/Dots,
+diseño, parsing documental y recomendaciones oficiales de Claude Opus 5.5.
+Se reexaminan capturas históricas de tres videos, sin afirmar reproducción nueva
+de todos ni acceso privado exhaustivo. La conexión de navegador no funciona tras
+la activación declarada; no hay visita visual nueva. Los PDF exactos Proline y
+Aluminios 2000 y la homologación física CNC siguen pendientes.
+
+El plan de construcción futuro agrupa bug fixing y pruebas al final, conforme al
+dueño, conservando invariantes y checks de cierre. No se cambia código de producto,
+no se ejecutan prompts, no se reinicia el stack y no se tocan datos/sesiones.
+El golden ajeno mantiene SHA-256
+`F6A97BEBCED724C4C80FBBA0170B43019BD6C409E62901E472E420138EEAC8B3`.
+
+## 2026-10-18 · Implementación v1 en curso (etapas 01–06, sin commit)
+
+La rama `claude/v1-implementacion` ejecuta los prompts 01–10 por instrucción del dueño.
+No hay commit ni PR. El
+[registro de estado](../research/2026-10-17-claude/estado-implementacion.md) es la
+fuente viva de las etapas, decisiones e incidencias. Estado de la etapa 06, verificado
+en el árbol de trabajo:
+
+- Hay numeración comercial por empresa. El valor por defecto es «N.º 1», con prefijo y
+  siguiente número editables. El número se asigna al preparar la primera versión emitible,
+  de forma idempotente y bloqueando la fila. Las revisiones heredan el número. Migración
+  `20270130000300`.
+- Hay tres composiciones de cotización: Esencial, Proyecto y Alternativas.
+  - Las condiciones aparecen una sola vez.
+  - La huella no aparece en el cuerpo comercial y la URL se muestra corta.
+  - La aceptación sigue la política: por defecto no hay, y un enlace sirve para consultar.
+- Hay cuatro variantes de taller y compra sobre los mismos datos sellados de DOC-05:
+  secuencia, lista compacta, por ventana y pedido por obra.
+- Editor del documento en Cotización:
+  - borrador real sin número;
+  - diseño, bloques, textos y presentación;
+  - deshacer y rehacer;
+  - guardar en la obra o como diseño de la empresa.
+- Paso de IA `document_layout`: modifica el mismo objeto de forma reversible y nunca
+  modifica cifras.
+- Las muestras PDF se renderizaron localmente y se inspeccionaron como imagen con
+  fixtures DEMO. No hubo revisión en navegador ni stack real.
+- La edición de PDF externos queda pendiente de una decisión de licencia:
+  [evaluación](../research/2026-10-17-claude/evaluacion-editor-pdf-externo.md).
+
+## 2026-10-18 · Implementación v1: etapas 07–09 (sin commit)
+
+Árbol de trabajo de `claude/v1-implementacion`; detalle en el
+[registro de estado](../research/2026-10-17-claude/estado-implementacion.md).
+
+- Etapa 07:
+  - «Materiales y corte» de la obra (`projects/materials.py`) lee los resultados del
+    motor guardados por ventana y separa consumo, borrador de corte y barras a comprar.
+  - El corte usa `optimize_cut` con barras y perfil de corte declarados. Cuando falta un
+    dato, se listan las causas exactas.
+  - Hay un botón «Orden de corte» en la obra y en el editor.
+  - El lenguaje de «autoridad» se reemplazó por causas y acciones en precio y editor.
+- Etapa 08:
+  - El tablero de taller agrupa las decisiones por causa.
+  - Hay un contrato de adaptadores CNC: solo intercambio neutro, y homologar exige
+    evidencia física.
+  - Al crear un cliente se muestran clientes parecidos.
+  - El acceso por enlace muestra el correo y permite reenviar.
+- Etapa 09:
+  - El asistente ya no tiene tarjetas de cobro (O09).
+  - Se retiraron reglas CSS huérfanas.
+  - Se hizo una pasada editorial: nombre de obra antes que código.
+
+No hubo revisión en navegador ni proveedor IA real. Las pruebas y la verificación se
+concentran en la etapa 10.
+
+
+## 2026-10-18 · REVIEW con la implementación de Claude
+
+Verificado en el árbol de trabajo de `claude/v1-implementacion`, sin commit:
+API, worker e interfaz reconstruidos para revisar en `http://127.0.0.1:5179`.
+Se conservó la base poblada. Su historial local tenía `20270130000000`
+(`presentation_changes`) y `20270131000000` (`catalog_visual_references`) de
+una revisión anterior; el SQL actual de valores habituales se aplicó mediante
+un alias local `20270130000001`, sin reemplazar el historial. El adaptador
+local y los recibos están en `.run/review/`; no forman parte de las migraciones
+canónicas del repositorio.
+
+La carga real detectó un permiso de lectura faltante en las columnas nuevas de
+`projects`: la migración `20270130000400_v1_project_read_grants.sql` concede
+SELECT de `design_defaults` y `commercial_number` al rol `authenticated`.
+RLS permanece habilitado y `anon` sigue sin lectura de esas columnas.
+Comprobación acotada: build de frontend aprobado, inicio Proyectos visible
+con la navegación nueva, y API autenticada de lista, detalle y materiales
+con HTTP 200. No constituye el cierre de la campaña de pruebas de la etapa 10.
+
+## 2026-10-18 · Investigación profunda y elección pendiente
+
+Incorporada la nueva [fuente del dueño](sources/owner-revision-profunda-2026-10-18.md):
+rechazo de la experiencia de Claude, asistente Chat/Trabajo y **Omitir todo**,
+catálogos reales y tres propuestas antes de implementar. La
+[síntesis](research/revision-profunda-2026-10-18.md) y el
+[dossier](../research/2026-10-18-revision-profunda/README.md) reúnen quince familias,
+18 ejes, 270 casillas, 176 URLs competitivas y 28 imágenes seleccionadas.
+Se delimitan manuales, material comercial, fotogramas y REA parcial sin acceso
+a suites privadas ni algoritmos de fabricación.
+
+Auditoría local en `claude/v1-implementacion`, HEAD `6f78e329` más cambios locales
+de Claude: historial existente pero continuidad confusa; Completado con ventanas
+pendientes; lista plana DEMO; una apertura reversible sí funcionó; Corte requiere
+mejor exponer el requisito/rol. No es aceptación final. Se actualizan intención,
+asistente, catálogo, diseño y mapa competitivo con enlaces y límites fechados.
+Estudio/Mesa de obra/Centro de encargos y el prompt para Claude quedan pendientes
+de elección del dueño; no se implementó el rediseño ni se borraron demos.
+
+## 2026-10-18 · Dirección final del dueño y paquete integrado para Claude
+
+La [corrección posterior](sources/owner-final-direction-2026-10-18.md) resuelve
+Mesa de obra + Estudio como dos vistas del mismo producto manual, Mesa inicial
+recomendada y copiloto opcional en popup global. El usuario trabaja y delega;
+el plan base es completo sin IA. Los píxeles de los conceptos previos no quedan
+aprobados. Desarrollo primero y campaña de pruebas/corrección al final.
+
+Tres revisiones especializadas integradas en el
+[paquete final](../research/2026-10-18-direccion-final/README.md): producto/editor,
+copiloto/planes y diseño/documentos/operación. Incluye dirección final, tres
+contratos, prompt maestro, siete etapas y criterios de entrega. Reutiliza la
+investigación competitiva anterior con sus límites; no la presenta como nuevas
+sesiones privadas ni convierte REA público en fórmulas de fabricación.
+
+Se contrastó código del árbol `claude/v1-implementacion`, HEAD `6f78e329` más
+cambios locales, sin ejecutar el rediseño ni nuevas pruebas de producto.
+Se conserva editor/operaciones/documentos/billing existentes. PRODUCT y cláusulas
+de Constitución requieren conciliación al implementar; las invariantes no
+cambian. Se actualizan decisiones, visión, asistente, proyecto, catálogo, diseño,
+índice y síntesis; el dossier anterior señala los prompts/composición superados.
+No se publica catálogo, activa cobro, borra demo ni declara aceptación final.
+
+## 2026-10-18 · Créditos comunes, referencias profesionales y personaje Grok Bot
+
+La [aclaración del dueño](sources/owner-credits-and-grokbot-2026-10-18.md) confirma MiMo para todos los planes IA hasta cambio expreso, diferencias por créditos/capacidad y posible valor profesional adicional. DeepSeek queda candidato futuro sin validar/configurar; anual 30/49/99/149 es referencia, no tarifa. La fidelidad a Grok Bot se centra en el personaje animado, con estilos compatibles con DEKOPEN.
+
+Se amplía el [paquete para Claude](../research/2026-10-18-direccion-final/README.md) a seis contratos y siete prompts: PRD-03/billing real, cuotas versionadas y reservas, veinte referencias profesionales y personaje/estados/movimiento. Se distinguen débito fijo actual, costo físico, saldo y presupuesto; no se activan ofertas, cambian cuotas legacy ni migran contratos. La campaña 07 incorpora casos de modelo común, anualidad, packs, concurrencia y movimiento.
+
+Evidencia externa nueva: 17 fuentes oficiales adicionales a tres sectoriales, tres imágenes inspeccionadas y demo pública Grok Bot con cuatro capturas seleccionadas. REA analiza tres de 62 scripts públicos, con grafo parcial/truncado; el lanzamiento de runtime recibió WAF, por lo que no acredita la interfaz del bot. No se operaron licencias privadas. Se actualizan fuente, decisiones, visión, asistente, proveedor, diseño, suscripción/créditos, síntesis e índice. No se implementó código del producto ni se ejecutaron suites, proveedores o pagos.
+
+## 2026-10-18 · Versión definitiva antes de las conexiones de producción
+
+La [aclaración del dueño](sources/owner-launch-boundary-2026-10-18.md) exige
+todo el alcance funcional listo para revisión; solo pueden quedar las conexiones
+y configuración finales de Railway, Supabase y pagos de producción. Se precisan
+preparación de archivos/comandos/migraciones y entrega de `production-handoff.md`.
+Persistencia, auth/RLS, IA, créditos y lógica de pagos no quedan aplazados. Una
+función obligatoria o fuente técnica ausente sigue impidiendo la entrega completa.
+
+Se actualizan README, dirección, prompt maestro, criterios y 07 del paquete,
+decisiones, síntesis e índice. Desarrollo y cierre técnico preceden a revisión y
+aprobación del dueño; conexiones y pruebas del entorno de lanzamiento siguen a
+esa aprobación antes de publicar. Este cambio es documental: no ejecuta Claude,
+servicios, suites, pagos ni despliegues y no acredita aceptación del producto.
+
+## 2026-10-18 · Revisión abierta desde dirección de innovación
+
+El [nuevo encargo](sources/owner-innovation-review-2026-10-18.md) solicita
+investigar mejoras/adiciones y pensar ampliamente. El
+[dossier](../research/2026-10-18-innovacion/README.md) reúne veinte fuentes
+primarias de quince organizaciones, dieciocho páginas accesibles y dos Odoo
+indexadas cuya apertura falló. Reutiliza la investigación sectorial anterior
+y contrasta puntos de entrada de código en `claude/v1-implementacion`, HEAD
+`6f78e329` más cambios locales, sin nuevas pruebas de runtime.
+
+Se proponen veinticuatro oportunidades, seis apuestas abiertas y seis prioridades:
+revisión por etapa, catálogo con impacto, alternativas, consecuencias de cambios,
+primera propuesta propia y aprendizaje de margen. Se distinguen capacidades ya
+existentes, cierre comprometido y ampliación opcional. La muestra/pilotos y
+beneficios comerciales son hipótesis, no entrevistas o ahorro demostrado.
+Se añade síntesis e índice; no se modifica el prompt de implementación ni se
+aprueban nuevas funciones, tarifas, proveedores, pagos o despliegues.
+
+## 2026-10-18 · Adjuntos del copiloto y refinamientos con sentido
+
+El [seguimiento del dueño](sources/owner-attachments-and-innovation-2026-10-18.md)
+recibe favorablemente las ideas y añade documentos, imágenes y demás archivos
+compatibles. Se integra ese requisito en contrato 03, prompt maestro/05,
+criterios A15–A17 y cierre 07. Formatos, persistencia, cobertura real y evidencia
+por campo quedan especificados; no se declara implementación ni prueba.
+
+La [nota adicional](../research/2026-10-18-innovacion/06-archivos-y-mejoras-con-sentido.md)
+consulta cinco páginas oficiales de MiMo/Adobe/Microsoft/Autodesk y contrasta
+extractores, ingestión y transporte del árbol local existente. MiMo documenta
+visión para 2.6 Pro; no hubo llamada a la cuenta configurada. Propone fuentes
+reutilizables de obra, contradicciones localizadas y selección con nota como
+refinamientos, distinguiéndolos de requisitos ya comprometidos. La valoración
+general del dueño no convierte toda la cartera en alcance simultáneo de salida.
+Se actualizan fuentes, decisiones, asistente, síntesis e índice. Solo documentación;
+sin tocar producto, fórmulas, golden, Constitución, cobros ni configuración.
+
+## 2026-10-18 · Inventario de conexiones para lanzamiento
+
+La consulta del dueño sobre Railway, Supabase, Flow, dominio y Cloudflare se
+contrasta con configuración y documentación oficial. La [síntesis](quality/production-connections.md)
+conserva Redis exigido por producción, servicios/cron existentes, SMTP para Auth
+y Django, credenciales MiMo y diferencias Flow plataforma/taller. Railway
+documenta SMTP desde Pro; Hobby requiere adaptar envío a HTTPS. El respaldo de
+base Supabase no incluye objetos de Storage. Se distingue requisito, opción y
+configuración histórica del runbook; sin contratar, activar ni probar producción.
+
+## 2026-10-19 · Candidata definitiva: desarrollo 01–06 y campaña 07
+
+Claude implementa la dirección final (Mesa/Estudio, cotizador manual, copiloto
+en popup con hilos, adjuntos, tres autonomías, recibo, resolvedor de
+capacidades, retenciones de créditos y planes) y ejecuta la campaña 07 con MiMo
+real en REVIEW. La campaña corrige un defecto crítico de destino sellado y
+nueve altos/medios. Estado verificado resumido en
+[estado vigente](state/current-reality.md); evidencia en
+`docs/redesign/2026-10-18-final/acceptance.md`. Sin commit, despliegue ni
+activación comercial; pendiente la aprobación del dueño.
+

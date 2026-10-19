@@ -22,26 +22,21 @@ export function ShortcutHelp(): JSX.Element {
     };
     window.addEventListener("keydown", show);
     const dismiss = () => setOpen(false);
+    // The account menu opens the same help; the top bar keeps no extra icon.
+    const request = () => {
+      window.dispatchEvent(new Event("dekopen:shell-overlay"));
+      setOpen(true);
+    };
     window.addEventListener("dekopen:shell-overlay", dismiss);
+    window.addEventListener("dekopen:shortcuts", request);
     return () => {
       window.removeEventListener("keydown", show);
       window.removeEventListener("dekopen:shell-overlay", dismiss);
+      window.removeEventListener("dekopen:shortcuts", request);
     };
   }, []);
   return (
     <>
-      <button
-        type="button"
-        className="topbar-button topbar-button--icon"
-        aria-label="Ayuda de atajos"
-        title="Ayuda de atajos · ?"
-        onClick={() => {
-          window.dispatchEvent(new Event("dekopen:shell-overlay"));
-          setOpen(true);
-        }}
-      >
-        ?
-      </button>
       {open && (
         <Dialog onClose={() => setOpen(false)} title="Atajos de teclado">
           <dl className="shell-shortcuts">

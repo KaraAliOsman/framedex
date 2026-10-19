@@ -22,7 +22,22 @@ DEFAULT_PREFERENCES = {
     "remnant_destination": "Recepción de retazos",
     "remnant_age_days": 90,
     "commercial_terms": DEFAULT_TERMS,
+    # v1 06: quotation composition and acceptance policy for new revisions.
+    "quotation_template": "ESENCIAL",
+    "acceptance_mode": "NONE",
+    "quotation_layout": {},
 }
+TEMPLATES = ("ESENCIAL", "PROYECTO", "ALTERNATIVAS")
+ACCEPTANCE_MODES = ("NONE", "PORTAL", "SIGNATURE")
+
+
+def declared(value: object, key: str) -> bool:
+    """Whether a stored/sealed preference set declared `key` itself: a
+    revision sealed before a preference existed keeps the behavior it was
+    issued with instead of the new default."""
+    if isinstance(value, str):
+        value = json.loads(value)
+    return isinstance(value, dict) and key in value
 
 
 def document_preferences(value: object) -> dict:
@@ -30,6 +45,12 @@ def document_preferences(value: object) -> dict:
         value = json.loads(value)
     supplied = value if isinstance(value, dict) else {}
     result = {**deepcopy(DEFAULT_PREFERENCES), **supplied}
+    if result["quotation_template"] not in TEMPLATES:
+        result["quotation_template"] = "ESENCIAL"
+    if result["acceptance_mode"] not in ACCEPTANCE_MODES:
+        result["acceptance_mode"] = "NONE"
+    if not isinstance(result["quotation_layout"], dict):
+        result["quotation_layout"] = {}
     if result["paper"] not in PAPERS:
         result["paper"] = "LETTER"
     if result["accent"] not in ACCENTS:

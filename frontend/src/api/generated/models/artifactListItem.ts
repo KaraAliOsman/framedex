@@ -20,4 +20,5 @@ export interface ArtifactListItem {
   revision_code: string;
   byte_size: number;
   created_at: string;
+  layout?: string;
 }

@@ -89,6 +89,43 @@ def _raise_agent_error(error: Exception):
     raise error
 
 
+def _copilot_seal(*, org_id, user_id, data: dict, goal: str, thread_id=None) -> tuple[str, list[dict]]:
+    """Resolve the conversation and seal the attachments of one send.
+
+    The thread must belong to the caller (org + person); a missing one is
+    opened so legacy callers keep recoverable history. Attachments are
+    sealed by id + hash and bound to the thread; another person's or
+    tenant's file is refused as missing."""
+    from uuid import uuid4
+
+    from django.db import connection
+
+    from ai_gateway import attachments, threads
+
+    if connection.vendor != "postgresql":
+        # Threads and attachments live in Postgres only (like usage/holds);
+        # unit doubles keep the legacy single-job conversation.
+        return str(thread_id or data.get("thread_id") or uuid4()), []
+    try:
+        wanted = thread_id or data.get("thread_id")
+        if wanted:
+            thread = threads.require(org_id=org_id, user_id=user_id, thread_id=wanted)
+        else:
+            thread = threads.create(
+                org_id=org_id, user_id=user_id, title=goal,
+                interaction_mode=str(data.get("interaction_mode") or "work"),
+                autonomy=str(data.get("autonomy") or "propose"),
+            )
+        ids = list(data.get("attachment_ids") or [])
+        sealed = attachments.seal(org_id=org_id, user_id=user_id, ids=ids)
+        attachments.bind_thread(org_id=org_id, user_id=user_id, ids=ids, thread_id=thread["id"])
+    except threads.ThreadError as error:
+        raise contract_error(404 if error.code == "ai_thread_not_found" else 400, error.code, error.detail) from None
+    except attachments.AttachmentError as error:
+        raise contract_error(error.status, error.code, error.detail) from None
+    return str(thread["id"]), sealed
+
+
 class AiInvokeView(APIView):
     @extend_schema(
         operation_id="ai_invoke",
@@ -252,6 +289,11 @@ class AiAgentView(APIView):
                     f"Esta superficie requiere la referencia '{missing_refs[0]}'.",
                 )
             operation_key = str(data["operation_key"])
+            thread_id, sealed = _copilot_seal(
+                org_id=org_id, user_id=token.user_id, data=data, goal=str(data["goal"])
+            )
+            interaction_mode = str(data.get("interaction_mode") or "work")
+            autonomy = str(data.get("autonomy") or "propose")
             try:
                 # The job row's refs are the conversation's identity —
                 # volatile pointer refs (a live canvas selection) stay in the
@@ -273,6 +315,13 @@ class AiAgentView(APIView):
                     "ai_operation_key_conflict",
                     "La clave de operación ya fue usada con otra solicitud.",
                 ) from error
+            from ai_gateway import threads
+
+            threads.link_job(
+                org_id=org_id, user_id=token.user_id, job_id=job["id"], thread_id=thread_id,
+                interaction_mode=interaction_mode,
+                autonomy="propose" if interaction_mode == "chat" else autonomy,
+            )
             try:
                 # job_runs is service-owned — the enqueue runs under the same
                 # role switch the ingest path uses, or the request scope's
@@ -291,6 +340,9 @@ class AiAgentView(APIView):
                             "product_sig": str(data.get("product_sig") or ""),
                             "history": list(data.get("history") or []),
                             "operation_key": operation_key,
+                            "autonomy": autonomy,
+                            "interaction_mode": interaction_mode,
+                            "attachments": sealed,
                         },
                         idempotency_key=f"ai:{operation_key}",
                         created_by=token.user_id,
@@ -300,7 +352,7 @@ class AiAgentView(APIView):
                     409, error.code, "No se pudo encolar la tarea del agente."
                 ) from error
             return Response(
-                {"job_id": job["id"], "state": job["state"]},
+                {"job_id": job["id"], "state": job["state"], "thread_id": thread_id},
                 status=status.HTTP_202_ACCEPTED,
             )
 
@@ -488,6 +540,33 @@ class AiJobMessagesView(APIView):
                     request.headers.get("X-Operation-Key")
                     or f"{job_id}:{len(history)}"
                 )
+                # Same conversation: the follow-up stays on the job's thread;
+                # its mode, policy and attachments are sealed for this round.
+                thread_id, sealed = _copilot_seal(
+                    org_id=org_id, user_id=token.user_id, data=data,
+                    goal=str(data["message"]), thread_id=job.get("thread_id"),
+                )
+                interaction_mode = str(data.get("interaction_mode") or "work")
+                autonomy = str(data.get("autonomy") or "propose")
+                # The task's destination is sealed on the job: live refs only
+                # refresh volatile pointers (selection) of that same work.
+                # Reading another work in the app never redirects the write.
+                stored_refs = dict(job.get("refs") or {})
+                live_refs = dict(data.get("refs") or {})
+                if (
+                    stored_refs.get("project_id")
+                    and live_refs.get("project_id")
+                    and str(live_refs["project_id"]) != str(stored_refs["project_id"])
+                ):
+                    live_refs = {}
+                sealed_refs = {**live_refs, **stored_refs}
+                from ai_gateway import threads
+
+                threads.link_job(
+                    org_id=org_id, user_id=token.user_id, job_id=job["id"], thread_id=thread_id,
+                    interaction_mode=interaction_mode,
+                    autonomy="propose" if interaction_mode == "chat" else autonomy,
+                )
                 # Flip the row to QUEUED *before* the run becomes claimable —
                 # the worker polls job_runs continuously and would otherwise
                 # claim a run whose ai_job still reads SUCCEEDED, fail the
@@ -516,7 +595,7 @@ class AiJobMessagesView(APIView):
                                 # Live refs from the caller refresh volatile
                                 # pointers (selection); the stored row keeps
                                 # stable identity refs only.
-                                "refs": dict(data.get("refs") or job.get("refs") or {}),
+                                "refs": sealed_refs,
                                 "goal": str(data["message"]),
                                 # The product rides with each message — the
                                 # client sends the position's live
@@ -525,6 +604,9 @@ class AiJobMessagesView(APIView):
                                 # job creation.
                                 "product": data.get("product"),
                                 "product_sig": str(data.get("product_sig") or ""),
+                                "autonomy": autonomy,
+                                "interaction_mode": interaction_mode,
+                                "attachments": sealed,
                                 "history": history,
                                 # Server-rebuilt from the stored transcript —
                                 # its numbers may ground the follow-up.
@@ -610,6 +692,13 @@ class AiJobRetryView(APIView):
                 ),
                 str(job["goal"]),
             )
+            failed_turn = next(
+                (
+                    turn for turn in reversed(job.get("transcript") or [])
+                    if isinstance(turn, dict) and turn.get("role") == "user"
+                ),
+                {},
+            )
             # Idempotent per attempt: mark_queued bumps updated_at, so the
             # derived key is unique per retry — a double POST of the same
             # click lands on one worker run.
@@ -639,6 +728,12 @@ class AiJobRetryView(APIView):
                             "history": [],
                             "operation_key": retry_key,
                             "replay": True,
+                            # The retry keeps the sealed policy, mode and
+                            # files of the failed round — never a newer
+                            # preference.
+                            "autonomy": str(failed_turn.get("autonomy") or job.get("autonomy") or "propose"),
+                            "interaction_mode": str(failed_turn.get("interaction_mode") or job.get("interaction_mode") or "work"),
+                            "attachments": list(failed_turn.get("attachments") or []),
                         },
                         idempotency_key=f"ai:{retry_key}",
                         created_by=token.user_id,
@@ -679,6 +774,15 @@ class AiJobOutcomeView(APIView):
                 job_id=job_id,
                 entry=data,
             )
+            if result.get("recorded"):
+                # The receipt follows the person's decision (applied, declined
+                # or undone) — re-read, never assumed.
+                from ai_gateway.postconditions import refresh_receipt
+
+                refreshed = jobs.get_job(org_id=org_id, user_id=token.user_id, job_id=job_id)
+                receipt = refresh_receipt(org_id=org_id, job=refreshed) if refreshed else None
+                if receipt is not None:
+                    jobs.set_receipt(job_id=job_id, receipt=receipt)
             return Response(result)
 
 

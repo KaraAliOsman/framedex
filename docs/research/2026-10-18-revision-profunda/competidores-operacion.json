@@ -1,0 +1,2775 @@
+{
+  "schema_version": "1.0",
+  "title": "Competidores: operación, fabricación y continuidad del trabajo",
+  "research_date": "2026-10-18",
+  "scope": "Subconjunto de la investigación amplia de DEKOPEN. Cinco familias de producto independientes y una ficha de distribuidor solapada; no representa por sí solo diez motores distintos.",
+  "repository_ref": "claude/v1-implementacion",
+  "author_scope": "Investigación documental y observación de material público. Sin cambios de producto, cuentas privadas, base de datos ni stack del propietario.",
+  "evidence_legend": {
+    "OBS": "Rasgo visible en una imagen/demo publicada inspeccionada. No equivale a uso del software ni validación de su resultado.",
+    "DOC": "Función descrita en manual, notas o página oficial/proveedor. El campo access de la fuente distingue texto leído de índice localizado.",
+    "NV": "No verificable con lo consultado. No significa ausente ni que el producto carezca de la función."
+  },
+  "rubric": {
+    "instruction": "Comparar cada eje por hallazgo, evidencia, límite e implicación. No producir nota numérica de capacidad a partir de marketing o falta de acceso.",
+    "axes": [
+      {
+        "id": "onboarding",
+        "label": "Alta, configuración y primer valor"
+      },
+      {
+        "id": "catalogs",
+        "label": "Catálogos, fabricantes y series"
+      },
+      {
+        "id": "editor_openings",
+        "label": "Editor, aperturas y composiciones"
+      },
+      {
+        "id": "visual2d3d",
+        "label": "Representación 2D/3D"
+      },
+      {
+        "id": "materials",
+        "label": "BOM, materiales y herrajes"
+      },
+      {
+        "id": "pricing",
+        "label": "Costos, precios y márgenes"
+      },
+      {
+        "id": "quote_pdf",
+        "label": "Cotización, documentos y PDF"
+      },
+      {
+        "id": "cuts_remnants",
+        "label": "Cortes, optimización y retazos"
+      },
+      {
+        "id": "purchasing_stock",
+        "label": "Compras, reservas e inventario"
+      },
+      {
+        "id": "production_cnc",
+        "label": "Producción y maquinaria/CNC"
+      },
+      {
+        "id": "qr_field",
+        "label": "Identificación física y trabajo en terreno"
+      },
+      {
+        "id": "ai",
+        "label": "IA y asistencia contextual"
+      },
+      {
+        "id": "history_undo",
+        "label": "Historial, revisiones y deshacer"
+      },
+      {
+        "id": "roles",
+        "label": "Roles y permisos"
+      },
+      {
+        "id": "visual_clarity",
+        "label": "Claridad visual y jerarquía"
+      },
+      {
+        "id": "keyboard_mobile",
+        "label": "Teclado, dispositivos y movilidad"
+      },
+      {
+        "id": "interoperability",
+        "label": "Interoperabilidad e integraciones"
+      },
+      {
+        "id": "maturity_price",
+        "label": "Madurez, soporte y precio"
+      }
+    ],
+    "evidence_strength": [
+      "E0: no verificable",
+      "E1: declaración del proveedor",
+      "E2: manual o notas con mecanismo concreto",
+      "E3: imagen pública inspeccionada, solo para rasgos visibles",
+      "E4: interacción controlada reproducible; no alcanzado en estas fichas"
+    ]
+  },
+  "methodology": [
+    "Prioridad a páginas oficiales, soporte, manuales y notas de versión; Moxisys se identifica como distribuidor.",
+    "Las afirmaciones operativas son documentales. Solo cuatro materiales visuales concretos se inspeccionaron realmente: F15, M14, W12 (frames 0/170) y T12.",
+    "Los flujos son reconstrucciones de pasos descritos por el proveedor; ninguno fue ejecutado de extremo a extremo.",
+    "Los vídeos se inventarían con enlace y estado; no se atribuyen escenas ni marcas de tiempo a vídeos no reproducidos.",
+    "WindowCC y WindoorCraft se agrupan operativamente por la relación expuesta por el distribuidor; no se afirma identidad jurídica o de repositorios de código.",
+    "Las reglas o cantidades de competidores no se convierten en reglas de fabricación de DEKOPEN. Un catálogo importado requiere fuente del fabricante y validación propia."
+  ],
+  "sources": [
+    {
+      "id": "F1",
+      "title": "FeneVision — módulos oficiales",
+      "url": "https://www.cyncly.com/products/fenevision/modules",
+      "kind": "fabricante",
+      "access": "texto público",
+      "limits": "Página comercial; las funciones dependen de módulos contratados."
+    },
+    {
+      "id": "F2",
+      "title": "FeneVision WEB User Manual — índice",
+      "url": "https://fenevision.support.cyncly.com/hc/en-us/articles/41527250125585-WEB-User-Manual",
+      "kind": "soporte oficial",
+      "access": "texto público",
+      "limits": "Artículo actualizado el 30-04-2026; no equivale a fecha de la versión del PDF."
+    },
+    {
+      "id": "F3",
+      "title": "FeneVision WEB User Manual, versión 18.1, junio de 2023, 109 páginas",
+      "url": "https://fenevision.support.cyncly.com/hc/en-us/article_attachments/41527278040721",
+      "kind": "manual oficial",
+      "access": "texto del PDF",
+      "limits": "Versión interna antigua. Se leyó el texto; no se inspeccionaron sus capturas como imágenes."
+    },
+    {
+      "id": "F4",
+      "title": "Opening Designer Configuration Guides — índice",
+      "url": "https://fenevision.support.cyncly.com/hc/en-us/articles/42166263419025-Opening-Designer-Configuration-Guides",
+      "kind": "soporte oficial",
+      "access": "texto público",
+      "limits": ""
+    },
+    {
+      "id": "F5",
+      "title": "Opening Designer Continuous Frame Best Practices, 22-12-2025",
+      "url": "https://fenevision.support.cyncly.com/hc/en-us/article_attachments/42166279093521",
+      "kind": "manual oficial",
+      "access": "texto del PDF",
+      "limits": "Guía de configuración, siete páginas; no ensayo de cálculo."
+    },
+    {
+      "id": "F6",
+      "title": "Price and Cost in WEB: Understanding Types of WEB Users",
+      "url": "https://fenevision.support.cyncly.com/hc/en-us/articles/33620584716689-Price-and-Cost-in-WEB-Understanding-Types-of-WEB-Users",
+      "kind": "soporte oficial",
+      "access": "texto público",
+      "limits": "24-07-2025; niveles y complementos comerciales."
+    },
+    {
+      "id": "F7",
+      "title": "Managing User Permissions in FeneVision",
+      "url": "https://fenevision.support.cyncly.com/hc/en-us/articles/33380224362641-Managing-User-Permissions-in-FeneVision",
+      "kind": "soporte oficial",
+      "access": "texto público",
+      "limits": "07-08-2026; algunos permisos de pantalla son de todo o nada."
+    },
+    {
+      "id": "F8",
+      "title": "Configuration and Attribute Scripting Guides",
+      "url": "https://fenevision.support.cyncly.com/hc/en-us/articles/28412158988177-Configuration-and-Attribute-Scripting-Guides",
+      "kind": "soporte oficial",
+      "access": "texto público",
+      "limits": "30-09-2026; guías de scripting, no catálogo validado para Chile."
+    },
+    {
+      "id": "F9",
+      "title": "Creating Inventory Adjustments",
+      "url": "https://fenevision.support.cyncly.com/hc/en-us/articles/31779065667473-Creating-Inventory-Adjustments",
+      "kind": "soporte oficial",
+      "access": "texto público",
+      "limits": "10-12-2025; ajustes de inventario, no prueba de retazos físicos."
+    },
+    {
+      "id": "F10",
+      "title": "How is Daily Average Usage (DAU) Calculated?",
+      "url": "https://fenevision.support.cyncly.com/hc/en-us/articles/45616224342289-How-is-Daily-Average-Usage-DAU-Calculated",
+      "kind": "soporte oficial",
+      "access": "texto público",
+      "limits": "10-04-2026; reglas de reposición específicas del proveedor."
+    },
+    {
+      "id": "F11",
+      "title": "Unposting Documents in FeneVision",
+      "url": "https://fenevision.support.cyncly.com/hc/en-us/articles/45201059625873-Unposting-Documents-in-FeneVision",
+      "kind": "soporte oficial",
+      "access": "texto público",
+      "limits": "17-04-2026; documentos contabilizados y transacciones compensatorias."
+    },
+    {
+      "id": "F12",
+      "title": "FeneVision Training Options",
+      "url": "https://fenevision.support.cyncly.com/hc/en-us/articles/29268386351505-FeneVision-Training-Options",
+      "kind": "soporte oficial",
+      "access": "texto público",
+      "limits": "16-04-2026; FenU requiere acceso de empresa/pago. No se vieron sus vídeos."
+    },
+    {
+      "id": "F13",
+      "title": "FeneVision OPTI",
+      "url": "https://www.cyncly.com/products/fenevision-opti",
+      "kind": "fabricante",
+      "access": "texto público",
+      "limits": "Optimización comercial documentada; algoritmos/resultados no probados."
+    },
+    {
+      "id": "F14",
+      "title": "OPTI User Manuals — índice",
+      "url": "https://fenevision.support.cyncly.com/hc/en-us/articles/46037769534481-OPTI-User-Manuals",
+      "kind": "soporte oficial",
+      "access": "índice público",
+      "limits": "02-06-2026; el adjunto OptiGlass no se pudo recuperar."
+    },
+    {
+      "id": "F15",
+      "title": "Captura publicada: FeneVision WEB contractor",
+      "url": "https://www.cyncly.com/contentassets/37c87ee3501a4047bb9708e991dd005b/web-contractor.png",
+      "kind": "captura del fabricante",
+      "access": "imagen inspeccionada",
+      "limits": "Datos de ejemplo de 2023; observación de imagen, no aplicación ejecutada."
+    },
+    {
+      "id": "M1",
+      "title": "Matrix Plastic/Aluminium overview",
+      "url": "https://www.matrix-software.com/windowframe/plasticalu",
+      "kind": "fabricante",
+      "access": "texto público",
+      "limits": ""
+    },
+    {
+      "id": "M2",
+      "title": "Matrix Windows PVC",
+      "url": "https://www.matrix-software.com/windowframe/matrix-windows-pvc",
+      "kind": "fabricante",
+      "access": "texto público",
+      "limits": "Se describe el módulo PVC; no trasladar automáticamente funciones a todos los paquetes."
+    },
+    {
+      "id": "M3",
+      "title": "Matrix Windows Project",
+      "url": "https://www.matrix-software.com/windowframe/matrix-windows-project",
+      "kind": "fabricante",
+      "access": "texto público",
+      "limits": "ERP/MRP de proyecto; módulos/licencias por confirmar."
+    },
+    {
+      "id": "M4",
+      "title": "Matrix Windows CNC",
+      "url": "https://www.matrix-software.com/windowframe/matrix-windows-cnc",
+      "kind": "fabricante",
+      "access": "texto público",
+      "limits": "Compatibilidad por máquina y posprocesador, no universal."
+    },
+    {
+      "id": "M5",
+      "title": "Matrix WebKozijn / Windows Web",
+      "url": "https://www.matrix-software.com/nl/windowframe/matrix-windows-web",
+      "kind": "fabricante",
+      "access": "texto público",
+      "limits": "Portal de ventas vinculado al fabricante."
+    },
+    {
+      "id": "M6",
+      "title": "Supplier Import — manual",
+      "url": "https://knowledge-base.matrix-software.com/nl/help/matrix-windows/manual-and-use/supplier-import",
+      "kind": "manual oficial",
+      "access": "texto público",
+      "limits": "Módulo separado; los proveedores mantienen sus archivos."
+    },
+    {
+      "id": "M7",
+      "title": "WebKozijn API",
+      "url": "https://knowledge-base.matrix-software.com/nl/help/matrix-windows/webkozijn/api",
+      "kind": "manual oficial",
+      "access": "texto público",
+      "limits": "Inventario documental de campos; API no invocada."
+    },
+    {
+      "id": "M8",
+      "title": "Matrix Windows SP30, 17-03-2026",
+      "url": "https://knowledge-base.matrix-software.com/node/1693",
+      "kind": "notas oficiales de versión",
+      "access": "texto público",
+      "limits": "Correcciones históricas, no afirmación de fallos actuales."
+    },
+    {
+      "id": "M9",
+      "title": "Matrix Windows SP24",
+      "url": "https://knowledge-base.matrix-software.com/nl/node/1503",
+      "kind": "notas oficiales de versión",
+      "access": "texto público",
+      "limits": ""
+    },
+    {
+      "id": "M10",
+      "title": "WebManager SP26",
+      "url": "https://knowledge-base.matrix-software.com/nl/node/1606",
+      "kind": "notas oficiales de versión",
+      "access": "texto público",
+      "limits": ""
+    },
+    {
+      "id": "M11",
+      "title": "Matrix training",
+      "url": "https://www.matrix-software.com/nl/training",
+      "kind": "fabricante",
+      "access": "texto público",
+      "limits": "Los importes publicados son formación, no licencia."
+    },
+    {
+      "id": "M12",
+      "title": "Matrix Windows manual and use — MxKPVC40",
+      "url": "https://knowledge-base.matrix-software.com/nl/help/matrix-windows/manual-and-use/MxKPVC40",
+      "kind": "manual oficial",
+      "access": "índice público",
+      "limits": ""
+    },
+    {
+      "id": "M13",
+      "title": "MatrixKozijn flyer",
+      "url": "https://www.matrix-software.com/flyer/matrixkozijn/",
+      "kind": "fabricante",
+      "access": "texto público",
+      "limits": ""
+    },
+    {
+      "id": "M14",
+      "title": "Captura publicada del editor MatrixKozijn Kunststof",
+      "url": "https://www.matrix-software.com/themes/matrix/images/monitors/monitor2_MatrixKozijn_Kunststof_NL.png",
+      "kind": "captura del fabricante",
+      "access": "imagen inspeccionada",
+      "limits": "Imagen pequeña dentro de un monitor; no permite evaluar accesibilidad o interacción."
+    },
+    {
+      "id": "W1",
+      "title": "Windowmaker Web",
+      "url": "https://windowmaker.com/windowmaker-web/",
+      "kind": "fabricante",
+      "access": "texto público",
+      "limits": "Página actual de Web 3.0; demostraciones y disponibilidad comercial requieren confirmación."
+    },
+    {
+      "id": "W2",
+      "title": "Windowmaker Configurator",
+      "url": "https://windowmaker.com/configurator/",
+      "kind": "fabricante",
+      "access": "texto público",
+      "limits": ""
+    },
+    {
+      "id": "W3",
+      "title": "Windowmaker Operations",
+      "url": "https://windowmaker.com/operations/",
+      "kind": "fabricante",
+      "access": "texto público",
+      "limits": ""
+    },
+    {
+      "id": "W4",
+      "title": "Windowmaker Manufacturing Solution",
+      "url": "https://windowmaker.com/manufacturing-solution/",
+      "kind": "fabricante",
+      "access": "texto público",
+      "limits": ""
+    },
+    {
+      "id": "W5",
+      "title": "Windowmaker e-Catalog",
+      "url": "https://windowmaker.com/e-catalog/",
+      "kind": "fabricante",
+      "access": "texto público",
+      "limits": "Cobertura por regiones y familias, no validación de catálogo chileno."
+    },
+    {
+      "id": "W6",
+      "title": "Windowmaker 2025 R4.0.0 Release Document, 29-12-2025",
+      "url": "https://windowmaker.com/wp-content/uploads/2026/02/WINDOWMAKER-2025-R4-0-0-Release-Document.pdf",
+      "kind": "notas oficiales de versión",
+      "access": "texto del PDF",
+      "limits": "Archivo publicado en ruta febrero 2026; fecha interna diciembre 2025; 13 páginas."
+    },
+    {
+      "id": "W7",
+      "title": "Windowmaker Measure",
+      "url": "https://windowmaker.com/windomaker-measure/",
+      "kind": "fabricante",
+      "access": "texto público",
+      "limits": "El URL oficial usa windomaker; app no instalada/probada."
+    },
+    {
+      "id": "W8",
+      "title": "Windowmaker Cloud y planes",
+      "url": "https://windowmaker.com/windowmaker-cloud/",
+      "kind": "fabricante",
+      "access": "texto público",
+      "limits": "Importes de bloque regional en INR por usuario/mes; no oferta para Chile."
+    },
+    {
+      "id": "W9",
+      "title": "Windowmaker webinars",
+      "url": "https://windowmaker.com/webinars/",
+      "kind": "fabricante",
+      "access": "inventario de títulos",
+      "limits": "Grabaciones mayormente con registro; no reproducidas."
+    },
+    {
+      "id": "W10",
+      "title": "AI in Fenestration Software: Reliability and Windowmaker, 06-05-2026",
+      "url": "https://windowmaker.com/ai-fenestration-software-reliability-windowmaker/",
+      "kind": "artículo oficial histórico",
+      "access": "texto público",
+      "limits": "Dice que se trabaja en IA; no sustituye la documentación posterior de Web."
+    },
+    {
+      "id": "W11",
+      "title": "Archivo oficial con anuncio REST API/webhooks, 27-09-2025",
+      "url": "https://windowmaker.com/category/uncategorized/",
+      "kind": "fabricante",
+      "access": "texto público indexado",
+      "limits": "Índice con anuncio; API no ensayada."
+    },
+    {
+      "id": "W12",
+      "title": "Demo publicada: AI Assistant",
+      "url": "https://windowmaker.com/wp-content/uploads/2026/09/AI-Assistant.gif",
+      "kind": "demo animada del fabricante",
+      "access": "frames 0 y 170 inspeccionados de 171",
+      "limits": "Frame 170 muestra chat/herramientas. No es vídeo completo visto ni ejecución real; fechas de cotizaciones del ejemplo no datan el lanzamiento."
+    },
+    {
+      "id": "W13",
+      "title": "Demo publicada: 3D Visualisation",
+      "url": "https://windowmaker.com/wp-content/uploads/2026/09/3D-Visualisation.gif",
+      "kind": "demo animada del fabricante",
+      "access": "URL inventariado",
+      "limits": "No reproducida ni inspeccionada."
+    },
+    {
+      "id": "W14",
+      "title": "Demo publicada: One-off Designs",
+      "url": "https://windowmaker.com/wp-content/uploads/2026/09/1-OFF-Designs-3.gif",
+      "kind": "demo animada del fabricante",
+      "access": "URL inventariado",
+      "limits": "No reproducida ni inspeccionada."
+    },
+    {
+      "id": "W15",
+      "title": "Demo publicada: Global Changes",
+      "url": "https://windowmaker.com/wp-content/uploads/2026/09/Global-Changes.gif",
+      "kind": "demo animada del fabricante",
+      "access": "URL inventariado",
+      "limits": "No reproducida ni inspeccionada."
+    },
+    {
+      "id": "C1",
+      "title": "WindowCC — página principal",
+      "url": "https://windowcc.com/",
+      "kind": "fabricante/plataforma",
+      "access": "texto público indexado",
+      "limits": "La apertura directa devuelve una estructura JS; no se ejecutó la aplicación."
+    },
+    {
+      "id": "C2",
+      "title": "WindowCC Developer Platform",
+      "url": "https://windowcc.com/develop-platform",
+      "kind": "documentación oficial indexada",
+      "access": "texto público indexado",
+      "limits": "SDK comercial con token; no es prueba de licencia de código abierto."
+    },
+    {
+      "id": "C3",
+      "title": "WindowCC Gallery",
+      "url": "https://windowcc.com/gallery",
+      "kind": "galería oficial indexada",
+      "access": "texto público indexado",
+      "limits": "Controles y ejemplos indexados; no se operó el editor."
+    },
+    {
+      "id": "C4",
+      "title": "WindowCC Privacy Policy",
+      "url": "https://windowcc.com/privacy?locale=en-US",
+      "kind": "documento legal oficial",
+      "access": "texto público",
+      "limits": "Identifica Wuxi Window Manufacturing Software Co., Ltd.; traducción inglesa peculiar no determina branding comercial."
+    },
+    {
+      "id": "C5",
+      "title": "WindowCC developer site histórico",
+      "url": "https://dev.windowcc.com/",
+      "kind": "documentación histórica indexada",
+      "access": "texto indexado antiguo",
+      "limits": "Snapshot de aproximadamente cinco años; no autoridad sobre la interfaz actual."
+    },
+    {
+      "id": "X1",
+      "title": "Moxisys Window Design Software — tutorial de 19 capítulos",
+      "url": "https://moxisys.com/window-design-software/",
+      "kind": "distribuidor",
+      "access": "texto público y extracción de embeds",
+      "limits": "Contiene 17 vídeos YouTube; no vistos. Capturas con rutas de 2022."
+    },
+    {
+      "id": "X2",
+      "title": "Moxisys Window Door Software — funciones y planes",
+      "url": "https://moxisys.com/window-door-software/",
+      "kind": "distribuidor",
+      "access": "texto público",
+      "limits": "Precio anual oculto como $***; no tarifa verificable."
+    },
+    {
+      "id": "X3",
+      "title": "Moxisys Windoor Software — contenedor",
+      "url": "https://moxisys.com/windoorsoftware/",
+      "kind": "distribuidor",
+      "access": "HTML público leído",
+      "limits": "Iframe con windoorcraft.com/login?redirect=%2Fhome; no sesión iniciada."
+    },
+    {
+      "id": "X4",
+      "title": "WindoorCraft SA — destino enlazado por el tutorial",
+      "url": "https://sa.windoorcraft.com/",
+      "kind": "plataforma enlazada",
+      "access": "URL identificado",
+      "limits": "No se accedió a cuenta privada ni se probó el producto."
+    },
+    {
+      "id": "X5",
+      "title": "Moxisys Aluminum Machine Catalog",
+      "url": "https://moxisys.com/wp-content/uploads/2022/05/Aluminum-Machine-Catalog.pdf",
+      "kind": "catálogo de maquinaria",
+      "access": "referencia localizada",
+      "limits": "No es documentación de integración software-CNC."
+    },
+    {
+      "id": "X6",
+      "title": "Moxisys: inspector de detalles",
+      "url": "https://moxisys.com/wp-content/uploads/2022/01/window-manufacturing-software-details-info-1024x512.jpg",
+      "kind": "captura publicada del distribuidor",
+      "access": "URL inventariado",
+      "limits": "No inspeccionada visualmente."
+    },
+    {
+      "id": "X7",
+      "title": "Moxisys: parámetros",
+      "url": "https://moxisys.com/wp-content/uploads/2022/01/timber-window-design-software-parameters-1024x633.jpg",
+      "kind": "captura publicada del distribuidor",
+      "access": "URL inventariado",
+      "limits": "No inspeccionada visualmente."
+    },
+    {
+      "id": "X8",
+      "title": "Moxisys: menú 3D",
+      "url": "https://moxisys.com/wp-content/uploads/2022/01/3d-window-design-software-menu.jpg",
+      "kind": "captura publicada del distribuidor",
+      "access": "URL inventariado",
+      "limits": "No inspeccionada visualmente."
+    },
+    {
+      "id": "X9",
+      "title": "Moxisys: print/share",
+      "url": "https://moxisys.com/wp-content/uploads/2022/01/window-software-system-print-share-1024x173.jpg",
+      "kind": "captura publicada del distribuidor",
+      "access": "URL inventariado",
+      "limits": "No inspeccionada visualmente."
+    },
+    {
+      "id": "X10",
+      "title": "Moxisys: plantilla impresa",
+      "url": "https://moxisys.com/wp-content/uploads/2022/01/window-software-system-printing-1024x782.jpg",
+      "kind": "captura publicada del distribuidor",
+      "access": "URL inventariado",
+      "limits": "Recuperación por buscador devolvió 403; no inspeccionada visualmente."
+    },
+    {
+      "id": "T1",
+      "title": "3E LOOK ERP",
+      "url": "https://www.3e-it.com/en/window-design-software/3e-look-erp",
+      "kind": "fabricante",
+      "access": "texto público",
+      "limits": ""
+    },
+    {
+      "id": "T2",
+      "title": "3E order handling",
+      "url": "https://www.3e-it.com/en/window-design-software/order-handling",
+      "kind": "fabricante",
+      "access": "texto público",
+      "limits": ""
+    },
+    {
+      "id": "T3",
+      "title": "3E LOOK Trade",
+      "url": "https://www.3e-it.com/en/window-design-software/look-trade",
+      "kind": "fabricante",
+      "access": "texto público",
+      "limits": "Módulo comercial; distinguirlo del ERP fabricante."
+    },
+    {
+      "id": "T4",
+      "title": "3E e-procurement",
+      "url": "https://www.3e-it.com/en/window-design-software/e-procurement",
+      "kind": "fabricante",
+      "access": "texto público",
+      "limits": ""
+    },
+    {
+      "id": "T5",
+      "title": "3E digital production",
+      "url": "https://www.3e-it.com/en/window-design-software/digital-production",
+      "kind": "fabricante",
+      "access": "texto público",
+      "limits": ""
+    },
+    {
+      "id": "T6",
+      "title": "3E mobile solutions",
+      "url": "https://www.3e-it.com/en/window-design-software/mobile-solutions",
+      "kind": "fabricante",
+      "access": "texto público",
+      "limits": ""
+    },
+    {
+      "id": "T7",
+      "title": "3E web sales",
+      "url": "https://www.3e-it.com/en/window-design-software/web-sales",
+      "kind": "fabricante",
+      "access": "texto público",
+      "limits": ""
+    },
+    {
+      "id": "T8",
+      "title": "3E workflows and dashboards",
+      "url": "https://www.3e-it.com/en/window-design-software/workflows-and-dashboards",
+      "kind": "fabricante",
+      "access": "texto público",
+      "limits": ""
+    },
+    {
+      "id": "T9",
+      "title": "3E time tracking and post-calculation",
+      "url": "https://www.3e-it.com/en/window-design-software/time-tracking-and-post-calculation",
+      "kind": "fabricante",
+      "access": "texto público",
+      "limits": ""
+    },
+    {
+      "id": "T10",
+      "title": "3E flexible planning",
+      "url": "https://www.3e-it.com/en/window-design-software/flexible-planning",
+      "kind": "fabricante",
+      "access": "texto público",
+      "limits": ""
+    },
+    {
+      "id": "T11",
+      "title": "3E y Stemeseder: procesos digitales conectados",
+      "url": "https://www.3e-it.com/en/magazine-and-news/3e-and-stemeseder-ensure-end-to-end-digital-processes",
+      "kind": "fabricante/caso de integración",
+      "access": "texto público",
+      "limits": "Caso documentado por proveedor; no ensayo independiente."
+    },
+    {
+      "id": "T12",
+      "title": "Captura publicada: dashboard de producción 3E",
+      "url": "https://www.3e-it.com/uploads/fact/image/133/large_Dashboard_%C3%9Cbersicht_Produktion.png",
+      "kind": "captura del fabricante",
+      "access": "imagen inspeccionada",
+      "limits": "Datos de muestra de 2019; no certifica diseño de la versión actual."
+    }
+  ],
+  "products": [
+    {
+      "id": "fenevision",
+      "name": "FeneVision — FeneTech / Cyncly",
+      "independent_product_family": true,
+      "provider": "FeneTech, dentro de Cyncly",
+      "relationship_note": "No atribuir este producto a Forterro.",
+      "official_screen_url": "https://www.cyncly.com/products/fenevision/modules",
+      "product_scope": "ERP de fabricación fenestración/vidrio con módulos WEB, inventario, planificación, CAD, optimización y conexión a maquinaria.",
+      "strongest_transfer": "Continuidad entre configuración, niveles de precio, documento, inventario y estaciones; permisos y correcciones transaccionales explícitos.",
+      "axes": [
+        {
+          "id": "onboarding",
+          "status": "DOC",
+          "finding": "La empresa usuaria mantiene productos, partes, opciones y atributos; las guías incluyen configuración y scripting VB.",
+          "sources": [
+            "F8",
+            "F12"
+          ],
+          "locator": "",
+          "limit": "No se midieron duración, coste o calidad de implantación; formación y configuración son trabajo real.",
+          "lesson": "DEKOPEN debe mostrar qué datos faltan, quién los mantiene y cómo se valida el primer producto sin ocultarlo bajo un asistente."
+        },
+        {
+          "id": "catalogs",
+          "status": "DOC",
+          "finding": "WEB navega por categoría y parte; Product Navigator permite categorías con imágenes y depende de visibilidad Remote/Web.",
+          "sources": [
+            "F3"
+          ],
+          "locator": "pp.19–20 y 71–72",
+          "limit": "No se confirmó una jerarquía fabricante → serie en la interfaz consultada.",
+          "lesson": "Usar imágenes vinculadas a familia real y jerarquía Proline → serie; no convertir una lista plana de artículos en catálogo."
+        },
+        {
+          "id": "editor_openings",
+          "status": "DOC",
+          "finding": "Opening Designer combina secciones, apila/divide, asigna partes, fija secciones y permite selección múltiple; ofrece tamaño Fixed/Grow.",
+          "sources": [
+            "F3"
+          ],
+          "locator": "pp.76–83",
+          "limit": "Guía de junio de 2023; no se probaron gestos, restricciones ni aperturas de una serie concreta.",
+          "lesson": "Explicar qué objeto está seleccionado, qué medida gobierna y qué cambio afecta al conjunto."
+        },
+        {
+          "id": "visual2d3d",
+          "status": "DOC",
+          "finding": "El manual distingue vista interior/exterior en composiciones y documenta geometrías rake/gable/arc. La página muestra un módulo 3D específico para duchas.",
+          "sources": [
+            "F3",
+            "F1"
+          ],
+          "locator": "pp.74–83",
+          "limit": "El 3D Shower Designer no demuestra 3D universal de ventanas. Capturas del PDF no inspeccionadas visualmente.",
+          "lesson": "Rotular punto de vista y orientación física; no prometer una apertura 3D solo por dibujar una diagonal."
+        },
+        {
+          "id": "materials",
+          "status": "DOC",
+          "finding": "La guía Continuous Frame transmite el color padre a secciones y define un único marco exterior compartido con subensambles.",
+          "sources": [
+            "F5"
+          ],
+          "locator": "pp.2–4",
+          "limit": "Ejemplo de configuración del proveedor, no cálculo comprobado por nosotros.",
+          "lesson": "Representar la autoridad del conjunto en BOM para evitar duplicar marcos y perfilería al acoplar."
+        },
+        {
+          "id": "pricing",
+          "status": "DOC",
+          "finding": "WEB separa coste fabricante y precio minorista del distribuidor; distingue manufacturer, dealer y contractor.",
+          "sources": [
+            "F6"
+          ],
+          "locator": "",
+          "limit": "Contractor requiere complemento; no se verificó una tarifa o política de margen local.",
+          "lesson": "Mostrar coste, venta y responsable del precio según rol, con una etiqueta que evite confundirlos."
+        },
+        {
+          "id": "quote_pdf",
+          "status": "DOC",
+          "finding": "WEB ofrece documentos de cotización con distintas vistas de precio y exportaciones; oculta campos según permisos.",
+          "sources": [
+            "F3",
+            "F6"
+          ],
+          "locator": "pp.15–17",
+          "limit": "No se emitió un PDF ni se inspeccionó una cotización de cliente real.",
+          "lesson": "Una sola revisión debe alimentar documento comercial y detalle interno, con visibilidad de costes controlada."
+        },
+        {
+          "id": "cuts_remnants",
+          "status": "DOC",
+          "finding": "OPTI documenta optimización lineal con longitudes/bin sizes, varios carros y conexión TigerStop; también optimización de vidrio.",
+          "sources": [
+            "F13",
+            "F14"
+          ],
+          "locator": "",
+          "limit": "No se verificó inventario físico de retazos, etiquetas de sobrantes o rendimiento real; el adjunto de manual falló.",
+          "lesson": "Separar plan de corte, compra de barras y alta física de sobrante; cada resultado debe indicar qué fase ya ocurrió."
+        },
+        {
+          "id": "purchasing_stock",
+          "status": "DOC",
+          "finding": "Ajustes distinguen lote, ubicación, coste y publicación. DAU usa días laborables y permite valor manual; advierte efectos de producción en fin de semana.",
+          "sources": [
+            "F9",
+            "F10"
+          ],
+          "locator": "",
+          "limit": "No se ejecutaron recepciones ni reservas. La regla DAU es del proveedor, no una recomendación numérica para DEKOPEN.",
+          "lesson": "Diferenciar sugerencia de reposición, inventario registrado y ajuste publicado; exponer la causa de una propuesta."
+        },
+        {
+          "id": "production_cnc",
+          "status": "DOC",
+          "finding": "Módulos describen capacidad, rutas, estaciones, advertencia por escaneo previo faltante y enlaces a sierras, soldadoras y CNC.",
+          "sources": [
+            "F1"
+          ],
+          "locator": "",
+          "limit": "Compatibilidad por equipo no validada; una lista de interfaces no certifica un archivo seguro para una máquina concreta.",
+          "lesson": "La orden de taller necesita secuencia, requisito previo y estado físico; CNC requiere adaptador y validación por máquina."
+        },
+        {
+          "id": "qr_field",
+          "status": "DOC",
+          "finding": "Tracking móvil documenta localizar, aceptar/rechazar, agrupar en contenedores y registrar entrega, firma o daño.",
+          "sources": [
+            "F1"
+          ],
+          "locator": "",
+          "limit": "Se documentan códigos de barras; QR exacto no confirmado. Tampoco se probó uso sin conexión.",
+          "lesson": "El código debe abrir una unidad y su tarea concreta; no presentar un QR como sustituto de trazabilidad."
+        },
+        {
+          "id": "ai",
+          "status": "NV",
+          "finding": "No se confirmó un asistente LLM global con acciones, contexto de pantalla e historial persistente en las fuentes consultadas.",
+          "sources": [
+            "F1",
+            "F8"
+          ],
+          "locator": "",
+          "limit": "Procesos denominados Agent o scripting no prueban IA generativa ni autonomía.",
+          "lesson": "La propuesta de IA de DEKOPEN debe sostenerse por acciones verificables e historial propio; no por vocabulario de automatización."
+        },
+        {
+          "id": "history_undo",
+          "status": "DOC",
+          "finding": "Un documento contabilizado no se despublica con Undo: se corrige mediante transacciones compensatorias como devolución, ajuste o crédito.",
+          "sources": [
+            "F11"
+          ],
+          "locator": "",
+          "limit": "No describe el deshacer del dibujo ni historial conversacional.",
+          "lesson": "Separar deshacer de edición, nueva revisión y compensación contable; el asistente debe informar cuál aplica."
+        },
+        {
+          "id": "roles",
+          "status": "DOC",
+          "finding": "Permisos por usuario/grupo: permitir, denegar, ocultar y consultar permiso efectivo; algunos cambios requieren reinicio.",
+          "sources": [
+            "F7"
+          ],
+          "locator": "",
+          "limit": "Algunas pantallas solo admiten acceso completo o ninguno; no se auditó aislamiento entre empresas.",
+          "lesson": "Resolver permisos antes de proponer herramientas; mostrar al usuario el motivo de un bloqueo concreto."
+        },
+        {
+          "id": "visual_clarity",
+          "status": "OBS",
+          "finding": "La captura WEB Contractor distingue cabecera azul, encabezados naranjas, acción crear cotización y tablas de cotizaciones por ámbito/estado.",
+          "sources": [
+            "F15"
+          ],
+          "locator": "",
+          "limit": "Captura estática con ejemplos de 2023; no demuestra calidad de toda la interfaz o contraste medido.",
+          "lesson": "Reservar acento para acción y estructura; agrupar tablas por propósito antes de introducir color de estado."
+        },
+        {
+          "id": "keyboard_mobile",
+          "status": "DOC",
+          "finding": "El producto documenta WEB y módulos móviles de planta/entrega.",
+          "sources": [
+            "F1"
+          ],
+          "locator": "",
+          "limit": "No se verificaron atajos, foco, navegación solo teclado, zoom, tamaño táctil o accesibilidad.",
+          "lesson": "Ensayar por separado escritorio de cálculo y dispositivo de terreno; una página web no garantiza buen uso móvil."
+        },
+        {
+          "id": "interoperability",
+          "status": "DOC",
+          "finding": "WEB exporta Word/Excel/CSV/XML; la oferta incluye CAD/DXF e integración contable, entre ellas Business Central.",
+          "sources": [
+            "F3",
+            "F1"
+          ],
+          "locator": "WEB pp.15–17",
+          "limit": "No se intercambiaron archivos ni se verificó conservación de unidades o versiones.",
+          "lesson": "Nombrar formato, versión y alcance de cada exportación; advertir si contiene geometría, precios o solo listado."
+        },
+        {
+          "id": "maturity_price",
+          "status": "DOC",
+          "finding": "El soporte ofrece manuales detallados y FenU con más de 80 vídeos de formación accesibles por empresa/pago; la licencia se cotiza.",
+          "sources": [
+            "F12",
+            "F2"
+          ],
+          "locator": "",
+          "limit": "No se accedió a los vídeos ni se obtuvo precio o SLA. La actualización del índice no rejuvenece el PDF interno.",
+          "lesson": "El coste de datos, implantación y formación debe ser visible en la propuesta comercial de DEKOPEN."
+        }
+      ],
+      "flows": [
+        {
+          "name": "Distribuidor: configuración → cotización → fabricante",
+          "status": "reconstrucción documental",
+          "steps": [
+            "Abrir WEB y crear cotización para el contratista/cliente.",
+            "Elegir categoría y parte, ingresar dimensiones y opciones; componer secciones si aplica.",
+            "Seleccionar documento según visibilidad de precios y enviarlo al fabricante."
+          ],
+          "sources": [
+            "F3",
+            "F6"
+          ],
+          "limit": "Secuencia sintetizada desde manual; sin cuenta, PDF emitido ni pedido real."
+        },
+        {
+          "name": "Fabricación: orden → materiales → estaciones → entrega",
+          "status": "reconstrucción documental",
+          "steps": [
+            "Derivar requerimientos y compra de la orden; registrar recepción/inventario.",
+            "Agrupar trabajo, planificar rutas y procesar en estaciones/máquinas con seguimiento.",
+            "Registrar contenedor/entrega, y corregir movimientos publicados mediante compensación."
+          ],
+          "sources": [
+            "F1",
+            "F9",
+            "F11"
+          ],
+          "limit": "Los pasos combinan módulos documentados; licencias, transición exacta y tiempos no ensayados."
+        }
+      ],
+      "frictions": [
+        {
+          "finding": "La configuración del catálogo recae en la empresa; requiere conocimiento de datos y scripts.",
+          "sources": [
+            "F8"
+          ],
+          "implication": "El onboarding comercial no puede ocultar el coste de construir autoridad técnica."
+        },
+        {
+          "finding": "Precio fabricante, precio distribuidor y contractor son niveles distintos.",
+          "sources": [
+            "F6"
+          ],
+          "implication": "Una UI sin identidad de rol puede generar interpretaciones comerciales incorrectas."
+        },
+        {
+          "finding": "Cambiar permisos puede exigir reiniciar; algunas pantallas son todo/nada.",
+          "sources": [
+            "F7"
+          ],
+          "implication": "No copiar esa fricción: explicar estado efectivo de permisos sin ambigüedad."
+        }
+      ],
+      "visual_inventory": [
+        {
+          "source_id": "F15",
+          "state": "OBS",
+          "target": "Dashboard contractor, separación de tablas y CTA.",
+          "capture_hint": "Página módulos → WEB; imagen pública directa.",
+          "temporal_limit": "Datos de muestra 2023."
+        },
+        {
+          "source_id": "F3",
+          "state": "texto leído; capturas no inspeccionadas",
+          "target": "PDF p.15 documentos, pp.77–83 Opening Designer.",
+          "capture_hint": "Abrir PDF y capturar páginas exactas.",
+          "temporal_limit": "Manual interno junio de 2023."
+        }
+      ],
+      "video_inventory": {
+        "sources": [
+          "F12"
+        ],
+        "state": "inventario documental, no reproducido",
+        "items": "FenU: más de 80 vídeos según soporte; acceso de empresa/pago.",
+        "limit": "No hay escenas o timestamps verificados."
+      },
+      "boundary": "No se ensayó cálculo, importación, mecanizado, trazabilidad real ni asistente IA. La evidencia demuestra alcance descrito, no fiabilidad cuantitativa."
+    },
+    {
+      "id": "matrix",
+      "name": "Matrix Software — MatrixKozijn / Matrix Windows",
+      "independent_product_family": true,
+      "provider": "Matrix Software",
+      "relationship_note": "La familia combina PVC, Project, CNC y WebKozijn; no atribuir todos los módulos a la licencia básica.",
+      "official_screen_url": "https://www.matrix-software.com/windowframe/matrix-windows-pvc",
+      "product_scope": "Configuración y cálculo de carpinterías PVC/aluminio con ERP de proyecto, portal comercial e interfaces CNC.",
+      "strongest_transfer": "Biblioteca del proveedor importada con validación visible y continuidad del mismo elemento desde venta hasta fábrica.",
+      "axes": [
+        {
+          "id": "onboarding",
+          "status": "DOC",
+          "finding": "Supplier Import es un módulo separado: recibir archivos del proveedor, seleccionar origen, mapear columnas y cargar tabla de artículos o biblioteca de herrajes.",
+          "sources": [
+            "M6"
+          ],
+          "locator": "",
+          "limit": "Matrix declara que no mantiene esos datos; no se probaron archivos reales.",
+          "lesson": "Proponer un asistente de importación con estado por etapa y responsabilidades concretas; evitar un botón mágico sin diagnóstico."
+        },
+        {
+          "id": "catalogs",
+          "status": "DOC",
+          "finding": "La importación selecciona proveedor y distingue artículos de tablas de herrajes; el programa permite una biblioteca propia de perfiles y accesorios.",
+          "sources": [
+            "M6",
+            "M2"
+          ],
+          "locator": "",
+          "limit": "No se observó árbol de fabricante → serie ni imágenes de referencia completas.",
+          "lesson": "La entidad proveedor/fabricante debe contener sus series y mantener separadas la biblioteca técnica y la oferta comercial."
+        },
+        {
+          "id": "editor_openings",
+          "status": "DOC",
+          "finding": "PVC parte de forma principal, añade montantes/travesaños y rellena compartimentos con fijo, ventana, puerta o panel; resuelve encuentros con ajustes manuales.",
+          "sources": [
+            "M2"
+          ],
+          "locator": "",
+          "limit": "No se verificaron tipos concretos de herraje ni límites de cada apertura.",
+          "lesson": "Construir primero la estructura física y después la apertura de cada hoja, con selección inequívoca."
+        },
+        {
+          "id": "visual2d3d",
+          "status": "DOC",
+          "finding": "Project documenta intercambio BIM LOD200/LOD400 e IFC; el material comercial muestra dibujo técnico.",
+          "sources": [
+            "M3",
+            "M14"
+          ],
+          "locator": "",
+          "limit": "BIM no prueba un visor 3D interactivo de apertura. La captura no demuestra exactitud geométrica.",
+          "lesson": "Diferenciar elevación, sección, modelo y pose de apertura; cada vista debe mostrar su alcance."
+        },
+        {
+          "id": "materials",
+          "status": "DOC",
+          "finding": "El editor configura conexiones de perfiles, acoples, taladros y adaptadores; la biblioteca importada diferencia artículos y herrajes.",
+          "sources": [
+            "M2",
+            "M6"
+          ],
+          "locator": "",
+          "limit": "BOM numérica y reglas de kits no ensayadas.",
+          "lesson": "Dejar que el motor expanda materiales desde componentes válidos; mostrar qué biblioteca y revisión originaron cada partida."
+        },
+        {
+          "id": "pricing",
+          "status": "DOC",
+          "finding": "PVC permite precios de material, tarifas horarias y coeficientes de mano de obra por centro; calcula por elemento/proyecto/serie de entrega.",
+          "sources": [
+            "M2"
+          ],
+          "locator": "",
+          "limit": "Sin comprobación de moneda, impuestos o fórmula; no existe equivalencia automática con precio chileno.",
+          "lesson": "Mostrar coste por material y operación, venta y margen con procedencia; mantener una sola fuente de resultado."
+        },
+        {
+          "id": "quote_pdf",
+          "status": "DOC",
+          "finding": "PVC genera ofertas mediante plantillas Word con dibujos, descripción y precio; WebKozijn produce PDF de distribuidor con acuerdos de margen/precio.",
+          "sources": [
+            "M2",
+            "M5"
+          ],
+          "locator": "",
+          "limit": "No se generó ni inspeccionó un PDF resultante.",
+          "lesson": "Permitir una plantilla profesional consistente desde la revisión calculada; evitar reconstruir números en un editor libre."
+        },
+        {
+          "id": "cuts_remnants",
+          "status": "NV",
+          "finding": "Se documenta procesamiento de producción, pero no se verificó un flujo explícito de retazo físico, ubicación y reuso desde lo consultado.",
+          "sources": [
+            "M3",
+            "M4"
+          ],
+          "locator": "",
+          "limit": "No interpretar la falta de una página específica como carencia del producto.",
+          "lesson": "Exigir demostración separada de optimizador, corte confirmado, longitud remanente y stock disponible."
+        },
+        {
+          "id": "purchasing_stock",
+          "status": "DOC",
+          "finding": "Project enlaza necesidad de material, compras EDI, reservas, recepción y conteos de stock.",
+          "sources": [
+            "M3"
+          ],
+          "locator": "",
+          "limit": "No se ejecutó reserva concurrente ni recepción parcial.",
+          "lesson": "La pantalla debe distinguir requerido, reservado, pedido, recibido y disponible; cada estado abre su documento."
+        },
+        {
+          "id": "production_cnc",
+          "status": "DOC",
+          "finding": "CNC enumera equipos PVC/aluminio de fabricantes como Thorwesten, Rapid, Schirmer, Rotox, Urban, Mecal y Emmegi.",
+          "sources": [
+            "M4"
+          ],
+          "locator": "",
+          "limit": "Equipos no listados requieren consulta; no se validó posprocesador ni salida de máquina.",
+          "lesson": "Una integración CNC debe nombrar equipo, versión y autorización antes de habilitar exportación operativa."
+        },
+        {
+          "id": "qr_field",
+          "status": "DOC",
+          "finding": "Las notas describen códigos de barras en informes; Project ofrece MES móvil con dibujos, instrucciones y registro de horas.",
+          "sources": [
+            "M9",
+            "M3"
+          ],
+          "locator": "",
+          "limit": "No se confirmó QR, lectura física o conexión con unidad instalada.",
+          "lesson": "Vincular la etiqueta al objeto exacto y a la tarea de esa estación; separar seguimiento de planta y terreno."
+        },
+        {
+          "id": "ai",
+          "status": "NV",
+          "finding": "No se confirmó asistente LLM con herramientas y contexto global en las páginas/manuales consultados.",
+          "sources": [
+            "M1",
+            "M2",
+            "M3"
+          ],
+          "locator": "",
+          "limit": "Automatizar cálculos o importar archivos no demuestra IA conversacional.",
+          "lesson": "DEKOPEN puede diferenciarse por ejecutar operaciones comunes y explicar resultados sin convertir al usuario en transcriptor."
+        },
+        {
+          "id": "history_undo",
+          "status": "DOC",
+          "finding": "SP30 incluye correcciones de copia de artículos y cálculos geométricos/CNC; evidencia mantenimiento de versiones.",
+          "sources": [
+            "M8"
+          ],
+          "locator": "",
+          "limit": "Notas de versión del software no son historial de proyecto ni deshacer; esos dos puntos quedan NV.",
+          "lesson": "Mantener tres historiales distintos: producto/software, revisiones del proyecto y acciones del asistente."
+        },
+        {
+          "id": "roles",
+          "status": "NV",
+          "finding": "El portal admite acuerdos y entornos de distribuidores; no se verificó una matriz granular de permisos por acción/dato.",
+          "sources": [
+            "M5",
+            "M10"
+          ],
+          "locator": "",
+          "limit": "Personalización comercial no certifica autorización o aislamiento.",
+          "lesson": "Diseñar roles explícitos para costes, catálogos, emisión y CNC; verificar seguridad fuera de la apariencia de la UI."
+        },
+        {
+          "id": "visual_clarity",
+          "status": "OBS",
+          "finding": "La captura PVC muestra escritorio tradicional: árbol a la izquierda, herramientas pequeñas y dibujo técnico central con diagonales de apertura.",
+          "sources": [
+            "M14"
+          ],
+          "locator": "",
+          "limit": "La imagen es pequeña y promocional; no permite medir contraste, legibilidad real ni eficacia.",
+          "lesson": "Conservar la centralidad del dibujo y la estructura de objetos, pero reducir densidad y hacer legible la selección."
+        },
+        {
+          "id": "keyboard_mobile",
+          "status": "DOC",
+          "finding": "WebKozijn se presenta para PC/tableta/teléfono; MES usa móviles/tabletas en producción.",
+          "sources": [
+            "M5",
+            "M3"
+          ],
+          "locator": "",
+          "limit": "No se probaron atajos, uso con guantes, foco o aplicación sin conexión.",
+          "lesson": "Diseñar acciones de taller para tacto y acciones del editor para precisión y teclado; no limitarse a comprimir el escritorio."
+        },
+        {
+          "id": "interoperability",
+          "status": "DOC",
+          "finding": "La API WebKozijn enumera proyecto, líneas, perfiles/tipos de marco, colores y artículos de vidrio; Project añade IFC y compras EDI.",
+          "sources": [
+            "M7",
+            "M3"
+          ],
+          "locator": "",
+          "limit": "API e intercambio no invocados; versiones/unidades y escritura externa no verificadas.",
+          "lesson": "Publicar contratos de datos por dominio y validar importaciones; una API no vuelve confiable un catálogo."
+        },
+        {
+          "id": "maturity_price",
+          "status": "DOC",
+          "finding": "Hay base de conocimiento, notas SP y formación pública: 500 € por persona/día, curso básico PVC 1.000 € por dos días.",
+          "sources": [
+            "M11",
+            "M8"
+          ],
+          "locator": "",
+          "limit": "Importes de formación, no licencias ni oferta local; comprobar vigencia e impuestos antes de comprar.",
+          "lesson": "Cotizar la implantación de datos y capacitación aparte de la suscripción cuando corresponda."
+        }
+      ],
+      "flows": [
+        {
+          "name": "Proveedor → biblioteca → elemento → oferta",
+          "status": "reconstrucción documental",
+          "steps": [
+            "Solicitar archivos del proveedor y clasificar tablas de artículos/herrajes.",
+            "Mapear columnas, resolver rechazos y escoger destinos de tabla/biblioteca.",
+            "Configurar forma/compartimentos, calcular y generar oferta Word/PDF."
+          ],
+          "sources": [
+            "M6",
+            "M2",
+            "M5"
+          ],
+          "limit": "El mapeo admite indicadores verde/azul y rechazo documentados, no inspeccionados en una ejecución real."
+        },
+        {
+          "name": "Portal → ingeniería → reserva → producción",
+          "status": "reconstrucción documental",
+          "steps": [
+            "Configurar pedido en WebKozijn y transferirlo al fabricante.",
+            "Ingeniería revisa; Project gestiona reservas, compras y planificación.",
+            "CNC/MES usa el mismo elemento para producción, instrucciones y registro; cerrar entrega/factura."
+          ],
+          "sources": [
+            "M5",
+            "M3",
+            "M4"
+          ],
+          "limit": "Flujo entre módulos sintetizado de la oferta, no contrato de transición ni prueba integral."
+        }
+      ],
+      "frictions": [
+        {
+          "finding": "Proveedor y empresa usuaria deben preparar datos; el importador no los corrige por autoridad propia.",
+          "sources": [
+            "M6"
+          ],
+          "implication": "Mostrar incidencias por artículo, unidad y columna en vez de un error genérico."
+        },
+        {
+          "finding": "SP30 exige 64 bits y versiones concretas de Project/CNC/plugins.",
+          "sources": [
+            "M8"
+          ],
+          "implication": "Documentar dependencias de integración y ensayo de regresión antes de actualizar."
+        },
+        {
+          "finding": "Correcciones históricas incluyen perfiles espejados/inclinados y copias de cantidades.",
+          "sources": [
+            "M8"
+          ],
+          "implication": "Usar esos escenarios como preguntas de demostración; no afirmar que continúan fallando."
+        }
+      ],
+      "visual_inventory": [
+        {
+          "source_id": "M14",
+          "state": "OBS",
+          "target": "Editor técnico, árbol de estructura, composición y apertura.",
+          "capture_hint": "Imagen del monitor en página PVC.",
+          "temporal_limit": "La imagen no informa versión exacta."
+        },
+        {
+          "source_id": "M6",
+          "state": "texto leído",
+          "target": "Mapeo de importación y elección de destinos.",
+          "capture_hint": "Manual oficial; buscar secciones del asistente de importación.",
+          "temporal_limit": "No se manipuló un fichero."
+        }
+      ],
+      "video_inventory": {
+        "sources": [
+          "M11",
+          "M12"
+        ],
+        "state": "formación/manual inventariados, no vídeo reproducido",
+        "items": "Cursos y manual de uso de PVC.",
+        "limit": "No se atribuyen timestamps o escenas."
+      },
+      "boundary": "No se ensayaron reglas de fabricación, importador, portal, BIM, EDI ni CNC. No se conoce precio de licencia o cobertura de catálogos chilenos."
+    },
+    {
+      "id": "windowmaker",
+      "name": "Windowmaker — Web / Cloud / Operations",
+      "independent_product_family": true,
+      "provider": "Windowmaker Software",
+      "relationship_note": "Se cruza con otras fichas de la investigación; contar una sola familia de producto.",
+      "official_screen_url": "https://windowmaker.com/windowmaker-web/",
+      "product_scope": "Venta/configuración web y fabricación con catálogo, BOM, operaciones, stock, documentos, medición y conectividad industrial.",
+      "strongest_transfer": "Asistente contextual sobre trabajo existente, cambios globales y continuidad de datos entre venta y operación.",
+      "axes": [
+        {
+          "id": "onboarding",
+          "status": "DOC",
+          "finding": "Web comparte base de datos y motor/BOM con Cloud; el fabricante ofrece demo con datos del cliente. e-Catalog contempla actualizaciones suscritas.",
+          "sources": [
+            "W1",
+            "W5"
+          ],
+          "locator": "",
+          "limit": "No se importó catálogo propio ni se midió esfuerzo de puesta en marcha.",
+          "lesson": "La primera experiencia debe usar una serie real y mostrar la procedencia/fecha de sus reglas, no un catálogo de muestra sin explicación."
+        },
+        {
+          "id": "catalogs",
+          "status": "DOC",
+          "finding": "e-Catalog distingue regiones y familias de proveedores: perfiles, herrajes, hojas de puerta e insertos de vidrio.",
+          "sources": [
+            "W5"
+          ],
+          "locator": "",
+          "limit": "No demuestra disponibilidad Proline/Vinhaus ni completitud del mercado chileno.",
+          "lesson": "Mostrar fabricante, serie, revisión y componentes compatibles; la cobertura regional debe ser explícita."
+        },
+        {
+          "id": "editor_openings",
+          "status": "DOC",
+          "finding": "Configurator documenta composición por arrastrar/soltar, dimensiones y BOM/precio vinculados; incluye bay/bow, arcos, ángulos y retículas.",
+          "sources": [
+            "W2"
+          ],
+          "locator": "",
+          "limit": "No se ensayaron restricciones físicas ni una apertura específica del catálogo.",
+          "lesson": "Cada gesto debe producir un cambio visible en objeto, cota y resultado; mantener una ruta precisa para entradas numéricas."
+        },
+        {
+          "id": "visual2d3d",
+          "status": "DOC",
+          "finding": "Web documenta rotación 3D, secciones y elevaciones.",
+          "sources": [
+            "W1",
+            "W13"
+          ],
+          "locator": "",
+          "limit": "La animación W13 solo está inventariada; no se verificaron apertura real, colisiones o fidelidad de perfiles.",
+          "lesson": "Dar a cada vista una pregunta concreta: apariencia, detalle de sección o verificación de movimiento; no mezclar sus alcances."
+        },
+        {
+          "id": "materials",
+          "status": "DOC",
+          "finding": "R4 documenta acoples entre series y cambios globales de sistema/opciones, además de vidrio mixto; mantiene configuración vinculada a materiales.",
+          "sources": [
+            "W6",
+            "W2"
+          ],
+          "locator": "R4 pp.4,8",
+          "limit": "No se verificaron cantidades calculadas o equivalencia entre piezas y ensambles.",
+          "lesson": "Un cambio global necesita lista de elementos afectados, compatibilidad y recálculo desde el motor."
+        },
+        {
+          "id": "pricing",
+          "status": "DOC",
+          "finding": "R4 añade recálculo con tarifa reciente, congelación de precio/descuento y permisos de costes/márgenes.",
+          "sources": [
+            "W6"
+          ],
+          "locator": "R4 pp.9–11",
+          "limit": "No se compararon tarifas, impuestos ni números de una cotización.",
+          "lesson": "Separar precio vigente, precio aplicado y precio congelado; que el asistente explique cuál conserva una revisión."
+        },
+        {
+          "id": "quote_pdf",
+          "status": "DOC",
+          "finding": "Web describe gestión de revisiones, caducidad, bloqueo y condiciones especiales en cotización/documentos.",
+          "sources": [
+            "W1",
+            "W6"
+          ],
+          "locator": "",
+          "limit": "Sin PDF emitido o diseño documental inspeccionado; no se certifica calidad visual de la plantilla.",
+          "lesson": "El documento debe corresponder a una revisión identificable y enseñar vigencia, condiciones y alcance sin ruido."
+        },
+        {
+          "id": "cuts_remnants",
+          "status": "DOC",
+          "finding": "Manufacturing documenta optimización de barras y vidrio, emparejamiento y reutilización de sobrantes.",
+          "sources": [
+            "W4"
+          ],
+          "locator": "",
+          "limit": "No se probó lectura de etiqueta, ubicación, medida útil o reserva de un sobrante concreto.",
+          "lesson": "Mostrar de dónde sale cada barra, qué retazo se consumirá y cuándo se registra el sobrante real."
+        },
+        {
+          "id": "purchasing_stock",
+          "status": "DOC",
+          "finding": "Operations distingue stock disponible, pedido y asignado; compras para stock o pedido específico.",
+          "sources": [
+            "W3"
+          ],
+          "locator": "",
+          "limit": "No se ensayaron faltantes, sustituciones, recepción parcial ni concurrencia.",
+          "lesson": "Una propuesta de compra debe explicar necesidad menos reserva/stock, no mostrar únicamente un total opaco."
+        },
+        {
+          "id": "production_cnc",
+          "status": "DOC",
+          "finding": "Manufacturing enlaza sierras, centros de mecanizado, soldadoras y mesas de vidrio; etiquetas y escaneo alimentan rendimiento/incidencias.",
+          "sources": [
+            "W4"
+          ],
+          "locator": "",
+          "limit": "No se verificó soporte por modelo/posprocesador, seguridad de salida o telemetría real.",
+          "lesson": "Agrupar acciones por orden y estación con estado verificable; CNC no debe ser un botón genérico para cualquier diseño."
+        },
+        {
+          "id": "qr_field",
+          "status": "DOC",
+          "finding": "Measure documenta medición láser, comprobaciones múltiples y holguras para tamaño de fabricación; la fabricación usa códigos de barras.",
+          "sources": [
+            "W7",
+            "W4"
+          ],
+          "locator": "",
+          "limit": "App no instalada. QR exacto, disponibilidad sin conexión y formato de comprobantes quedan sin verificar.",
+          "lesson": "Vincular medida de vano, medida de fabricación y evidencia del operario, dejando clara su diferencia."
+        },
+        {
+          "id": "ai",
+          "status": "OBS",
+          "finding": "La página actual describe asistente contextual. El frame 170 de AI-Assistant.gif muestra chat sobre cotizaciones y chips Get Sales Pipeline y Get Planned Activities.",
+          "sources": [
+            "W1",
+            "W12"
+          ],
+          "locator": "",
+          "limit": "Es demo del proveedor. No demuestra escritura, aprobación, historial persistente, modos Chat/Trabajo ni ejecución fiable.",
+          "lesson": "Tomar presencia contextual y herramientas visibles; DEKOPEN debe añadir historial y recibo de acciones comprobables, según el objetivo del propietario."
+        },
+        {
+          "id": "history_undo",
+          "status": "DOC",
+          "finding": "Se documentan revisiones de cotización y webinarios sobre Revisions y Dashboards/Actions History.",
+          "sources": [
+            "W1",
+            "W9"
+          ],
+          "locator": "",
+          "limit": "Los vídeos no se reprodujeron. Revisiones comerciales no prueban undo por operación ni historial del asistente.",
+          "lesson": "Mantener hilo, acciones y revisiones relacionados pero distinguibles; permitir retomar una tarea desde su resultado."
+        },
+        {
+          "id": "roles",
+          "status": "DOC",
+          "finding": "R4 menciona permisos para ver BOM, cambiar/ver proveedores y cambiar/ver costes/márgenes en el entorno dealer.",
+          "sources": [
+            "W6"
+          ],
+          "locator": "R4 pp.10–11",
+          "limit": "No se auditó RLS, aislamiento o el alcance de cada permiso.",
+          "lesson": "El asistente hereda permisos por herramienta y dato; ocultar coste en la UI no basta."
+        },
+        {
+          "id": "visual_clarity",
+          "status": "OBS",
+          "finding": "La demo del asistente presenta un panel lateral sobre la lista de cotizaciones y diferencia llamadas a herramientas con indicadores de estado.",
+          "sources": [
+            "W12"
+          ],
+          "locator": "",
+          "limit": "Solo frames 0/170 inspeccionados; no se evaluaron toda la animación, responsividad o diseño actual completo.",
+          "lesson": "Mantener contexto del trabajo visible; usar pocas señales legibles para preparando, ejecutando y terminado."
+        },
+        {
+          "id": "keyboard_mobile",
+          "status": "DOC",
+          "finding": "Web se ofrece como aplicación de navegador; Measure cubre medición móvil.",
+          "sources": [
+            "W1",
+            "W7"
+          ],
+          "locator": "",
+          "limit": "No se verificaron atajos, accesibilidad, foco o precisión del editor en teléfono.",
+          "lesson": "Priorizar escritorio para diseñar y móvil para medir/instalar, conservando el mismo proyecto y sus datos."
+        },
+        {
+          "id": "interoperability",
+          "status": "DOC",
+          "finding": "El anuncio oficial de API REST/webhooks menciona conexión con Salesforce, HubSpot, Dynamics y Zoho; Manufacturing documenta interfaces de máquinas.",
+          "sources": [
+            "W11",
+            "W4"
+          ],
+          "locator": "",
+          "limit": "Sin documentación ejecutada, credenciales ni prueba de eventos/idempotencia.",
+          "lesson": "Definir contratos y recibos por integración; evitar que el asistente declare enviado o sincronizado antes de confirmarlo."
+        },
+        {
+          "id": "maturity_price",
+          "status": "DOC",
+          "finding": "Cloud publica un bloque regional: Sales ₹2.700, Essentials ₹4.500 y Professional ₹13.000 por usuario/mes; existen complementos y otros bloques con solicitud de oferta.",
+          "sources": [
+            "W8",
+            "W9"
+          ],
+          "locator": "",
+          "limit": "No son precios universales ni de Chile; no se verificaron vigencia contractual, impuestos o implantación.",
+          "lesson": "La propuesta de DEKOPEN debe explicar qué capacidad incluye cada plan y el coste de catálogo/operación, evitando comparar monedas sin contexto."
+        }
+      ],
+      "flows": [
+        {
+          "name": "Catálogo → diseño → cambio global → revisión comercial",
+          "status": "reconstrucción documental",
+          "steps": [
+            "Cargar/elegir sistema del proveedor y configurar un diseño estándar o específico.",
+            "Generar materiales/precio ligados a la configuración y aplicar cambios globales compatibles.",
+            "Elegir recálculo o precio congelado, guardar revisión y generar documentos del cliente."
+          ],
+          "sources": [
+            "W5",
+            "W2",
+            "W6"
+          ],
+          "limit": "No se operó un configurador real ni se verificó precio/PDF. Los pasos reflejan funciones descritas, no un tutorial observado."
+        },
+        {
+          "name": "Venta → programación → materiales → taller → instalación",
+          "status": "reconstrucción documental",
+          "steps": [
+            "Programar compra, producción, entrega e instalación con restricciones de capacidad.",
+            "Asignar stock/pedidos a lotes, optimizar barras y sobrantes.",
+            "Procesar estaciones/máquinas con etiquetas y registrar entrega/instalación."
+          ],
+          "sources": [
+            "W3",
+            "W4"
+          ],
+          "limit": "No se probó compatibilidad entre módulos ni se confirmó el seguimiento de un retazo físico."
+        }
+      ],
+      "frictions": [
+        {
+          "finding": "Las notas R4 diferencian recálculo a tarifa nueva de congelación comercial.",
+          "sources": [
+            "W6"
+          ],
+          "implication": "Un cambio de catálogo nunca debe alterar silenciosamente una oferta emitida."
+        },
+        {
+          "finding": "El artículo de 06-05-2026 hablaba de IA en desarrollo; la página Web actual ya describe asistente.",
+          "sources": [
+            "W10",
+            "W1"
+          ],
+          "implication": "Registrar fechas para no declarar ausente una función nueva ni asumir fiabilidad de producción por marketing."
+        },
+        {
+          "finding": "Precio y cobertura de catálogo varían por región y módulo.",
+          "sources": [
+            "W5",
+            "W8"
+          ],
+          "implication": "La comparación económica requiere oferta local y el mismo alcance funcional."
+        }
+      ],
+      "visual_inventory": [
+        {
+          "source_id": "W12",
+          "state": "OBS parcial",
+          "target": "Asistente contextual sobre cotizaciones, chips de herramientas y texto de seguimiento comercial.",
+          "capture_hint": "GIF de 171 frames; inspeccionados 0 y 170.",
+          "temporal_limit": "Ruta de publicación 2026/09; los datos de ejemplo no prueban fecha de lanzamiento."
+        },
+        {
+          "source_id": "W13",
+          "state": "URL inventariado, no visto",
+          "target": "Visualización 3D.",
+          "capture_hint": "GIF publicado en página Web.",
+          "temporal_limit": "No adjudicar detalles de interacción."
+        },
+        {
+          "source_id": "W14",
+          "state": "URL inventariado, no visto",
+          "target": "Diseños específicos.",
+          "capture_hint": "GIF publicado en página Web.",
+          "temporal_limit": "No adjudicar detalles de interacción."
+        },
+        {
+          "source_id": "W15",
+          "state": "URL inventariado, no visto",
+          "target": "Cambios globales.",
+          "capture_hint": "GIF publicado en página Web.",
+          "temporal_limit": "No adjudicar detalles de interacción."
+        }
+      ],
+      "video_inventory": {
+        "sources": [
+          "W9"
+        ],
+        "state": "títulos localizados, no reproducidos",
+        "items": [
+          "Costing Versions",
+          "Dealer Client",
+          "Smarter Quote",
+          "Global Changes",
+          "Revisions",
+          "Dashboards / Actions History",
+          "Remakes",
+          "Cutting Lists",
+          "Glass PO",
+          "Delivery / Frame Labels"
+        ],
+        "limit": "La mayoría requiere registro; no hay timestamps o escenas verificadas."
+      },
+      "boundary": "Asistente global documentado y una demo parcial observada; autonomía, memoria persistente y modos Chat/Trabajo no confirmados. No se midió calidad de IA ni fiabilidad industrial."
+    },
+    {
+      "id": "windowcc",
+      "name": "WindowCC / WindoorCraft — plataforma de diseño",
+      "independent_product_family": true,
+      "provider": "WindowCC; política identifica Wuxi Window Manufacturing Software Co., Ltd.",
+      "relationship_note": "Se agrupa con WindoorCraft para no duplicar capacidades comercializadas por Moxisys. Los enlaces prueban ese canal de producto; identidad jurídica y base de código entre marcas no se verificaron.",
+      "official_screen_url": "https://windowcc.com/gallery",
+      "product_scope": "Editor paramétrico web y SDK para diseño de ventanas/puertas, BOM, visualización, cotización y reportes.",
+      "strongest_transfer": "Interacción directa de marco/montante/hoja y una biblioteca editable; separar ese editor de una suite industrial completa.",
+      "axes": [
+        {
+          "id": "onboarding",
+          "status": "DOC",
+          "finding": "El sitio ofrece edición web y plataforma de desarrollo; el SDK usa token adquirido y herramientas de canvas.",
+          "sources": [
+            "C1",
+            "C2"
+          ],
+          "locator": "",
+          "limit": "Texto indexado; no se obtuvo token ni se completó alta. No confundir SDK disponible con código abierto.",
+          "lesson": "Un editor embebido necesita una ruta de primer producto que incluya sistema válido, no solo un canvas vacío."
+        },
+        {
+          "id": "catalogs",
+          "status": "DOC",
+          "finding": "La plataforma describe esquemas por serie para reconocer tipologías y menciona series de perfiles 70/80/85.",
+          "sources": [
+            "C1"
+          ],
+          "locator": "",
+          "limit": "No se verificaron fabricantes, versiones de catálogo, autoridad de precios o jerarquía de marca.",
+          "lesson": "Organizar marca/serie/componentes y exigir un origen legible; el número de serie no demuestra una familia comercial validada."
+        },
+        {
+          "id": "editor_openings",
+          "status": "DOC",
+          "finding": "El texto indexado describe marco, montante y hoja por arrastrar; mover/alinear manilla cambia el sentido de apertura.",
+          "sources": [
+            "C1"
+          ],
+          "locator": "",
+          "limit": "No se operó la galería ni se comprobó validez física de los estados.",
+          "lesson": "La interacción debe separar cambiar manilla, bisagra y tipología; ofrecer límites claros cuando la serie no admite una operación."
+        },
+        {
+          "id": "visual2d3d",
+          "status": "DOC",
+          "finding": "El proveedor anuncia 3D animado y colocación de diseño sobre foto de obra; la galería enumera ejemplos editables.",
+          "sources": [
+            "C1",
+            "C3"
+          ],
+          "locator": "",
+          "limit": "No hubo observación directa del visor ni comprobación de colisiones/dimensiones.",
+          "lesson": "Usar foto para comunicar al cliente y vista técnica para verificar; preservar orientación y escala."
+        },
+        {
+          "id": "materials",
+          "status": "DOC",
+          "finding": "La oferta afirma BOM automática para aluminio, uPVC y madera con reportes de perfiles y vidrio.",
+          "sources": [
+            "C1"
+          ],
+          "locator": "",
+          "limit": "No se revisó receta, kit, unidad ni cantidades de un caso concreto.",
+          "lesson": "Hacer inspeccionable qué regla y artículo producen cada línea; la compatibilidad declarada no sustituye la autoridad del fabricante."
+        },
+        {
+          "id": "pricing",
+          "status": "DOC",
+          "finding": "La página incluye presupuestos/precios para cliente y distribuidor, además de documentos de materiales.",
+          "sources": [
+            "C1"
+          ],
+          "locator": "",
+          "limit": "No se verificaron cálculo de coste, márgenes, impuestos, permisos o revisiones de tarifa.",
+          "lesson": "Distinguir cotización orientativa de precio aprobado y no inferir un coste de fabricación desde una tarifa por superficie."
+        },
+        {
+          "id": "quote_pdf",
+          "status": "DOC",
+          "finding": "Se anuncia impresión de presupuesto/BOM a PDF y compartir enlace.",
+          "sources": [
+            "C1"
+          ],
+          "locator": "",
+          "limit": "No se generó un documento ni se inspeccionó control de acceso del enlace.",
+          "lesson": "El PDF y enlace deben identificar revisión, destinatario y vigencia; que compartir no exponga coste interno."
+        },
+        {
+          "id": "cuts_remnants",
+          "status": "DOC",
+          "finding": "El proveedor enumera listas de corte y optimización.",
+          "sources": [
+            "C1"
+          ],
+          "locator": "",
+          "limit": "No se verificó almacén de sobrantes, medida útil, etiquetado ni consumo real.",
+          "lesson": "Exigir al producto distinguir cálculo de distribución de cortes de una operación física confirmada."
+        },
+        {
+          "id": "purchasing_stock",
+          "status": "NV",
+          "finding": "No se encontró evidencia suficientemente concreta de compras, reservas y recepciones en las páginas examinadas.",
+          "sources": [
+            "C1",
+            "C2"
+          ],
+          "locator": "",
+          "limit": "No implica inexistencia; el alcance público puede centrarse en diseño/SDK.",
+          "lesson": "Evitar interpretar un reporte BOM como módulo de inventario; cada operación necesita documento y estado propios."
+        },
+        {
+          "id": "production_cnc",
+          "status": "NV",
+          "finding": "No se verificó interfaz CNC o un posprocesador de máquina en la documentación consultada.",
+          "sources": [
+            "C1",
+            "C2"
+          ],
+          "locator": "",
+          "limit": "Un SDK de dibujo o lista de cortes no certifica una salida industrial.",
+          "lesson": "Mantener las capacidades industriales detrás de contratos comprobados por equipo."
+        },
+        {
+          "id": "qr_field",
+          "status": "NV",
+          "finding": "No se verificaron QR, unidad física, despacho, instalación o servicio de campo.",
+          "sources": [
+            "C1",
+            "C3"
+          ],
+          "locator": "",
+          "limit": "Compartir un enlace o editar en móvil no equivale a trazabilidad de fabricación.",
+          "lesson": "Definir el ciclo de vida de la unidad antes de añadir QR a documentos y menús."
+        },
+        {
+          "id": "ai",
+          "status": "DOC",
+          "finding": "El marketing menciona render AI en diez segundos.",
+          "sources": [
+            "C1"
+          ],
+          "locator": "",
+          "limit": "Es una afirmación comercial de render; no prueba asistente de ingeniería, memoria, herramientas o control del software.",
+          "lesson": "Separar generación visual de IA que opera datos. DEKOPEN no debe permitir que un render decida fabricación o cantidades."
+        },
+        {
+          "id": "history_undo",
+          "status": "DOC",
+          "finding": "La documentación indexada del SDK expone mometoManager.undo(); la galería enumera undo/redo/clean/import.",
+          "sources": [
+            "C2",
+            "C3"
+          ],
+          "locator": "",
+          "limit": "No se ejecutó la API. Undo del canvas no demuestra historial persistente, revisiones o auditoría multiusuario.",
+          "lesson": "Distinguir historial local de dibujo y registro durable de operaciones del proyecto."
+        },
+        {
+          "id": "roles",
+          "status": "NV",
+          "finding": "La política legal identifica proveedor, pero no se verificó una matriz de permisos por operación.",
+          "sources": [
+            "C4",
+            "C2"
+          ],
+          "locator": "",
+          "limit": "Tener cuenta/token no prueba roles de una empresa ni aislamiento entre organizaciones.",
+          "lesson": "El asistente necesita permisos explícitos sobre leer precios, modificar sistemas, emitir y publicar."
+        },
+        {
+          "id": "visual_clarity",
+          "status": "NV",
+          "finding": "Se localizó la galería oficial con ejemplos C1–C7; no se inspeccionó una pantalla renderizada actual.",
+          "sources": [
+            "C3"
+          ],
+          "locator": "",
+          "limit": "El fetch directo devolvió estructura JS y el texto indexado no permite evaluar jerarquía visual.",
+          "lesson": "No usar una página comercial o un texto indexado como aprobación estética; la propuesta necesita capturas reales."
+        },
+        {
+          "id": "keyboard_mobile",
+          "status": "DOC",
+          "finding": "El proveedor anuncia sincronización y uso en móvil, tableta y escritorio.",
+          "sources": [
+            "C1"
+          ],
+          "locator": "",
+          "limit": "No se verificaron teclado, foco, tamaño táctil, edición fina o funcionamiento sin conexión.",
+          "lesson": "Una tarea de medición móvil debe abrir y actualizar el mismo proyecto; la edición detallada requiere interacción propia."
+        },
+        {
+          "id": "interoperability",
+          "status": "DOC",
+          "finding": "La plataforma ofrece SDK JS/TS y ejemplos de integración HTML/React/Vue/Angular con herramientas de canvas.",
+          "sources": [
+            "C2"
+          ],
+          "locator": "",
+          "limit": "Token y condiciones comerciales no adquiridos; API de negocio, migración y licencia de código no verificadas.",
+          "lesson": "Comparar comprar/integrar un editor con mantener uno propio sin copiar código o asumir licencias permisivas."
+        },
+        {
+          "id": "maturity_price",
+          "status": "DOC",
+          "finding": "Existen sitio, galería, documentación y política; la plataforma de desarrollo comercializa acceso por token.",
+          "sources": [
+            "C2",
+            "C4"
+          ],
+          "locator": "",
+          "limit": "No se verificó precio total, SLA, número de clientes, soporte local ni versión del backend. C5 es histórico.",
+          "lesson": "Evaluar continuidad del proveedor, portabilidad de proyectos y coste de datos junto con la calidad del canvas."
+        }
+      ],
+      "flows": [
+        {
+          "name": "Geometría → apertura → comunicación visual",
+          "status": "reconstrucción documental",
+          "steps": [
+            "Elegir un marco y añadir montantes/hojas.",
+            "Ajustar parámetros y sentido de apertura; consultar representación.",
+            "Generar documento o compartir diseño sobre foto para revisión."
+          ],
+          "sources": [
+            "C1",
+            "C3"
+          ],
+          "limit": "Texto indexado, no tutorial ejecutado ni visor observado."
+        },
+        {
+          "name": "Serie → configuración → BOM/cortes",
+          "status": "reconstrucción documental",
+          "steps": [
+            "Preparar esquema por serie y biblioteca técnica.",
+            "Configurar una tipología compatible.",
+            "Obtener BOM y reportes de corte/optimización."
+          ],
+          "sources": [
+            "C1",
+            "C2"
+          ],
+          "limit": "No se validaron catálogo, receta, precio o rendimiento. No acredita compras/CNC/retazo físico."
+        }
+      ],
+      "frictions": [
+        {
+          "finding": "La apertura directa de las páginas mostró una estructura JS, mientras el buscador expuso texto indexado.",
+          "sources": [
+            "C1",
+            "C2",
+            "C3"
+          ],
+          "implication": "Esta ficha tiene menor evidencia visual que las de manuales y capturas inspeccionadas."
+        },
+        {
+          "finding": "El término render AI describe generación visual.",
+          "sources": [
+            "C1"
+          ],
+          "implication": "No elevar ese alcance a agente capaz de controlar un negocio."
+        },
+        {
+          "finding": "El sitio de desarrollo antiguo C5 no acredita la versión actual.",
+          "sources": [
+            "C5"
+          ],
+          "implication": "Pedir demo vigente, términos de licencia y contrato de persistencia antes de adoptar el SDK."
+        }
+      ],
+      "visual_inventory": [
+        {
+          "source_id": "C3",
+          "state": "índice localizado; no pantalla observada",
+          "target": "Galería C1–C7 con editor y controles.",
+          "capture_hint": "Abrir galería oficial en navegador/REA; comprobar acceso público.",
+          "temporal_limit": "Texto indexado no identifica versión actual."
+        }
+      ],
+      "video_inventory": {
+        "sources": [
+          "C1",
+          "C3"
+        ],
+        "state": "no reproducción",
+        "items": "Galería/demostraciones públicas por inspeccionar.",
+        "limit": "Sin escenas o marcas de tiempo; los 17 tutoriales de Moxisys se enumeran en su ficha sin contarlos como producto nuevo."
+      },
+      "boundary": "No se abrió sesión privada ni se ejecutó SDK/canvas. Su valor comparativo está en el alcance de editor documentado; el estado de ERP industrial y asistente operativo queda sin confirmar."
+    },
+    {
+      "id": "moxisys",
+      "name": "Moxisys — distribución/tutoriales de WindoorCraft",
+      "independent_product_family": false,
+      "same_product_as": "windowcc",
+      "count_as_independent_engine": false,
+      "provider": "Moxisys, proveedor de maquinaria y canal de software",
+      "relationship_note": "El tutorial enlaza sa.windoorcraft.com y la página windoorsoftware incrusta windoorcraft.com/login. Es evidencia del canal WindoorCraft, no de un motor propio. Se agrupa conservadoramente con WindowCC; no se probó identidad jurídica/técnica entre todas las marcas.",
+      "official_screen_url": "https://moxisys.com/window-design-software/",
+      "product_scope": "Comercialización y guía de un editor web de ventanas/puertas, configuración de series, 3D, cotización y reportes.",
+      "strongest_transfer": "Tutorial público suficientemente concreto para estudiar el orden de tareas; su existencia no demuestra un producto ERP independiente.",
+      "axes": [
+        {
+          "id": "onboarding",
+          "status": "DOC",
+          "finding": "El tutorial solicita idioma, cuenta/contraseña del proveedor; anuncia prueba de tres días.",
+          "sources": [
+            "X1",
+            "X2"
+          ],
+          "locator": "cap.1–2",
+          "limit": "No se solicitó cuenta ni se midió alta; trial documentado no equivale a editor libre anónimo.",
+          "lesson": "Preparar primer proyecto con serie real y datos necesarios; evitar un onboarding que termina en un lienzo vacío."
+        },
+        {
+          "id": "catalogs",
+          "status": "DOC",
+          "finding": "Hay capítulos para crear series, datos predefinidos y plantillas de material.",
+          "sources": [
+            "X1"
+          ],
+          "locator": "cap.17–19; vídeos X-V14 a X-V17",
+          "limit": "Vídeos solo inventariados; no se verificó contenido completo, jerarquía de marca ni autoridad técnica.",
+          "lesson": "Aprender del orden de preparación, pero exigir fabricante → serie → revisión antes de publicar."
+        },
+        {
+          "id": "editor_openings",
+          "status": "DOC",
+          "finding": "La guía distingue marco, montante, hoja y un inspector para manilla, bisagra, vidrio y apertura.",
+          "sources": [
+            "X1"
+          ],
+          "locator": "cap.3–8",
+          "limit": "No se editó una ventana. Los límites de la guía no se adoptan como reglas de DEKOPEN.",
+          "lesson": "Dar inspector específico por objeto y mantener visibles hoja activa, sentido y componentes compatibles."
+        },
+        {
+          "id": "visual2d3d",
+          "status": "DOC",
+          "finding": "El capítulo 3D describe fondo, suelo, pared y vidrio; permite situar el diseño en foto.",
+          "sources": [
+            "X1"
+          ],
+          "locator": "cap.9–10",
+          "limit": "Sin visor observado ni vídeo visto; las URLs de imágenes son antiguas.",
+          "lesson": "Separar representación comercial y verificación física, con estado y orientación coincidentes."
+        },
+        {
+          "id": "materials",
+          "status": "DOC",
+          "finding": "La oferta menciona materiales de perfiles, herrajes y vidrio; el tutorial dedica una sección a plantillas.",
+          "sources": [
+            "X2",
+            "X1"
+          ],
+          "locator": "",
+          "limit": "BOM, unidades, kits y fórmula no comprobados.",
+          "lesson": "La tabla de materiales debe derivar de reglas válidas y permitir inspeccionar procedencia y cantidades."
+        },
+        {
+          "id": "pricing",
+          "status": "DOC",
+          "finding": "El tutorial de cotización usa superficie y cantidad; la oferta llama intelligent quotation al cálculo.",
+          "sources": [
+            "X1",
+            "X2"
+          ],
+          "locator": "cap.12",
+          "limit": "No prueba costeo industrial exacto ni LLM. Precios/impuestos locales no verificados.",
+          "lesson": "No confundir precio comercial por m² con BOM, coste o precio calculado por el motor."
+        },
+        {
+          "id": "quote_pdf",
+          "status": "DOC",
+          "finding": "Describe guardar diseño → pedido → cotización, plantillas de impresión, PDF/Excel y enlaces para firma del cliente.",
+          "sources": [
+            "X1"
+          ],
+          "locator": "cap.12–13",
+          "limit": "Sin documento emitido, envío, firma o seguridad del enlace ensayados.",
+          "lesson": "Crear un flujo con recibo documental, versión y destinatario; que editar plantilla no cambie resultados de ingeniería."
+        },
+        {
+          "id": "cuts_remnants",
+          "status": "DOC",
+          "finding": "La oferta publica optimización de cortes como capacidad del software.",
+          "sources": [
+            "X2"
+          ],
+          "locator": "",
+          "limit": "No demuestra retazo físico, etiquetado, longitud útil, ubicación o consumo registrado.",
+          "lesson": "Una pantalla de optimización debe declarar si usa stock real, barras por comprar o medidas de simulación."
+        },
+        {
+          "id": "purchasing_stock",
+          "status": "NV",
+          "finding": "No se verificó un flujo de compra, recepción y reserva en el material revisado.",
+          "sources": [
+            "X1",
+            "X2"
+          ],
+          "locator": "",
+          "limit": "El listado de materiales no acredita inventario ni capacidad ERP.",
+          "lesson": "Vincular BOM con necesidad, compra y recepción mediante estados propios; evitar botones de funciones sin proceso."
+        },
+        {
+          "id": "production_cnc",
+          "status": "NV",
+          "finding": "No se encontró evidencia de integración software-CNC concreta.",
+          "sources": [
+            "X2",
+            "X5"
+          ],
+          "locator": "",
+          "limit": "Moxisys vende máquinas, pero su catálogo de máquinas no prueba un posprocesador del editor.",
+          "lesson": "Solicitar archivo muestra y compatibilidad por máquina antes de permitir producción."
+        },
+        {
+          "id": "qr_field",
+          "status": "NV",
+          "finding": "Se describen compartir y firma; no se verificaron QR, unidad física ni instalación.",
+          "sources": [
+            "X1"
+          ],
+          "locator": "",
+          "limit": "Un enlace de diseño no es trazabilidad de taller/terreno.",
+          "lesson": "Reservar QR para abrir evidencia y tarea de una unidad identificada."
+        },
+        {
+          "id": "ai",
+          "status": "NV",
+          "finding": "Intelligent quotation no aporta evidencia suficiente de asistente conversacional o agente con herramientas.",
+          "sources": [
+            "X1",
+            "X2"
+          ],
+          "locator": "",
+          "limit": "No se vio el vídeo ni un comportamiento LLM. No atribuir autonomía a ese rótulo.",
+          "lesson": "Los modos Chat y Trabajo deben explicar qué acción hace la IA, guardar resultado y reducir preguntas evitables."
+        },
+        {
+          "id": "history_undo",
+          "status": "DOC",
+          "finding": "La guía menciona listado de pedidos y guardado de diseños.",
+          "sources": [
+            "X1"
+          ],
+          "locator": "",
+          "limit": "Lista de pedidos no prueba versiones, auditoría, undo o historial de chat.",
+          "lesson": "Persistir conversaciones y acciones por proyecto; recuperar un pedido no debe equivaler a reconstruir el trabajo."
+        },
+        {
+          "id": "roles",
+          "status": "NV",
+          "finding": "La cuenta de pago admite marca de empresa en documentos, sin matriz de permisos verificada.",
+          "sources": [
+            "X1",
+            "X2"
+          ],
+          "locator": "",
+          "limit": "Branding por cuenta no demuestra roles ni confidencialidad entre distribuidor/cliente.",
+          "lesson": "Diferenciar identidad comercial, permisos y visibilidad de costes."
+        },
+        {
+          "id": "visual_clarity",
+          "status": "NV",
+          "finding": "Se localizaron imágenes del inspector, parámetros, 3D e impresión.",
+          "sources": [
+            "X6",
+            "X7",
+            "X8",
+            "X9",
+            "X10"
+          ],
+          "locator": "",
+          "limit": "Imágenes no inspeccionadas; la de impresión devolvió 403 por buscador. No se emite juicio visual comprobado.",
+          "lesson": "La propuesta necesita observar el editor actual antes de adoptar su composición o densidad."
+        },
+        {
+          "id": "keyboard_mobile",
+          "status": "DOC",
+          "finding": "La oferta anuncia sincronización en móvil, tableta y PC.",
+          "sources": [
+            "X2"
+          ],
+          "locator": "",
+          "limit": "No se ensayaron gestos, teclado, captura de medición o funcionamiento sin conexión.",
+          "lesson": "Mantener continuidad de proyecto entre dispositivos, con tareas adecuadas a cada pantalla."
+        },
+        {
+          "id": "interoperability",
+          "status": "DOC",
+          "finding": "La guía describe PDF/Excel y enlace compartido; el sitio incrusta WindoorCraft.",
+          "sources": [
+            "X1",
+            "X3"
+          ],
+          "locator": "",
+          "limit": "No se verificó API pública de negocio ni importación portable de proyectos.",
+          "lesson": "Separar exportar un documento de integrar datos; una incrustación no garantiza control del backend."
+        },
+        {
+          "id": "maturity_price",
+          "status": "DOC",
+          "finding": "Se publica trial $0/tres días y plan anual cuyo importe aparece como $***.",
+          "sources": [
+            "X2"
+          ],
+          "locator": "",
+          "limit": "Precio anual, soporte, SLA y coste de configuración no verificables. No estimar a partir del trial.",
+          "lesson": "Pedir oferta con alcance y datos reales; no comparar una prueba gratuita con coste de producción completa."
+        }
+      ],
+      "flows": [
+        {
+          "name": "Diseño → pedido → cotización",
+          "status": "reconstrucción del texto del tutorial",
+          "steps": [
+            "Entrar en Design; crear marco/montantes/hojas y ajustar inspector.",
+            "Guardar, ingresar cantidad/precio, convertir a pedido y añadir cotización."
+          ],
+          "sources": [
+            "X1"
+          ],
+          "limit": "Ningún paso se ejecutó; los 17 vídeos no se reprodujeron."
+        },
+        {
+          "name": "Pedido → documento o enlace al cliente",
+          "status": "reconstrucción del texto del tutorial",
+          "steps": [
+            "Abrir pedido; elegir plantilla.",
+            "Exportar PDF/Excel o compartir enlace para revisión/firma."
+          ],
+          "sources": [
+            "X1"
+          ],
+          "limit": "No se inspeccionaron PDF, seguridad del enlace, firma o entrega."
+        }
+      ],
+      "frictions": [
+        {
+          "finding": "La edición detallada de plantillas se explica mediante Excel.",
+          "sources": [
+            "X1"
+          ],
+          "implication": "Ofrecer una edición guiada del documento con vista previa evita sacar al usuario del producto."
+        },
+        {
+          "finding": "El distribuidor no publica la tarifa anual.",
+          "sources": [
+            "X2"
+          ],
+          "implication": "No evaluar valor/precio con cifras inventadas."
+        },
+        {
+          "finding": "El producto enlazado/incrustado es WindoorCraft.",
+          "sources": [
+            "X3",
+            "X4"
+          ],
+          "implication": "Deduplicar esta ficha y no presentar Moxisys como otro motor independiente."
+        }
+      ],
+      "visual_inventory": [
+        {
+          "source_id": "X6",
+          "state": "URL inventariado, no inspeccionado",
+          "target": "Inspector lateral de detalles.",
+          "capture_hint": "Tutorial público cap.3–8.",
+          "temporal_limit": "Ruta 2022/01."
+        },
+        {
+          "source_id": "X7",
+          "state": "URL inventariado, no inspeccionado",
+          "target": "Parámetros de diseño.",
+          "capture_hint": "Tutorial público.",
+          "temporal_limit": "Ruta 2022/01."
+        },
+        {
+          "source_id": "X8",
+          "state": "URL inventariado, no inspeccionado",
+          "target": "Menú 3D.",
+          "capture_hint": "Tutorial público cap.9.",
+          "temporal_limit": "Ruta 2022/01."
+        },
+        {
+          "source_id": "X9",
+          "state": "URL inventariado, no inspeccionado",
+          "target": "Acciones imprimir/compartir.",
+          "capture_hint": "Tutorial público cap.13.",
+          "temporal_limit": "Ruta 2022/01."
+        },
+        {
+          "source_id": "X10",
+          "state": "URL inventariado; fetch 403",
+          "target": "Plantilla de impresión.",
+          "capture_hint": "Abrir desde el tutorial con navegador si hay acceso.",
+          "temporal_limit": "Ruta 2022/01; no usar como UI vigente sin comprobar."
+        }
+      ],
+      "video_inventory": {
+        "sources": [
+          "X1"
+        ],
+        "state": "17 embeds extraídos; ninguno reproducido",
+        "items": [
+          "X-V01",
+          "X-V02",
+          "X-V03",
+          "X-V04",
+          "X-V05",
+          "X-V06",
+          "X-V07",
+          "X-V08",
+          "X-V09",
+          "X-V10",
+          "X-V11",
+          "X-V12",
+          "X-V13",
+          "X-V14",
+          "X-V15",
+          "X-V16",
+          "X-V17"
+        ],
+        "limit": "Enlaces directos en el inventario global. Sin timestamps; los títulos describen el capítulo de origen, no una transcripción vista."
+      },
+      "boundary": "Ficha del canal y su material formativo. No cuenta como otra implementación industrial independiente. Documentación detallada no equivale a uso observado ni a catálogo real validado."
+    },
+    {
+      "id": "3e_look",
+      "name": "3E LOOK — ERP / Trade / Web Sales",
+      "independent_product_family": true,
+      "provider": "3E Datentechnik",
+      "relationship_note": "Familia independiente añadida para mantener amplitud después de deduplicar Moxisys/WindoorCraft.",
+      "official_screen_url": "https://www.3e-it.com/en/window-design-software/workflows-and-dashboards",
+      "product_scope": "ERP para fabricación de ventanas con venta de distribuidores, compras digitales, planificación, producción y servicio móvil.",
+      "strongest_transfer": "Flujo documental continuo, detección de discrepancias de proveedor y trabajo de terreno ligado al componente.",
+      "axes": [
+        {
+          "id": "onboarding",
+          "status": "DOC",
+          "finding": "LOOK Trade contempla instalación/configuración con expertos e importación de datos maestros desde Excel.",
+          "sources": [
+            "T3"
+          ],
+          "locator": "",
+          "limit": "No se midieron implantación, esfuerzo de depuración o coste.",
+          "lesson": "Mostrar una ruta honesta de catálogo real, primer cálculo validado y primer documento; no exigir descubrir datos técnicos durante una venta."
+        },
+        {
+          "id": "catalogs",
+          "status": "DOC",
+          "finding": "Web Sales activa la base del fabricante para sus distribuidores y permite extras/servicios propios.",
+          "sources": [
+            "T7"
+          ],
+          "locator": "",
+          "limit": "No se observó árbol marca/serie ni cobertura regional concreta.",
+          "lesson": "Un catálogo de fabricante puede ser autoridad compartida; extras locales y servicios deben quedar separados de la receta física."
+        },
+        {
+          "id": "editor_openings",
+          "status": "DOC",
+          "finding": "Trade documenta elementos rectangulares, inclinados, redondos y acoplados con retículas, extensiones y accesorios.",
+          "sources": [
+            "T3",
+            "T2"
+          ],
+          "locator": "",
+          "limit": "No se verificaron cinemáticas, límites de herraje ni edición directa.",
+          "lesson": "Ofrecer capacidades según sistema válido y explicar diferencias entre forma geométrica, tipo y apertura."
+        },
+        {
+          "id": "visual2d3d",
+          "status": "DOC",
+          "finding": "Planificación ofrece visualización 3D de volumen de carga; order handling describe diseño de elementos.",
+          "sources": [
+            "T10",
+            "T2"
+          ],
+          "locator": "",
+          "limit": "3D de carga no demuestra 3D físico de ventanas. No se inspeccionó un visor.",
+          "lesson": "No usar una capacidad 3D de un dominio como promesa de todo el producto; nombrar la pregunta que resuelve."
+        },
+        {
+          "id": "materials",
+          "status": "DOC",
+          "finding": "El ERP conecta diseño, requerimientos y consumo; el poscálculo compara material y horas reales.",
+          "sources": [
+            "T1",
+            "T9"
+          ],
+          "locator": "",
+          "limit": "No se comprobaron recetas o cantidades.",
+          "lesson": "La misma revisión calculada debe alimentar materiales, compra y comparación posterior; no duplicar números en cada módulo."
+        },
+        {
+          "id": "pricing",
+          "status": "DOC",
+          "finding": "El módulo de poscálculo reúne lista de precios, cálculo detallado, horas/material real, margen e informes Excel.",
+          "sources": [
+            "T9"
+          ],
+          "locator": "",
+          "limit": "Sin cálculo probado, tarifa local o fiscalidad validada.",
+          "lesson": "Separar presupuesto de coste real y explicar desvíos con cantidad, precio y operación de origen."
+        },
+        {
+          "id": "quote_pdf",
+          "status": "DOC",
+          "finding": "Trade enlaza oferta, pedido, albarán, factura y crédito, con archivo PDF.",
+          "sources": [
+            "T3"
+          ],
+          "locator": "",
+          "limit": "No se emitió ni inspeccionó documento; archivo no garantiza firma o inmutabilidad técnica.",
+          "lesson": "Cada documento necesita número, revisión y relación con el anterior; la UI debe ubicar el siguiente paso."
+        },
+        {
+          "id": "cuts_remnants",
+          "status": "DOC",
+          "finding": "Digital Production documenta lotes, capacidad y optimización de corte.",
+          "sources": [
+            "T5"
+          ],
+          "locator": "",
+          "limit": "No se verificó identificación, medida o reuso de un retazo físico.",
+          "lesson": "Optimización y almacén de sobrantes deben ser tareas distintas conectadas por una confirmación de producción."
+        },
+        {
+          "id": "purchasing_stock",
+          "status": "DOC",
+          "finding": "E-procurement genera propuestas, usa openTRANS y detecta discrepancias en confirmaciones/backorders; movimientos escaneados mantienen trazabilidad.",
+          "sources": [
+            "T4"
+          ],
+          "locator": "",
+          "limit": "No se probaron conciliación, faltantes o recepción real.",
+          "lesson": "La revisión de compra debe mostrar diferencias de cantidad, artículo, precio o fecha y la acción para resolverlas."
+        },
+        {
+          "id": "production_cnc",
+          "status": "DOC",
+          "finding": "Producción digital ofrece estaciones bidireccionales sin papel, etiquetas, interfaces de máquina/robot y seguimiento.",
+          "sources": [
+            "T5"
+          ],
+          "locator": "",
+          "limit": "No se verificó lista de máquinas, posprocesador ni salida segura.",
+          "lesson": "Una estación debe presentar orden, instrucciones, evento y siguiente requisito con estado real."
+        },
+        {
+          "id": "qr_field",
+          "status": "DOC",
+          "finding": "Soluciones móviles adjuntan foto/voz/vídeo/texto/dibujo, firma y albarán; NFC permite recuperar datos del componente.",
+          "sources": [
+            "T6"
+          ],
+          "locator": "",
+          "limit": "NFC y códigos de barras no son QR. Sin ensayo físico o sin conexión.",
+          "lesson": "Relacionar incidencias de instalación con unidad y revisión; pedir evidencia útil, no formularios repetidos."
+        },
+        {
+          "id": "ai",
+          "status": "NV",
+          "finding": "No se verificó un agente LLM global con acciones y memoria en las fuentes consultadas.",
+          "sources": [
+            "T1",
+            "T8"
+          ],
+          "locator": "",
+          "limit": "Workflows y automatización ERP no prueban IA generativa.",
+          "lesson": "El asistente de DEKOPEN debe operar el flujo existente con resultados persistentes; no añadir una segunda interfaz que exige repetir datos."
+        },
+        {
+          "id": "history_undo",
+          "status": "DOC",
+          "finding": "Trade documenta archivo PDF y ciclo de documentos; workflows mantiene tareas/estados.",
+          "sources": [
+            "T3",
+            "T8"
+          ],
+          "locator": "",
+          "limit": "No se verificó undo de edición, historial completo ni conversación persistente.",
+          "lesson": "Definir qué se puede deshacer y qué requiere nueva revisión o documento compensatorio."
+        },
+        {
+          "id": "roles",
+          "status": "DOC",
+          "finding": "Dashboards y cockpit son personalizados por rol/tarea.",
+          "sources": [
+            "T8"
+          ],
+          "locator": "",
+          "limit": "Personalización por rol no demuestra permisos granulares ni aislamiento de datos.",
+          "lesson": "Separar adaptación de la pantalla de autorización de acciones y datos."
+        },
+        {
+          "id": "visual_clarity",
+          "status": "OBS",
+          "finding": "La captura de producción muestra barras de capacidad, tabla densa de órdenes/estados y gráficos de progreso; usa verde en filas/estados.",
+          "sources": [
+            "T12"
+          ],
+          "locator": "",
+          "limit": "Datos de ejemplo de 2019; no acredita UI de la versión actual ni contraste accesible.",
+          "lesson": "Usar densidad donde ayuda a decidir, con causa y estado legibles; no llenar todos los módulos de tarjetas iguales."
+        },
+        {
+          "id": "keyboard_mobile",
+          "status": "DOC",
+          "finding": "La oferta móvil cubre medición, instalación, servicio y mantenimiento con acceso a datos técnicos.",
+          "sources": [
+            "T6"
+          ],
+          "locator": "",
+          "limit": "No se verificaron atajos, rendimiento táctil, captura sin conexión o usabilidad con guantes.",
+          "lesson": "Las tareas de terreno necesitan información mínima accionable y sincronización clara, manteniendo detalle técnico accesible."
+        },
+        {
+          "id": "interoperability",
+          "status": "DOC",
+          "finding": "Se documentan openTRANS y configuradores conectados; el caso Stemeseder describe integración de proveedor.",
+          "sources": [
+            "T4",
+            "T7",
+            "T11"
+          ],
+          "locator": "",
+          "limit": "Caso narrado por proveedor; integración/API no invocadas.",
+          "lesson": "Priorizar intercambio estructurado con confirmación y discrepancias, además de exportaciones de documentos."
+        },
+        {
+          "id": "maturity_price",
+          "status": "DOC",
+          "finding": "La oferta mantiene módulos ERP, Trade, Web Sales y digital production; el proveedor declara más de 30 años.",
+          "sources": [
+            "T1"
+          ],
+          "locator": "",
+          "limit": "Antigüedad es declaración comercial; no se obtuvo licencia, SLA ni oferta local.",
+          "lesson": "La compra debe evaluar acompañamiento de datos e integración, no únicamente aspecto o lista de funciones."
+        }
+      ],
+      "flows": [
+        {
+          "name": "Distribuidor → configuración → oferta → ERP fabricante",
+          "status": "reconstrucción documental",
+          "steps": [
+            "Activar datos del fabricante para el distribuidor.",
+            "Configurar con comprobaciones de plausibilidad y añadir servicios propios.",
+            "Emitir oferta/pedido en línea y transferir sin reingreso al ERP."
+          ],
+          "sources": [
+            "T7",
+            "T3"
+          ],
+          "limit": "No se operó portal ni se verificó un catálogo concreto."
+        },
+        {
+          "name": "Planificación → compra → estaciones → instalación",
+          "status": "reconstrucción documental",
+          "steps": [
+            "Planificar por capacidad y disponibilidad de material.",
+            "Generar compra, revisar confirmaciones/discrepancias y trazar movimientos.",
+            "Ejecutar lotes/estaciones con identificación; registrar instalación, evidencia y firma en móvil."
+          ],
+          "sources": [
+            "T10",
+            "T4",
+            "T5",
+            "T6"
+          ],
+          "limit": "Secuencia compuesta desde módulos; no se ejecutó un pedido ni lectura física."
+        }
+      ],
+      "frictions": [
+        {
+          "finding": "La compra digital admite diferencias entre pedido y confirmación.",
+          "sources": [
+            "T4"
+          ],
+          "implication": "Diseñar el caso discrepante y la recepción parcial, no solo la ruta feliz."
+        },
+        {
+          "finding": "Trade, Web Sales y ERP fabricante tienen alcances distintos.",
+          "sources": [
+            "T1",
+            "T3",
+            "T7"
+          ],
+          "implication": "Comparar el paquete que necesita una pyme en lugar de atribuirle toda la suite empresarial."
+        },
+        {
+          "finding": "La captura inspeccionada contiene datos de 2019.",
+          "sources": [
+            "T12"
+          ],
+          "implication": "Útil para estudiar jerarquía de información; insuficiente para describir una versión actual."
+        }
+      ],
+      "visual_inventory": [
+        {
+          "source_id": "T12",
+          "state": "OBS",
+          "target": "Dashboard de producción con capacidad, órdenes y progreso.",
+          "capture_hint": "Página Workflows and Dashboards → imagen ÜBERSICHT – PRODUKTION.",
+          "temporal_limit": "Muestra histórica 2019."
+        },
+        {
+          "source_id": "T10",
+          "state": "texto leído",
+          "target": "Gantt, reserva de capacidad/material y planificación de carga.",
+          "capture_hint": "Página flexible planning.",
+          "temporal_limit": "No se inspeccionó un plan operativo."
+        }
+      ],
+      "video_inventory": {
+        "sources": [
+          "T1"
+        ],
+        "state": "referencias a material audiovisual; no reproducido",
+        "items": "No hay vídeo o timestamp específico verificado en esta ficha.",
+        "limit": "No contabilizar como tutorial observado."
+      },
+      "boundary": "Fuentes de fabricante, un caso publicado y una captura histórica. No hay cálculo, compra, CNC, NFC o portal ejecutados; IA, undo y permiso granular permanecen sin confirmar."
+    }
+  ],
+  "synthesis": [
+    {
+      "id": "single_input",
+      "claim": "Los productos operativos más amplios organizan el trabajo alrededor del mismo elemento/orden a través de venta, material y producción.",
+      "sources": [
+        "F1",
+        "M3",
+        "W3",
+        "T1"
+      ],
+      "lesson": "En DEKOPEN, el resultado del motor y su revisión deben acompañar toda transición; los módulos no deben obligar a volver a escribir cantidades.",
+      "limit": "Continuidad descrita por proveedores, no equivalencia técnica o fiabilidad medida."
+    },
+    {
+      "id": "catalog_authority",
+      "claim": "FeneVision y Matrix explicitan trabajo de preparación/mantenimiento de datos; e-Catalog y Web Sales añaden distribución de datos del fabricante.",
+      "sources": [
+        "F8",
+        "M6",
+        "W5",
+        "T7"
+      ],
+      "lesson": "Catálogo navegable y catálogo autorizado son problemas diferentes. Mostrar fabricante → serie → revisión, imagen y estado de validación por capacidad.",
+      "limit": "Ninguna fuente consultada valida Proline/Vinhaus para fabricación local de DEKOPEN."
+    },
+    {
+      "id": "cutting_not_stock",
+      "claim": "Optimizar barras, reusar sobrantes y mantener inventario físico requieren evidencias distintas.",
+      "sources": [
+        "F13",
+        "W4",
+        "T5"
+      ],
+      "lesson": "El usuario debe saber si mira un borrador, una reserva o un corte confirmado; el sobrante entra a stock con identidad y medida útil.",
+      "limit": "Solo Windowmaker menciona reuso de offcuts de forma explícita en este subconjunto; no se ensayó su ciclo físico."
+    },
+    {
+      "id": "assistant",
+      "claim": "Windowmaker es la referencia actual más directa de asistente contextual de este grupo; su demo muestra herramientas sobre datos comerciales.",
+      "sources": [
+        "W1",
+        "W12"
+      ],
+      "lesson": "DEKOPEN puede mantener Chat y Trabajo con contexto de pantalla, navegación autorizada, historial persistente y recibo final. Son objetivos del propietario, no funciones confirmadas de todos los competidores.",
+      "limit": "La demo no acredita autonomía, memoria o precisión; el modo de aprobaciones debe respetar invariantes y permisos."
+    },
+    {
+      "id": "document_finality",
+      "claim": "FeneVision distingue documento publicado y transacción compensatoria; revisiones, archivo y deshacer tienen semánticas diferentes.",
+      "sources": [
+        "F11",
+        "W6",
+        "T3"
+      ],
+      "lesson": "Explicar al asistente y al usuario qué se revierte, qué crea nueva revisión y qué necesita una acción compensatoria.",
+      "limit": "No se verificó implementación técnica de inmutabilidad de estos productos."
+    },
+    {
+      "id": "physical_identity",
+      "claim": "Las fuentes mencionan códigos de barras y NFC; no debe traducirse automáticamente a QR.",
+      "sources": [
+        "F1",
+        "M9",
+        "W4",
+        "T6"
+      ],
+      "lesson": "El valor está en identificar unidad, estación y evidencia; el tipo de código es una decisión de transporte.",
+      "limit": "Ninguna lectura real se ejecutó."
+    },
+    {
+      "id": "visual_purpose",
+      "claim": "Las cuatro referencias observadas usan estructuras diferentes según tarea: tabla comercial, editor, panel contextual y dashboard industrial.",
+      "sources": [
+        "F15",
+        "M14",
+        "W12",
+        "T12"
+      ],
+      "lesson": "Mantener un lenguaje visual común sin hacer idénticos editor, catálogo, asistente y taller; reservar jerarquía y color para consecuencias claras.",
+      "limit": "Muestras de fechas y tamaños distintos; no es ranking visual actual."
+    },
+    {
+      "id": "deduplication",
+      "claim": "Moxisys enlaza e incrusta WindoorCraft; no hay prueba de motor propio.",
+      "sources": [
+        "X3",
+        "X4"
+      ],
+      "lesson": "Contar proveedores, marcas y familias de producto por separado para evitar una comparación inflada.",
+      "limit": "La relación técnica/jurídica exacta con WindowCC no se verificó; el agrupamiento es conservador."
+    }
+  ],
+  "videos": [
+    {
+      "id": "X-V01",
+      "title": "Login",
+      "url": "https://www.youtube.com/watch?v=7Hpe-uQ-VwE",
+      "origin_source": "X1",
+      "state": "embed extraído del HTML; no reproducido",
+      "timestamps": null
+    },
+    {
+      "id": "X-V02",
+      "title": "Account setting",
+      "url": "https://www.youtube.com/watch?v=MtyisxiTxFo",
+      "origin_source": "X1",
+      "state": "embed extraído del HTML; no reproducido",
+      "timestamps": null
+    },
+    {
+      "id": "X-V03",
+      "title": "Drawing tools",
+      "url": "https://www.youtube.com/watch?v=9cW3KNsjszU",
+      "origin_source": "X1",
+      "state": "embed extraído del HTML; no reproducido",
+      "timestamps": null
+    },
+    {
+      "id": "X-V04",
+      "title": "Window design",
+      "url": "https://www.youtube.com/watch?v=eo6qYc_rZlI",
+      "origin_source": "X1",
+      "state": "embed extraído del HTML; no reproducido",
+      "timestamps": null
+    },
+    {
+      "id": "X-V05",
+      "title": "Casement",
+      "url": "https://www.youtube.com/watch?v=stui2w0pr_4",
+      "origin_source": "X1",
+      "state": "embed extraído del HTML; no reproducido",
+      "timestamps": null
+    },
+    {
+      "id": "X-V06",
+      "title": "Sliding",
+      "url": "https://www.youtube.com/watch?v=jKa5hJKnnuY",
+      "origin_source": "X1",
+      "state": "embed extraído del HTML; no reproducido",
+      "timestamps": null
+    },
+    {
+      "id": "X-V07",
+      "title": "Corner",
+      "url": "https://www.youtube.com/watch?v=ORHx_Aw8mH4",
+      "origin_source": "X1",
+      "state": "embed extraído del HTML; no reproducido",
+      "timestamps": null
+    },
+    {
+      "id": "X-V08",
+      "title": "Door",
+      "url": "https://www.youtube.com/watch?v=byS-ZZiapiU",
+      "origin_source": "X1",
+      "state": "embed extraído del HTML; no reproducido",
+      "timestamps": null
+    },
+    {
+      "id": "X-V09",
+      "title": "3D",
+      "url": "https://www.youtube.com/watch?v=7ITEeClahF8",
+      "origin_source": "X1",
+      "state": "embed extraído del HTML; no reproducido",
+      "timestamps": null
+    },
+    {
+      "id": "X-V10",
+      "title": "Customer project",
+      "url": "https://www.youtube.com/watch?v=qqvRUKs5R9M",
+      "origin_source": "X1",
+      "state": "embed extraído del HTML; no reproducido",
+      "timestamps": null
+    },
+    {
+      "id": "X-V11",
+      "title": "Window library",
+      "url": "https://www.youtube.com/watch?v=8sEafsAE1Bg",
+      "origin_source": "X1",
+      "state": "embed extraído del HTML; no reproducido",
+      "timestamps": null
+    },
+    {
+      "id": "X-V12",
+      "title": "Quotation",
+      "url": "https://www.youtube.com/watch?v=aktreLX_AMo",
+      "origin_source": "X1",
+      "state": "embed extraído del HTML; no reproducido",
+      "timestamps": null
+    },
+    {
+      "id": "X-V13",
+      "title": "Printing / share",
+      "url": "https://www.youtube.com/watch?v=DX96T7JDhac",
+      "origin_source": "X1",
+      "state": "embed extraído del HTML; no reproducido",
+      "timestamps": null
+    },
+    {
+      "id": "X-V14",
+      "title": "Add series",
+      "url": "https://www.youtube.com/watch?v=rrtx6plqLsM",
+      "origin_source": "X1",
+      "state": "embed extraído del HTML; no reproducido",
+      "timestamps": null
+    },
+    {
+      "id": "X-V15",
+      "title": "Preset data",
+      "url": "https://www.youtube.com/watch?v=Efbwq8LtPCM",
+      "origin_source": "X1",
+      "state": "embed extraído del HTML; no reproducido",
+      "timestamps": null
+    },
+    {
+      "id": "X-V16",
+      "title": "Material template",
+      "url": "https://www.youtube.com/watch?v=TVUQ7zQS4e0",
+      "origin_source": "X1",
+      "state": "embed extraído del HTML; no reproducido",
+      "timestamps": null
+    },
+    {
+      "id": "X-V17",
+      "title": "Intelligent quotation / BOM",
+      "url": "https://www.youtube.com/watch?v=iOAAAQeus5s",
+      "origin_source": "X1",
+      "state": "embed extraído del HTML; no reproducido",
+      "timestamps": null
+    }
+  ],
+  "review_questions": [
+    "Mostrar una serie real propia y explicar quién mantiene reglas, artículos, precios y actualizaciones.",
+    "Cambiar apertura, mano y punto de vista; probar hoja activa/pasiva, acople, forma inclinada y selección múltiple.",
+    "Modificar sistema o color globalmente y mostrar lista de impactos/incompatibilidades antes de aplicar.",
+    "Distinguir coste, precio actual, precio congelado y revisión emitida sin recalcular silenciosamente.",
+    "Optimizar usando una barra/retazo existente; confirmar corte y demostrar alta/consumo físico del sobrante.",
+    "Recibir parcialmente un pedido y resolver una diferencia en confirmación del proveedor.",
+    "Abrir desde etiqueta una unidad en estación y luego en instalación; conservar revisión y evidencias.",
+    "Dar al asistente una tarea multiacción, interrumpir/reanudar y recuperar su historial desde otra pantalla.",
+    "Probar permisos de coste, catálogo, emisión y salida CNC con usuarios de roles distintos.",
+    "Pedir precios y contrato con módulos, implantación, catálogo, formación, exportación y soporte incluidos."
+  ]
+}
+

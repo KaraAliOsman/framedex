@@ -1,5 +1,5 @@
 .ui-panel {
-  padding: var(--space-12px);
+  padding: var(--space-16px) 0;
   border-block-start: 1px solid var(--border-default);
 }
 .ui-panel__header {
@@ -48,12 +48,9 @@
 .ui-key-value dt {
   color: var(--text-secondary);
   font-size: var(--type-label);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
 }
 .ui-key-value dd {
   margin: 0;
-  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }

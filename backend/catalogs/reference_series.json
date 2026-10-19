@@ -1,0 +1,679 @@
+{
+  "version": "2026-10-18",
+  "note": "Fichas de referencia de fabricantes reales. Datos tomados literalmente de las fuentes citadas; ninguna serie es cotizable ni fabricable hasta que una persona competente declare su autoridad técnica y la empresa cargue sus costos.",
+  "series": [
+    {
+      "id": "proline-pro6004",
+      "manufacturer": "Proline",
+      "series_code": "PRO6004",
+      "series_name": "PRO6004 · 60 mm",
+      "material": "PVC",
+      "family": "Practicable",
+      "uses": [
+        "Ventana",
+        "Puerta"
+      ],
+      "facts": [
+        {
+          "label": "Profundidad del sistema",
+          "value": "60 mm",
+          "source": "catalogo-perfiles",
+          "pages": "4–6"
+        },
+        {
+          "label": "Cámaras",
+          "value": "4",
+          "source": "catalogo-perfiles",
+          "pages": "5–6"
+        }
+      ],
+      "articles": [
+        {
+          "code": "PRO01",
+          "name": "Marco fijo",
+          "role": "Marco",
+          "source": "plantilla-corte",
+          "pages": "1–13, 15, 17, 24"
+        },
+        {
+          "code": "PRO521",
+          "name": "Hoja ventana exterior",
+          "role": "Hoja",
+          "source": "plantilla-corte",
+          "pages": "2–4, 14, 16, 18"
+        },
+        {
+          "code": "PRO04",
+          "name": "Hoja puerta exterior / interior",
+          "role": "Hoja de puerta",
+          "source": "plantilla-corte",
+          "pages": "5, 7, 9, 11"
+        },
+        {
+          "code": "PRO10",
+          "name": "Hoja puerta exterior",
+          "role": "Hoja de puerta",
+          "source": "plantilla-corte",
+          "pages": "6, 8, 10, 12, 24"
+        },
+        {
+          "code": "PRO12",
+          "name": "Batiente",
+          "role": "Batiente",
+          "source": "plantilla-corte",
+          "pages": "9–12"
+        },
+        {
+          "code": "PRO05",
+          "name": "Junquillo para termopanel 18–20 mm",
+          "role": "Junquillo",
+          "source": "plantilla-corte",
+          "pages": "1–12, 14, 16, 18, 24"
+        },
+        {
+          "code": "PRO-R1",
+          "name": "Refuerzo múltiple 28×25×28 · 1,3 mm",
+          "role": "Refuerzo",
+          "source": "plantilla-corte",
+          "pages": "1–12, 14, 16, 18, 24"
+        },
+        {
+          "code": "PRO-R2",
+          "name": "Refuerzo múltiple 29×28×18 · 1,3 mm",
+          "role": "Refuerzo",
+          "source": "plantilla-corte",
+          "pages": "2–4, 14, 16, 18"
+        },
+        {
+          "code": "PRO-R3",
+          "name": "Refuerzo múltiple 42×29×42 · 1,5 mm",
+          "role": "Refuerzo",
+          "source": "plantilla-corte",
+          "pages": "6, 8, 10, 12, 24"
+        }
+      ],
+      "sources": [
+        "catalogo-perfiles",
+        "plantilla-corte",
+        "proline-productos",
+        "proline-catalogo-publico"
+      ],
+      "capabilities": {
+        "reference": true,
+        "quotable": false,
+        "manufacturable": false,
+        "cnc": false
+      },
+      "missing": [
+        "Geometría de perfiles y reglas de corte revisadas por un responsable técnico. Las 18 hojas de corte de la plantilla son ejemplos, no fórmulas generales.",
+        "Matriz de junquillo por espesor de vidrio (la plantilla solo nombra termopanel 18–20 mm).",
+        "Herrajes por tipo de hoja con su fuente.",
+        "Costos privados de la empresa (el catálogo no trae precios).",
+        "Acabados declarados por el fabricante."
+      ],
+      "incidents": [
+        "Plantilla págs. 15–16: seis medidas aparecen como «#NAME?» (error de planilla); no se infieren.",
+        "Plantilla págs. 19–21: el título dice «Puerta doble exterior con solera» pero los perfiles son de corredera; se conserva tal como está."
+      ],
+      "seed": {
+        "name": "PRO6004 60 mm",
+        "code": "PRO6004",
+        "system_family": "CASEMENT",
+        "material": "PVC",
+        "manufacturer": "Proline",
+        "family": "PRO6004",
+        "depth_mm": "60",
+        "chamber_count": "4"
+      }
+    },
+    {
+      "id": "proline-proslide70",
+      "manufacturer": "Proline",
+      "series_code": "PROSLIDE-70",
+      "series_name": "PROSLIDE-70 · corredera",
+      "material": "PVC",
+      "family": "Corredera",
+      "uses": [
+        "Ventana"
+      ],
+      "facts": [
+        {
+          "label": "Profundidad del sistema",
+          "value": "70 mm (pág. 13); las págs. 14–15 indican «81 MM 6 CÁMARAS»",
+          "source": "catalogo-perfiles",
+          "pages": "13–15"
+        }
+      ],
+      "articles": [
+        {
+          "code": "PRO201",
+          "name": "Marco corredera",
+          "role": "Marco",
+          "source": "plantilla-corte",
+          "pages": "19–20"
+        },
+        {
+          "code": "PRO204",
+          "name": "Traslapo",
+          "role": "Traslapo",
+          "source": "plantilla-corte",
+          "pages": "19–20"
+        },
+        {
+          "code": "PRO211",
+          "name": "Hoja ventana",
+          "role": "Hoja corredera",
+          "source": "plantilla-corte",
+          "pages": "19"
+        },
+        {
+          "code": "PRO213",
+          "name": "Hoja ventana",
+          "role": "Hoja corredera",
+          "source": "plantilla-corte",
+          "pages": "20"
+        },
+        {
+          "code": "PRO703",
+          "name": "Junquillo para termopanel 18–20 mm",
+          "role": "Junquillo",
+          "source": "plantilla-corte",
+          "pages": "19–20"
+        },
+        {
+          "code": "PRO-R1",
+          "name": "Refuerzo múltiple 28×25×28 · 1,3 mm",
+          "role": "Refuerzo",
+          "source": "plantilla-corte",
+          "pages": "19–20"
+        },
+        {
+          "code": "PRO-R5",
+          "name": "Refuerzo múltiple 10×42 · 1,3 mm",
+          "role": "Refuerzo",
+          "source": "plantilla-corte",
+          "pages": "19–20"
+        }
+      ],
+      "sources": [
+        "catalogo-perfiles",
+        "plantilla-corte",
+        "proline-productos",
+        "proline-catalogo-publico"
+      ],
+      "capabilities": {
+        "reference": true,
+        "quotable": false,
+        "manufacturable": false,
+        "cnc": false
+      },
+      "missing": [
+        "Confirmar que la línea «PRO SLD-70» de la plantilla corresponde a PROSLIDE-70 del catálogo; hoy se asocian solo por el nombre.",
+        "Resolver la profundidad: el catálogo indica 70 mm en la pág. 13 y «81 MM 6 CÁMARAS» en las págs. 14–15.",
+        "Carriles, traslapos y reglas de corte de corredera revisadas por un responsable técnico.",
+        "Herrajes de corredera, vidrio por espesor y costos privados de la empresa."
+      ],
+      "incidents": [],
+      "seed": {
+        "name": "PROSLIDE-70",
+        "code": "PROSLIDE-70",
+        "system_family": "SLIDING",
+        "material": "PVC",
+        "manufacturer": "Proline",
+        "family": "PROSLIDE-70"
+      }
+    },
+    {
+      "id": "proline-pro5003",
+      "manufacturer": "Proline",
+      "series_code": "PRO5003",
+      "series_name": "PRO5003 · 50 mm",
+      "material": "PVC",
+      "family": "Practicable",
+      "uses": [],
+      "facts": [
+        {
+          "label": "Profundidad del sistema",
+          "value": "50 mm",
+          "source": "catalogo-perfiles",
+          "pages": "3"
+        },
+        {
+          "label": "Cámaras",
+          "value": "3",
+          "source": "catalogo-perfiles",
+          "pages": "3"
+        }
+      ],
+      "articles": [],
+      "sources": [
+        "catalogo-perfiles",
+        "proline-productos"
+      ],
+      "capabilities": {
+        "reference": true,
+        "quotable": false,
+        "manufacturable": false,
+        "cnc": false
+      },
+      "missing": [
+        "Artículos, reglas de corte, vidrio, herrajes y costos: la fuente aportada solo trae la sección de la pág. 3."
+      ],
+      "incidents": [],
+      "seed": {
+        "name": "PRO5003 50 mm",
+        "code": "PRO5003",
+        "system_family": "CASEMENT",
+        "material": "PVC",
+        "manufacturer": "Proline",
+        "family": "PRO5003",
+        "depth_mm": "50",
+        "chamber_count": "3"
+      }
+    },
+    {
+      "id": "proline-pro7005",
+      "manufacturer": "Proline",
+      "series_code": "PRO7005",
+      "series_name": "PRO7005 · 70 mm",
+      "material": "PVC",
+      "family": "Practicable",
+      "uses": [],
+      "facts": [
+        {
+          "label": "Profundidad del sistema",
+          "value": "70 mm",
+          "source": "catalogo-perfiles",
+          "pages": "7–9"
+        },
+        {
+          "label": "Cámaras",
+          "value": "5",
+          "source": "catalogo-perfiles",
+          "pages": "7–9"
+        }
+      ],
+      "articles": [],
+      "sources": [
+        "catalogo-perfiles",
+        "proline-productos"
+      ],
+      "capabilities": {
+        "reference": true,
+        "quotable": false,
+        "manufacturable": false,
+        "cnc": false
+      },
+      "missing": [
+        "Artículos, reglas de corte, vidrio, herrajes y costos: la fuente aportada solo trae secciones (págs. 7–9)."
+      ],
+      "incidents": [],
+      "seed": {
+        "name": "PRO7005 70 mm",
+        "code": "PRO7005",
+        "system_family": "CASEMENT",
+        "material": "PVC",
+        "manufacturer": "Proline",
+        "family": "PRO7005",
+        "depth_mm": "70",
+        "chamber_count": "5"
+      }
+    },
+    {
+      "id": "proline-pro8106",
+      "manufacturer": "Proline",
+      "series_code": "PRO-8106",
+      "series_name": "PRO-8106 · 81 mm",
+      "material": "PVC",
+      "family": "Practicable",
+      "uses": [],
+      "facts": [
+        {
+          "label": "Profundidad del sistema",
+          "value": "81 mm",
+          "source": "catalogo-perfiles",
+          "pages": "10–12"
+        },
+        {
+          "label": "Cámaras",
+          "value": "6",
+          "source": "catalogo-perfiles",
+          "pages": "10–12"
+        },
+        {
+          "label": "Disponibilidad",
+          "value": "A pedido (según el catálogo)",
+          "source": "catalogo-perfiles",
+          "pages": "10"
+        }
+      ],
+      "articles": [],
+      "sources": [
+        "catalogo-perfiles",
+        "proline-productos"
+      ],
+      "capabilities": {
+        "reference": true,
+        "quotable": false,
+        "manufacturable": false,
+        "cnc": false
+      },
+      "missing": [
+        "Artículos, reglas de corte, vidrio, herrajes y costos: la fuente aportada solo trae secciones (págs. 10–12)."
+      ],
+      "incidents": [],
+      "seed": {
+        "name": "PRO-8106 81 mm",
+        "code": "PRO-8106",
+        "system_family": "CASEMENT",
+        "material": "PVC",
+        "manufacturer": "Proline",
+        "family": "PRO-8106",
+        "depth_mm": "81",
+        "chamber_count": "6"
+      }
+    },
+    {
+      "id": "proline-proslide84",
+      "manufacturer": "Proline",
+      "series_code": "PROSLIDE-84",
+      "series_name": "PROSLIDE-84 · corredera",
+      "material": "PVC",
+      "family": "Corredera",
+      "uses": [],
+      "facts": [
+        {
+          "label": "Disponibilidad",
+          "value": "A pedido (según el catálogo)",
+          "source": "catalogo-perfiles",
+          "pages": "16"
+        }
+      ],
+      "articles": [],
+      "sources": [
+        "catalogo-perfiles",
+        "proline-productos"
+      ],
+      "capabilities": {
+        "reference": true,
+        "quotable": false,
+        "manufacturable": false,
+        "cnc": false
+      },
+      "missing": [
+        "Profundidad y cámaras: el texto de las págs. 16–18 mezcla «70 MM 3 CÁMARAS» y «81 MM 6 CÁMARAS»; requiere lectura humana de las secciones.",
+        "Artículos, reglas, herrajes y costos."
+      ],
+      "incidents": [],
+      "seed": {
+        "name": "PROSLIDE-84",
+        "code": "PROSLIDE-84",
+        "system_family": "SLIDING",
+        "material": "PVC",
+        "manufacturer": "Proline",
+        "family": "PROSLIDE-84"
+      }
+    },
+    {
+      "id": "indalum-superba-33-rpt",
+      "manufacturer": "Indalum",
+      "series_code": "Superba 33 RPT",
+      "series_name": "Superba 33 RPT",
+      "material": "Aluminio con rotura de puente térmico",
+      "family": "Por confirmar en el catálogo",
+      "uses": [],
+      "facts": [],
+      "articles": [],
+      "sources": [
+        "indalum-catalogos",
+        "indalum-manuales"
+      ],
+      "capabilities": {
+        "reference": true,
+        "quotable": false,
+        "manufacturable": false,
+        "cnc": false
+      },
+      "missing": [
+        "Descargar e incorporar el catálogo exacto de la serie (documento, versión y páginas) antes de declarar perfiles o usos."
+      ],
+      "incidents": [],
+      "seed": {
+        "name": "Superba 33 RPT",
+        "code": "SUPERBA-33-RPT",
+        "material": "ALUMINIUM",
+        "manufacturer": "Indalum",
+        "family": "Superba 33 RPT"
+      }
+    },
+    {
+      "id": "indalum-superba-44-rpt",
+      "manufacturer": "Indalum",
+      "series_code": "Superba 44 RPT",
+      "series_name": "Superba 44 RPT",
+      "material": "Aluminio con rotura de puente térmico",
+      "family": "Por confirmar en el catálogo",
+      "uses": [],
+      "facts": [],
+      "articles": [],
+      "sources": [
+        "indalum-catalogos",
+        "indalum-manuales"
+      ],
+      "capabilities": {
+        "reference": true,
+        "quotable": false,
+        "manufacturable": false,
+        "cnc": false
+      },
+      "missing": [
+        "Descargar e incorporar el catálogo exacto de la serie (documento, versión y páginas) antes de declarar perfiles o usos."
+      ],
+      "incidents": [],
+      "seed": {
+        "name": "Superba 44 RPT",
+        "code": "SUPERBA-44-RPT",
+        "material": "ALUMINIUM",
+        "manufacturer": "Indalum",
+        "family": "Superba 44 RPT"
+      }
+    },
+    {
+      "id": "winhouse-diamond-60",
+      "manufacturer": "Winhouse",
+      "series_code": "Diamond 60",
+      "series_name": "Diamond 60",
+      "material": "PVC",
+      "family": "Por confirmar en el folleto",
+      "uses": [],
+      "facts": [],
+      "articles": [],
+      "sources": [
+        "winhouse-biblioteca",
+        "winhouse-diamond"
+      ],
+      "capabilities": {
+        "reference": true,
+        "quotable": false,
+        "manufacturable": false,
+        "cnc": false
+      },
+      "missing": [
+        "Incorporar el folleto técnico de la serie y sus perfiles principales con versión y páginas."
+      ],
+      "incidents": [],
+      "seed": {
+        "name": "Diamond 60",
+        "code": "DIAMOND-60",
+        "material": "PVC",
+        "manufacturer": "Winhouse",
+        "family": "Diamond 60"
+      }
+    },
+    {
+      "id": "winhouse-opal-70",
+      "manufacturer": "Winhouse",
+      "series_code": "Opal 70",
+      "series_name": "Opal 70",
+      "material": "PVC",
+      "family": "Por confirmar en el folleto",
+      "uses": [],
+      "facts": [],
+      "articles": [],
+      "sources": [
+        "winhouse-biblioteca",
+        "winhouse-opal"
+      ],
+      "capabilities": {
+        "reference": true,
+        "quotable": false,
+        "manufacturable": false,
+        "cnc": false
+      },
+      "missing": [
+        "Incorporar el folleto técnico de la serie y sus perfiles principales con versión y páginas."
+      ],
+      "incidents": [],
+      "seed": {
+        "name": "Opal 70",
+        "code": "OPAL-70",
+        "material": "PVC",
+        "manufacturer": "Winhouse",
+        "family": "Opal 70"
+      }
+    },
+    {
+      "id": "deceuninck-chile",
+      "manufacturer": "Deceuninck",
+      "series_code": "Catálogos Chile",
+      "series_name": "Catálogos de Deceuninck Chile",
+      "material": "PVC",
+      "family": "Por identificar",
+      "uses": [],
+      "facts": [],
+      "articles": [],
+      "sources": [
+        "deceuninck-catalogos"
+      ],
+      "capabilities": {
+        "reference": true,
+        "quotable": false,
+        "manufacturable": false,
+        "cnc": false
+      },
+      "missing": [
+        "Elegir la serie concreta en los catálogos publicados e incorporar su documento con versión y páginas."
+      ],
+      "incidents": [],
+      "seed": {
+        "material": "PVC",
+        "manufacturer": "Deceuninck"
+      }
+    },
+    {
+      "id": "vinhaus-pendiente",
+      "manufacturer": "Fabricante por identificar",
+      "series_code": "«Vinhaus»",
+      "series_name": "«Vinhaus» (nombre mencionado, identidad sin resolver)",
+      "material": "Por identificar",
+      "family": "Por identificar",
+      "uses": [],
+      "facts": [],
+      "articles": [],
+      "sources": [],
+      "capabilities": {
+        "reference": false,
+        "quotable": false,
+        "manufacturable": false,
+        "cnc": false
+      },
+      "missing": [
+        "Resolver la identidad: puede no corresponder a Winhouse, Winhaus.cl ni Winhouse by Haustek. No se fusiona con otra marca hasta confirmar el fabricante."
+      ],
+      "incidents": [],
+      "seed": {}
+    }
+  ],
+  "sources": {
+    "catalogo-perfiles": {
+      "title": "Catálogo de productos · Perfiles de PVC (Proline)",
+      "holder": "Aluminios 2000 (www.aluminios2000.com, distribuidor según la portada)",
+      "kind": "Documento aportado por el dueño",
+      "sha256": "b2732493f1981cbc0f7a595104a1603bbc4bafe76a6e625ab5a3119bfe755cfe",
+      "pages_total": 24,
+      "url": null
+    },
+    "plantilla-corte": {
+      "title": "Plantilla de corte · ventanas de PVC Proline",
+      "holder": "Aluminios 2000 / Proline",
+      "kind": "Documento aportado por el dueño",
+      "sha256": "bf16d500eae5b7f2af9bef2f983b987acc4e0fda63c6c8fa499ed47ae4ac816f",
+      "pages_total": 25,
+      "url": null
+    },
+    "proline-productos": {
+      "title": "Proline · productos",
+      "holder": "Proline PVC",
+      "kind": "Sitio público del fabricante",
+      "sha256": null,
+      "pages_total": null,
+      "url": "https://www.prolinepvc.com/en/products"
+    },
+    "proline-catalogo-publico": {
+      "title": "Proline · catálogo PVC (PDF público)",
+      "holder": "Proline PVC",
+      "kind": "Documento público del fabricante",
+      "sha256": null,
+      "pages_total": null,
+      "url": "https://www.prolinepvc.com/catalogue/Proline_PVC_Catalogue.pdf"
+    },
+    "indalum-catalogos": {
+      "title": "Indalum · catálogos",
+      "holder": "Indalum",
+      "kind": "Sitio público del fabricante",
+      "sha256": null,
+      "pages_total": null,
+      "url": "https://www.indalum.cl/fabricantes-minisite/catalogos/40"
+    },
+    "indalum-manuales": {
+      "title": "Indalum · manuales para arquitectos",
+      "holder": "Indalum",
+      "kind": "Sitio público del fabricante",
+      "sha256": null,
+      "pages_total": null,
+      "url": "https://www.indalum.cl/arquitectos/manuales/39"
+    },
+    "winhouse-biblioteca": {
+      "title": "Winhouse · folletos técnicos",
+      "holder": "Winhouse",
+      "kind": "Sitio público del fabricante",
+      "sha256": null,
+      "pages_total": null,
+      "url": "https://www.winhouse.com.tr/en-us/architects-engineers/technical-brochures"
+    },
+    "winhouse-diamond": {
+      "title": "Winhouse · Diamond 60 · perfiles principales",
+      "holder": "Winhouse",
+      "kind": "Sitio público del fabricante",
+      "sha256": null,
+      "pages_total": null,
+      "url": "https://www.winhouse.com.tr/en-us/pvc-window-and-door-system/diamond-60-pvc-series/main-profiles"
+    },
+    "winhouse-opal": {
+      "title": "Winhouse · Opal 70 · perfiles principales",
+      "holder": "Winhouse",
+      "kind": "Sitio público del fabricante",
+      "sha256": null,
+      "pages_total": null,
+      "url": "https://www.winhouse.com.tr/en-us/pvc-window-and-door-system/opal-70-series-pvc-windows/main-profiles"
+    },
+    "deceuninck-catalogos": {
+      "title": "Deceuninck Chile · catálogos",
+      "holder": "Deceuninck Chile",
+      "kind": "Sitio público del fabricante",
+      "sha256": null,
+      "pages_total": null,
+      "url": "https://www.deceuninck.cl/nuestros_catalogos.html"
+    }
+  }
+}

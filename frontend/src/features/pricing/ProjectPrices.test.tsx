@@ -216,7 +216,7 @@ it("consumes the company currency in a new motor projection", async () => {
   render(page());
   await waitFor(() => expect(calls("workspace/")).toHaveLength(1));
   expect(JSON.parse(String(calls("workspace/")[0]?.[1].body))).toMatchObject({ currency: "USD" });
-  fireEvent.click(screen.getByText("Moneda y autoridades"));
+  fireEvent.click(screen.getByText("Moneda y listas de costos"));
   expect(screen.getByLabelText("Moneda")).toHaveValue("USD");
   fireEvent.change(screen.getByLabelText("Fecha de costos"), { target: { value: "2026-10-09" } });
   expect(screen.getByRole("option", { name: /USD → CLP.*900.*09-10-2026/ })).toBeInTheDocument();
@@ -274,7 +274,7 @@ it("mounts selling evidence and authorized FX for estimator without confidential
   expect(screen.queryByText("Utilidad de la obra:")).not.toBeInTheDocument();
   expect(screen.queryByText("Costo unitario")).not.toBeInTheDocument();
   expect(screen.getByText(/Margen solicitado: 35/)).toBeInTheDocument();
-  fireEvent.click(screen.getByText("Moneda y autoridades"));
+  fireEvent.click(screen.getByText("Moneda y listas de costos"));
   fireEvent.change(screen.getByLabelText("Fecha de costos"), { target: { value: "2026-10-09" } });
   expect(screen.getByRole("option", { name: /USD → CLP.*900.*09-10-2026/ })).toBeInTheDocument();
 });
@@ -328,7 +328,7 @@ it("keeps a positioned missing-cost failure and a resolver link without a zero-p
   render(page());
   await screen.findByRole("alert");
   expect(screen.getByRole("alert")).toHaveTextContent("Vano 4");
-  expect(screen.getByRole("link", { name: "Completar costos y autoridades" })).toHaveAttribute(
+  expect(screen.getByRole("link", { name: "Completar costos" })).toHaveAttribute(
     "href",
     "/pricing/cost-lists",
   );
@@ -421,7 +421,7 @@ it.each([
   fireEvent.click(confirmation);
   expect(confirmation).toBeChecked();
   if (["Moneda", "Fecha de costos", "Tipo de cambio registrado"].includes(label))
-    fireEvent.click(screen.getByText("Moneda y autoridades"));
+    fireEvent.click(screen.getByText("Moneda y listas de costos"));
   const values: Record<string, string> = {
     "Margen solicitado (%)": "20",
     "Descuento (%)": "5",

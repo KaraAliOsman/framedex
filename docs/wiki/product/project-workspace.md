@@ -13,6 +13,17 @@ sources:
 
 # Centro de trabajo del proyecto
 
+## Nueva composición del dueño · 18-10-2026 · pendiente de implementación
+
+[Mesa de obra + Estudio](../../research/2026-10-18-direccion-final/01-producto-y-dos-vistas.md)
+son dos vistas del mismo proyecto y sesión manual; Mesa es el inicio recomendado.
+Ambas conservan selección, revisión, borrador, undo y permisos. La nueva
+preferencia no equivale al selector galería/tabla. El copiloto es popup opcional
+global, sin ocupar el inspector o el lienzo. Las afirmaciones de P21 siguientes
+conservan su ref histórico; no prueban que las dos vistas ya existan.
+
+## Base histórica verificada en P21
+
 El proyecto comparte una lectura por organización e identidad. Su encabezado
 identifica cliente, dirección, revisión, vigencia y precio aplicado; siete
 pestañas exponen posiciones, cotización, precio, cobranza, producción,

@@ -24,7 +24,7 @@ const code = Object.values(
   }),
 ) as string[];
 const definitions = (source: string) =>
-  new Set(Array.from(source.matchAll(/(--[\w-]+)\s*:/g), (match) => match[1]!));
+  new Set(Array.from(source.matchAll(/(?:^|[{;\s])(--[\w-]+)\s*:/gm), (match) => match[1]!));
 const references = (source: string) =>
   new Set(Array.from(source.matchAll(/var\(\s*(--[\w-]+)/g), (match) => match[1]!));
 const allCss = styles.join("\n");
@@ -107,8 +107,8 @@ function contrast(fg: string, bg: string, map: Record<string, string>): number {
     b = luminance(rgb(bg, map));
   return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
 }
-describe.each([false, true])("AA roles (dark=%s)", (dark) => {
-  const map = roles(dark);
+describe("AA roles of the single light theme", () => {
+  const map = roles(false);
   for (const foreground of ["text-primary", "text-secondary", "text-small-muted", "interactive"]) {
     for (const background of [
       "bg-app",
@@ -133,6 +133,8 @@ describe.each([false, true])("AA roles (dark=%s)", (dark) => {
   // Small UI text and units use text-small-muted, checked above at 4.5.
   it("large muted annotations >= 3", () =>
     expect(contrast("--text-muted", "--surface-sheet", map)).toBeGreaterThanOrEqual(3));
+  it("control boundary >= 3 on panels", () =>
+    expect(contrast("--border-control", "--surface-panel", map)).toBeGreaterThanOrEqual(3));
   it("focus indicator >= 3", () =>
     expect(contrast("--border-focus", "--surface-sheet", map)).toBeGreaterThanOrEqual(3));
 });

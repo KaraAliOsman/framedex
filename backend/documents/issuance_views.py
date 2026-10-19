@@ -4,6 +4,7 @@ import json
 from uuid import UUID
 
 from django.db import connection, DatabaseError, transaction
+from django.http import HttpResponse
 from drf_spectacular.utils import extend_schema
 from rest_framework import serializers
 from rest_framework.response import Response
@@ -15,6 +16,7 @@ from authentication.tenancy import MembershipRepository, enforce_owner_mfa, reso
 from authentication.views import verified_request_token
 from documents import issuance
 from documents.serializers import FreezeResponseSerializer
+from documents.quote_serializers import QuotationLayoutSerializer
 from documents.views import (
     ERRORS,
     _database_sqlstate,
@@ -186,3 +188,99 @@ class QuotationCustomerView(APIView):
         data = validate(QuotationCustomerRequestSerializer, request.data)
         with documentary_scope(request, ("OWNER", "ESTIMATOR")) as (_, _, org_id):
             return Response(issuance.save_customer(org_id=org_id, project_id=project_id, data=data))
+
+
+class QuotationLayoutResponseSerializer(serializers.Serializer):
+    layout = QuotationLayoutSerializer()
+    prepared = serializers.BooleanField()
+
+
+class QuotationLayoutView(APIView):
+    """This work's quotation composition (template, blocks, texts)."""
+
+    @extend_schema(
+        operation_id="quotation_layout_get",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        responses={200: QuotationLayoutResponseSerializer, **ERRORS},
+        tags=["documents"],
+    )
+    def get(self, request, project_id: UUID):
+        with documentary_scope(request, ("OWNER", "ESTIMATOR")) as (_, _, org_id):
+            return Response(issuance.get_layout(org_id=org_id, project_id=project_id))
+
+    @extend_schema(
+        operation_id="quotation_layout_save",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=QuotationLayoutSerializer,
+        responses={200: QuotationLayoutResponseSerializer, **ERRORS},
+        tags=["documents"],
+    )
+    def put(self, request, project_id: UUID):
+        data = validate(QuotationLayoutSerializer, request.data)
+        with documentary_scope(request, ("OWNER", "ESTIMATOR")) as (_, _, org_id):
+            return Response(issuance.save_layout(org_id=org_id, project_id=project_id, layout=data))
+
+
+class QuotationDraftPreviewView(APIView):
+    """The real document early: «Borrador», no number consumed, not stored.
+    An optional unsaved layout lets the editor show a change before saving."""
+
+    @extend_schema(
+        operation_id="quotation_draft_preview",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=QuotationLayoutSerializer,
+        responses={200: {"type": "string", "format": "binary"}, **ERRORS},
+        tags=["documents"],
+    )
+    def post(self, request, project_id: UUID):
+        data = validate(QuotationLayoutSerializer, request.data or {})
+        with documentary_scope(request, ("OWNER", "ESTIMATOR")) as (token, _, org_id):
+            content = issuance.draft_preview(
+                org_id=org_id, actor_id=token.user_id, project_id=project_id, layout=data or None
+            )
+        response = HttpResponse(content, content_type="application/pdf")
+        response["Cache-Control"] = "private, no-store"
+        response["Content-Disposition"] = 'inline; filename="cotizacion-borrador.pdf"'
+        return response
+
+
+class QuotationNumberingSerializer(StrictSerializer):
+    prefix = serializers.CharField(max_length=20, allow_blank=True)
+    next_number = serializers.IntegerField(min_value=1, max_value=999999999)
+
+
+class QuotationNumberingResponseSerializer(serializers.Serializer):
+    prefix = serializers.CharField(allow_blank=True)
+    next_number = serializers.IntegerField()
+    highest_assigned = serializers.IntegerField(allow_null=True)
+    example = serializers.CharField(allow_null=True)
+
+
+class QuotationNumberingView(APIView):
+    """Company quotation numbering: N.º 1 by default, editable prefix/next."""
+
+    @extend_schema(
+        operation_id="quotation_numbering_get",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        responses={200: QuotationNumberingResponseSerializer, **ERRORS},
+        tags=["documents"],
+    )
+    def get(self, request):
+        from documents import numbering
+
+        with documentary_scope(request, ("OWNER", "ESTIMATOR", "WORKSHOP_MANAGER")) as (_, _, org_id):
+            return Response(numbering.settings(org_id))
+
+    @extend_schema(
+        operation_id="quotation_numbering_save",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=QuotationNumberingSerializer,
+        responses={200: QuotationNumberingResponseSerializer, **ERRORS},
+        tags=["documents"],
+    )
+    def put(self, request):
+        from documents import numbering
+
+        data = validate(QuotationNumberingSerializer, request.data)
+        with documentary_scope(request, ("OWNER",)) as (_, _, org_id):
+            return Response(numbering.save_settings(org_id, data))

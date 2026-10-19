@@ -7,6 +7,7 @@
  */
 import type { DocumentTypeEnum } from "./documentTypeEnum";
 import type { FormatEnum } from "./formatEnum";
+import type { LayoutEnum } from "./layoutEnum";
 
 export interface ArtifactRequestRequest {
   document_type: DocumentTypeEnum;
@@ -14,4 +15,5 @@ export interface ArtifactRequestRequest {
   project_version_id: string;
   /** @nullable */
   order_id?: string | null;
+  layout?: LayoutEnum;
 }

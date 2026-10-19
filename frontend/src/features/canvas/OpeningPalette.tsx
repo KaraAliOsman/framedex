@@ -10,6 +10,37 @@ import { dismissFloatingLayers } from "../../ui/floatingLayer";
 import type { Opening } from "./intentEditing";
 import { OpeningGlyph } from "./ProductFrontSvg";
 
+/** Why no opening choice can be offered right now — never a universal
+ * palette as a fallback (dirección final 03, aperturas):
+ * - loading/error: the series' options did not arrive (drawing kept);
+ * - missing: the series declares neither capabilities nor historical
+ *   compatible openings, so nothing is offered until its source is declared. */
+export function OpeningOptionsState({
+  state,
+}: {
+  state: "loading" | "error" | "missing";
+}): JSX.Element {
+  if (state === "loading")
+    return (
+      <p className="assembly-hint" role="status">
+        Cargando las aperturas que declara la serie…
+      </p>
+    );
+  if (state === "error")
+    return (
+      <p className="assembly-hint" role="alert">
+        No se pudieron cargar las aperturas de la serie. El dibujo y tus cambios se conservan; usa
+        «Reintentar catálogo» junto a la serie.
+      </p>
+    );
+  return (
+    <p className="assembly-hint" role="status">
+      Esta serie no declara aperturas con fuente. Declara sus capacidades en Catálogos › Serie antes
+      de cambiar la apertura.
+    </p>
+  );
+}
+
 /** Historical designs use the same palette in the bay and module inspectors. */
 export function LegacyOpeningPalette({
   options,
@@ -26,29 +57,29 @@ export function LegacyOpeningPalette({
 }): JSX.Element {
   return (
     <div className="opening-palette" role="group" aria-label={t("assembly.opening")}>
-      {OPENING_OPTIONS.filter(
-        ([value]) => !options?.system_family || options.compatible_openings.includes(value),
-      ).map(([value, labelKey]) => {
-        const reason = unavailable?.(value);
-        return (
-          <button
-            key={value}
-            type="button"
-            className={`opening-choice opening-choice--named${opening === value ? " is-active" : ""}`}
-            title={reason ?? t(labelKey)}
-            aria-label={t(labelKey)}
-            aria-pressed={opening === value}
-            disabled={disabled || !!reason}
-            onClick={() => onPick(value)}
-          >
-            <svg viewBox="0 0 100 100" aria-hidden="true">
-              <rect className="opening-choice__frame" x={4} y={4} width={92} height={92} />
-              <OpeningGlyph opening={value} x={4} y={4} w={92} h={92} />
-            </svg>
-            <span>{t(labelKey)}</span>
-          </button>
-        );
-      })}
+      {OPENING_OPTIONS.filter(([value]) => options?.compatible_openings.includes(value)).map(
+        ([value, labelKey]) => {
+          const reason = unavailable?.(value);
+          return (
+            <button
+              key={value}
+              type="button"
+              className={`opening-choice opening-choice--named${opening === value ? " is-active" : ""}`}
+              title={reason ?? t(labelKey)}
+              aria-label={t(labelKey)}
+              aria-pressed={opening === value}
+              disabled={disabled || !!reason}
+              onClick={() => onPick(value)}
+            >
+              <svg viewBox="0 0 100 100" aria-hidden="true">
+                <rect className="opening-choice__frame" x={4} y={4} width={92} height={92} />
+                <OpeningGlyph opening={value} x={4} y={4} w={92} h={92} />
+              </svg>
+              <span>{t(labelKey)}</span>
+            </button>
+          );
+        },
+      )}
     </div>
   );
 }

@@ -3,6 +3,7 @@
 // Authentication and generated API calls are mocked. These tests do not prove RLS.
 
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../api/apiMutator";
 import * as client from "../../api/generated/dekopen";
@@ -216,10 +217,14 @@ function expectNoWrites() {
 }
 
 async function mount() {
+  // The manufacturer reference shelf reads through react-query.
+  const queries = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
-    <ConfirmProvider>
-      <CatalogPage />
-    </ConfirmProvider>,
+    <QueryClientProvider client={queries}>
+      <ConfirmProvider>
+        <CatalogPage />
+      </ConfirmProvider>
+    </QueryClientProvider>,
   );
   await screen.findByRole("heading", { name: t("catalog.title") });
 }
@@ -305,6 +310,9 @@ beforeEach(() => {
   vi.mocked(client.catalogArticleList).mockResolvedValue(ok({ items: [] }));
   vi.mocked(client.catalogBeadList).mockResolvedValue(ok({ items: [] }));
   vi.mocked(client.catalogKitList).mockResolvedValue(ok({ items: [kit()] }));
+  vi.mocked(client.catalogReferenceSeries).mockResolvedValue(
+    ok({ version: "test", note: "", series: [], sources: {} }) as never,
+  );
 });
 
 afterEach(() => {

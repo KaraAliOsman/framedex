@@ -1074,9 +1074,9 @@ def _revision_header(
     return f'<main class="{class_name}">{titleblock}{header}', bom_hash
 
 
-def _doc01(snapshot: dict[str, object], *, portal_url: str | None = None) -> str:
+def _doc01(snapshot: dict[str, object], *, portal_url: str | None = None, layout: str | None = None) -> str:
     from documents.quotation import render
-    return render(snapshot, portal_url=portal_url)
+    return render(snapshot, portal_url=portal_url, layout_name=layout)
 
 
 def _doc03(snapshot: dict[str, object]) -> str:
@@ -2080,12 +2080,27 @@ def _doc08(snapshot: dict[str, object]) -> str:
 
 
 def render_pdf_document(
-    document_type: str, snapshot: dict[str, object], *, pdf_identifier: str, portal_url: str | None = None
+    document_type: str, snapshot: dict[str, object], *, pdf_identifier: str, portal_url: str | None = None,
+    layout: str | None = None,
 ) -> tuple[bytes, str]:
+    """One sealed payload, one or more compositions: DOC-01 Esencial/Proyecto/
+    Alternativas; DOC-05 Secuencia (estándar), Lista compacta, Pedido por obra."""
     from weasyprint import HTML
 
     if document_type == "DOC-01":
-        body = _doc01(snapshot, portal_url=portal_url)
+        body = _doc01(snapshot, portal_url=portal_url, layout=layout)
+    elif document_type == "DOC-05" and layout == "COMPACTA":
+        from documents.workshop_layouts import cut_compact
+        body = cut_compact(snapshot)
+    elif document_type == "DOC-03" and layout == "PLANO":
+        from documents.workshop_layouts import technical_plan
+        body = technical_plan(snapshot)
+    elif document_type == "DOC-05" and layout == "VENTANA":
+        from documents.workshop_layouts import cut_by_window
+        body = cut_by_window(snapshot)
+    elif document_type == "DOC-05" and layout == "OBRA":
+        from documents.workshop_layouts import purchase_by_work
+        body = purchase_by_work(snapshot)
     elif document_type == "DOC-02":
         body = _doc02(snapshot)
     elif document_type == "DOC-03":

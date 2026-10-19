@@ -12,7 +12,7 @@ import {
 
 import { t } from "../i18n/es-CL";
 import { decimalInputValue, formatDecimal, parseDecimalInput } from "../decimal";
-import { DimLoader } from "./Signature";
+import { Loading } from "./Signature";
 
 /* ---------- Button ---------- */
 
@@ -75,7 +75,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       {...rest}
       title={disabled ? (disabledReason ?? rest.title) : rest.title}
     >
-      {loading ? <DimLoader label="Procesando la acción" /> : null}
+      {loading ? <Loading label="Procesando la acción" quiet /> : null}
       {!loading && icon ? <span className="ui-button__icon">{icon}</span> : null}
       {/* The label stays mounted while loading so width doesn't collapse. */}
       <span className="ui-button__label">{children}</span>
@@ -351,7 +351,7 @@ export const SelectField = forwardRef<HTMLSelectElement, SelectFieldProps>(funct
 /* ---------- misc ---------- */
 
 export function Spinner({ label }: { label?: string }): JSX.Element {
-  return <DimLoader label={label ?? t("ui.loading")} />;
+  return <Loading label={label ?? t("ui.loading")} />;
 }
 
 export const TextField = TextInput;
