@@ -12,7 +12,7 @@ const anonKey = requiredEnvironment("SUPABASE_ANON_KEY");
 const serviceRoleKey = requiredEnvironment("SUPABASE_SERVICE_ROLE_KEY");
 const mailpitUrl = environment("MAILPIT_URL") ?? "http://127.0.0.1:25324";
 const djangoUrl = environment("DJANGO_URL") ?? "http://127.0.0.1:8000";
-const demoSeriesLabel = "PVC practicable 60 mm · acoples v7 · DEMO · sintético, sin certificación";
+const demoSeriesLabel = "PVC practicable 60 mm · acoples v7 · DEMO";
 
 type FixtureUser = {
   email: string;
@@ -154,7 +154,7 @@ async function prepareProjectPrice(page: Page, date: string, reason: string): Pr
   await expect(page.getByRole("heading", { name: "Actual y propuesto" })).toBeVisible();
   const control = page.getByRole("button", { name: "Ajustar propuesta y decidir" });
   if (await control.isVisible()) await control.click();
-  await page.getByText("Moneda y autoridades", { exact: true }).click();
+  await page.getByText("Moneda y listas de costos", { exact: true }).click();
   const projection = page.waitForResponse(
     (response) =>
       response.request().method() === "POST" &&
@@ -362,6 +362,12 @@ async function assertOwnerBlockedAtAal1(
   });
 }
 
+/** «Cerrar sesión» lives in the account menu of the navigation rail. */
+async function signOut(page: Page) {
+  await page.getByRole("button", { name: "Cuenta", exact: true }).click();
+  await page.getByRole("button", { name: "Cerrar sesión", exact: true }).click();
+}
+
 test("real Magic Link reaches Mailpit and authenticates Django /auth/me", async ({
   page,
   request,
@@ -381,13 +387,11 @@ test("real Magic Link reaches Mailpit and authenticates Django /auth/me", async 
   const navigation = page.getByRole("navigation", { name: "Navegación principal" });
   // ESTIMATOR can read technical authority, while publication and organization
   // administration remain supervisor capabilities enforced by the backend.
-  await expect(navigation.getByRole("link", { name: "Catálogo técnico", exact: true })).toHaveCount(
-    1,
-  );
+  await expect(navigation.getByRole("link", { name: "Catálogos", exact: true })).toHaveCount(1);
   await expect(navigation.getByRole("link", { name: "Administración", exact: true })).toHaveCount(
     0,
   );
-  await navigation.getByRole("link", { name: "Catálogo técnico", exact: true }).click();
+  await navigation.getByRole("link", { name: "Catálogos", exact: true }).click();
   // The real catalog loads its authority families before mounting the workspace.
   // Wait for that state to finish before inspecting publication controls.
   await expect(page.getByRole("heading", { name: "Catálogo técnico", exact: true })).toBeVisible({
@@ -401,7 +405,8 @@ test("real Magic Link reaches Mailpit and authenticates Django /auth/me", async 
   await expect(
     page.getByRole("button", { name: "Descargar plantilla XLSX", exact: true }),
   ).toHaveCount(0);
-  await navigation.getByRole("link", { name: "Ajustes", exact: true }).click();
+  // Company settings sit apart from the four everyday areas, in «Empresa».
+  await page.getByRole("link", { name: "Empresa", exact: true }).click();
   await page
     .getByRole("navigation", { name: "Secciones de ajustes" })
     .getByRole("button", { name: "Documentos", exact: true })
@@ -410,25 +415,18 @@ test("real Magic Link reaches Mailpit and authenticates Django /auth/me", async 
     page.getByRole("heading", { name: "Documentos", exact: true, level: 2 }),
   ).toBeVisible();
   await expect(page.getByRole("button", { name: "Guardar documentos", exact: true })).toBeVisible();
-  for (const route of ["Proyectos", "Clientes", "Inicio"]) {
+  for (const route of ["Proyectos", "Clientes", "Catálogos"]) {
     await navigation.getByRole("link", { name: route, exact: true }).click();
     await expect(page.getByTestId("app-shell")).toBeVisible();
   }
-  const initialTheme = await page.locator("html").getAttribute("data-theme");
-  await page.getByRole("button", { name: "Cambiar tema" }).click();
-  await expect(page.locator("html")).toHaveAttribute(
-    "data-theme",
-    initialTheme === "light" ? "dark" : "light",
-  );
+  // One light theme (constitution 2026-10): no switch, never dark.
+  await expect(page.getByRole("button", { name: "Cambiar tema" })).toHaveCount(0);
   await page.reload();
-  await expect(page.locator("html")).toHaveAttribute(
-    "data-theme",
-    initialTheme === "light" ? "dark" : "light",
-  );
+  await expect(page.locator("html")).not.toHaveAttribute("data-theme", "dark");
   await expect(page.getByTestId("app-shell")).toBeVisible();
 
   // A consumed email link must not create a second authenticated session.
-  await page.getByRole("button", { name: "Cerrar sesión" }).click();
+  await signOut(page);
   await expect(page.getByTestId("login-page")).toBeVisible();
   await page.goto(message.link);
   await expect(page.getByRole("alert")).toBeVisible();
@@ -501,19 +499,17 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
     reason: "Test commercial rules",
   });
   await page.goto("/projects");
-  await page.getByRole("button", { name: "Crear proyecto", exact: true }).click();
-  await page.getByLabel("Nombre del proyecto", { exact: true }).fill("Commercial browser gate");
-  await page.getByLabel("Cliente", { exact: true }).fill("Synthetic fixture");
+  // «Nueva cotización» creates the work and opens its first window at once.
   const creation = page.waitForResponse(
     (response) =>
       response.request().method() === "POST" &&
       new URL(response.url()).pathname === "/api/v1/projects/",
   );
-  await page.getByRole("button", { name: "Guardar", exact: true }).click();
+  await page.getByRole("button", { name: "Nueva cotización", exact: true }).first().click();
   const createdResponse = await creation;
   expect(createdResponse.status()).toBe(201);
   const draft = (await createdResponse.json()) as { id: string };
-  await page.getByRole("link", { name: "Agregar vanos", exact: true }).click();
+  await expect(page).toHaveURL(new RegExp(`/projects/${draft.id}/positions/new`));
   await page.getByLabel("Ubicación del vano", { exact: true }).fill("Fijo comercial");
   await page.getByLabel("Cantidad", { exact: true }).fill("2");
   await page.locator(".editor-system-chip").click();
@@ -538,10 +534,23 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await expect(page.getByRole("button", { name: "Guardar", exact: true })).toBeEnabled();
   await page.getByRole("button", { name: "Guardar", exact: true }).click();
   await expect(page.getByText("Guardado", { exact: true })).toBeVisible();
-  await page.getByRole("link", { name: /Volver al proyecto/ }).click();
+  await page.getByRole("button", { name: "Volver a la obra", exact: true }).click();
   // Reload the cached project so the next action and price workspace use the
   // position just persisted, rather than the collection before the save.
   await page.reload();
+  // Work and client names are completed from the work when needed.
+  await page.locator(".project-head").getByRole("button", { name: "Más", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Datos de la obra y del cliente" }).click();
+  const details = page.getByRole("group", { name: "Datos del proyecto", exact: true });
+  await details.getByLabel("Nombre del proyecto", { exact: true }).fill("Commercial browser gate");
+  await details.getByLabel("Cliente", { exact: true }).fill("Synthetic fixture");
+  const renamed = page.waitForResponse(
+    (response) =>
+      response.request().method() === "PATCH" &&
+      new URL(response.url()).pathname === `/api/v1/projects/${draft.id}/`,
+  );
+  await details.getByRole("button", { name: "Guardar", exact: true }).click();
+  expect((await renamed).status()).toBe(200);
   await openProjectPrices(page);
   await expect(page.getByLabel("Proyecto", { exact: true })).toHaveCount(0);
   await prepareProjectPrice(page, "2026-09-10", "Aplicar cotización desde el navegador");
@@ -585,7 +594,7 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   ).toContainText(formatMoney(quote.project_gross, "CLP"));
   await page.goto(`/projects/${draft.id}`);
   const projectGross = page
-    .locator(".project-head__facts dd.project-number")
+    .locator(".project-head__total strong")
     .filter({ hasText: formatMoney(quote.project_gross, "CLP") });
   await expect(projectGross).toHaveCount(1);
   await expect(projectGross).toBeVisible();
@@ -662,18 +671,18 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await successorDialog.getByRole("button", { name: t("ui.confirm"), exact: true }).click();
   expect((await successor).status()).toBe(201);
   await expect(page.getByText("Borrador", { exact: true })).toBeVisible();
-  await expect(page.getByText("Revisión B", { exact: true })).toBeVisible();
-  await page.getByRole("tab", { name: "Posiciones", exact: true }).click();
+  await expect(page.locator(".project-head__revision")).toHaveText("Revisión B");
+  await page.getByRole("tab", { name: "Ventanas", exact: true }).click();
   // The collection opens the exact selected position with Enter.
   await page
-    .getByRole("list", { name: "Posiciones" })
+    .getByRole("list", { name: "Ventanas" })
     .getByRole("listitem")
     .filter({ hasText: "Fijo comercial" })
     .press("Enter");
   await page.getByLabel("Cantidad", { exact: true }).fill("3");
   await page.getByRole("button", { name: "Guardar", exact: true }).click();
   await expect(page.getByText("Guardado", { exact: true })).toBeVisible();
-  await page.getByRole("link", { name: /Volver al proyecto/ }).click();
+  await page.getByRole("button", { name: "Volver a la obra", exact: true }).click();
   // Reload the cached project so the next action and price workspace use the
   // position just persisted, rather than the collection before the save.
   await page.reload();
@@ -727,17 +736,14 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   ).toEqual(["REV-A", "REV-B"]);
 
   await page.goto("/projects");
-  await page.getByRole("button", { name: "Crear proyecto", exact: true }).click();
-  await page.getByLabel("Nombre del proyecto", { exact: true }).fill("Composite browser gate");
-  await page.getByLabel("Cliente", { exact: true }).fill("Synthetic composite fixture");
   const compositeCreation = page.waitForResponse(
     (response) =>
       response.request().method() === "POST" &&
       new URL(response.url()).pathname === "/api/v1/projects/",
   );
-  await page.getByRole("button", { name: "Guardar", exact: true }).click();
+  await page.getByRole("button", { name: "Nueva cotización", exact: true }).first().click();
   const compositeProject = (await (await compositeCreation).json()) as { id: string };
-  await page.getByRole("link", { name: "Agregar vanos", exact: true }).click();
+  await expect(page).toHaveURL(new RegExp(`/projects/${compositeProject.id}/positions/new`));
   await page.getByLabel("Ubicación del vano", { exact: true }).fill("Fachada compuesta");
   await page.locator(".editor-system-chip").click();
   await page.getByRole("combobox", { name: "Serie de perfiles", exact: true }).selectOption({
@@ -777,7 +783,7 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   );
   await page.getByRole("button", { name: "Dividir vertical", exact: true }).click();
   // In divide mode the module owns hit-testing; leaf selection is suspended.
-  await page.locator(".canvas-sheet .front-module").first().click();
+  await page.locator(".canvas-sheet .front-module[role=group]").first().click();
   const dividedResponse = await dividedCalculation;
   expect(dividedResponse.status()).toBe(200);
   expect((await dividedResponse.json()).valid).toBe(true);
@@ -790,12 +796,10 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await page.getByRole("button", { name: "Guardar", exact: true }).click();
   const compositePosition = await (await compositeSave).json();
   expect(compositePosition.typology).toBe("COMPOSITE");
-  await page.getByRole("link", { name: /Volver al proyecto/ }).click();
-  await page.getByRole("link", { name: /Volver al proyecto/ }).click();
-  await page.reload();
-  await page.getByRole("link", { name: "Composite browser gate", exact: true }).click();
+  await page.getByRole("button", { name: "Volver a la obra", exact: true }).click();
+  await page.goto(`/projects/${compositeProject.id}`);
   await page
-    .getByRole("list", { name: "Posiciones" })
+    .getByRole("list", { name: "Ventanas" })
     .getByRole("listitem")
     .filter({ hasText: "Fachada compuesta" })
     .press("Enter");
@@ -804,7 +808,7 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   // draws a real mullion member between the two glass bays.
   await expect(page.locator(".canvas-sheet .member-mullion")).toHaveCount(1);
   await expect(page.locator(".canvas-sheet .module-glass")).toHaveCount(2);
-  await page.getByRole("link", { name: /Volver al proyecto/ }).click();
+  await page.getByRole("button", { name: "Volver a la obra", exact: true }).click();
   // Reload the cached project so the next action and price workspace use the
   // position just persisted, rather than the collection before the save.
   await page.reload();
@@ -848,7 +852,7 @@ test("OWNER must complete real TOTP enrollment and challenge after each Magic Li
   await expect(page.getByTestId("app-shell")).toBeVisible();
   await assertRealIdentity(page, request, fixture, "aal2");
 
-  await page.getByRole("button", { name: "Cerrar sesión" }).click();
+  await signOut(page);
   await expect(page.getByTestId("login-page")).toBeVisible();
   await requestMagicLink(page, fixture.email);
   const secondMessage = await latestMagicLink(fixture.email, firstMessage.id);
@@ -948,8 +952,7 @@ for (const tier of ["TRIAL", "STARTER"] as const) {
     });
     expect(project.status(), await project.text()).toBe(201);
     await page.goto(`/projects/${(await project.json()).id}`);
-    await expect(
-      page.getByRole("heading", { name: "SHOT-11 manual product", exact: true, level: 1 }),
-    ).toBeVisible();
+    // The work title is editable in place; its text is the work's name.
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("SHOT-11 manual product");
   });
 }

@@ -60,16 +60,12 @@ async function screenshot(page: Page, info: TestInfo, name: string): Promise<voi
   await info.attach(name, { path, contentType: "image/png" });
 }
 
-/** Secondary position details live in the drawer; the main collection keeps
- * its selection and the editor opens the exact physical position. */
-async function card(page: Page, location: string, action: string) {
-  await page
-    .getByRole("list", { name: "Posiciones" })
-    .getByRole("listitem")
-    .filter({ hasText: location })
-    .click();
-  await page.getByRole("button", { name: "Ficha de posición", exact: true }).click();
-  return page.getByRole("dialog").getByRole("link", { name: action, exact: true });
+/** Each window card opens the exact physical position in the editor. */
+async function card(page: Page, location: string) {
+  return page
+    .getByRole("list", { name: "Ventanas" })
+    .getByRole("button", { name: `Abrir ${location} en el editor`, exact: true })
+    .first();
 }
 
 test("SHOT-10 real project core path and visual evidence", async ({ page, manual }, info) => {
@@ -80,7 +76,7 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   // Navigation uses the editor's accessible project backlink. React
   // Query may serve the project from its fresh cache without a fetch, so the
   // reload makes the backend round-trip (and in-memory reset) explicit.
-  const back = () => page.getByRole("link", { name: /Volver al proyecto/ }).click();
+  const back = () => page.getByRole("button", { name: "Volver a la obra", exact: true }).click();
   const toProjects = () =>
     page
       .getByRole("navigation", { name: "Ruta de navegación" })
@@ -96,10 +92,22 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
     () => page.goto("/projects"),
   );
   expect(emptyProjects.items).toEqual([]);
-  await expect(page.getByText("No hay proyectos que coincidan.", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Crear proyecto", exact: true }).click();
-  // Extended identity fields live under the collapsed "Datos adicionales" section.
-  await page.locator("summary", { hasText: "Datos adicionales" }).click();
+  await expect(page.getByText("Aún no hay cotizaciones", { exact: true })).toBeVisible();
+  // «Nueva cotización» creates the work at once and opens its first window;
+  // the client and work data are completed from the work when needed.
+  const created = await responseTo<ProjectResponse>(page, "POST", "/api/v1/projects/", 201, () =>
+    page.getByRole("button", { name: "Nueva cotización", exact: true }).first().click(),
+  );
+  expect(created).toMatchObject({ status: "DRAFT", pricing_current: false });
+  const projectPath = `/projects/${created.id}`;
+  const projectApi = `/api/v1/projects/${created.id}/`;
+  await expect(page).toHaveURL(new RegExp(`${projectPath}/positions/new`));
+  await page.goto(projectPath);
+  await page.locator(".project-head").getByRole("button", { name: "Más", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Datos de la obra y del cliente" }).click();
+  const details = page.getByRole("group", { name: "Datos del proyecto", exact: true });
+  const extra = details.locator("summary", { hasText: "Datos adicionales" });
+  if (!(await details.locator("details[open]").count())) await extra.click();
 
   const metadata = [
     ["Nombre del proyecto", projectName],
@@ -112,11 +120,14 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
     ["Notas internas", "DEMO_60 SYNTHETIC FIXTURE — tests only"],
   ] as const;
   for (const [label, value] of metadata) {
-    await page.getByLabel(label, { exact: true }).fill(value);
+    await details.getByLabel(label, { exact: true }).fill(value);
   }
 
-  const project = await responseTo<ProjectResponse>(page, "POST", "/api/v1/projects/", 201, save);
+  const project = await responseTo<ProjectResponse>(page, "PATCH", projectApi, 200, () =>
+    details.getByRole("button", { name: "Guardar", exact: true }).click(),
+  );
   expect(project).toMatchObject({
+    id: created.id,
     name: projectName,
     client_name: "Cliente sintético E2E",
     client_email: "cliente-e2e@example.test",
@@ -124,9 +135,7 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
     status: "DRAFT",
     pricing_current: false,
   });
-  const projectPath = `/projects/${project.id}`;
-  const projectApi = `/api/v1/projects/${project.id}/`;
-  await expect(page).toHaveURL(new RegExp(`${projectPath}$`));
+  await expect(page).toHaveURL(new RegExp(`${projectPath}([?][^/]*)?$`));
   await expect(page.getByRole("heading", { level: 1 })).toContainText(projectName);
   await expect(page.getByRole("link", { name: "Agregar vanos", exact: true })).toBeVisible();
   await screenshot(page, info, "01-project-created");
@@ -172,7 +181,8 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   expect(initial.quantity).toBe(2);
   const positionApi = `/api/v1/positions/${initial.id}/`;
   const editPath = `${projectPath}/positions/${initial.id}/edit`;
-  await expect(page).toHaveURL(new RegExp(`${editPath}$`));
+  // The editor keeps its presentation (Mesa/Estudio) in the query string.
+  await expect(page).toHaveURL(new RegExp(`${editPath}(\\?view=\\w+)?$`));
   await expect(page.getByText("Guardado", { exact: true })).toBeVisible();
 
   // The shared registry refuses invalid edits atomically. The field returns
@@ -278,8 +288,10 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
     ]);
   }
   // Top-of-editor composition at the requested real desktop viewport.
-  await page.getByRole("heading", { level: 1 }).scrollIntoViewIfNeeded();
+  // The editor names the window in its strip, not with a page heading.
+  await page.evaluate(() => window.scrollTo(0, 0));
   await screenshot(page, info, "02-saved-configurator");
+  await page.getByRole("button", { name: "Cerrar Despiece y materiales", exact: true }).click();
 
   const persisted = await manual.readRows(
     "project_positions",
@@ -297,7 +309,7 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
 
   // Leave both editor and project; full reload removes in-memory UI state.
   await back();
-  await expect(page).toHaveURL(new RegExp(`${projectPath}$`));
+  await expect(page).toHaveURL(new RegExp(`${projectPath}([?][^/]*)?$`));
   const projectResponse = await responseTo<ProjectResponse>(
     page,
     "GET",
@@ -313,18 +325,14 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   await page.reload();
 
   const reopenedProject = await responseTo<ProjectResponse>(page, "GET", projectApi, 200, () =>
-    page
-      .getByRole("link", {
-        name: projectName,
-        exact: true,
-      })
-      .click(),
+    // The work card reads status, name, client and total as one link.
+    page.getByRole("link", { name: new RegExp(projectName) }).click(),
   );
   expect(reopenedProject.client_email).toBe("cliente-e2e@example.test");
   expect(reopenedProject.position_count).toBe(1);
 
   const reopened = await responseTo<PositionResponse>(page, "GET", positionApi, 200, () =>
-    card(page, "Cocina original", "Abrir diseño").then((link) => link.click()),
+    card(page, "Cocina original").then((open) => open.click()),
   );
   expect(reopened).toEqual(saved);
   await expect(page.getByRole("textbox", { name: "Ancho", exact: true })).toHaveValue("1100,25");
@@ -341,29 +349,31 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   await bom.waitFor({ state: "visible" });
   await bom.scrollIntoViewIfNeeded();
   await screenshot(page, info, "03-reopened-bom");
+  await page.getByRole("button", { name: "Cerrar Despiece y materiales", exact: true }).click();
 
   await back();
-  await expect(page).toHaveURL(new RegExp(`${projectPath}$`));
-  await page.getByLabel(`Seleccionar posición ${saved.position_index}`, { exact: true }).check();
-  const proposal = await responseTo<{ diff: { kind: string }[] }>(
-    page,
-    "POST",
-    `${projectApi}operations/preview/`,
-    200,
-    () => page.getByRole("button", { name: "Duplicar lote", exact: true }).click(),
+  await expect(page).toHaveURL(new RegExp(`${projectPath}([?][^/]*)?$`));
+  await page.getByLabel("Seleccionar Cocina original", { exact: true }).check();
+  // Duplicating is reversible: the engine previews and seals it, then it
+  // applies at once and offers «Deshacer».
+  const previewed = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname === `${projectApi}operations/preview/`,
   );
-  expect(proposal.diff).toHaveLength(1);
-  expect(proposal.diff[0]!.kind).toBe("add");
-  expect(
-    await manual.readRows("project_positions", `project_id=eq.${project.id}&select=id`),
-  ).toHaveLength(1);
   const applied = await responseTo<{
     operation_id: string;
     state: string;
     project: ProjectResponse;
   }>(page, "POST", `${projectApi}operations/apply/`, 200, () =>
-    page.getByRole("button", { name: "Aplicar cambios revisados", exact: true }).click(),
+    page.getByRole("button", { name: "Duplicar", exact: true }).click(),
   );
+  const proposal = (await (await previewed).json()) as { diff: { kind: string }[] };
+  expect(proposal.diff).toHaveLength(1);
+  expect(proposal.diff[0]!.kind).toBe("add");
+  await expect(
+    page.getByRole("button", { name: "Deshacer último cambio", exact: true }),
+  ).toBeVisible();
   const copied = applied.project.positions!.find((item) => item.id !== saved.id)!;
   expect(copied.id).not.toBe(saved.id);
   expect(copied.design).toEqual(saved.design);
@@ -385,12 +395,8 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   });
   expect((history[0]!.before_state as { positions: unknown[] }).positions).toHaveLength(1);
   expect((history[0]!.after_state as { positions: unknown[] }).positions).toHaveLength(2);
-  const copyRow = page
-    .getByRole("list", { name: "Posiciones" })
-    .getByRole("listitem")
-    .filter({
-      has: page.getByLabel(`Seleccionar posición ${copied.position_index}`, { exact: true }),
-    });
+  // The copy keeps the location and lands last in the work's order.
+  const copyRow = page.getByRole("list", { name: "Ventanas" }).getByRole("listitem").nth(1);
   await responseTo(page, "GET", `/api/v1/positions/${copied.id}/`, 200, () =>
     copyRow.press("Enter"),
   );
@@ -408,11 +414,13 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   expect(duplicate.id).not.toBe(saved.id);
   expect(duplicate.design).toEqual(saved.design);
   expect(duplicate.bom).toEqual(saved.bom);
-  await expect(page).toHaveURL(new RegExp(`${projectPath}/positions/${duplicate.id}/edit$`));
+  await expect(page).toHaveURL(
+    new RegExp(`${projectPath}/positions/${duplicate.id}/edit(\\?view=\\w+)?$`),
+  );
   await expect(page.getByText("Guardado", { exact: true })).toBeVisible();
 
   await back();
-  await expect(page).toHaveURL(new RegExp(`${projectPath}$`));
+  await expect(page).toHaveURL(new RegExp(`${projectPath}([?][^/]*)?$`));
   const source = await responseTo<ProjectResponse>(page, "GET", projectApi, 200, freshRead);
   expect(source.position_count).toBe(2);
   expect(source.positions!.find((item) => item.id === saved.id)).toEqual({
@@ -423,13 +431,10 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
     commercial: null,
   });
 
+  // Work-level actions live in the header's «Más» menu.
+  await page.locator(".project-head").getByRole("button", { name: "Más", exact: true }).click();
   const clone = await responseTo<ProjectResponse>(page, "POST", `${projectApi}clone/`, 201, () =>
-    page
-      .getByRole("button", {
-        name: "Duplicar proyecto",
-        exact: true,
-      })
-      .click(),
+    page.getByRole("menuitem", { name: "Duplicar proyecto", exact: true }).click(),
   );
   expect(clone.id).not.toBe(source.id);
   expect(clone).toMatchObject({
@@ -448,7 +453,7 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
     expect(copy.bom).toEqual(original!.bom);
   }
 
-  await expect(page).toHaveURL(new RegExp(`/projects/${clone.id}$`));
+  await expect(page).toHaveURL(new RegExp(`/projects/${clone.id}([?][^/]*)?$`));
   const reopenedClone = await responseTo<ProjectResponse>(
     page,
     "GET",
@@ -457,7 +462,7 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
     () => page.reload(),
   );
   expect(reopenedClone.positions).toEqual(clone.positions);
-  await expect(page.getByRole("list", { name: "Posiciones" }).getByRole("listitem")).toHaveCount(2);
+  await expect(page.getByRole("list", { name: "Ventanas" }).getByRole("listitem")).toHaveCount(2);
   await page.getByRole("heading", { level: 1 }).scrollIntoViewIfNeeded();
   await screenshot(page, info, "04-reopened-draft-clone");
 
@@ -465,8 +470,8 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
     page.goto(projectPath),
   );
   expect(unchangedSource).toEqual(source);
-  await page.getByRole("button", { name: "Cambiar tema", exact: true }).click();
-  await screenshot(page, info, "05-project-dark");
+  // The product keeps one light theme (constitution 2026-10): no theme switch.
+  await expect(page.getByRole("button", { name: "Cambiar tema", exact: true })).toHaveCount(0);
   // Estimators can browse the catalog (and run supplier imports); structural
   // edits stay owner/manager-only.
   // A cold route first resolves the real catalog authority. Wait for that

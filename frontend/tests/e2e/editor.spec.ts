@@ -279,7 +279,7 @@ test("P06 bow is created in seven interactions, survives exact reload and synchr
     "data-module-id",
     product.assembly.modules[1].id,
   );
-  await page.locator(".front-module").first().click();
+  await page.locator(".front-module[role=group]").first().click();
   await expect(
     page.getByRole("button", { name: "Módulo 1 en planta", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");
@@ -287,7 +287,10 @@ test("P06 bow is created in seven interactions, survives exact reload and synchr
   await separator.press("ArrowUp");
   await expect(separator).toHaveAttribute("aria-valuenow", "276");
   await page.getByRole("combobox", { name: "Elevación del conjunto" }).selectOption("projected");
-  await expect(page.locator(".front-module").first()).toHaveAttribute("transform", /scale/);
+  await expect(page.locator(".front-module[role=group]").first()).toHaveAttribute(
+    "transform",
+    /scale/,
+  );
   await page.getByRole("combobox", { name: "Elevación del conjunto" }).selectOption("developed");
   await page.getByRole("button", { name: "Ángulo de unión 1", exact: true }).press("Enter");
   const angle = page.getByRole("textbox", { name: "Ángulo de unión 1", exact: true });
@@ -479,7 +482,7 @@ test("two tilt-turn leaves 1500×1200 and 4-16-4 take at most six design interac
   await expect(page.getByRole("button", { name: "Guardar", exact: true })).toBeEnabled();
   await page.getByLabel("Ubicación del vano", { exact: true }).fill("Dormitorio DEMO");
   await page.getByRole("button", { name: "Guardar", exact: true }).click();
-  await expect(page).toHaveURL(/\/positions\/[^/]+\/edit$/);
+  await expect(page).toHaveURL(/\/positions\/[^/]+\/edit([?]view=[a-z]+)?$/);
   await page.reload();
   await expect(page.getByLabel("Ubicación del vano", { exact: true })).toHaveValue(
     "Dormitorio DEMO",
@@ -665,30 +668,30 @@ test("every editor link opens the unsaved guard and only one footer panel remain
   page,
 }) => {
   await twoLeaves(page);
-  const path = new URL(page.url()).pathname;
+  let editorPath = new URL(page.url()).pathname;
   const guarded = async (action: () => Promise<unknown>) => {
     await action();
     const dialog = page.getByRole("dialog");
     await expect(dialog).toContainText("sin guardar");
     await dialog.getByRole("button", { name: "Cancelar", exact: true }).click();
-    expect(new URL(page.url()).pathname).toBe(path);
+    expect(new URL(page.url()).pathname).toBe(editorPath);
   };
-  await guarded(() => page.getByRole("link", { name: "Volver al proyecto", exact: true }).click());
-  await page.getByRole("button", { name: "Posiciones del proyecto", exact: true }).click();
-  await guarded(() =>
-    page
-      .locator(".editor-bottom-panel")
-      .getByRole("link", { name: "Nuevo vano", exact: true })
-      .click(),
-  );
+  // Back to the same work keeps the editing session (Mesa and Estudio share
+  // it): no prompt and nothing lost. Leaving the work or switching window asks.
+  await page.getByRole("button", { name: "Volver a la obra", exact: true }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page).not.toHaveURL(/\/edit/);
+  await twoLeaves(page);
+  editorPath = new URL(page.url()).pathname;
   await page.getByRole("button", { name: "Precio neto indicativo", exact: true }).click();
   await guarded(() =>
     page.getByRole("link", { name: "Revisar reglas de precio", exact: true }).click(),
   );
-  await page.getByRole("button", { name: "Posiciones del proyecto", exact: true }).click();
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "Ventanas de la obra", exact: true }).click();
   await page.getByRole("button", { name: "Despiece y materiales", exact: true }).click();
   await expect(
-    page.getByRole("button", { name: "Posiciones del proyecto", exact: true }),
+    page.getByRole("button", { name: "Ventanas de la obra", exact: true }),
   ).toHaveAttribute("aria-expanded", "false");
   await expect(page.locator(".editor-bottom-panel")).toHaveCount(1);
   await expect(page.locator(".editor-bottom-panel table")).not.toHaveCount(0);
