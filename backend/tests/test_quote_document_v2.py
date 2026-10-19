@@ -184,3 +184,34 @@ def test_doc01_reads_exact_sealed_measures_with_nonzero_coupling_gap():
         assert '2 448' in text
     assert product.model_dump(mode='json') == before
     assert developed_layout(product.assembly, evaluation.measures).members[1].x_mm == Decimal('624')
+
+
+def test_sealed_alternatives_are_always_shown_and_not_summed():
+    """A revision that seals alternatives offers them to the customer: the
+    default template (which has no alternatives block) still shows them after
+    the windows, a layout cannot hide them, and each says it is not in the
+    total."""
+    from documents.quotation import resolve_layout
+
+    snapshot = proposal_case(1)
+    alternative = deepcopy(snapshot)
+    snapshot["alternatives"] = [{"revision": "REV-A", "project": alternative["project"],
+                                 "positions": alternative["positions"]}]
+    snapshot["project"]["document_layout"] = {"template": "PROYECTO", "hidden": ["alternatives"]}
+    layout = resolve_layout(snapshot)
+    assert "alternatives" not in layout["hidden"]
+    assert layout["order"].index("alternatives") == layout["order"].index("positions") + 1
+    html = _doc01(snapshot)
+    assert "No incluida en el total de esta propuesta" in html
+    assert 'data-block="alternatives"' in html
+
+
+def test_legal_footer_keeps_company_identity_unbroken():
+    snapshot = proposal_case(1)
+    snapshot["organization"]["document_preferences"] = {
+        **(snapshot["organization"].get("document_preferences") or {}), "legal_footer": "Pie vigente de la empresa"}
+    html = _doc01(snapshot)
+    footer = re.search(r'<div class="q-legal">(.*?)</div></footer>', html)
+    assert footer is not None
+    assert footer.group(1).count('class="q-legal-id"') >= 1
+    assert "Pie vigente de la empresa" in footer.group(1)

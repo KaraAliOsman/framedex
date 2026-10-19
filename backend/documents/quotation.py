@@ -33,6 +33,7 @@ CSS = """
 .q-footer-line > span { display: table-cell; vertical-align: top; overflow-wrap: anywhere; }
 .q-footer-line > span:last-child { width: 30%; text-align: right; }
 .q-footer .q-legal { font: 8.25pt 'IBM Plex Sans', sans-serif; margin-top: 1mm; }
+.q-legal-id { white-space: nowrap; }
 .q-head { position: relative; display: flex; justify-content: space-between; gap: 8mm; border-bottom: 1.5pt solid #075F5A; padding: 0 7mm 4mm 0; }
 .q-head .brand { letter-spacing: 0; font-size: 16pt; }
 .q-head .brand-sub { font-size: 8.25pt; letter-spacing: 0; }
@@ -345,11 +346,21 @@ def resolve_layout(snapshot: dict, requested: str | None = None) -> dict:
             template = prefs["quotation_template"] if prefs.get("quotation_template") in TEMPLATES else "ESENCIAL"
     order = [block for block in merged.get("order") or [] if block in BLOCKS]
     order += [block for block in DEFAULT_ORDER[template] if block not in order]
-    hidden = {block for block in merged.get("hidden") or [] if block in BLOCKS and block not in REQUIRED_BLOCKS}
+    required = set(REQUIRED_BLOCKS)
+    order = [block for block in order if block in DEFAULT_ORDER[template] or block in merged.get("order", [])]
+    if snapshot.get("alternatives"):
+        # Alternatives sealed in this revision are part of the offer the
+        # customer chooses from: every template shows them, after the
+        # windows unless the layout places them elsewhere, and they are
+        # never hidden.
+        required.add("alternatives")
+        if "alternatives" not in order:
+            order.insert(order.index("positions") + 1 if "positions" in order else len(order), "alternatives")
+    hidden = {block for block in merged.get("hidden") or [] if block in BLOCKS and block not in required}
     texts = merged.get("texts") if isinstance(merged.get("texts"), dict) else {}
     return {
         "template": template,
-        "order": [block for block in order if block in DEFAULT_ORDER[template] or block in merged.get("order", [])],
+        "order": order,
         "hidden": hidden,
         "texts": {key: str(texts.get(key) or "")[:MAX_TEXT] for key in ("intro", "closing", "notes")},
         "drawing_size": merged.get("drawing_size") if merged.get("drawing_size") in ("S", "M", "L") else "M",
@@ -407,12 +418,15 @@ def render(snapshot: dict, *, portal_url: str | None = None, layout_name: str | 
                                        or f'COT-{known(project.get("code"))}-{revision}')
     date = _cldate(snapshot.get("sealed_at"))
     valid = _cldate(project["quotation_valid_until"]) if project.get("quotation_valid_until") else ""
-    legal = " · ".join(value for value in [
-        known(org.get("name")), "RUT " + known(org["tax_id"]) if known(org.get("tax_id")) else "",
-        known(prefs.get("legal_footer"))] if value)
+    # The legal line spans the full width: company name and RUT never break
+    # inside themselves; the company's free legal text may wrap.
+    legal_parts = [f'<span class="q-legal-id">{escape(value)}</span>' for value in [
+        known(org.get("name")), "RUT " + known(org["tax_id"]) if known(org.get("tax_id")) else ""] if value]
+    if known(prefs.get("legal_footer")):
+        legal_parts.append(f'<span>{escape(known(prefs.get("legal_footer")))}</span>')
     footer = (f'<footer class="q-footer"><div class="q-footer-line"><span>Cotización {escape(number)} · '
               f'Revisión {escape(_rev_display(revision))}</span><span class="q-num">Página <span class="pg"></span></span></div>'
-              f'<div class="q-footer-line q-legal"><span>{escape(legal)}</span><span></span></div></footer>')
+              f'<div class="q-legal">{" · ".join(legal_parts)}</div></footer>')
     drawing_width = {"S": 46, "M": 60, "L": 78}[layout["drawing_size"]]
     if template == "ESENCIAL":
         drawing_width = {"S": 34, "M": 42, "L": 56}[layout["drawing_size"]]
@@ -555,7 +569,9 @@ def render(snapshot: dict, *, portal_url: str | None = None, layout_name: str | 
         out += '</tbody></table><p class="q-legend">Las alternativas no se suman al total de esta propuesta. Usted elige una.</p>'
         for alternative in alternatives:
             alt_currency = str(alternative["project"]["currency"])
-            out += f'<h3>Alternativa · Revisión {escape(_rev_display(alternative["revision"]))}</h3>'
+            out += (f'<h3>Alternativa · Revisión {escape(_rev_display(alternative["revision"]))}</h3>'
+                    '<p><strong>No incluida en el total de esta propuesta.</strong> Corresponde a una revisión '
+                    'emitida anterior; se presenta para comparar.</p>')
             for option in alternative["positions"]:
                 out += (f'<article class="q-position q-position--compact"><h3>{escape(known(option.get("location_tag")) or _product_caption(option))}</h3>'
                         f'<div class="q-position-body"><div class="q-figure">{_position_svg(option, commercial=True, dimensions=True, dimension_font_divisor=Decimal("14"), include_sliding_plan=False)}</div>'
