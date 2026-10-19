@@ -62,7 +62,7 @@ it("shows the three policies only in Trabajo and keeps the choice", () => {
   expect(
     screen.queryByRole("radiogroup", { name: "Autonomía del trabajo" }),
   ).not.toBeInTheDocument();
-  fireEvent.click(screen.getByRole("radio", { name: "Trabajo" }));
+  fireEvent.click(screen.getByRole("radio", { name: "Encargar" }));
   const policies = screen.getByRole("radiogroup", { name: "Autonomía del trabajo" });
   expect(policies).toBeInTheDocument();
   expect(screen.getByRole("radio", { name: "Con aprobación" })).toHaveAttribute(
@@ -133,7 +133,7 @@ it("opens from a manual delegation with the request prefilled, never sent", asyn
       "Divide esta ventana en dos hojas",
     ),
   );
-  expect(screen.getByRole("radio", { name: "Trabajo" })).toHaveAttribute("aria-checked", "true");
+  expect(screen.getByRole("radio", { name: "Encargar" })).toHaveAttribute("aria-checked", "true");
   expect(aiAgent).not.toHaveBeenCalled();
 });
 

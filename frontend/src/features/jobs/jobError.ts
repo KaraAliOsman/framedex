@@ -11,6 +11,11 @@ export function jobErrorKey(code: string): TranslationKey {
   if (code.includes("permission") || code.includes("access_denied")) return "jobs.fail.permission";
   if (code.startsWith("document_storage_")) return "jobs.fail.storage";
   if (code.includes("hash_mismatch") || code.includes("stale")) return "jobs.fail.stale";
+  // Plan and balance limits are the account's, not an outage: name them so
+  // nobody retries or waits for a provider that is fine.
+  if (code === "ai_entitlement_required") return "jobs.fail.plan";
+  if (code === "insufficient_credits" || code === "ai_credits_exhausted")
+    return "jobs.fail.credits";
   if (code === "ai_provider_quota") return "jobs.fail.providerQuota";
   if (code === "ai_provider_auth" || code === "ai_provider_rejected")
     return "jobs.fail.providerConfig";

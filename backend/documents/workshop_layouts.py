@@ -44,6 +44,8 @@ COMPACT_CSS = """
 
 
 def _require_production(snapshot: dict) -> None:
+    if snapshot.get("draft") is True:  # quick draft: stamped «Borrador», never stored
+        return
     if snapshot.get("production_allowed") is not True:
         raise DocumentaryError("production_document_blocked")
     if snapshot.get("documentary_complete") is not True:

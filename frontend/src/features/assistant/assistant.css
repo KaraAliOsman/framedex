@@ -1003,9 +1003,14 @@
 .ask-dock__errorTurn {
   margin-top: 4px;
   padding: 8px 12px;
-  border-left: 3px solid var(--theme-danger);
-  background: var(--state-danger-soft);
+  border-left: 3px solid var(--theme-warning);
+  background: var(--state-warning-soft);
   border-radius: var(--r-1);
+}
+/* An account limit is information, not an alarm. */
+.ask-dock__errorTurn.is-limit {
+  border-left-color: var(--border-control);
+  background: var(--surface-panel);
 }
 .ask-dock__errorTurn p {
   margin: 0 0 6px;

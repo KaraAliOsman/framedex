@@ -7,6 +7,7 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { aiThreadUpdate, aiThreadsCreate, aiThreadsList } from "../../api/generated/dekopen";
 import type { AiThread } from "../../api/generated/models/aiThread";
 import {
@@ -34,6 +35,7 @@ import {
 import { publishCopilotStatus } from "./copilotStatus";
 import { Companion, companionStateFor, type CompanionState } from "./Companion";
 import { SURFACE_LABELS } from "./surfaces";
+import { projectKey, type ProjectView } from "../projects/useProject";
 import "./assistant.css";
 import "./copilot.css";
 
@@ -201,11 +203,29 @@ export function CopilotWindow({
   }, [contextKey]);
   const readSurface = contextCleared ? "dashboard" : surface;
   const readRefs = contextCleared ? {} : { ...refs, ...(delegatedRefs ?? {}) };
+  // Name the destination the way the person sees it: «V1 · Colegio» rather
+  // than a surface code, so it is obvious which work a request will change.
+  const queryClient = useQueryClient();
+  const openWork = readRefs.project_id
+    ? queryClient.getQueryData<ProjectView>(projectKey(organizationId, readRefs.project_id))
+        ?.project
+    : undefined;
+  const openWindow = readRefs.position_id
+    ? openWork?.positions?.find((item) => item.id === readRefs.position_id)
+    : undefined;
+  const windowName = openWindow
+    ? openWindow.location_tag || `Ventana ${openWindow.position_index}`
+    : null;
+  const workName = openWork ? openWork.name || openWork.code : null;
   const contextLabel = contextCleared
     ? null
-    : `${SURFACE_LABELS[surface] ?? "Tu trabajo actual"}${readRefs.position_id && surface !== "position" ? " · ventana abierta" : ""}${
-        readRefs.selection ? " · selección" : ""
-      }`;
+    : `${
+        windowName && workName
+          ? `${windowName} · ${workName}`
+          : workName
+            ? `obra ${workName}`
+            : `${SURFACE_LABELS[surface] ?? "tu trabajo actual"}${readRefs.position_id && surface !== "position" ? " · ventana abierta" : ""}`
+      }${readRefs.selection ? " · selección" : ""}`;
 
   const pose: CompanionState =
     composing && (!jobState || ["SUCCEEDED", "CANCELED"].includes(jobState))
@@ -395,7 +415,7 @@ export function CopilotWindow({
                 className="copilot__mode"
                 onClick={() => setMode(value)}
               >
-                {value === "chat" ? "Chat" : "Trabajo"}
+                {value === "chat" ? "Preguntar" : "Encargar"}
               </button>
             ))}
           </div>
@@ -658,7 +678,7 @@ function ThreadHistory({
                 >
                   <strong>{item.title}</strong>
                   <span>
-                    {item.interaction_mode === "work" ? "Trabajo" : "Chat"} ·{" "}
+                    {item.interaction_mode === "work" ? "Encargo" : "Pregunta"} ·{" "}
                     {relativeDay(item.last_activity_at)}
                   </span>
                 </button>

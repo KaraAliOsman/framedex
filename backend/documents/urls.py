@@ -7,6 +7,7 @@ from documents.issuance_views import (
     QuotationNumberingView,
     QuotationPreviewAccessView,
     QuotationPreviewView,
+    QuickDraftView,
 )
 
 from documents.views import (
@@ -25,6 +26,7 @@ urlpatterns = [
     path("projects/<uuid:project_id>/issue/", QuotationIssueView.as_view(), name="quotation-issue"),
     path("projects/<uuid:project_id>/quotation-layout/", QuotationLayoutView.as_view(), name="quotation-layout"),
     path("projects/<uuid:project_id>/quotation-draft/", QuotationDraftPreviewView.as_view(), name="quotation-draft"),
+    path("projects/<uuid:project_id>/quick-draft/", QuickDraftView.as_view(), name="quick-draft"),
     path("organization/quotation-numbering/", QuotationNumberingView.as_view(), name="quotation-numbering"),
     path("artifacts/", ArtifactGenerateView.as_view(), name="documentary-artifact-generate"),
     path(

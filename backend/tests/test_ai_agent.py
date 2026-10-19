@@ -1569,3 +1569,37 @@ def test_agent_document_text_never_reaches_system_prompt():
     built = assist.guarded(assist.ASK_SYSTEM)
     assert poisoned not in built
     # The system prompt is static text — payload content cannot inject into it.
+
+
+def test_agent_never_creates_another_work_while_one_is_open(monkeypatch):
+    """«Edita esta ventana» inside a work must not open another quotation:
+    with a project in the context, create_project is refused and reported
+    back to the model; the draft service is never called."""
+    project_id = uuid4()
+    contexts = {
+        "project": {"surface": "project", "id": str(project_id), "code": "OB-1", "editable": True},
+    }
+    outputs = [
+        _doc(reply="Preparo la obra.", steps=[{"kind": "create_project", "name": "Otra", "client": "X"}]),
+        _doc(reply="Trabajo sobre la obra abierta."),
+    ]
+    calls = _patch(monkeypatch, contexts=contexts, outputs=outputs)
+    created = []
+    monkeypatch.setattr(agent, "_create_project_draft", lambda *a, **k: created.append(a) or {})
+    agent.act(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        surface="project",
+        refs={"project_id": str(project_id)},
+        goal="Edita la ventana 1",
+        product=None,
+        history=[],
+        operation_key="goal-open-work",
+        autonomy="draft",
+        role="ESTIMATOR",
+        interaction_mode="work",
+    )
+    assert created == []
+    second = calls[1]["input_payload"]["observations"]
+    assert any(item["surface"] == "create_project" and item["context"]["error"] == "project_in_context"
+               for item in second)

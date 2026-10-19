@@ -36,11 +36,9 @@ export function EditorPriceChip({
             price.unit_net !== null &&
             price.unit_net !== undefined ? (
             <>
+              <small>Precio estimado</small>
               <span>
-                <Money value={price.unit_net} currency={price.currency} /> <small>neto / un.</small>
-              </span>
-              <span>
-                <Money value={price.net} currency={price.currency} /> <small>línea</small>
+                <Money value={price.net} currency={price.currency} /> <small>neto</small>
               </span>
             </>
           ) : (
@@ -50,6 +48,13 @@ export function EditorPriceChip({
       }
     >
       <h3>Precio neto indicativo</h3>
+      {!priceLoading && price?.unit_net != null && price.net != null ? (
+        <p>
+          Por unidad <Money value={price.unit_net} currency={price.currency} /> · total de esta
+          ventana <Money value={price.net} currency={price.currency} />, antes de impuestos. Es una
+          estimación: el precio de la obra se fija al calcularla.
+        </p>
+      ) : null}
       <p>
         {priceLoading
           ? "El motor está calculando el diseño actual."

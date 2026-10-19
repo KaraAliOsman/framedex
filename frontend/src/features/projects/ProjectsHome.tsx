@@ -185,7 +185,7 @@ export function ProjectsHome({
       {decisions.length > 0 ? (
         <section className="projects-home__decide" aria-labelledby="decide-title">
           <div className="projects-home__section-head">
-            <h2 id="decide-title">Para decidir</h2>
+            <h2 id="decide-title">Necesita tu atención</h2>
             <Link className="ui-link" to="/dashboard">
               Ver todos los pendientes ({today.data?.actions.length ?? 0})
             </Link>
@@ -321,13 +321,19 @@ export function ProjectsHome({
                   </span>
                   <span className="work-card__foot">
                     <span>
-                      {item.position_count === 1 ? "1 ventana" : `${item.position_count} ventanas`}
+                      {item.position_count === 0
+                        ? "Sin ventanas todavía"
+                        : item.position_count === 1
+                          ? "1 ventana"
+                          : `${item.position_count} ventanas`}
                     </span>
-                    <span className="work-card__total">
-                      {item.pricing_current
-                        ? formatMoney(item.total_price_gross, item.currency)
-                        : "Sin precio"}
-                    </span>
+                    {item.pricing_current ? (
+                      <span className="work-card__total">
+                        {formatMoney(item.total_price_gross, item.currency)}
+                      </span>
+                    ) : item.position_count > 0 ? (
+                      <span className="work-card__total is-pending">Falta precio</span>
+                    ) : null}
                   </span>
                 </Link>
               </li>

@@ -3,7 +3,7 @@ import { Icon } from "../../ui/Icon";
 import { AI_PHASES } from "./providerLabels";
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { ApiError } from "../../api/apiMutator";
 import {
@@ -457,12 +457,27 @@ export function AgentBody({
     inputRef.current?.focus();
   }, []);
 
+  /** A follow-up continues the current task only while the person is still
+   * on that task's work (same surface, work and window). A new message
+   * written while another work or window is open is a new task about what
+   * is open — it never writes into the earlier task's work. A running task
+   * keeps its sealed destination whatever the person navigates to. */
+  function continuesJob(candidate: AiJobDetail | null): AiJobDetail | null {
+    if (!candidate || TERMINAL_STATES.has(candidate.state)) return null;
+    if (LIVE_STATES.has(candidate.state)) return candidate;
+    const sealed = (candidate.refs ?? {}) as Record<string, string>;
+    if (candidate.surface !== surface) return null;
+    if ((sealed.project_id ?? "") !== (refs.project_id ?? "")) return null;
+    if ((sealed.position_id ?? "") !== (refs.position_id ?? "")) return null;
+    return candidate;
+  }
+
   async function run(): Promise<void> {
     const trimmed = goal.trim();
     if (!trimmed) return;
     // A terminal job can't take follow-ups — start a fresh one instead of
     // bouncing the message off a 409.
-    const followTarget = job && !TERMINAL_STATES.has(job.state) ? job : null;
+    const followTarget = continuesJob(job);
     if (followTarget && LIVE_STATES.has(followTarget.state)) {
       // Mid-run instructions are accepted and delivered once the run
       // settles — the claim chain can't interleave a second run anyway.
@@ -476,7 +491,7 @@ export function AgentBody({
   }
 
   async function send(trimmed: string, modeOverride?: InteractionMode): Promise<void> {
-    const followTarget = job && !TERMINAL_STATES.has(job.state) ? job : null;
+    const followTarget = continuesJob(job);
     const mode = modeOverride ?? interactionMode;
     const ready = attachments.filter((item) => item.state === "ready" && item.id);
     if (attachments.some((item) => item.state === "uploading")) {
@@ -529,6 +544,29 @@ export function AgentBody({
         }
         jobId = followTarget.id;
       } else {
+        if (job) {
+          // The earlier task of this conversation stays readable above.
+          const previous = job;
+          setEarlier((items) => [
+            {
+              kind: "job",
+              id: previous.id,
+              created_at: previous.created_at,
+              goal: previous.goal,
+              state: previous.state,
+              surface: previous.surface,
+              refs: previous.refs ?? {},
+              interaction_mode: previous.interaction_mode ?? "work",
+              autonomy: previous.autonomy ?? "propose",
+              receipt: previous.receipt ?? null,
+              error_code: previous.error_code ?? null,
+              question: null,
+              answer: null,
+            },
+            ...items.filter((item) => item.id !== previous.id),
+          ]);
+          setThread([]);
+        }
         const response = await aiAgent(
           {
             surface,
@@ -858,11 +896,16 @@ export function AgentBody({
     (lastTurn.result?.steps ?? []).some((step) =>
       ["ops", "batch_ops", "project_ops", "document_layout", "quote_draft"].includes(step.kind),
     );
-  const destinationProject = job ? (job.refs as Record<string, string>)?.project_id : undefined;
-  const destinationDiffers =
-    !!destinationProject && !!refs.project_id && destinationProject !== refs.project_id;
+  // Settled task about another work or window: the next message starts a
+  // new task on what is open (said plainly, no action required).
+  const nextIsNewTask = job !== null && !LIVE_STATES.has(job.state) && continuesJob(job) === null;
   const retryable = job !== null && job.state === "FAILED_RETRYABLE";
   const terminal = job !== null && TERMINAL_STATES.has(job.state);
+  const failures = thread.filter((turn) => turn.errorCode);
+  const lastFailure = failures.at(-1)?.errorCode ?? "";
+  // A plan or balance limit is not a failure to retry: say it calmly and
+  // point to where it is solved.
+  const accountLimit = ["jobs.fail.plan", "jobs.fail.credits"].includes(jobErrorKey(lastFailure));
   const liveProgress =
     job?.live && typeof job.live.progress === "number"
       ? Math.min(99, Math.max(0, job.live.progress))
@@ -930,12 +973,17 @@ export function AgentBody({
           </details>
         ) : null}
         {thread.some((turn) => turn.errorCode) && (retryable || terminal) ? (
-          <div className="ask-dock__errorTurn">
+          <div className={`ask-dock__errorTurn${accountLimit ? " is-limit" : ""}`}>
             <p>
-              {thread.filter((turn) => turn.errorCode).length} intentos fallidos ·{" "}
-              {t(jobErrorKey(thread.filter((turn) => turn.errorCode).at(-1)?.errorCode ?? ""))}
+              {accountLimit || failures.length === 1
+                ? t(jobErrorKey(lastFailure))
+                : `${failures.length} intentos fallidos · ${t(jobErrorKey(lastFailure))}`}
             </p>
-            {retryable ? (
+            {accountLimit ? (
+              <Link className="ask-dock__action" to="/settings/billing">
+                Ver plan y créditos
+              </Link>
+            ) : retryable ? (
               <button
                 type="button"
                 className="ask-dock__action"
@@ -1447,13 +1495,8 @@ export function AgentBody({
           </button>
         </p>
       ) : null}
-      {destinationDiffers && !live ? (
-        <p className="copilot-destination">
-          Este encargo sigue trabajando sobre su obra original.{" "}
-          <button type="button" className="ask-dock__meta-link" onClick={startFresh}>
-            Nuevo encargo para la obra abierta
-          </button>
-        </p>
+      {nextIsNewTask && !live && contextLabel ? (
+        <p className="copilot-destination">Tu próximo mensaje trabajará sobre: {contextLabel}.</p>
       ) : null}
       {pending.length > 0 ? (
         <ul className="ask-dock__pending" aria-label={t("agent.pending")}>
@@ -1483,7 +1526,7 @@ export function AgentBody({
         >
           {contextLabel ? (
             <p className="copilot-context">
-              <span>Leyendo: {contextLabel}</span>
+              <span>Sobre: {contextLabel}</span>
               {onClearContext ? (
                 <button
                   type="button"
@@ -1522,7 +1565,7 @@ export function AgentBody({
           <div className="ask-dock__compose-row">
             <span className="copilot-mode-hint">
               {interactionMode === "chat"
-                ? "Chat responde y propone; no cambia tus datos."
+                ? "Solo responde. No cambia nada."
                 : autonomy === "propose"
                   ? "Solo proponer: nada se aplica."
                   : autonomy === "approve"

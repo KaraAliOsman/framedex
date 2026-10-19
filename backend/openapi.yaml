@@ -9027,6 +9027,94 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/documents/projects/{project_id}/quick-draft/:
+    post:
+      operationId: documents_quick_draft
+      description: |-
+        Any document from a name and one window: quotation, cut sheet, plan or
+        materials, rendered by the issuing authority and stamped «Borrador».
+        Nothing is stored — a missing price or preparation is composed inside a
+        rolled-back transaction.
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuickDraftRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/QuickDraftRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/QuickDraftRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/documents/projects/{project_id}/quotation-customer/:
     patch:
       operationId: quotation_save_customer
@@ -32960,6 +33048,18 @@ components:
       - START
       - END
       - CENTER
+    DocumentEnum:
+      enum:
+      - CUT
+      - MATERIALS
+      - PLAN
+      - QUOTE
+      type: string
+      description: |-
+        * `CUT` - CUT
+        * `MATERIALS` - MATERIALS
+        * `PLAN` - PLAN
+        * `QUOTE` - QUOTE
     DocumentExtraPricesEnum:
       enum:
       - ITEMIZED
@@ -46519,6 +46619,13 @@ components:
       description: |-
         * `PASS` - PASS
         * `FAIL` - FAIL
+    QuickDraftRequestRequest:
+      type: object
+      properties:
+        document:
+          $ref: '#/components/schemas/DocumentEnum'
+      required:
+      - document
     QuotationBlockEnum:
       enum:
       - intro

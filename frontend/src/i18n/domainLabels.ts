@@ -23,6 +23,9 @@ export const domainLabels: Readonly<Record<string, string>> = {
   UNREADABLE: "No legible",
   plan: "Plan",
   PLANO: "Plano técnico",
+  // Quick drafts («Sacar PDF»).
+  PLAN: "Plano de ventanas",
+  MATERIALS: "Materiales",
   ok: "Disponible",
   no_ai_entitlement: "Plan sin IA",
   plan_inactive: "Plan inactivo",

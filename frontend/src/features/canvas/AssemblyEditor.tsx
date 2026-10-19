@@ -946,6 +946,7 @@ function LeafFacts({
   const resolved = hardware?.resolution as HardwareResolution | null | undefined;
   const glass = options?.glass_specs.find((item) => item.sku === bay.glass_article_sku);
   const handleHeight = bay.handle_height_mm ?? resolved?.handle_height_mm;
+  const fixedPane = visualOpening(bay) === "FIXED" && !leaf && !resolved;
   return (
     <>
       {handleHeight != null && (
@@ -958,76 +959,87 @@ function LeafFacts({
           onCommit={onHandleHeight}
         />
       )}
-      <dl className="editor-leaf-facts">
-        <div>
-          <dt>Composición</dt>
-          <dd>{glass?.spec ?? bay.glass_spec ?? "Sin dato · elige vidrio"}</dd>
-        </div>
-        <div>
-          <dt>Espesor</dt>
-          <dd>
-            {bay.glass_thickness_mm
-              ? `${fmtMm(bay.glass_thickness_mm)} mm`
-              : "Sin dato · elige vidrio"}
-          </dd>
-        </div>
-        <div>
-          <dt>Hoja · ancho</dt>
-          <dd>
-            {leaf || resolved
-              ? `${fmtMm(quantize(leaf?.width_mm ?? resolved?.width_mm, 2))} mm`
-              : visualOpening(bay) === "FIXED"
-                ? "No requiere · paño fijo"
-                : "Sin dato · calcula el marco"}
-          </dd>
-        </div>
-        <div>
-          <dt>Hoja · alto</dt>
-          <dd>
-            {leaf || resolved
-              ? `${fmtMm(quantize(leaf?.height_mm ?? resolved?.height_mm, 2))} mm`
-              : visualOpening(bay) === "FIXED"
-                ? "No requiere · paño fijo"
-                : "Sin dato · calcula el marco"}
-          </dd>
-        </div>
-        <div>
-          <dt>Kit derivado</dt>
-          <dd>
-            {kit?.name ??
-              (visualOpening(bay) === "FIXED"
-                ? "No requiere · paño fijo"
-                : "Sin dato · revisa herrajes")}
-          </dd>
-        </div>
-        <div>
-          <dt>Manilla · lado</dt>
-          <dd>
-            {leaf?.handle
-              ? leaf.handle.side === "LEFT"
-                ? "Izquierda"
-                : leaf.handle.side === "RIGHT"
-                  ? "Derecha"
-                  : "Cierre superior/inferior"
-              : visualOpening(bay) === "FIXED"
-                ? "No requiere · paño fijo"
-                : "Sin dato · revisa apertura"}
-          </dd>
-        </div>
-        <div>
-          <dt>Fuente</dt>
-          <dd>
-            <details className="editor-leaf-facts__source">
-              <summary>¿De dónde sale?</summary>
-              <p>
-                {leaf?.source ??
-                  resolved?.source ??
-                  "Evaluación del motor sobre la apertura declarada; composición y kit del catálogo de la serie."}
-              </p>
-            </details>
-          </dd>
-        </div>
-      </dl>
+      <details className="editor-leaf-facts-fold">
+        <summary>Datos de fabricación</summary>
+        <dl className="editor-leaf-facts">
+          <div>
+            <dt>Composición</dt>
+            <dd>{glass?.spec ?? bay.glass_spec ?? "Sin dato · elige vidrio"}</dd>
+          </div>
+          <div>
+            <dt>Espesor</dt>
+            <dd>
+              {bay.glass_thickness_mm
+                ? `${fmtMm(bay.glass_thickness_mm)} mm`
+                : "Sin dato · elige vidrio"}
+            </dd>
+          </div>
+          {!fixedPane && (
+            <div>
+              <dt>Hoja · ancho</dt>
+              <dd>
+                {leaf || resolved
+                  ? `${fmtMm(quantize(leaf?.width_mm ?? resolved?.width_mm, 2))} mm`
+                  : visualOpening(bay) === "FIXED"
+                    ? "No requiere · paño fijo"
+                    : "Sin dato · calcula el marco"}
+              </dd>
+            </div>
+          )}
+          {!fixedPane && (
+            <div>
+              <dt>Hoja · alto</dt>
+              <dd>
+                {leaf || resolved
+                  ? `${fmtMm(quantize(leaf?.height_mm ?? resolved?.height_mm, 2))} mm`
+                  : visualOpening(bay) === "FIXED"
+                    ? "No requiere · paño fijo"
+                    : "Sin dato · calcula el marco"}
+              </dd>
+            </div>
+          )}
+          {!fixedPane && (
+            <div>
+              <dt>Kit derivado</dt>
+              <dd>
+                {kit?.name ??
+                  (visualOpening(bay) === "FIXED"
+                    ? "No requiere · paño fijo"
+                    : "Sin dato · revisa herrajes")}
+              </dd>
+            </div>
+          )}
+          {!fixedPane && (
+            <div>
+              <dt>Manilla · lado</dt>
+              <dd>
+                {leaf?.handle
+                  ? leaf.handle.side === "LEFT"
+                    ? "Izquierda"
+                    : leaf.handle.side === "RIGHT"
+                      ? "Derecha"
+                      : "Cierre superior/inferior"
+                  : visualOpening(bay) === "FIXED"
+                    ? "No requiere · paño fijo"
+                    : "Sin dato · revisa apertura"}
+              </dd>
+            </div>
+          )}
+          <div>
+            <dt>Fuente</dt>
+            <dd>
+              <details className="editor-leaf-facts__source">
+                <summary>¿De dónde sale?</summary>
+                <p>
+                  {leaf?.source ??
+                    resolved?.source ??
+                    "Evaluación del motor sobre la apertura declarada; composición y kit del catálogo de la serie."}
+                </p>
+              </details>
+            </dd>
+          </div>
+        </dl>
+      </details>
     </>
   );
 }

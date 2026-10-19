@@ -346,6 +346,7 @@ import type {
   PurchaseNeedsResult,
   PurchasingState,
   QcRemakeRequestRequest,
+  QuickDraftRequestRequest,
   QuotationCustomer,
   QuotationIndexResponse,
   QuotationIssue,
@@ -10189,6 +10190,95 @@ export const quotationIssue = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(quotationIssueRequestRequest),
+  });
+};
+
+export type documentsQuickDraftResponse200 = {
+  data: Blob;
+  status: 200;
+};
+
+export type documentsQuickDraftResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type documentsQuickDraftResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type documentsQuickDraftResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type documentsQuickDraftResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type documentsQuickDraftResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type documentsQuickDraftResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type documentsQuickDraftResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type documentsQuickDraftResponseSuccess = documentsQuickDraftResponse200 & {
+  headers: Headers;
+};
+export type documentsQuickDraftResponseError = (
+  | documentsQuickDraftResponse400
+  | documentsQuickDraftResponse401
+  | documentsQuickDraftResponse403
+  | documentsQuickDraftResponse404
+  | documentsQuickDraftResponse409
+  | documentsQuickDraftResponse422
+  | documentsQuickDraftResponse503
+) & {
+  headers: Headers;
+};
+
+export type documentsQuickDraftResponse =
+  documentsQuickDraftResponseSuccess | documentsQuickDraftResponseError;
+
+export const getDocumentsQuickDraftUrl = (projectId: string) => {
+  return `/api/v1/documents/projects/${projectId}/quick-draft/`;
+};
+
+/**
+ * Any document from a name and one window: quotation, cut sheet, plan or
+ * materials, rendered by the issuing authority and stamped «Borrador».
+ * Nothing is stored — a missing price or preparation is composed inside a
+ * rolled-back transaction.
+ */
+export const documentsQuickDraft = async (
+  projectId: string,
+  quickDraftRequestRequest: QuickDraftRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<documentsQuickDraftResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<documentsQuickDraftResponse>(getDocumentsQuickDraftUrl(projectId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(quickDraftRequestRequest),
   });
 };
 

@@ -43,6 +43,7 @@ import { useProjectView } from "./useProject";
 import "./projects.css";
 import "./project-workspace.css";
 import "./project-head.css";
+import { QuickPdfMenu } from "./QuickPdfMenu";
 import { PositionThumb } from "./PositionThumb";
 import { PositionCollection, positionReadiness } from "./PositionCollection";
 import { ProjectBom } from "./ProjectPositionEditor";
@@ -716,7 +717,9 @@ function ProjectHeader({
   const actionLabel = action
     ? t(action.labelKey).replace("{count}", String(action.count ?? ""))
     : null;
-  const showTrack = project.status !== "DRAFT" || Boolean(project.current_revision);
+  // The commercial track follows a quotation once it left the draft; while
+  // drafting, every document is already available from «Sacar PDF».
+  const showTrack = project.status !== "DRAFT";
   return (
     <div className="project-head">
       <div className="project-head__row">
@@ -773,7 +776,9 @@ function ProjectHeader({
                 : "Sin precio"}
             </strong>
           </div>
-          {(canWrite || canRelease) && (project.position_count ?? 0) > 0 ? (
+          {canWrite && project.status === "DRAFT" && (project.position_count ?? 0) > 0 ? (
+            <QuickPdfMenu projectId={project.id} orgId={orgId} />
+          ) : (canWrite || canRelease) && (project.position_count ?? 0) > 0 ? (
             <Link className="ui-button" to={`/projects/${project.id}?section=production&tab=cut`}>
               <Icon name="cut" size={16} /> Orden de corte
             </Link>

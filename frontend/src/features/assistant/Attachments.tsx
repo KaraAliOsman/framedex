@@ -255,7 +255,7 @@ export function AttachmentTray({
           <Icon name="paperclip" size={16} />
           Adjuntar
         </button>
-        <span className="copilot-attach__limits">Hasta {MAX_FILES} · 40 MB c/u</span>
+        <span className="copilot-attach__limits sr-only">Hasta {MAX_FILES} archivos de 40 MB</span>
         <input
           ref={input}
           type="file"

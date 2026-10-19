@@ -159,6 +159,8 @@ export function Tooltip({ text, children }: { text: string; children: ReactEleme
 export type MenuItem = {
   id: string;
   label: string;
+  /** One plain line under the label: what the option gives you. */
+  hint?: string;
   shortcut?: string;
   danger?: boolean;
   disabledReason?: string;
@@ -167,10 +169,12 @@ function MenuList({
   items,
   close,
   label,
+  note,
 }: {
   items: readonly MenuItem[];
   close: () => void;
   label: string;
+  note?: string;
 }): JSX.Element {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -202,6 +206,7 @@ function MenuList({
         options[next]?.focus();
       }}
     >
+      {note ? <p className="ui-menu__note">{note}</p> : null}
       {items.map((item) =>
         item.href ? (
           <a
@@ -227,7 +232,14 @@ function MenuList({
               close();
             }}
           >
-            {item.label}
+            {item.hint ? (
+              <span className="ui-menu__text">
+                <span>{item.label}</span>
+                <span className="ui-menu__hint">{item.hint}</span>
+              </span>
+            ) : (
+              item.label
+            )}
             {item.shortcut ? <kbd>{item.shortcut}</kbd> : null}
           </button>
         ),
@@ -236,7 +248,21 @@ function MenuList({
   );
 }
 
-export function Menu({ label, items }: { label: string; items: readonly MenuItem[] }): JSX.Element {
+export function Menu({
+  label,
+  items,
+  note,
+  trigger,
+  busy = false,
+}: {
+  label: string;
+  items: readonly MenuItem[];
+  /** A sentence above the options, e.g. what they need. */
+  note?: string;
+  /** Visible button content when it differs from the accessible label. */
+  trigger?: ReactNode;
+  busy?: boolean;
+}): JSX.Element {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLSpanElement>(null);
   const panel = useRef<HTMLDivElement>(null);
@@ -264,14 +290,17 @@ export function Menu({ label, items }: { label: string; items: readonly MenuItem
         className="ui-button"
         aria-haspopup="menu"
         aria-expanded={open}
+        aria-label={trigger ? label : undefined}
+        aria-busy={busy || undefined}
+        disabled={busy}
         onClick={() => setOpen((value) => !value)}
       >
-        {label}
+        {trigger ?? label}
       </button>
       {open ? (
         <FloatingSurface anchor={ref} className="ui-popover">
           <div ref={panel}>
-            <MenuList label={label} items={items} close={close} />
+            <MenuList label={label} items={items} close={close} note={note} />
           </div>
         </FloatingSurface>
       ) : null}

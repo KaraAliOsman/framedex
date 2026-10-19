@@ -14,7 +14,7 @@ from authentication.errors import contract_error
 from authentication.serializers import ACTIVE_ORGANIZATION_HEADER
 from authentication.tenancy import MembershipRepository, enforce_owner_mfa, resolve_tenant_context
 from authentication.views import verified_request_token
-from documents import issuance
+from documents import issuance, quick_drafts
 from documents.serializers import FreezeResponseSerializer
 from documents.quote_serializers import QuotationLayoutSerializer
 from documents.views import (
@@ -241,6 +241,32 @@ class QuotationDraftPreviewView(APIView):
         response = HttpResponse(content, content_type="application/pdf")
         response["Cache-Control"] = "private, no-store"
         response["Content-Disposition"] = 'inline; filename="cotizacion-borrador.pdf"'
+        return response
+
+
+class QuickDraftRequestSerializer(StrictSerializer):
+    document = serializers.ChoiceField(choices=sorted(quick_drafts.QUICK_DOCUMENTS))
+
+
+class QuickDraftView(APIView):
+    """Any document from a name and one window: quotation, cut sheet, plan or
+    materials, rendered by the issuing authority and stamped «Borrador».
+    Nothing is stored — a missing price or preparation is composed inside a
+    rolled-back transaction."""
+
+    @extend_schema(
+        operation_id="documents_quick_draft",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=QuickDraftRequestSerializer,
+        responses={200: {"type": "string", "format": "binary"}, **ERRORS},
+        tags=["documents"],
+    )
+    def post(self, request, project_id: UUID):
+        data = validate(QuickDraftRequestSerializer, request.data)
+        content, name = quick_drafts.render(request, project_id, data["document"])
+        response = HttpResponse(content, content_type="application/pdf")
+        response["Cache-Control"] = "private, no-store"
+        response["Content-Disposition"] = f'inline; filename="{name}.pdf"'
         return response
 
 

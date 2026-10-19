@@ -244,3 +244,8 @@
     width: 100%;
   }
 }
+
+.work-card__total.is-pending {
+  color: var(--text-secondary);
+  font-weight: 400;
+}

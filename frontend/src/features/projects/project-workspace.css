@@ -446,3 +446,34 @@
     width: 100%;
   }
 }
+
+/* Calm gallery: the drawing and the name lead. Selecting, duplicating and
+   deleting appear when the pointer or keyboard reaches the card; the whole
+   drawing already opens the editor. Touch screens keep them visible. */
+.project-position-row-group[data-view="grid"] .position-row__open {
+  display: none;
+}
+@media (hover: hover) {
+  .project-position-row-group[data-view="grid"]
+    .position-row:not([data-selected])
+    .position-row__actions,
+  .project-position-row-group[data-view="grid"]
+    .position-row:not([data-selected])
+    .project-position-check
+    input {
+    opacity: 0;
+    transition: opacity var(--t-micro) var(--ease-in);
+  }
+  .project-position-row-group[data-view="grid"]
+    .position-row:is(:hover, :focus-within)
+    .position-row__actions,
+  .project-position-row-group[data-view="grid"]
+    .position-row:is(:hover, :focus-within)
+    .project-position-check
+    input,
+  .project-position-row-group[data-view="grid"]:has(.project-position-check input:checked)
+    .project-position-check
+    input {
+    opacity: 1;
+  }
+}

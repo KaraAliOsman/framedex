@@ -1338,6 +1338,10 @@ export const messages = {
     "El almacenamiento de documentos falló. Reintenta; si persiste, revisa la configuración.",
   "jobs.fail.stale": "El contenido cambió desde que se encoló el trabajo. Vuelve a encolarlo.",
   "jobs.fail.provider": "El proveedor externo no respondió. Reintenta en unos minutos.",
+  "jobs.fail.plan":
+    "Tu plan actual no incluye el asistente o la prueba terminó. Todo lo manual sigue disponible.",
+  "jobs.fail.credits":
+    "No quedan créditos de IA para este encargo. Todo lo manual sigue disponible.",
   "jobs.fail.aiBudget":
     "La IA alcanzó el presupuesto mensual. El dueño puede ajustarlo en Ajustes › Inteligencia artificial; las funciones manuales siguen disponibles.",
   "jobs.fail.providerQuota":
@@ -3117,7 +3121,7 @@ export const messages = {
   "assistant.state.canceled": "cancelado",
   "assistant.state.unavailable": "no disponible",
   "agent.hint":
-    "Dile qué necesitas lograr — el agente consulta los datos reales, propone pasos y prepara acciones. Tú confirmas lo que cambia.",
+    "Pregunta lo que necesites o encárgale una tarea. Trabaja sobre lo que tienes abierto y te muestra qué cambió.",
   "agent.placeholder": "¿Qué necesitas lograr?",
   "agent.send": "Ejecutar",
   "agent.thinking": "Trabajando…",

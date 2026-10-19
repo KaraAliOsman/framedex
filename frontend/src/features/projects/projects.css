@@ -968,3 +968,15 @@ p.handle-pending {
   white-space: nowrap;
   overflow-wrap: normal;
 }
+
+/* Page-wide link and label defaults must not repaint controls: a primary
+   link-button keeps white text on its fill, search fields stay one row. */
+.projects-page a.ui-button--primary,
+.projects-page a.ui-button--primary:hover {
+  color: var(--text-on-fill);
+}
+.projects-page label.project-positions-search,
+.projects-page label.projects-home__search {
+  display: inline-flex;
+  margin-block: 0;
+}

@@ -108,6 +108,10 @@ acceptance claims keep separate refs; newer code always requires verification.
 
 ## Quality
 
+- [Revisión local de los cambios de Claude · 19-10-2026](quality/review-2026-10-19.md) — REVIEW actualizado sin reset; cuatro PDF rápidos descargados, popup contextual visible y 72 tests dirigidos aprobados.
+
+- [Revisión local de la candidata · 18-10-2026](quality/review-2026-10-18.md) — pantallas abiertas, aperturas y PDF ejercitados; incidencias del checklist/visor y límites de catálogo real.
+
 - [Conexiones de producción](quality/production-connections.md) — dominio/Cloudflare, Railway/Redis, Supabase, Flow, MiMo, SMTP y recuperación de archivos; inventario estático y condiciones verificadas de proveedores.
 
 - [Suscripción SaaS y créditos](product/subscription-credits.md) — MiMo común, cupos/paquetes/presupuesto, divergencia PRD/código y propuesta de límites sin activación comercial.

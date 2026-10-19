@@ -2022,3 +2022,32 @@ nueve altos/medios. Estado verificado resumido en
 `docs/redesign/2026-10-18-final/acceptance.md`. Sin commit, despliegue ni
 activación comercial; pendiente la aprobación del dueño.
 
+## 2026-10-18 America/Santiago (19-10 UTC) · Revisión local de la candidata comprometida
+
+Se verifica HEAD `de6cfcab` en `claude/v1-implementacion` y se reutiliza REVIEW
+sin reconstruir ni alterar datos. Se abren las pantallas para el dueño, se
+ejercita una apertura y se deshace, se recupera historial del popup al navegar,
+y se descarga/renderiza una cotización real de dos páginas. Se documentan
+pendientes falsos del checklist, iframe PDF vacío en IAB, límites visuales y
+catálogo Proline todavía no cotizable. Se actualiza el ref de estado vigente;
+sin cambios de producto, emisión, cobros, nuevas llamadas IA ni despliegue.
+Detalle en [revisión local](quality/review-2026-10-18.md).
+
+## 2026-10-19 · PDF rápidos y destino del asistente
+
+Tras la revisión del dueño («con nombre y una ventana ya puedes generar
+cualquier PDF»; «le dije que edite y me hizo otra cotización»), Claude agrega
+borradores rápidos sin persistencia (cotización, corte, plano, materiales),
+fija el destino del asistente a la obra/ventana abierta y calma Obra, Inicio,
+editor y popup. Prototipo actualizado en el lienzo de diseño. Estado en
+[estado vigente](state/current-reality.md). Sin commit ni despliegue.
+
+## 2026-10-19 · Ejecución local para revisión del dueño
+
+Se revisa `6695c9d2` y el trabajo pendiente de Claude, se reconstruyen API y
+worker de REVIEW preservando datos y configuración, y se deja abierta la obra
+P-000023 con popup contextual. Se descargan los cuatro PDF rápidos y se
+comprueba tras recarga que sigue en borrador sin precio aplicado. Pasan 61
+tests backend y 11 frontend dirigidos. Sin nuevas llamadas IA, emisión,
+reset ni despliegue. Alcance y límites en
+[revisión local del 19-10](quality/review-2026-10-19.md).

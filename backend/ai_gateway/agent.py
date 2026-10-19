@@ -1075,7 +1075,15 @@ def _act(
             # «Con aprobación» may open the empty draft destination of a new
             # quotation so the coherent set can be simulated against it; its
             # windows still wait for the person's approval.
-            if not (may_draft or may_prepare_destination):
+            if refs.get("project_id") or refs.get("position_id"):
+                # The person is working inside a work (or one of its windows):
+                # the encargo edits THAT work. Opening another quotation
+                # elsewhere is never the answer to «edita esto».
+                extra_observations.append({"surface": "create_project", "context": {
+                    "error": "project_in_context",
+                    "detail": ("Ya hay una obra abierta en el contexto. Trabaja sobre esa obra y sus ventanas "
+                               "con project_ops u ops; no crees otra cotización.")}})
+            elif not (may_draft or may_prepare_destination):
                 extra_observations.append({"surface": "create_project", "context": {
                     "error": "draft_not_allowed",
                     "detail": "Esta conversación solo propone cambios; ofrece crear la obra y espera la confirmación."}})

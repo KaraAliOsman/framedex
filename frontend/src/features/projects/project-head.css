@@ -195,3 +195,24 @@
 .project-facts .is-missing {
   color: var(--text-muted);
 }
+
+/* «Sacar PDF»: any document from a name and one window. */
+.quick-pdf {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-4px);
+}
+.quick-pdf .ui-button {
+  gap: var(--space-8px);
+}
+.quick-pdf__again {
+  font-size: var(--type-dense);
+}
+.quick-pdf__error {
+  max-width: 22rem;
+  color: var(--state-danger-ink);
+  font-size: var(--type-dense);
+  text-align: right;
+}

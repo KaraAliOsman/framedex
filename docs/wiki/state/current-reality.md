@@ -3,7 +3,7 @@ type: state
 status: active
 updated: 2026-10-19
 volatility: high
-verified_ref: edcfd2844d2c2fc7cbb0d3b543b50e9089ab9b3f
+verified_ref: de6cfcaba1833b679f8b4c35254655aa31adb59d
 sources:
   - https://github.com/KaraAliOsman/framedex/pull/157
   - docs/cola/ESTADO.md
@@ -11,14 +11,46 @@ sources:
   - docs/operations/ACTIVACION.md
   - docs/redesign/2026-10-18-final/acceptance.md
   - docs/redesign/2026-10-18-final/production-handoff.md
+  - docs/wiki/quality/review-2026-10-18.md
 ---
 
 # Estado vigente de DEKOPEN v1
 
-## Candidata definitiva · 19-10-2026 (sin commit, pendiente de aprobación del dueño)
+## Libertad rápida y asistente con destino fijo · 19-10-2026
+
+Verificado en el árbol de trabajo (sin commit) y en REVIEW:
+
+- «Sacar PDF» en la cabecera de una obra en borrador: cotización borrador,
+  hoja de corte (DOC-05), plano (DOC-03 PLANO) y materiales (DOC-05 OBRA) con
+  solo un nombre y una ventana. `POST /api/v1/documents/projects/{id}/quick-draft/`
+  compone con la misma autoridad que la emisión (precio del motor con las
+  reglas vigentes, preparación con los valores sugeridos) dentro de una
+  transacción que siempre se revierte: no guarda precio, preparación ni
+  artefacto, y cada página dice «BORRADOR».
+- El asistente edita la obra o ventana abierta: el servidor rechaza crear otra
+  obra cuando el contexto trae `project_id`/`position_id`, y un mensaje nuevo
+  sobre otro destino abre un trabajo nuevo en vez de continuar el anterior.
+  Modos «Preguntar / Encargar»; el contexto se nombra («V1 · obra»).
+- Obra, inicio y editor más calmados (estados comerciales solo fuera de
+  borrador, acciones de tarjeta al pasar, datos de fabricación plegados, un
+  solo precio estimado). `test-db` sigue sin ejecutarse.
+
+## Revisión local · 18-10-2026 America/Santiago (19-10 UTC)
+
+La candidata está comprometida en `de6cfcab`, rama `claude/v1-implementacion`.
+La revisión directa de REVIEW confirma Mesa/Estudio, cambio reversible de
+apertura, popup e historial, catálogo por fabricante y descarga de PDF real.
+Encuentra pendientes falsos en el checklist antes de cargar la preparación y
+una vista previa PDF vacía en el navegador integrado (el archivo sí renderiza).
+Proline sigue como referencia no cotizable y sin autoridad de fabricación.
+Véase [revisión y límites](../quality/review-2026-10-18.md).
+La aprobación del dueño y el lanzamiento siguen pendientes.
+
+## Campaña de entrega de Claude · 19-10-2026
 
 Verificado en el árbol de trabajo de `claude/v1-implementacion` (base `6f78e329`)
-y en REVIEW reconstruido desde ese árbol — **no** en un ref publicado:
+y en REVIEW reconstruido desde ese árbol. El informe original precede al
+commit `de6cfcab`; conserva el contexto de su propia campaña:
 
 - Mesa de obra y Estudio presentan la misma sesión de edición; el cotizador
   manual no depende de IA y el plan sin IA no monta asistente ni sondeo.
