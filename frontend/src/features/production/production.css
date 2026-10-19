@@ -1855,3 +1855,94 @@ div:has(> table.production-plan) {
 .production-work-switch {
   margin: var(--space-8px) 0 var(--space-12px);
 }
+
+/* Work order card (owner direction 2026-10-19): the work, who and which OT,
+   the next step, a progress bar and the commitment. Alerts are short chips. */
+.production-board-order {
+  border-color: var(--border-subtle);
+  border-radius: var(--r-3);
+  gap: var(--space-6px);
+  padding: var(--space-12px) var(--space-16px) var(--space-16px);
+  transition:
+    border-color var(--t-micro) var(--ease-in),
+    box-shadow var(--t-state) var(--ease-in),
+    transform 160ms var(--ease-in);
+}
+.production-board-order:hover {
+  background: var(--surface-panel);
+}
+@media (hover: hover) and (pointer: fine) {
+  .production-board-order:hover {
+    border-color: var(--border-default);
+    box-shadow:
+      0 1px 2px rgb(22 28 31 / 4%),
+      0 8px 20px rgb(22 28 31 / 6%);
+  }
+}
+.production-board-order:active {
+  transform: scale(0.98);
+}
+.production-board-head {
+  align-items: flex-start;
+  display: flex;
+  gap: var(--space-8px);
+  justify-content: space-between;
+}
+.production-board-work {
+  font-size: var(--type-body);
+  font-weight: 600;
+  line-height: var(--line-body);
+}
+.production-board-status {
+  background: var(--surface-card);
+  border-radius: var(--r-pill);
+  color: var(--text-secondary);
+  flex: none;
+  font-size: var(--type-micro);
+  padding: 2px var(--space-8px);
+}
+.production-board-meta {
+  color: var(--text-secondary);
+  font-size: var(--type-dense);
+}
+.production-board-code {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.production-board-next {
+  color: var(--state-info-ink);
+  font-size: var(--type-dense);
+  font-weight: 600;
+  margin-top: var(--space-4px);
+}
+.production-board-progress {
+  color: var(--text-secondary);
+  display: grid;
+  font-size: var(--type-dense);
+  gap: var(--space-4px);
+}
+.production-board-bar {
+  --done: 0%;
+  background: linear-gradient(
+    to right,
+    var(--interactive-fill) var(--done, 0%),
+    var(--surface-card) var(--done, 0%)
+  );
+  border-radius: var(--r-pill);
+  display: block;
+  height: 4px;
+}
+.production-board-date {
+  color: var(--text-secondary);
+  font-size: var(--type-dense);
+}
+.production-board-order .production-requires-person {
+  background: var(--state-person-soft);
+  border: 0;
+  border-radius: var(--r-pill);
+  color: var(--state-person-ink);
+  font-size: var(--type-micro);
+  font-weight: 500;
+  justify-self: start;
+  padding: 2px var(--space-8px);
+}

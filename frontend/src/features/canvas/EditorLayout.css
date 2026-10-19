@@ -5,7 +5,7 @@
   position: relative;
   height: calc(100dvh - 110px);
   min-height: 0;
-  grid-template-columns: 112px minmax(0, 1fr) 320px;
+  grid-template-columns: 84px minmax(0, 1fr) 320px;
   grid-template-rows: minmax(0, 1fr) 28px;
   grid-template-areas: "tools canvas side" "tools status side";
   gap: var(--space-2);
@@ -685,4 +685,103 @@
   .position-editor .editor-system-chip {
     max-width: 11rem;
   }
+}
+
+/* Tool palette (owner direction 2026-10-19): icon over a short name, like a
+   Keynote toolbar; the shortcut lives in the tooltip. */
+.assembly-editor .assembly-tools {
+  background: var(--surface-panel);
+  border-right: 1px solid var(--border-subtle);
+  gap: var(--space-2px);
+  padding: var(--space-8px) var(--space-6px);
+}
+.assembly-editor .assembly-tools .tool-button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: var(--r-2);
+  color: var(--text-secondary);
+  flex-direction: column;
+  font-size: var(--type-micro);
+  font-weight: 500;
+  gap: var(--space-4px);
+  justify-content: center;
+  line-height: 1.15;
+  min-height: 58px;
+  padding: var(--space-6px) var(--space-2px);
+  text-align: center;
+  transition:
+    background var(--t-micro) var(--ease-in),
+    color var(--t-micro) var(--ease-in),
+    transform 160ms var(--ease-in);
+}
+.assembly-editor .assembly-tools .tool-button span {
+  display: block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.assembly-editor .assembly-tools .tool-button kbd {
+  display: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .assembly-editor .assembly-tools .tool-button:hover:not(:disabled) {
+    background: var(--surface-hover);
+    color: var(--text-primary);
+  }
+}
+.assembly-editor .assembly-tools .tool-button:active:not(:disabled) {
+  transform: scale(0.96);
+}
+.assembly-editor .assembly-tools .tool-button.is-active,
+.assembly-editor .assembly-tools .tool-button[aria-pressed="true"] {
+  background: var(--surface-selected);
+  color: var(--state-info-ink);
+}
+
+/* One disclosure grammar in the inspector: every fold reads the same — a
+   40 px row, a hairline above, a chevron that turns quickly. */
+.assembly-side details > summary {
+  align-items: center;
+  border-top: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  font-size: var(--type-label);
+  font-weight: 600;
+  gap: var(--space-8px);
+  list-style: none;
+  margin: 0;
+  min-height: 40px;
+  padding: var(--space-8px) 0;
+  user-select: none;
+}
+.assembly-side details > summary::-webkit-details-marker {
+  display: none;
+}
+.assembly-side details > summary::before {
+  border-bottom: 1.5px solid currentColor;
+  border-right: 1.5px solid currentColor;
+  color: var(--text-muted);
+  content: "";
+  flex: none;
+  height: 6px;
+  margin: 0 var(--space-2px) 0 var(--space-4px);
+  transform: rotate(-45deg);
+  transition: transform 160ms var(--ease-in);
+  width: 6px;
+}
+.assembly-side details[open] > summary::before {
+  transform: rotate(45deg);
+}
+@media (hover: hover) and (pointer: fine) {
+  .assembly-side details > summary:hover {
+    color: var(--interactive);
+  }
+}
+.assembly-side details details > summary {
+  border-top: 0;
+  color: var(--text-secondary);
+  font-size: var(--type-dense);
+  font-weight: 500;
+  min-height: 32px;
 }

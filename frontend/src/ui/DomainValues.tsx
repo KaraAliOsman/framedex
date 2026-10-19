@@ -10,18 +10,22 @@ import {
 } from "../decimal";
 import { UnknownValue } from "./Signature";
 
+/** Technical measures (mm) speak in Mono (constitution §3.2); money,
+ * quantities, dates and ratios stay in Sans with tabular figures. */
 function Value({
   text,
   unit,
   cause,
+  measure = false,
 }: {
   text: string;
   unit?: string;
   cause?: string;
+  measure?: boolean;
 }): JSX.Element {
   if (text === "Sin dato") return <UnknownValue cause={cause} />;
   return (
-    <span className="ui-value">
+    <span className={measure ? "ui-value ui-value--measure" : "ui-value"}>
       {text}
       {unit ? (
         <>
@@ -58,6 +62,7 @@ export function Dims({
       text={width === "Sin dato" || height === "Sin dato" ? "Sin dato" : `${width} × ${height}`}
       unit="mm"
       cause={cause}
+      measure
     />
   );
 }
@@ -70,7 +75,7 @@ export function Length({
   precision?: number;
   cause?: string;
 }): JSX.Element {
-  return <Value text={formatDecimal(mm, precision)} unit="mm" cause={cause} />;
+  return <Value text={formatDecimal(mm, precision)} unit="mm" cause={cause} measure />;
 }
 export function Area({ m2, cause }: { m2: DecimalValue; cause?: string }): JSX.Element {
   return <Value text={formatDecimal(m2, 2)} unit="m²" cause={cause} />;

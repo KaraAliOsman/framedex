@@ -4,7 +4,6 @@ import type { DesignOptions, ProjectResponse } from "../../api/generated/models"
 import { fmtMm } from "../../format";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { formatMoney } from "../money";
 import { useQuery } from "@tanstack/react-query";
 import {
   engineSystems,
@@ -994,12 +993,8 @@ function PositionWorkspace({
           title={project.data?.name ?? t("projects.back")}
           onClick={onBack}
         >
-          <Icon name="chevronLeft" size={16} />
-          <span>{presentation === "studio" ? "Mesa de obra" : project.data?.name || "Obra"}</span>
+          <Icon name="chevronLeft" size={20} />
         </button>
-        <span className="editor-position-code">
-          {saved ? `Ventana ${saved.position_index}` : "Ventana nueva"}
-        </span>
         <input
           className="editor-location"
           aria-label={t("projects.location")}
@@ -1143,17 +1138,6 @@ function PositionWorkspace({
             />
           )}
         </Popover>
-        {project.data && projectId ? (
-          <Link
-            className="editor-chip editor-price"
-            to={`/projects/${projectId}?section=pricing`}
-            title="Precio de la obra con el último cálculo aplicado"
-          >
-            {project.data.pricing_current
-              ? `Obra ${formatMoney(project.data.total_price_gross, project.data.currency)}`
-              : "Calcular precio de la obra"}
-          </Link>
-        ) : null}
         <span className="editor-save-state" role="status">
           {busy
             ? "Guardando…"

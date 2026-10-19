@@ -5,9 +5,11 @@
   box-shadow: var(--sheet);
 }
 .ui-value {
+  font-variant-numeric: tabular-nums;
+}
+.ui-value--measure {
   font-family: var(--font-mono);
   font-size: var(--type-dim);
-  font-variant-numeric: tabular-nums;
   line-height: var(--line-dim);
 }
 .ui-value__unit {

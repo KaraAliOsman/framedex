@@ -213,7 +213,7 @@ export function PurchaseNeeds({
                         <span className="ui-value">{line.sku}</span>
                         {line.is_demo && <small>DEMO · catálogo sintético</small>}
                         <details>
-                          <summary>¿De dónde sale?</summary>
+                          <summary>Ver de qué OT sale</summary>
                           <p>
                             {line.project_code} · Necesidad del modelo sellado y del plan de corte.
                             Las mermas y la compatibilidad las decide el motor.

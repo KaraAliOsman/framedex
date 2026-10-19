@@ -24,7 +24,7 @@ a.ui-button {
   transition:
     background var(--t-micro) var(--ease-in),
     border-color var(--t-micro) var(--ease-in),
-    transform var(--t-micro) var(--ease-in);
+    transform 160ms var(--ease-in);
 }
 .ui-button:hover:not(:disabled) {
   background: var(--surface-hover);
@@ -33,7 +33,7 @@ a.ui-button {
 }
 .ui-button:active:not(:disabled) {
   background: var(--surface-active);
-  transform: translateY(1px);
+  transform: scale(0.97);
 }
 .ui-button--primary,
 button.ui-button--primary,
@@ -268,14 +268,47 @@ textarea.ui-field__input {
   outline: 2px solid var(--border-focus);
   outline-offset: 1px;
 }
+/* One segmented grammar everywhere (owner direction 2026-10-19): a soft
+   track with the chosen option lifted in white, like iOS/macOS. */
 .ui-segmented {
+  align-items: center;
+  background: var(--surface-active);
+  border-radius: var(--r-2);
   display: inline-flex;
   flex-wrap: wrap;
-  gap: var(--space-2px);
+  gap: 2px;
+  padding: 3px;
+  width: fit-content;
 }
-.ui-segmented [aria-checked="true"] {
-  border-color: var(--interactive);
-  background: var(--surface-selected);
+.ui-segmented > button,
+.ui-segmented > [role="radio"] {
+  background: transparent;
+  border: 0;
+  border-radius: calc(var(--r-2) - 3px);
+  color: var(--text-secondary);
+  font-weight: 500;
+  min-height: 32px;
+  padding: 0 var(--space-12px);
+  transition:
+    background var(--t-micro) var(--ease-in),
+    color var(--t-micro) var(--ease-in);
+}
+.ui-segmented > button:hover:not(:disabled),
+.ui-segmented > [role="radio"]:hover:not(:disabled) {
+  background: transparent;
+  color: var(--text-primary);
+}
+.ui-segmented [aria-checked="true"],
+.ui-segmented [aria-pressed="true"] {
+  background: var(--surface-panel);
+  box-shadow:
+    0 1px 2px rgb(22 28 31 / 10%),
+    0 0 0 0.5px rgb(22 28 31 / 6%);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.ui-segmented > button:hover[aria-checked="true"] {
+  background: var(--surface-panel);
 }
 .ui-combobox {
   position: relative;
@@ -320,4 +353,10 @@ textarea.ui-field__input {
 [data-density="workshop"] .ui-check {
   min-height: var(--density-loose);
   min-width: var(--density-loose);
+}
+/* Workshop and field surfaces: touch-size segments (constitution §3.7). */
+[data-density="workshop"] .ui-segmented > button,
+[data-density="workshop"] .ui-segmented > [role="radio"] {
+  min-height: 44px;
+  padding: 0 var(--space-16px);
 }

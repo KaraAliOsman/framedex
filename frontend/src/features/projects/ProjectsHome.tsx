@@ -66,8 +66,6 @@ export function ProjectsHome({
 
   const search = params.get("q") ?? "";
   const statusFilter = params.get("status") ?? "";
-  // Large practices open on the table; the choice is remembered in the URL.
-  const view = params.get("view") ?? (items.length > 24 ? "table" : "gallery");
   const sortKey = params.get("sort") ?? "updated";
   function setParam(key: string, value: string, fallback = ""): void {
     setParams(
@@ -142,30 +140,19 @@ export function ProjectsHome({
           <h1 className="projects-home__title" id="page-title">
             Proyectos
           </h1>
-          <p className="projects-home__context">{orgName}</p>
+          <p className="projects-home__context">Lo que tiene {orgName} en curso.</p>
         </div>
-        <div className="projects-home__actions">
-          <label className="projects-home__search">
-            <Icon name="search" size={16} />
-            <span className="sr-only">Buscar obra o cliente</span>
-            <input
-              type="search"
-              placeholder="Buscar obra o cliente"
-              value={search}
-              onChange={(event) => setParam("q", event.target.value)}
-            />
-          </label>
-          {canWrite ? (
-            <Button
-              variant="primary"
-              icon={<Icon name="plus" />}
-              loading={creating}
-              onClick={() => void startQuotation()}
-            >
-              Nueva cotización
-            </Button>
-          ) : null}
-        </div>
+        {canWrite ? (
+          <Button
+            variant="primary"
+            className="projects-home__new"
+            icon={<Icon name="plus" />}
+            loading={creating}
+            onClick={() => void startQuotation()}
+          >
+            Nueva cotización
+          </Button>
+        ) : null}
       </header>
       {createError ? <p role="alert">{createError}</p> : null}
 
@@ -183,8 +170,8 @@ export function ProjectsHome({
       ) : null}
 
       {decisions.length > 0 ? (
-        <section className="projects-home__decide" aria-labelledby="decide-title">
-          <div className="projects-home__section-head">
+        <section className="home-card" aria-labelledby="decide-title">
+          <div className="home-card__head">
             <h2 id="decide-title">Necesita tu atención</h2>
             <Link className="ui-link" to="/dashboard">
               Ver todos los pendientes ({today.data?.actions.length ?? 0})
@@ -193,20 +180,20 @@ export function ProjectsHome({
           <ul className="decide-list">
             {decisions.slice(0, 4).map((group) => (
               <li key={group.name} className="decide-item">
+                <span
+                  className={`decide-item__dot${group.urgent ? " is-urgent" : ""}`}
+                  aria-hidden="true"
+                />
                 <div className="decide-item__work">
                   <strong>{group.name}</strong>
                   <span>
                     {group.actions.length === 1
                       ? group.actions[0]!.title
                       : `${group.actions.length} decisiones · ${group.actions[0]!.title}`}
+                    {group.urgent ? ` · ${group.urgent}` : ""}
                   </span>
                 </div>
-                {group.urgent ? (
-                  <StatusBadge tone="warning" showIcon={false}>
-                    {group.urgent}
-                  </StatusBadge>
-                ) : null}
-                <Link className="ui-button ui-button--compact" to={group.actions[0]!.href}>
+                <Link className="decide-item__action" to={group.actions[0]!.href}>
                   {capitalize(group.actions[0]!.verb)}
                 </Link>
               </li>
@@ -216,14 +203,10 @@ export function ProjectsHome({
       ) : null}
 
       <section className="projects-home__works" aria-labelledby="works-title">
-        <div className="projects-home__section-head">
-          <h2 id="works-title">Trabajos</h2>
+        <div className="home-works__head">
+          <h2 id="works-title">Obras</h2>
           <div className="projects-home__tools">
-            <div
-              className="ui-segmented projects-home__filters"
-              role="radiogroup"
-              aria-label="Estado"
-            >
+            <div className="home-segmented" role="radiogroup" aria-label="Estado">
               {FILTERS.map((filter) => (
                 <button
                   key={filter.value || "all"}
@@ -236,7 +219,17 @@ export function ProjectsHome({
                 </button>
               ))}
             </div>
-            <label className="projects-home__sort">
+            <label className="home-search">
+              <Icon name="search" size={16} />
+              <span className="sr-only">Buscar obra o cliente</span>
+              <input
+                type="search"
+                placeholder="Buscar obra o cliente"
+                value={search}
+                onChange={(event) => setParam("q", event.target.value)}
+              />
+            </label>
+            <label className="home-sort">
               <span className="sr-only">Ordenar</span>
               <select
                 value={sortKey}
@@ -246,28 +239,6 @@ export function ProjectsHome({
                 <option value="name">Por nombre</option>
               </select>
             </label>
-            <div className="ui-segmented" role="radiogroup" aria-label="Vista">
-              <button
-                type="button"
-                role="radio"
-                aria-checked={view === "gallery"}
-                aria-label="Galería"
-                title="Galería"
-                onClick={() => setParam("view", "gallery")}
-              >
-                <Icon name="grid" size={16} />
-              </button>
-              <button
-                type="button"
-                role="radio"
-                aria-checked={view === "table"}
-                aria-label="Tabla"
-                title="Tabla"
-                onClick={() => setParam("view", "table")}
-              >
-                <Icon name="list" size={16} />
-              </button>
-            </div>
           </div>
         </div>
 
@@ -285,8 +256,8 @@ export function ProjectsHome({
           />
         ) : visible.length === 0 ? (
           <EmptyState
-            title="Ningún trabajo coincide"
-            body="Cambia la búsqueda o el estado para ver más trabajos."
+            title="Ninguna obra coincide"
+            body="Cambia la búsqueda o el estado para ver más obras."
             action={
               <Button
                 onClick={() =>
@@ -302,93 +273,43 @@ export function ProjectsHome({
               </Button>
             }
           />
-        ) : view === "gallery" ? (
-          <ul className="work-grid">
+        ) : (
+          <ul className="work-list">
             {visible.map((item) => (
-              <li key={item.id}>
-                <Link className="work-card" to={`/projects/${encodeURIComponent(item.id)}`}>
-                  <span className="work-card__top">
-                    <StatusBadge showIcon={false} data-status={item.status.toLowerCase()}>
-                      {t(PROJECT_STATUS[item.status])}
-                    </StatusBadge>
+              <li key={item.id} className="work-row">
+                <span className="work-row__main">
+                  <Link className="work-row__name" to={`/projects/${encodeURIComponent(item.id)}`}>
+                    {item.name || item.code}
+                  </Link>
+                  <span className="work-row__meta">
+                    {item.client_name || "Sin cliente todavía"} ·{" "}
                     <time dateTime={item.updated_at} title={formatDateTime(item.updated_at)}>
                       {formatRelativeTimestamp(item.updated_at)}
                     </time>
                   </span>
-                  <span className="work-card__name">{item.name || item.code}</span>
-                  <span className={`work-card__client${item.client_name ? "" : " is-missing"}`}>
-                    {item.client_name || "Sin cliente todavía"}
-                  </span>
-                  <span className="work-card__foot">
-                    <span>
-                      {item.position_count === 0
-                        ? "Sin ventanas todavía"
-                        : item.position_count === 1
-                          ? "1 ventana"
-                          : `${item.position_count} ventanas`}
-                    </span>
-                    {item.pricing_current ? (
-                      <span className="work-card__total">
-                        {formatMoney(item.total_price_gross, item.currency)}
-                      </span>
-                    ) : item.position_count > 0 ? (
-                      <span className="work-card__total is-pending">Falta precio</span>
-                    ) : null}
-                  </span>
-                </Link>
+                </span>
+                <span className="work-row__status">
+                  <StatusBadge showIcon={false} data-status={item.status.toLowerCase()}>
+                    {t(PROJECT_STATUS[item.status])}
+                  </StatusBadge>
+                </span>
+                <span className="work-row__windows">
+                  {item.position_count === 0
+                    ? "Sin ventanas"
+                    : item.position_count === 1
+                      ? "1 ventana"
+                      : `${item.position_count} ventanas`}
+                </span>
+                <span className={`work-row__total${item.pricing_current ? "" : " is-pending"}`}>
+                  {item.pricing_current
+                    ? formatMoney(item.total_price_gross, item.currency)
+                    : item.position_count > 0
+                      ? "Falta precio"
+                      : ""}
+                </span>
               </li>
             ))}
           </ul>
-        ) : (
-          <div className="work-table-wrap">
-            <table className="ui-data-table work-table">
-              <thead>
-                <tr>
-                  <th scope="col">Obra</th>
-                  <th scope="col">Cliente</th>
-                  <th scope="col">Estado</th>
-                  <th scope="col" className="is-numeric">
-                    Ventanas
-                  </th>
-                  <th scope="col" className="is-numeric">
-                    Total
-                  </th>
-                  <th scope="col">Actualizado</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visible.map((item) => (
-                  <tr key={item.id}>
-                    <td>
-                      <Link to={`/projects/${encodeURIComponent(item.id)}`}>
-                        {item.name || item.code}
-                      </Link>
-                      <span className="work-table__code">{item.code}</span>
-                    </td>
-                    <td className={item.client_name ? undefined : "is-missing"}>
-                      {item.client_name || "Sin cliente"}
-                    </td>
-                    <td>
-                      <StatusBadge showIcon={false} data-status={item.status.toLowerCase()}>
-                        {t(PROJECT_STATUS[item.status])}
-                      </StatusBadge>
-                    </td>
-                    <td className="is-numeric">{item.position_count}</td>
-                    <td className="is-numeric">
-                      {item.pricing_current
-                        ? formatMoney(item.total_price_gross, item.currency)
-                        : "Sin precio"}
-                    </td>
-                    <td>
-                      <time dateTime={item.updated_at} title={formatDateTime(item.updated_at)}>
-                        {formatRelativeTimestamp(item.updated_at)}
-                      </time>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
         )}
       </section>
     </div>

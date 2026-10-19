@@ -60,6 +60,21 @@ export function solidToGeometry(solid: Solid3D): THREE.ExtrudeGeometry | null {
       depth: span,
       bevelEnabled: false,
     });
+    if (solid.miter) {
+      // Welded corner: pull each end back by the distance from the outer
+      // face (45°), capped at half the run so short members stay closed.
+      const us = outline.map(([u]) => u);
+      const outerU = solid.miter.outer === "low" ? Math.min(...us) : Math.max(...us);
+      const position = geo.attributes.position!;
+      for (let index = 0; index < position.count; index++) {
+        const z = position.getZ(index);
+        const offset = Math.min(Math.abs(position.getX(index) - outerU), span / 2);
+        if (solid.miter.start && z < 1e-6) position.setZ(index, offset);
+        else if (solid.miter.end && Math.abs(z - span) < 1e-6) position.setZ(index, span - offset);
+      }
+      position.needsUpdate = true;
+      geo.computeVertexNormals();
+    }
     if (flipped) {
       geo.rotateX(-Math.PI / 2);
       geo.translate(solid.u0, solid.a0, solid.v0);

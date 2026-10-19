@@ -165,26 +165,45 @@ export function ProductionBoard({
                       key={order.id}
                       onClick={() => onOpen(order.id)}
                     >
-                      <strong className="production-board-work">
-                        {order.project_name ?? order.project_code ?? "Obra no vinculada"}
-                      </strong>
+                      <span className="production-board-head">
+                        <strong className="production-board-work">
+                          {order.project_name ?? order.project_code ?? "Obra no vinculada"}
+                        </strong>
+                        <span className="production-board-status">
+                          {domainLabels[order.status] ?? "Sin estado"}
+                        </span>
+                      </span>
                       <span className="production-board-meta">
                         {order.client_name ? `${order.client_name} · ` : ""}
-                        <span className="ui-value">{order.order_code}</span>
+                        <span className="production-board-code">{order.order_code}</span>
                       </span>
                       <span className="production-board-next">
                         Siguiente: {order.next_step?.label ?? stationCodeLabel(station.code)}
                       </span>
-                      <span className="production-board-line ui-value">
-                        {formatDecimal(order.quantity)} unidades · {order.steps_done}/
-                        {order.steps_total} pasos
+                      <span className="production-board-progress">
+                        <span
+                          className="production-board-bar"
+                          aria-hidden="true"
+                          style={{
+                            ["--done" as string]: `${
+                              order.steps_total
+                                ? Math.round((order.steps_done / order.steps_total) * 100)
+                                : 0
+                            }%`,
+                          }}
+                        />
+                        <span>
+                          {order.steps_done} de {order.steps_total} pasos ·{" "}
+                          {Number(order.quantity) === 1
+                            ? "1 unidad"
+                            : `${formatDecimal(order.quantity)} unidades`}
+                        </span>
                       </span>
-                      <span className="ui-value">
+                      <span className="production-board-date">
                         {order.scheduled_date
                           ? `Compromiso ${formatDate(order.scheduled_date)}`
-                          : "Sin dato · agenda de entrega pendiente"}
+                          : "Sin fecha de entrega"}
                       </span>
-                      <span>{domainLabels[order.status] ?? "Sin dato · estado sin etiqueta"}</span>
                       {order.status === "HOLD" ? (
                         <span className="production-requires-person">
                           {entry?.note ?? "Bloqueada · revisar motivo"}

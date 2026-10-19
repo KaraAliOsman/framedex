@@ -131,7 +131,11 @@ acceptance claims keep separate refs; newer code always requires verification.
 
 ## Sources
 
+- [Planteamiento original recuperado · 19-10-2026](sources/owner-original-recovered-2026-10-19.md) — procedencia de los dos adjuntos iniciales, voz literal del dueño y aclaraciones históricas; compilación completa privada en `.run/`.
+
 - [Adjuntos y criterio de innovación · 18-10-2026](sources/owner-attachments-and-innovation-2026-10-18.md) — documentos e imágenes en el popup como requisito; refinamientos con valor, sin inflar el lanzamiento. [Análisis adicional](../research/2026-10-18-innovacion/06-archivos-y-mejoras-con-sentido.md).
+
+- [Ambición del producto · 19-10-2026](sources/owner-ambition-brief-2026-10-19.md) — versión ordenada por el dueño: un diseño para todo, MiMo, catálogos, documentos, 3D del oficio y nivel Apple; quitar lo inservible.
 
 - [Encargo de innovación · 18-10-2026](sources/owner-innovation-review-2026-10-18.md) — investigar mejoras y adiciones con criterio gerencial y pensamiento abierto.
 - [Versión definitiva y conexiones finales · 18-10-2026](sources/owner-launch-boundary-2026-10-18.md) — todo el alcance funcional listo; solo Railway, Supabase y pagos de producción pendientes, con pruebas de lanzamiento después de la aprobación.

@@ -223,6 +223,31 @@ export { SURFACE_LABELS };
  * renders provenance (what it consulted), lets the human apply design ops
  * through the canvas's own commit, and deep-links consequential actions —
  * it never executes them itself. */
+/** Context starting points (owner vision: the copilot takes the work a
+ * person would do). Plain requests the agent resolves with the product's own
+ * operations; no numbers are promised here. */
+const SUGGESTIONS: Record<string, string[]> = {
+  project: [
+    "Agrega una ventana fija de 1200 × 1000 mm",
+    "Calcula el precio de esta obra con las reglas de la empresa",
+    "Revisa qué falta para enviar la cotización",
+  ],
+  position: [
+    "Cambia esta ventana a oscilobatiente con manilla a la derecha",
+    "Usa termopanel 4-12-4 en esta ventana",
+    "Divide esta ventana en dos hojas iguales",
+  ],
+  projects: [
+    "Crea una cotización con 3 ventanas para la casa de Pedro Soto",
+    "¿Qué cotizaciones vencen esta semana?",
+  ],
+  catalog: [
+    "Revisa qué le falta a esta serie para cotizar",
+    "Compara las series de 60 y 70 mm de este fabricante",
+  ],
+  default: ["¿Qué tengo pendiente hoy?", "Crea una cotización nueva con una ventana"],
+};
+
 export function AgentBody({
   organizationId,
   userId,
@@ -1010,8 +1035,28 @@ export function AgentBody({
         ) : null}
         {thread.length === 0 && !live ? (
           <div className="ask-dock__welcome">
-            <Companion state={presenceState(job)} size={96} />
+            <Companion state={presenceState(job)} size={64} />
             <p className="ask-dock__hint">{t("agent.hint")}</p>
+            {/* Starting points for what is open: they fill the request, never
+             * send it — the person still decides and can edit the words. */}
+            {(SUGGESTIONS[surface] ?? SUGGESTIONS.default)!.length ? (
+              <ul className="ask-dock__suggestions" aria-label="Sugerencias">
+                {(SUGGESTIONS[surface] ?? SUGGESTIONS.default)!.map((text) => (
+                  <li key={text}>
+                    <button
+                      type="button"
+                      className="ask-dock__suggestion"
+                      onClick={() => {
+                        setGoal(text);
+                        inputRef.current?.focus();
+                      }}
+                    >
+                      {text}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
           </div>
         ) : (
           thread

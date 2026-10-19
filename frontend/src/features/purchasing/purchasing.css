@@ -267,9 +267,9 @@
 }
 
 .purchasing-index {
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-2);
-  padding: var(--space-16px);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-3);
+  padding: var(--space-24px);
   margin: var(--space-8px) 0 var(--space-16px);
   background: var(--surface-panel);
   overflow-x: auto;
@@ -279,22 +279,7 @@
   font-size: 1rem;
 }
 .purchasing-index-filters {
-  display: flex;
-  gap: var(--space-6px);
-  flex-wrap: wrap;
-  margin-bottom: var(--space-3);
-}
-.purchasing-index-filters button {
-  border: 1px solid var(--border-default);
-  background: var(--surface-panel);
-  border-radius: var(--r-1);
-  padding: var(--space-4px) var(--space-12px);
-  font-size: var(--type-body);
-}
-.purchasing-index-filters button.is-active {
-  background: var(--interactive-fill);
-  border-color: var(--interactive-fill);
-  color: var(--text-on-fill);
+  margin-bottom: var(--space-12px);
 }
 .purchasing-index table {
   width: 100%;
@@ -598,4 +583,113 @@
     padding: var(--space-1);
     overflow-wrap: anywhere;
   }
+}
+
+/* Order index: words never break mid-word; numbers align. */
+.purchasing-index table {
+  table-layout: auto;
+}
+.purchasing-index th,
+.purchasing-index td {
+  overflow-wrap: normal;
+  word-break: normal;
+}
+.purchasing-index th {
+  white-space: nowrap;
+}
+.purchasing-index h2 {
+  font-size: var(--type-subtitle);
+  margin-bottom: var(--space-12px);
+}
+
+/* Needs in one card per supplier; the trace to the work orders reads as a
+   small link, not a sentence on every row. */
+.purchase-needs {
+  background: var(--surface-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-3);
+  margin-bottom: var(--space-24px);
+  padding: var(--space-24px);
+}
+.purchase-need-group + .purchase-need-group {
+  border-top: 1px solid var(--border-subtle);
+  margin-top: var(--space-16px);
+  padding-top: var(--space-16px);
+}
+.purchase-needs details > summary {
+  color: var(--interactive);
+  cursor: pointer;
+  font-size: var(--type-dense);
+  list-style: none;
+  margin-top: var(--space-2px);
+}
+.purchase-needs details > summary::-webkit-details-marker {
+  display: none;
+}
+.purchase-needs th {
+  white-space: nowrap;
+}
+
+/* Existencias: one toolbar row and the stock in a card. */
+.inventory-page .purchasing-stock {
+  background: var(--surface-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-3);
+  padding: var(--space-24px);
+}
+.inventory-toolbar {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8px) var(--space-12px);
+  margin-bottom: var(--space-16px);
+}
+.inventory-toolbar h2 {
+  font-size: var(--type-subtitle);
+  margin: 0 auto 0 0;
+}
+.inventory-page .purchasing-stock label.inventory-search {
+  flex-direction: row;
+  align-items: center;
+  background: var(--surface-card);
+  border-radius: var(--r-pill);
+  color: var(--text-muted);
+  display: inline-flex;
+  gap: var(--space-8px);
+  margin: 0;
+  min-height: 38px;
+  padding: 0 var(--space-12px);
+  width: min(22rem, 100%);
+}
+.inventory-page .purchasing-stock label.inventory-search input[type="search"] {
+  background: transparent;
+  border: 0;
+  flex: 1;
+  min-width: 0;
+  outline: none;
+  padding: 0;
+}
+.inventory-page .purchasing-stock label.inventory-sort {
+  display: inline-flex;
+  margin: 0;
+}
+label.inventory-sort select {
+  background: transparent;
+  border: 0;
+  color: var(--text-secondary);
+  font-weight: 500;
+  min-height: 38px;
+}
+button.inventory-toggle {
+  background: var(--surface-panel);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-pill);
+  color: var(--text-secondary);
+  font-size: var(--type-dense);
+  min-height: 32px;
+}
+button.inventory-toggle[aria-pressed="true"] {
+  background: var(--surface-selected);
+  border-color: var(--interactive);
+  color: var(--state-info-ink);
 }

@@ -2,24 +2,25 @@
    primary action; the work's details live with its activity. */
 .project-head {
   display: grid;
-  gap: var(--space-4);
-  margin-bottom: var(--space-4);
+  gap: var(--space-16px);
+  margin-bottom: var(--space-24px);
 }
 .project-head__row {
-  align-items: flex-start;
+  align-items: flex-end;
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-4);
   justify-content: space-between;
 }
 .project-head__identity {
+  flex: 1 1 26rem;
   min-width: 0;
 }
 .project-head__title {
-  font-size: var(--type-title-l);
+  font-size: var(--type-display);
   font-weight: 600;
-  letter-spacing: -0.01em;
-  line-height: var(--line-title-l);
+  letter-spacing: -0.02em;
+  line-height: var(--line-display);
   margin: 0;
 }
 .project-head__title .ui-inline-edit {
@@ -45,8 +46,9 @@
   color: var(--text-secondary);
   display: flex;
   flex-wrap: wrap;
+  font-size: var(--type-title-m);
   gap: var(--space-12px);
-  margin: var(--space-6px) 0 0;
+  margin: var(--space-8px) 0 0;
 }
 .project-head__add {
   align-items: center;
@@ -79,10 +81,10 @@
 }
 .project-head__total span {
   color: var(--text-secondary);
-  font-size: var(--type-micro);
+  font-size: var(--type-dense);
 }
 .project-head__total strong {
-  font-size: var(--type-subtitle);
+  font-size: var(--type-title-l);
   font-variant-numeric: tabular-nums;
   font-weight: 600;
   line-height: var(--line-subtitle);
@@ -215,4 +217,26 @@
   color: var(--state-danger-ink);
   font-size: var(--type-dense);
   text-align: right;
+}
+
+/* Destinations of the work, with the Mesa / Estudio choice at their end. */
+.project-tabs-row {
+  align-items: flex-end;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  gap: var(--space-16px);
+  justify-content: space-between;
+  margin-bottom: var(--space-24px);
+}
+.project-tabs-row > .ui-tabs,
+.project-tabs-row > [role="tablist"] {
+  border-bottom: 0;
+  margin: 0;
+}
+.project-tabs-row .work-view-switch {
+  margin-bottom: var(--space-8px);
+}
+.project-head__total .project-head__pending {
+  color: var(--text-secondary);
+  font-size: var(--type-body);
 }

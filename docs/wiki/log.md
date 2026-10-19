@@ -2051,3 +2051,31 @@ comprueba tras recarga que sigue en borrador sin precio aplicado. Pasan 61
 tests backend y 11 frontend dirigidos. Sin nuevas llamadas IA, emisión,
 reset ni despliegue. Alcance y límites en
 [revisión local del 19-10](quality/review-2026-10-19.md).
+
+## 2026-10-19 · Recuperación literal de la intención original
+
+A petición del dueño se revisan adjuntos, chats disponibles y sesiones locales
+del proyecto de septiembre/octubre. Se reúnen el planteamiento inicial, ambos
+adjuntos íntegros y 17 aclaraciones posteriores en un archivo privado de `.run/`.
+Se distinguen voz del dueño, preguntas de la app y mandatos pegados; no se
+convierte documentación de asistentes en citas personales. Procedencia y límites
+en [fuente recuperada](sources/owner-original-recovered-2026-10-19.md).
+
+## 2026-10-19 · Idea original adaptada para Claude
+
+El dueño pide sustituir los modelos antiguos por MiMo y retirar Product Pass
+y material accesorio. Se redacta en primera persona un [encargo de visión](../research/2026-10-19-idea-original-para-claude.md)
+que presenta la primera idea como punto de partida hacia un SaaS de gran
+alcance y mayor calidad. Se conservan los originales y las decisiones
+posteriores sobre base manual, popup y créditos. Sin cambios de aplicación.
+
+## 2026-10-19 · Rediseño estructural tras la nota 3/10
+
+El dueño califica 3/10 la pasada de retoques y pide rehacer todo con criterio
+profesional (apple-design, emil-design-eng) y atención a cada detalle, incluido
+el 3D de PVC. Entrega su [ambición del producto](sources/owner-ambition-brief-2026-10-19.md).
+Claude cambia la base visual (tipografía, color, radios), retira reglas
+globales heredadas que repintaban componentes, rehace Inicio, Obra, editor,
+tarjetas de Taller, la vista previa de cotización sin precio aplicado y el 3D
+de PVC (silueta por familia, ingletes soldados). Sin commit todavía.
+

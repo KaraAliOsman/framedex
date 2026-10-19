@@ -237,3 +237,66 @@
   color: var(--text-secondary);
   font-size: var(--type-dense);
 }
+
+/* Editor strip (owner direction 2026-10-19): back, the window's name as an
+   editable title, quantity and finish choices on the left; save state,
+   history, the estimate and Guardar on the right — one row on desktop. */
+.position-editor .position-strip {
+  flex-wrap: nowrap;
+  gap: var(--space-8px);
+  min-height: 60px;
+  padding: var(--space-8px) var(--space-16px) var(--space-8px) var(--space-8px);
+}
+.position-editor .editor-project-link {
+  color: var(--text-secondary);
+  justify-content: center;
+  max-width: none;
+  min-width: 40px;
+  padding: 0;
+}
+.position-editor .position-strip input.editor-location {
+  background: transparent;
+  border-color: transparent;
+  font-size: var(--type-subtitle);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  min-width: 6rem;
+  width: clamp(8rem, 18vw, 18rem);
+}
+.position-editor .position-strip input.editor-location:hover:not(:disabled) {
+  border-color: var(--border-subtle);
+}
+.position-editor .position-strip input.editor-location:focus {
+  background: var(--surface-sheet);
+  border-color: var(--border-focus);
+}
+.position-editor .editor-quantity {
+  white-space: nowrap;
+}
+.position-editor .editor-chip {
+  background: var(--surface-card);
+  border-color: transparent;
+  border-radius: var(--r-pill);
+  min-height: 34px;
+}
+.position-editor .editor-chip:hover:not(:disabled) {
+  background: var(--surface-active);
+}
+.position-editor .editor-save-state {
+  margin-left: auto;
+}
+.position-editor .editor-price {
+  border: 0;
+  min-width: 0;
+}
+.position-editor .position-strip .editor-save,
+.position-editor .position-strip [data-primary] {
+  min-height: 40px;
+}
+.position-editor .editor-price {
+  font-family: var(--font-sans);
+}
+.position-editor .editor-price span {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}

@@ -405,6 +405,16 @@ export function PositionCollection({
             busy={busy}
             onPropose={operations.propose}
           />
+          {/* Gallery summary: what a person reads first, in one calm line. */}
+          <span className="position-row__summary" aria-hidden="true">
+            <span>
+              {finishLabel(position)} · {positionGlass(position)} ·{" "}
+              {position.quantity === 1 ? "1 unidad" : `${position.quantity} unidades`}
+            </span>
+            {sale?.line_net != null ? (
+              <strong>{formatMoney(sale.line_net, project.currency)}</strong>
+            ) : null}
+          </span>
         </div>
         <dl className="position-row__specs">
           <div>
@@ -514,25 +524,30 @@ export function PositionCollection({
           Ventanas <span className="project-positions-count">{positions.length}</span>
         </h2>
         <div className="project-positions-tools">
-          <label className="project-positions-search">
-            <Icon name="search" size={16} />
-            <span className="sr-only">Buscar por ubicación, piso, vidrio o tipología</span>
-            <input
-              type="search"
-              placeholder="Buscar ventana"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-            />
-          </label>
-          <button
-            type="button"
-            className="ui-button ui-button--compact"
-            aria-expanded={filtersOpen}
-            onClick={() => setFiltersOpen((value) => !value)}
-          >
-            <Icon name="filter" size={16} />
-            Filtros{filtered ? " · activos" : ""}
-          </button>
+          {/* A short work needs no search: the cards are the index. */}
+          {positions.length > 6 || filtered ? (
+            <>
+              <label className="project-positions-search">
+                <Icon name="search" size={16} />
+                <span className="sr-only">Buscar por ubicación, piso, vidrio o tipología</span>
+                <input
+                  type="search"
+                  placeholder="Buscar ventana"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                />
+              </label>
+              <button
+                type="button"
+                className="ui-button ui-button--compact"
+                aria-expanded={filtersOpen}
+                onClick={() => setFiltersOpen((value) => !value)}
+              >
+                <Icon name="filter" size={16} />
+                Filtros{filtered ? " · activos" : ""}
+              </button>
+            </>
+          ) : null}
           <div className="ui-segmented project-positions-view" role="radiogroup" aria-label="Vista">
             <button
               type="button"
@@ -578,7 +593,7 @@ export function PositionCollection({
                 ]}
               />
               <Link
-                className="ui-button ui-button--primary"
+                className={`ui-button${positions.length ? "" : " ui-button--primary"}`}
                 to={`/projects/${project.id}/positions/new`}
               >
                 <Icon name="plus" />

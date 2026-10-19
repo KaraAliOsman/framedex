@@ -645,7 +645,6 @@ function ProjectHeader({
   onRename,
   onEditDetails,
   menu = [],
-  viewSwitch,
 }: {
   project: ProjectResponse;
   orgId: string;
@@ -655,7 +654,6 @@ function ProjectHeader({
   onRename?: (name: string) => void;
   onEditDetails?: () => void;
   menu?: MenuItem[];
-  viewSwitch?: JSX.Element;
 }): JSX.Element {
   const payments = useQuery({
     queryKey: ["projects", "payments-summary", orgId, project.id],
@@ -766,16 +764,18 @@ function ProjectHeader({
             ) : null}
           </p>
         </div>
-        {viewSwitch}
         <div className="project-head__side">
-          <div className="project-head__total">
-            <span>Total con IVA</span>
-            <strong>
-              {project.pricing_current
-                ? formatMoney(project.total_price_gross, project.currency)
-                : "Sin precio"}
-            </strong>
-          </div>
+          {project.pricing_current ? (
+            <div className="project-head__total">
+              <span>Total con IVA</span>
+              <strong>{formatMoney(project.total_price_gross, project.currency)}</strong>
+            </div>
+          ) : (project.position_count ?? 0) > 0 ? (
+            <div className="project-head__total is-pending">
+              <span>Total con IVA</span>
+              <span className="project-head__pending">Falta calcular el precio</span>
+            </div>
+          ) : null}
           {canWrite && project.status === "DRAFT" && (project.position_count ?? 0) > 0 ? (
             <QuickPdfMenu projectId={project.id} orgId={orgId} />
           ) : (canWrite || canRelease) && (project.position_count ?? 0) > 0 ? (
@@ -1658,7 +1658,6 @@ function ProjectWorkspace({
       <div className="project-chrome" hidden={work.presentation === "expanded"}>
         {project ? (
           <ProjectHeader
-            viewSwitch={<WorkViewSwitch view={work.view} onChange={work.setView} />}
             canWrite={canWrite}
             canRelease={canSendEnvio}
             orgId={orgId}
@@ -1738,17 +1737,20 @@ function ProjectWorkspace({
 
         {project ? (
           <>
-            <Tabs
-              label="Destinos de la obra"
-              value={viewOf(openSection)}
-              onChange={(value) => setOpenSection(VIEW_ENTRY[value as ProjectView] ?? null)}
-              items={[
-                { id: "windows", label: "Ventanas" },
-                { id: "quote", label: "Cotización" },
-                { id: "materials", label: "Materiales y corte" },
-                { id: "activity", label: "Actividad" },
-              ]}
-            />
+            <div className="project-tabs-row">
+              <Tabs
+                label="Destinos de la obra"
+                value={viewOf(openSection)}
+                onChange={(value) => setOpenSection(VIEW_ENTRY[value as ProjectView] ?? null)}
+                items={[
+                  { id: "windows", label: "Ventanas" },
+                  { id: "quote", label: "Cotización" },
+                  { id: "materials", label: "Materiales y corte" },
+                  { id: "activity", label: "Actividad" },
+                ]}
+              />
+              <WorkViewSwitch view={work.view} onChange={work.setView} />
+            </div>
             {VIEW_PARTS[viewOf(openSection)].length > 1 ? (
               <div className="project-subviews ui-segmented" role="radiogroup" aria-label="Sección">
                 {VIEW_PARTS[viewOf(openSection)].map(([section, label]) => (
@@ -1797,12 +1799,6 @@ function ProjectWorkspace({
                 onChanged={() => query.refetch()}
                 onImport={() => setOpenSection("imports")}
                 onDetails={() => setShowPosition(true)}
-              />
-              <ProjectServicesPanel
-                key={`${orgId}:${project.id}:${project.current_revision}`}
-                projectId={project.id}
-                orgId={orgId}
-                canWrite={canWrite}
               />
             </div>
             {visited.has("quote") && (
@@ -1880,6 +1876,16 @@ function ProjectWorkspace({
                 <ProjectFacts project={project} />
                 <ProjectActivity project={project} orgId={orgId} />
               </section>
+            )}
+            {/* Services (installation, sealing, freight) change the price: they
+             * live with the price, not over the windows. */}
+            {openSection === "pricing" && (
+              <ProjectServicesPanel
+                key={`${orgId}:${project.id}:${project.current_revision}`}
+                projectId={project.id}
+                orgId={orgId}
+                canWrite={canWrite}
+              />
             )}
             {["pricing", "production", "documents"].includes(openSection ?? "") && (
               <Suspense fallback={<p role="status">Cargando el flujo de la obra…</p>}>

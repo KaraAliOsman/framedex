@@ -97,3 +97,46 @@
     justify-content: space-between;
   }
 }
+
+/* Index in one calm card; the source of each total is one click away as
+   an information mark instead of a repeated sentence. */
+.quote-card {
+  background: var(--surface-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-3);
+  overflow: hidden;
+}
+.quote-card .quote-index th {
+  background: var(--surface-panel);
+  color: var(--text-secondary);
+  padding: var(--space-12px) var(--space-16px);
+}
+.quote-card .quote-index td {
+  padding: var(--space-16px);
+}
+.quote-card .quote-index tr:last-child td {
+  border-bottom: 0;
+}
+.quote-source {
+  display: inline-block;
+  margin-left: var(--space-6px);
+  vertical-align: middle;
+}
+.quote-source > summary {
+  color: var(--text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  list-style: none;
+}
+.quote-source > summary::-webkit-details-marker {
+  display: none;
+}
+.quote-source > summary:hover {
+  color: var(--interactive);
+}
+.quote-source[open] > p {
+  color: var(--text-secondary);
+  font-size: var(--type-dense);
+  max-width: 20rem;
+  text-align: right;
+}
