@@ -28,10 +28,15 @@ def verify(container: str) -> None:
             sql(path.read_text(encoding="utf-8"))
     after = capture()
     import json
+    # Columns added by later migrations carry their declared empty default on
+    # historical rows; every pre-existing field stays byte-identical.
+    added = {"projects": {"design_defaults": {}, "commercial_number": None},
+             "document_artifacts": {"layout": "STANDARD"}}
     for table in tables:
         current = {row["id"]: row for row in json.loads(after[table])}
         for row in json.loads(before[table]):
-            assert current[row["id"]] == row, f"D08 rewrote historical {table}"
+            defaults = {key: value for key, value in added.get(table, {}).items() if key not in row}
+            assert current[row["id"]] == {**row, **defaults}, f"D08 rewrote historical {table}"
     sql("""DO $$ BEGIN
       IF (SELECT count(*) FROM profile_systems WHERE version=8 AND is_demo)<>7
         OR EXISTS(SELECT 1 FROM profile_systems WHERE version<8 AND opening_capabilities::TEXT LIKE '%advanced_recipes%')

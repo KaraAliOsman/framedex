@@ -87,7 +87,8 @@ def verify(container: str) -> None:
             # reassignment of a historical project's work address.
             expected = ({**row, "display_order": None, "placement": {}}
                         if table == "project_positions" else
-                        {**row, "client_address_id": None} if table == "projects" else row)
+                        {**row, "client_address_id": None, "design_defaults": {},
+                         "commercial_number": None} if table == "projects" else row)
             assert current[key] == expected, table
     recipes = json.loads(sql("SELECT jsonb_agg(jsonb_build_object('sku',g.technical_sku,'status',c.status,'product',c.product,'reason',c.review_reason)) "
         "FROM public.catalog_glass_compositions c JOIN public.glass_purchase_mappings g ON g.id=c.mapping_id "
