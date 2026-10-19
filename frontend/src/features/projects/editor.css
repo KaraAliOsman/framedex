@@ -215,7 +215,6 @@
   gap: var(--space-8px);
   min-height: 44px;
   padding: var(--space-4px) var(--space-12px);
-  position: relative;
 }
 .editor-bottom > div > button,
 .editor-bottom > .project-bom > summary {
