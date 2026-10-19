@@ -1,66 +1,113 @@
 import type { MembershipRoleEnum } from "../api/generated/models";
 import type { TranslationKey } from "../i18n/es-CL";
+import type { IconName } from "../ui/Icon";
 
 const commercial = ["OWNER", "ESTIMATOR"] as const;
 const office = [...commercial, "WORKSHOP_MANAGER"] as const;
 const inventory = [...office, "OPERATOR"] as const;
 const everyone = [...inventory, "INSTALLER"] as const;
 
-type NavEntry = { to: string; label: TranslationKey; roles: readonly MembershipRoleEnum[] };
-export type NavGroup = { id: string; title?: TranslationKey; items: NavEntry[] };
+export type NavSection = {
+  to: string;
+  label: TranslationKey;
+  roles: readonly MembershipRoleEnum[];
+};
+export type NavArea = {
+  id: "projects" | "clients" | "catalogs" | "workshop" | "company";
+  label: TranslationKey;
+  icon: IconName;
+  /** Paths that belong to the area even when they are not a listed section. */
+  owns: readonly string[];
+  sections: NavSection[];
+};
 
-/** Mirrors the domain API's read capabilities, including read-only access.
- * The server still authorizes every request; this list grants nothing. */
-const flow: NavGroup[] = [
-  { id: "home", items: [{ to: "/dashboard", label: "nav.dashboard", roles: everyone }] },
+/** Four everyday areas and Empresa (constitution §5.1). The list mirrors the
+ * domain API's read capabilities; the server still authorizes every request
+ * and this list grants nothing. Sections render as the area's own tabs. */
+const AREAS: NavArea[] = [
   {
-    id: "sales",
-    title: "nav.groupSales",
-    items: [
-      { to: "/clients", label: "nav.clients", roles: office },
+    id: "projects",
+    label: "nav.projects",
+    icon: "projects",
+    owns: ["/projects", "/quotes", "/dashboard", "/onboarding", "/pricing/commercial"],
+    sections: [
       { to: "/projects", label: "nav.projects", roles: office },
       { to: "/quotes", label: "nav.quotes", roles: commercial },
-      { to: "/pricing/commercial", label: "nav.prices", roles: commercial },
     ],
   },
   {
-    id: "engineering",
-    title: "nav.groupEngineering",
-    items: [{ to: "/catalogs/systems", label: "nav.technicalCatalog", roles: office }],
+    id: "clients",
+    label: "nav.clients",
+    icon: "clients",
+    owns: ["/clients"],
+    sections: [{ to: "/clients", label: "nav.clients", roles: office }],
   },
   {
-    id: "operations",
-    title: "nav.groupOps",
-    items: [
+    id: "catalogs",
+    label: "nav.catalogs",
+    icon: "catalogs",
+    owns: ["/catalogs"],
+    sections: [
+      { to: "/catalogs/systems", label: "nav.catalogs", roles: office },
+      { to: "/catalogs/finish-samples", label: "nav.finishSamples", roles: office },
+      { to: "/catalogs/sheet-formats", label: "nav.sheetFormats", roles: office },
+    ],
+  },
+  {
+    id: "workshop",
+    label: "nav.workshop",
+    icon: "workshop",
+    owns: ["/production", "/purchasing", "/inventory", "/dispatch", "/field"],
+    sections: [
+      { to: "/production", label: "nav.orders", roles: everyone },
       { to: "/purchasing", label: "nav.purchasing", roles: office },
       { to: "/inventory", label: "nav.inventory", roles: inventory },
-      { to: "/production", label: "nav.production", roles: everyone },
       { to: "/dispatch", label: "nav.dispatch", roles: office },
       { to: "/field", label: "nav.field", roles: [...office, "INSTALLER"] },
     ],
   },
   {
-    id: "assistant",
-    title: "nav.groupAssistant",
-    items: [
-      { to: "/assistant", label: "nav.assistant", roles: office },
-      { to: "/jobs", label: "nav.jobs", roles: office },
+    id: "company",
+    label: "nav.company",
+    icon: "company",
+    owns: ["/settings", "/analytics", "/pricing/cost-lists", "/jobs", "/assistant"],
+    sections: [
+      { to: "/settings/general", label: "nav.preferences", roles: office },
+      { to: "/pricing/cost-lists", label: "nav.costs", roles: commercial },
+      { to: "/analytics", label: "nav.analytics", roles: ["OWNER", "WORKSHOP_MANAGER"] },
+      { to: "/settings/billing", label: "nav.plan", roles: office },
     ],
   },
-  {
-    id: "analytics",
-    items: [{ to: "/analytics", label: "nav.analytics", roles: ["OWNER", "WORKSHOP_MANAGER"] }],
-  },
-  { id: "settings", items: [{ to: "/settings/general", label: "nav.settings", roles: office }] },
 ];
 
-export function navigationFor(role: MembershipRoleEnum | undefined): NavGroup[] {
+export type VisibleArea = NavArea & { to: string };
+
+/** Areas a role can open, each pointing at its first readable section. */
+export function navigationFor(role: MembershipRoleEnum | undefined): VisibleArea[] {
   if (!role) return [];
-  return flow
-    .map((group) => ({ ...group, items: group.items.filter((item) => item.roles.includes(role)) }))
-    .filter((group) => group.items.length > 0);
+  return AREAS.flatMap((area) => {
+    const sections = area.sections.filter((section) => section.roles.includes(role));
+    const first = sections[0];
+    return first ? [{ ...area, sections, to: first.to }] : [];
+  });
 }
 
+/** The area that owns a pathname, for the active rail item and its tabs. */
+export function areaFor(
+  pathname: string,
+  role: MembershipRoleEnum | undefined,
+): VisibleArea | null {
+  return (
+    navigationFor(role).find((area) =>
+      area.owns.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)),
+    ) ?? null
+  );
+}
+
+/** Each role starts with its own work (owner/estimator: projects; workshop:
+ * orders; operator: station; installer: agenda). */
 export function homeFor(role: MembershipRoleEnum | undefined): string {
-  return role === "OPERATOR" ? "/production" : "/dashboard";
+  if (role === "OPERATOR" || role === "WORKSHOP_MANAGER") return "/production";
+  if (role === "INSTALLER") return "/field";
+  return "/projects";
 }

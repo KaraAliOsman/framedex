@@ -1500,6 +1500,31 @@ def _customer_comms(org_id: UUID, refs: dict) -> dict:
     }
 
 
+def _catalog_pages_summary(progress: Any) -> dict | None:
+    if not isinstance(progress, dict) or not progress.get("pages_total"):
+        return None
+    template = progress.get("cut_template") if isinstance(progress.get("cut_template"), dict) else None
+    return {
+        "total": int(progress.get("pages_total") or 0),
+        "done": int(progress.get("pages_done") or 0),
+        "failed_ranges": [
+            f"{chunk.get('first')}-{chunk.get('last')}"
+            for chunk in progress.get("chunks") or []
+            if isinstance(chunk, dict) and chunk.get("state") == "FAILED"
+        ],
+        "cut_template": {
+            "sheets": template.get("sheets"),
+            "lines": template.get("lines"),
+            "consistent_offsets": [
+                {key: item.get(key) for key in ("code", "side", "angles", "offset_mm", "typology")}
+                | {"examples": len(item.get("examples") or [])}
+                for item in (template.get("consistent_offsets") or [])[:12]
+            ],
+            "source_notes": [note.get("note") for note in (template.get("source_notes") or [])[:6]],
+        } if template else None,
+    }
+
+
 def _catalog_compiler(org_id: UUID) -> dict:
     """§08-WD catalog compiler: the org's catalog imports with their article
     candidates — extract→classify→map→compare already ran deterministic
@@ -1511,7 +1536,7 @@ def _catalog_compiler(org_id: UUID) -> dict:
     endpoint writes catalog authority."""
     imports = rows(
         "SELECT id, file_name, status, system_id, candidates, warnings, "
-        "result, error_code, created_at "
+        "result, error_code, created_at, progress "
         "FROM public.catalog_imports "
         "WHERE org_id=%s "
         "ORDER BY created_at DESC LIMIT %s",
@@ -1545,6 +1570,9 @@ def _catalog_compiler(org_id: UUID) -> dict:
                 "error_code": _cut(imp["error_code"]),
                 "system_id": str(imp["system_id"]) if imp["system_id"] else None,
                 "created_at": str(imp["created_at"])[:10],
+                # Real page progress and any manufacturer cut template found;
+                # the cut sheets are evidence to verify rules, not rules.
+                "pages": _catalog_pages_summary(_jsonb(imp.get("progress"))),
                 "candidates_total": len(cands),
                 "confirmed_keys": sorted(confirmed),
                 "candidates": [
@@ -1690,8 +1718,77 @@ def build_context(org_id: UUID, surface: str, refs: dict | None) -> dict:
         context = builder(org_id)
     context["surface"] = surface
     context["organization"] = _organization(org_id)
+    context["usual"] = _usual(org_id, refs)
+    if refs.get("project_id") and surface in ("project", "quotation", "quotation_complete"):
+        context["document_layout"] = _document_layout(org_id, refs["project_id"])
+    if refs.get("project_id") and surface == "project":
+        context["materials"] = _materials(org_id, refs["project_id"])
     context["context_version"] = 1
     return context
+
+
+def _document_layout(org_id: UUID, project_id: object) -> dict | None:
+    """This work's quotation composition, for document_layout steps."""
+    from django.db import transaction
+    from documents import issuance
+
+    try:
+        # A savepoint keeps a failed read from aborting the run's transaction.
+        with transaction.atomic():
+            return issuance.get_layout(org_id=org_id, project_id=UUID(str(project_id)))
+    except Exception:  # noqa: BLE001 — the document is optional context
+        return None
+
+
+def _materials(org_id: UUID, project_id: object) -> dict | None:
+    """The same materials and cut draft the work's «Materiales y corte» view
+    shows — never a second list. Bars are summarised; causes are exact."""
+    from django.db import transaction
+    from projects import materials
+
+    try:
+        with transaction.atomic():
+            listed = materials.project_materials(org_id, UUID(str(project_id)))
+            cut = materials.cut_draft(org_id, UUID(str(project_id)))
+    except Exception:  # noqa: BLE001 — materials are optional context
+        return None
+    groups = {
+        kind: [{key: row[key] for key in ("name", "reference", "finish", "unit", "count", "length_m", "area_m2")}
+               for row in rows[:40]]
+        for kind, rows in listed["consolidated"].items()
+    }
+    return {
+        "consolidated": groups,
+        "freshness": listed["freshness"],
+        "cut": {
+            "state": cut["state"],
+            "missing": cut["missing"],
+            "metrics": cut.get("metrics"),
+            "purchase": cut.get("purchase"),
+        },
+        "path": f"/projects/{project_id}?section=production&tab=cut",
+    }
+
+
+def _usual(org_id: UUID, refs: dict) -> dict:
+    """Usual series/finish/glass for new windows (company → project), with
+    their origin. «Lo habitual» means these values; nothing else is assumed."""
+    from django.db import transaction
+    from projects import design_defaults
+
+    try:
+        # A savepoint keeps a failed read from aborting the run's transaction.
+        with transaction.atomic():
+            project = None
+            raw = refs.get("project_id")
+            if raw:
+                try:
+                    project = {"design_defaults": design_defaults.project_defaults(org_id, UUID(str(raw)))}
+                except (TypeError, ValueError):
+                    project = None
+            return design_defaults.effective(org_id, project)
+    except Exception:  # noqa: BLE001 — a missing preference never blocks the run
+        return {}
 
 
 __all__ = ["REQUIRED_REFS", "build_context", "_ContextError"]

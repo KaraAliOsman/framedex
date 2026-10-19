@@ -143,6 +143,8 @@ REST_FRAMEWORK = {
 SPECTACULAR_SETTINGS = {
     "ENUM_NAME_OVERRIDES": {
         "CurrencyEnum": ["CLP", "USD"],
+        "QuotationTemplateEnum": ["ESENCIAL", "PROYECTO", "ALTERNATIVAS"],
+        "QuotationBlockEnum": ["intro", "client", "hero", "summary", "positions", "alternatives", "commercial", "terms", "services", "acceptance", "closing"],
         "PricingOperationStateEnum": ["PREVIEW","PENDING","APPLIED","REJECTED","WITHDRAWN"],
         "SlidingTravelEnum": ["LEFT", "RIGHT"],
         "DivisionReferenceEnum": ["START", "END", "CENTER"],
@@ -153,6 +155,8 @@ SPECTACULAR_SETTINGS = {
             "OWNER", "ESTIMATOR", "WORKSHOP_MANAGER", "INSTALLER", "OPERATOR",
         ],
         "AiAgentHistoryRoleEnum": ["user", "agent"],
+        "AiReceiptObjectStatusEnum": ["applied", "proposed", "pending", "blocked", "undone"],
+        "AiAttachmentStatusEnum": ["READY", "PARTIAL", "UNREADABLE"],
         "QcResultEnum": ["PASS", "FAIL"],
         "UnitEnum": ["kit"],
         "PurchaseUnitEnum": ["BAR"],

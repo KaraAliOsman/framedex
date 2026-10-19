@@ -113,12 +113,12 @@ El asistente conserva 14 hallazgos heredados por captura (112 acumulados en las 
 iguales antes/después; se documentan para P17 y no se atribuyen a la superficie nueva.
 
 Capturas clave:
-[conexión](../redesign/captures/proveedor-real/recorrido/conexion-verificada-light-1440.png),
-[sin credencial](../redesign/captures/proveedor-real/recorrido/sin-credencial-light-1440.png),
-[presupuesto](../redesign/captures/proveedor-real/recorrido/presupuesto-bloqueado-light-1440.png),
-[edición conserva conexión](../redesign/captures/proveedor-real/recorrido/presupuesto-conserva-conexion-light-1440.png),
-[traza](../redesign/captures/proveedor-real/recorrido/agente-costo-traza-light-1440.png),
-[sin permiso](../redesign/captures/proveedor-real/recorrido/ajustes-sin-permiso-dark-1024.png).
+[conexión](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/proveedor-real/recorrido/conexion-verificada-light-1440.png),
+[sin credencial](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/proveedor-real/recorrido/sin-credencial-light-1440.png),
+[presupuesto](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/proveedor-real/recorrido/presupuesto-bloqueado-light-1440.png),
+[edición conserva conexión](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/proveedor-real/recorrido/presupuesto-conserva-conexion-light-1440.png),
+[traza](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/proveedor-real/recorrido/agente-costo-traza-light-1440.png),
+[sin permiso](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/proveedor-real/recorrido/ajustes-sin-permiso-dark-1024.png).
 PNG optimizados sin pérdidas e inspeccionados visualmente.
 
 ## Dos rondas editoriales

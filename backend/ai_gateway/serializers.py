@@ -121,6 +121,21 @@ class AiAgentRequestSerializer(serializers.Serializer):
     product_sig = serializers.CharField(required=False, max_length=64, allow_blank=True)
     history = AiAgentHistorySerializer(many=True, required=False, max_length=6)
     operation_key = serializers.CharField(min_length=8, max_length=120)
+    # Conversation identity (popup). Omitted by legacy callers: the server
+    # then opens a thread for the run so history stays recoverable.
+    thread_id = serializers.UUIDField(required=False, allow_null=True)
+    # chat answers and prepares proposals without mutating the domain; work
+    # executes the delegated objective under the sealed autonomy.
+    interaction_mode = serializers.ChoiceField(choices=["chat", "work"], required=False, default="work")
+    attachment_ids = serializers.ListField(child=serializers.UUIDField(), required=False, max_length=6)
+    # Effective policy, sealed per run (a preference change governs only new
+    # tasks): «propose» Solo proponer — zero domain mutations; «approve» Con
+    # aprobación — prepare the coherent set and apply after one approval of
+    # the result; «draft» Omitir todo — execute every reversible change
+    # already delegated, verify and present the receipt. Emission, sending,
+    # charges, committed purchases, catalog publication and physical release
+    # always keep the human action the domain requires.
+    autonomy = serializers.ChoiceField(choices=["propose", "approve", "draft"], required=False, default="propose")
 
 
 class AiAgentStepSerializer(serializers.Serializer):
@@ -133,6 +148,14 @@ class AiAgentStepSerializer(serializers.Serializer):
     # §08-WC batch edits: validated ops grouped per position.
     items = serializers.ListField(child=serializers.DictField(), required=False)
     simulation = serializers.JSONField(required=False)
+    # The person asked to do it; with drafts allowed the server saved it
+    # (applied: operation receipt) or kept it as a proposal (apply_error).
+    apply_requested = serializers.BooleanField(required=False)
+    applied = serializers.JSONField(required=False)
+    apply_error = serializers.CharField(required=False)
+    # document_layout: the quotation composition proposed for this work.
+    layout = serializers.JSONField(required=False)
+    project_id = serializers.UUIDField(required=False)
 
 
 class ClarifyOptionSerializer(serializers.Serializer):
@@ -162,6 +185,7 @@ class AiAgentAcceptedSerializer(serializers.Serializer):
 
     job_id = serializers.UUIDField()
     state = serializers.CharField()
+    thread_id = serializers.UUIDField(required=False, allow_null=True)
 
 
 class AiAgentRunSerializer(serializers.Serializer):
@@ -169,6 +193,8 @@ class AiAgentRunSerializer(serializers.Serializer):
 
     ai_job_id = serializers.UUIDField()
     mode = serializers.ChoiceField(choices=["new", "resume"])
+    interaction_mode = serializers.ChoiceField(choices=["chat", "work"], required=False, default="work")
+    attachments = serializers.ListField(child=serializers.DictField(), required=False, max_length=6)
     surface = serializers.CharField(min_length=2, max_length=40)
     refs = serializers.DictField(required=False)
     goal = serializers.CharField(min_length=1, max_length=2000)
@@ -183,6 +209,14 @@ class AiAgentRunSerializer(serializers.Serializer):
     # the stored transcript, so its numbers may ground a follow-up. A
     # first-run payload's history is client-supplied and never trusted.
     history_trusted = serializers.BooleanField(required=False, default=False)
+    # Effective policy, sealed per run (a preference change governs only new
+    # tasks): «propose» Solo proponer — zero domain mutations; «approve» Con
+    # aprobación — prepare the coherent set and apply after one approval of
+    # the result; «draft» Omitir todo — execute every reversible change
+    # already delegated, verify and present the receipt. Emission, sending,
+    # charges, committed purchases, catalog publication and physical release
+    # always keep the human action the domain requires.
+    autonomy = serializers.ChoiceField(choices=["propose", "approve", "draft"], required=False, default="propose")
 
 
 class AiAgentResultSerializer(serializers.Serializer):
@@ -208,6 +242,8 @@ class AiAgentResultSerializer(serializers.Serializer):
 
 class AiJobMessageSerializer(serializers.Serializer):
     message = serializers.CharField(min_length=1, max_length=2000)
+    interaction_mode = serializers.ChoiceField(choices=["chat", "work"], required=False, default="work")
+    attachment_ids = serializers.ListField(child=serializers.UUIDField(), required=False, max_length=6)
     # Follow-ups carry the position's live product so design ops evaluate
     # the current design — a stored snapshot would go stale between turns.
     product = _BoundedDictField(required=False)
@@ -218,6 +254,46 @@ class AiJobMessageSerializer(serializers.Serializer):
     # The client's fingerprint of the product payload — persisted on the
     # turn so a restored ops step can refuse to apply onto a changed design.
     product_sig = serializers.CharField(required=False, max_length=64, allow_blank=True)
+    # Effective policy, sealed per run (a preference change governs only new
+    # tasks): «propose» Solo proponer — zero domain mutations; «approve» Con
+    # aprobación — prepare the coherent set and apply after one approval of
+    # the result; «draft» Omitir todo — execute every reversible change
+    # already delegated, verify and present the receipt. Emission, sending,
+    # charges, committed purchases, catalog publication and physical release
+    # always keep the human action the domain requires.
+    autonomy = serializers.ChoiceField(choices=["propose", "approve", "draft"], required=False, default="propose")
+
+
+class AiReceiptObjectSerializer(serializers.Serializer):
+    kind = serializers.CharField()
+    id = serializers.CharField()
+    label = serializers.CharField()
+    url = serializers.CharField(allow_null=True)
+    status = serializers.ChoiceField(choices=["applied", "proposed", "pending", "blocked", "undone"])
+    cause = serializers.CharField(allow_null=True)
+    operation_id = serializers.CharField(allow_null=True)
+
+
+class AiReceiptCheckSerializer(serializers.Serializer):
+    name = serializers.CharField()
+    label = serializers.CharField()
+    passed = serializers.BooleanField()
+    detail = serializers.CharField(allow_blank=True)
+
+
+class AiReceiptSerializer(serializers.Serializer):
+    """Final receipt of a run: the outcome is decided by typed postconditions
+    over saved objects — never by having received provider text."""
+
+    outcome = serializers.ChoiceField(choices=["complete", "partial", "proposal", "blocked", "answer"])
+    summary = serializers.CharField()
+    autonomy = serializers.CharField()
+    interaction_mode = serializers.CharField()
+    objects = AiReceiptObjectSerializer(many=True)
+    checks = AiReceiptCheckSerializer(many=True)
+    attachments = serializers.ListField(child=serializers.DictField())
+    credits = serializers.IntegerField(allow_null=True)
+    checkpoint = serializers.CharField(allow_null=True)
 
 
 class AiJobSerializer(serializers.Serializer):
@@ -239,6 +315,10 @@ class AiJobSerializer(serializers.Serializer):
     created_at = serializers.DateTimeField()
     updated_at = serializers.DateTimeField()
     completed_at = serializers.DateTimeField(required=False, allow_null=True)
+    thread_id = serializers.UUIDField(required=False, allow_null=True)
+    interaction_mode = serializers.CharField(required=False, allow_null=True)
+    autonomy = serializers.CharField(required=False, allow_null=True)
+    receipt = AiReceiptSerializer(required=False, allow_null=True)
 
 
 class AiJobOutcomeSerializer(serializers.Serializer):
@@ -299,3 +379,116 @@ class AiPresenceSerializer(serializers.Serializer):
 
 class AiAgentResumeRequestSerializer(serializers.Serializer):
     pass
+
+
+class AiThreadSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    title = serializers.CharField()
+    interaction_mode = serializers.CharField()
+    autonomy = serializers.CharField()
+    origin = serializers.CharField()
+    archived = serializers.BooleanField()
+    created_at = serializers.DateTimeField()
+    updated_at = serializers.DateTimeField()
+    last_activity_at = serializers.DateTimeField()
+
+
+class AiThreadListSerializer(serializers.Serializer):
+    items = AiThreadSerializer(many=True)
+    next_cursor = serializers.CharField(allow_null=True)
+
+
+class AiThreadQuerySerializer(serializers.Serializer):
+    q = serializers.CharField(required=False, allow_blank=True, max_length=120, default="")
+    archived = serializers.BooleanField(required=False, default=False)
+    cursor = serializers.CharField(required=False, allow_blank=True, max_length=200, default="")
+
+
+class AiThreadCreateSerializer(serializers.Serializer):
+    title = serializers.CharField(required=False, allow_blank=True, max_length=120, default="")
+    interaction_mode = serializers.ChoiceField(choices=["chat", "work"], required=False, default="chat")
+    autonomy = serializers.ChoiceField(choices=["propose", "approve", "draft"], required=False, default="approve")
+
+
+class AiThreadUpdateSerializer(serializers.Serializer):
+    title = serializers.CharField(required=False, max_length=120)
+    archived = serializers.BooleanField(required=False)
+    interaction_mode = serializers.ChoiceField(choices=["chat", "work"], required=False)
+    autonomy = serializers.ChoiceField(choices=["propose", "approve", "draft"], required=False)
+
+
+class AiTimelineEntrySerializer(serializers.Serializer):
+    kind = serializers.ChoiceField(choices=["job", "ask"])
+    id = serializers.UUIDField()
+    created_at = serializers.DateTimeField()
+    goal = serializers.CharField(allow_null=True)
+    state = serializers.CharField(allow_null=True)
+    surface = serializers.CharField()
+    refs = serializers.DictField()
+    interaction_mode = serializers.CharField()
+    autonomy = serializers.CharField()
+    receipt = AiReceiptSerializer(allow_null=True)
+    error_code = serializers.CharField(allow_null=True)
+    question = serializers.CharField(allow_null=True)
+    answer = serializers.CharField(allow_null=True)
+
+
+class AiTimelineSerializer(serializers.Serializer):
+    items = AiTimelineEntrySerializer(many=True)
+    next_cursor = serializers.CharField(allow_null=True)
+
+
+class AiAttachmentCoverageSerializer(serializers.Serializer):
+    unit = serializers.CharField(allow_blank=True)
+    total = serializers.IntegerField()
+    processed = serializers.IntegerField()
+    unprocessed_count = serializers.IntegerField()
+    visual_count = serializers.IntegerField()
+
+
+class AiAttachmentPartSerializer(serializers.Serializer):
+    ref = serializers.CharField()
+    text = serializers.CharField()
+
+
+class AiAttachmentSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    file_name = serializers.CharField()
+    media_type = serializers.CharField()
+    kind = serializers.CharField()
+    byte_size = serializers.IntegerField()
+    file_sha256 = serializers.CharField()
+    status = serializers.ChoiceField(choices=["READY", "PARTIAL", "UNREADABLE"])
+    thread_id = serializers.UUIDField(allow_null=True)
+    coverage = AiAttachmentCoverageSerializer()
+    preview = AiAttachmentPartSerializer(many=True)
+    created_at = serializers.DateTimeField()
+
+
+class AiAttachmentDetailSerializer(AiAttachmentSerializer):
+    parts = AiAttachmentPartSerializer(many=True)
+    visual = serializers.ListField(child=serializers.CharField())
+    unprocessed = serializers.ListField(child=serializers.CharField())
+
+
+class AiAttachmentListSerializer(serializers.Serializer):
+    items = AiAttachmentSerializer(many=True)
+
+
+class AiAttachmentUploadSerializer(serializers.Serializer):
+    file = serializers.FileField()
+    thread_id = serializers.UUIDField(required=False, allow_null=True)
+
+
+class AiAttachmentFormatSerializer(serializers.Serializer):
+    kind = serializers.CharField()
+    label = serializers.CharField()
+    extensions = serializers.ListField(child=serializers.CharField())
+    reading = serializers.CharField()
+    max_bytes = serializers.IntegerField()
+
+
+class AiAttachmentMatrixSerializer(serializers.Serializer):
+    formats = AiAttachmentFormatSerializer(many=True)
+    max_per_turn = serializers.IntegerField()
+    max_file_bytes = serializers.IntegerField()

@@ -142,7 +142,7 @@ export function ExtrasInspector({
       <summary>Extras de la posición</summary>
       {module.contour || module.frameless ? (
         <p className="inspector-note">
-          Sin autoridad de accesorios para esta forma. Revisa el catálogo de la serie.
+          La serie no declara accesorios para esta forma. Revisa su catálogo.
         </p>
       ) : choices.length === 0 ? (
         <p className="inspector-note">
@@ -203,7 +203,7 @@ export function ExtrasInspector({
               return (
                 <li key={`${selection.code}-${index}`}>
                   <header>
-                    <strong>{definition?.name ?? "Extra sin autoridad"}</strong>
+                    <strong>{definition?.name ?? "Extra no declarado"}</strong>
                     <button
                       type="button"
                       disabled={selectionLocked}

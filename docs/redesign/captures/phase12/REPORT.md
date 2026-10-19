@@ -1,3 +1,6 @@
+> Informe histórico de esta corrida. Consulte [aceptación final](../../acceptance-2026-10-12.md) y
+> [ubicación de las capturas archivadas](../README.md) para continuar.
+
 # Phase-12 — DEKOPEN Bot identity + trustworthy assistant — acceptance report
 
 Stack: worktree `wt-commercial` @ `614e7d8` (with the post-`d9bdf3a` mock fix). Vite `localhost:5173`, Django `127.0.0.1:8000` (`--noreload`), Supabase `25321/25322`, runjobs worker, Chrome CDP `:9333`. Org `548b9ce5` "DEKOPEN Demo Fixture". Roles: owner (aal2), operator, installer.

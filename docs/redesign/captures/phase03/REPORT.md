@@ -1,3 +1,6 @@
+> Informe histórico de esta corrida. Consulte [aceptación final](../../acceptance-2026-10-12.md) y
+> [ubicación de las capturas archivadas](../README.md) para continuar.
+
 # Phase-03 fenestration render evidence — @1079dc2 (superset of b8bc600)
 
 Captured on the live wt-commercial stack (Vite :5173, CDP-attached Chrome, real

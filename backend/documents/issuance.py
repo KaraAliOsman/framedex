@@ -8,6 +8,7 @@ from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from contextlib import contextmanager
 from contextvars import ContextVar
+import json
 import logging
 import secrets
 from uuid import UUID, uuid4
@@ -197,6 +198,10 @@ def prepare_preview(
     lock_revision_inputs(
         org_id=org_id, project_id=project_id, pricing_operation_id=pricing_operation_id
     )
+    # The work's commercial number is given once, with its first issuable
+    # preview: this PDF is the one that gets issued.
+    from documents.numbering import assign_commercial_number
+    assign_commercial_number(org_id, project_id)
     now = datetime.now(timezone.utc)
     prepared = compose_revision(
         org_id=org_id,
@@ -404,3 +409,58 @@ def issue_preview(*, org_id: UUID, actor_id: UUID, project_id: UUID, role: str, 
             ],
         )
         return _issue_public(receipt, preview, org_id=org_id, token=token, created=True)
+
+
+def draft_preview(*, org_id: UUID, actor_id: UUID, project_id: UUID, layout: dict | None = None) -> bytes:
+    """The real document early: rendered from the current applied price and
+    preparation, marked «Borrador», without consuming a commercial number and
+    without the data that only issuance requires. Never stored or issuable."""
+    from projects import service as projects_service
+
+    project = projects_service.project_public(org_id, projects_service.project_row(org_id, project_id))
+    if not project.get("current_pricing_operation_id"):
+        raise DocumentaryError(
+            "applied_pricing_authority_required",
+            detail="Calcula y aplica el precio de la obra para ver la cotización.",
+        )
+    prepared = compose_revision(
+        org_id=org_id,
+        actor_id=actor_id,
+        project_id=project_id,
+        pricing_operation_id=UUID(str(project["current_pricing_operation_id"])),
+        sealed_at=datetime.now(timezone.utc),
+        allow_incomplete_workshop=True,
+    )
+    snapshot = decoded(documentary_canonical_json_v1(prepared.snapshot).decode())
+    snapshot["draft"] = True
+    if layout:
+        snapshot["project"]["document_layout"] = {**(snapshot["project"].get("document_layout") or {}), **layout}
+    content, _ = render_pdf_document("DOC-01", snapshot, pdf_identifier="draft")
+    return content
+
+
+def get_layout(*, org_id: UUID, project_id: UUID) -> dict:
+    with documentary_backend():
+        found = rows(
+            "SELECT document_layout FROM public.project_documentary_inputs WHERE project_id=%s AND org_id=%s",
+            [str(project_id), str(org_id)],
+        )
+    stored = decoded(found[0]["document_layout"]) if found else {}
+    return {"layout": stored if isinstance(stored, dict) else {}, "prepared": bool(found)}
+
+
+def save_layout(*, org_id: UUID, project_id: UUID, layout: dict) -> dict:
+    """This work's draft composition. A sealed revision keeps the composition
+    it was issued with; changing it here affects only new previews."""
+    with documentary_backend():
+        found = rows(
+            "UPDATE public.project_documentary_inputs SET document_layout=%s::jsonb "
+            "WHERE project_id=%s AND org_id=%s RETURNING document_layout",
+            [json.dumps(layout), str(project_id), str(org_id)],
+        )
+    if not found:
+        raise DocumentaryError(
+            "project_documentary_inputs_required",
+            detail="Completa las condiciones de la cotización antes de cambiar su diseño.",
+        )
+    return {"layout": decoded(found[0]["document_layout"]), "prepared": True}

@@ -72,11 +72,34 @@ def parse_response(output: object, *, tagged: list[tuple[str, str]], file_name: 
     return candidates
 
 
+def compile_catalog_pages(*, org_id, actor_id, import_id, file_name, tagged, chunk):
+    """One internal batch of a PDF catalog: only its pages travel to the
+    provider (scanned/mixed pages also as images). Citations are verified
+    against the server-extracted text of the whole document, so a value is
+    HIGH only when its quote exists on the page it cites."""
+    from ai_gateway.service import invoke
+    result = invoke(org_id=org_id, user_id=actor_id, capability="catalog_import",
+        operation_key=f"catalog:{import_id}:p{chunk['first']}-{chunk['last']}:typed-v2", input_payload={
+            "file_name": file_name, "kind": "PDF", "source": {"kind": "catalog_import", "id": str(import_id)},
+            "schema": public_schema(),
+            "page_range": {"first": chunk["first"], "last": chunk["last"], "visual": chunk.get("visual_pages", [])},
+        }, provider_options={"system": SYSTEM + BATCH_NOTE, "json_output": True})
+    return parse_response(result["output"], tagged=tagged, file_name=file_name), result["audit_id"]
+
+
+BATCH_NOTE = """
+Recibes un tramo de páginas consecutivas de un catálogo más largo. Extrae solo lo que
+aparece en estas páginas; una tabla puede continuar desde una página anterior: conserva
+sus encabezados si están en este tramo y no inventes los que faltan. La referencia de cada
+cita es «página N» tal como la recibes.
+"""
+
+
 def compile_catalog(*, org_id, actor_id, import_id, kind, file_name, tagged):
     from ai_gateway.service import invoke
     source_lines = [{"text": text, "ref": ref} for text, ref in tagged]
     if sum(len(line["text"]) for line in source_lines) > 100_000:
-        raise ValueError("El documento supera el límite de texto. Divídelo para conservar todas las fuentes.")
+        raise ValueError("El documento de texto supera el límite. Súbelo como PDF para procesarlo por partes.")
     result = invoke(org_id=org_id, user_id=actor_id, capability="catalog_import",
         operation_key=f"catalog:{import_id}:typed-v1", input_payload={
             "file_name": file_name, "kind": kind, "source": {"kind": "catalog_import", "id": str(import_id)},

@@ -29,6 +29,9 @@ class ProfileChoiceSerializer(serializers.Serializer):
     material = serializers.CharField()
     face_width_mm = serializers.CharField()
     section = ProfileSectionSerializer(required=False, allow_null=True)
+    # Reviewed cut rule angle (45 = mitred/welded corner, 90 = butt joint);
+    # null when the catalog has not declared it. Drawing only, never cut math.
+    corner_cut_deg = serializers.IntegerField(required=False, allow_null=True)
 
 
 class CouplerChoiceSerializer(serializers.Serializer):
@@ -215,6 +218,7 @@ class DesignOptionsView(APIView):
                             "material": item.material.value,
                             "face_width_mm": str(item.face_width_mm),
                             "section": _section_json(item.section),
+                            "corner_cut_deg": item.cut_rule.angle_degrees if item.cut_rule else None,
                         }
                         for item in params.effective_profile_articles.values()
                     ],

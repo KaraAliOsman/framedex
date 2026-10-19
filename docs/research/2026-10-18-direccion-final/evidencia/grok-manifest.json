@@ -1,0 +1,30 @@
+[
+  {
+    "file": "grok-01-hero.png",
+    "source": "https://x.ai/bot",
+    "captured": "2026-10-18",
+    "scope": "public marketing demo observed in browser, no private app run",
+    "sha256": "b28e1575ed7e7987b4239904ffc7858a17ea9bfc569211330b0326429ac624c6"
+  },
+  {
+    "file": "grok-02-chief-thread.png",
+    "source": "https://x.ai/bot",
+    "captured": "2026-10-18",
+    "scope": "public marketing demo observed in browser, no private app run",
+    "sha256": "fa29494fef761775567e573d645267f85736f8c15e5680ab5544b65263d50c63"
+  },
+  {
+    "file": "grok-04-computer-context.png",
+    "source": "https://x.ai/bot",
+    "captured": "2026-10-18",
+    "scope": "public marketing demo observed in browser, no private app run",
+    "sha256": "ab96c0a9a9f2be5d965f030aa2da7d862baf764f11b489e45b072c6e09b03773"
+  },
+  {
+    "file": "grok-05-character-in-context.png",
+    "source": "https://x.ai/bot",
+    "captured": "2026-10-18",
+    "scope": "public marketing demo observed in browser, no private app run",
+    "sha256": "d43bccd7706682b56d78e497f98ea307e706b464411580261afec316a3b0af2b"
+  }
+]

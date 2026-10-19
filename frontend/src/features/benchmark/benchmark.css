@@ -87,9 +87,7 @@
 .benchmark-capture figcaption {
   color: var(--theme-text-secondary);
   font-size: 0.72rem;
-  letter-spacing: 0.04em;
   margin-bottom: 0.35rem;
-  text-transform: uppercase;
 }
 
 .benchmark-capture__body {

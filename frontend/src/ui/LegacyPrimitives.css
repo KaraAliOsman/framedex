@@ -87,7 +87,7 @@ a.ui-backlink:hover {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  padding-bottom: var(--space-3);
+  padding-bottom: var(--space-5);
 }
 .ui-crumbs {
   color: var(--theme-text-muted);
@@ -117,15 +117,15 @@ a.ui-backlink:hover {
   min-width: 0;
 }
 .ui-page-header__title {
-  font-size: var(--text-display);
+  font-size: var(--type-title-l);
   font-weight: 600;
   letter-spacing: -0.01em;
-  line-height: 1.15;
+  line-height: var(--line-title-l);
   margin: 0;
 }
 .ui-page-header__context {
   color: var(--theme-text-secondary);
-  font-size: var(--text-s);
+  font-size: var(--type-body);
   margin: var(--space-1) 0 0;
 }
 .ui-page-header__actions {
@@ -134,11 +134,7 @@ a.ui-backlink:hover {
   flex-shrink: 0;
   gap: var(--space-2);
 }
-.ui-table-wrap {
-  border: 1px solid var(--theme-border-subtle);
-  border-radius: var(--radius-lg);
-  overflow-x: auto;
-}
+
 .ui-table {
   border-collapse: collapse;
   font-size: var(--text-body);
@@ -165,11 +161,7 @@ a.ui-backlink:hover {
 .ui-table tbody tr:hover {
   background: var(--theme-surface-hover);
 }
-.ui-table .ui-table__num {
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-  white-space: nowrap;
-}
+
 .ui-table [aria-sort] button {
   align-items: center;
   background: none;

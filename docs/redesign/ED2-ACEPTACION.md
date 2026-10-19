@@ -3,7 +3,7 @@
 Base `fb7a661d`, rama `codex/ED2-pase-editorial`, revisión del 10-10-2026.
 El pase reúne bow/acoplados, emisión/enlace, cobranza, corte/etiquetas, CNC,
 compras/inventario y catálogo/ingesta, conservando las decisiones de ED1.
-La [comparación por persona](captures/ed2/index.html) contiene las vistas
+La [comparación por persona](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/ed2/index.html) contiene las vistas
 anteriores y posteriores; los recorridos registran decisiones reales.
 
 ## Dos rondas de mejoras

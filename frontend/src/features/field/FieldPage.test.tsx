@@ -10,7 +10,6 @@ const auth = vi.hoisted(() => ({
   me: { active_organization: { id: "org", role: "WORKSHOP_MANAGER" } },
 }));
 vi.mock("../../auth/AuthSessionProvider", () => ({ useAuthSession: () => auth }));
-vi.mock("../../theme/ThemeProvider", () => ({ useTheme: () => ({ toggleTheme: vi.fn() }) }));
 vi.mock("../../api/generated/dekopen", () => ({
   fieldWorkspace: vi.fn(),
   fieldSchedule: vi.fn(),

@@ -263,11 +263,17 @@ JWT, URLs firmadas ni capacidades activas de portal. La compresión PNG conserva
 los píxeles y su hash RGBA. Los recursos propios se detienen al cierre y la base
 REVIEW se conserva para el arranque del dueño.
 
-El PR final `integracion/v1` → `main` queda abierto con sus cuatro checks.
-Su merge corresponde al dueño. Los números anteriores acreditan la muestra
+El PR final `integracion/v1` → `main` se integró por instrucción del dueño
+mediante [PR #157](https://github.com/KaraAliOsman/framedex/pull/157), squash
+`2db4e13171884b93a989e68508a55f5590f9b34d`, con los cuatro checks en verde.
+Los números anteriores acreditan la muestra
 ejercitada y los límites declarados, no fabricación, tributación ni producción
 de una empresa que aún no conectó sus autoridades reales.
 
 ## Integración del cierre P20
 
-[PR #156](https://github.com/KaraAliOsman/framedex/pull/156), squash `c99d25b577cc2726d28465dbab59f142c2c7cd73` en `integracion/v1`. CI **4/4 PASA** sobre `c8ac0612aa1ff10008ab666c9527eccc67a9bc4c`: Lint & Typecheck, Test Suite, Frontend Build y Database Gate. ESTADO registra los 39 encargos cerrados. El PR hacia main se entrega abierto para el clic del dueño.
+[PR #156](https://github.com/KaraAliOsman/framedex/pull/156), squash `c99d25b577cc2726d28465dbab59f142c2c7cd73` en `integracion/v1`. CI **4/4 PASA** sobre `c8ac0612aa1ff10008ab666c9527eccc67a9bc4c`: Lint & Typecheck, Test Suite, Frontend Build y Database Gate. ESTADO registra los 39 encargos cerrados. PR #157 integra posteriormente el programa a main.
+
+La limpieza posterior conserva íntegra `captures/aceptacion-final/`. Las rondas
+visuales anteriores se consultan mediante [el mapa de evidencia](captures/README.md),
+sin alterar resultados, recibos ni refs de esta aceptación.

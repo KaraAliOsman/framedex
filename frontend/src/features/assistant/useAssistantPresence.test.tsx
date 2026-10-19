@@ -3,8 +3,7 @@ import { QueryClient } from "@tanstack/react-query";
 import { render } from "@testing-library/react";
 import type { AiJob } from "../../api/generated/models";
 import { presenceKey, presenceState, publishAssistantJob } from "./useAssistantPresence";
-import { Orb, orbStateFor } from "./Orb";
-import { BotFigure } from "./BotFigure";
+import { Companion, companionStateFor } from "./Companion";
 
 describe("contextual assistant presence", () => {
   it.each([
@@ -19,7 +18,7 @@ describe("contextual assistant presence", () => {
     ["CANCELED", "canceled"],
     ["FUTURE_STATE", "idle"],
   ])("maps %s to %s", (state, expected) => {
-    expect(orbStateFor(state)).toBe(expected);
+    expect(companionStateFor(state)).toBe(expected);
   });
   it("uses committed worker progress during the provider transaction", () => {
     expect(
@@ -69,9 +68,9 @@ describe("contextual assistant presence", () => {
   it("renders three orbs without duplicate SVG ids or unsafe external references", () => {
     const { container } = render(
       <>
-        <Orb title="En cola" state="queued" size={16} />
-        <Orb title="Trabajando" state="working" size={28} />
-        <BotFigure state="approval" size={160} welcome />
+        <Companion title="En cola" state="queued" size={16} />
+        <Companion title="Trabajando" state="working" size={28} />
+        <Companion state="approval" size={96} />
       </>,
     );
     const ids = [...container.querySelectorAll("[id]")].map((node) => node.id);

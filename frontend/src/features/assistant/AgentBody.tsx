@@ -1,19 +1,22 @@
 import { ValidatedForm } from "../../ui/FormValidation";
+import { Icon } from "../../ui/Icon";
 import { AI_PHASES } from "./providerLabels";
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { ApiError } from "../../api/apiMutator";
 import {
   aiAgent,
+  aiJobApprove,
   aiJobCancel,
-  aiPresenceGet,
   aiJobMessageCreate,
   aiJobOutcomeCreate,
   aiJobRetrieve,
   aiJobRetry,
+  aiThreadTimeline,
 } from "../../api/generated/dekopen";
+import type { AiTimelineEntry } from "../../api/generated/models/aiTimelineEntry";
 import type { AiAgentStep } from "../../api/generated/models/aiAgentStep";
 import type { AiJobDetail } from "../../api/generated/models/aiJobDetail";
 import { t } from "../../i18n/es-CL";
@@ -21,15 +24,18 @@ import { jobErrorKey } from "../jobs/jobError";
 import type { DesignOperation } from "../../api/generated/models";
 import { describeDesignOp, designAssistProduct, productFingerprint } from "../canvas/designOps";
 import type { ProductJson } from "../canvas/productEditing";
-import { stableRefs, useDesignOpsBridge } from "./assistantContext";
+import { useDesignOpsBridge } from "./assistantContext";
 import { BatchOpsStep } from "./BatchOpsStep";
-import { BotFigure } from "./BotFigure";
 import { ProjectOpsStep } from "./ProjectOpsStep";
+import { DocumentLayoutStep } from "./DocumentLayoutStep";
 import { SimulationPreview } from "./SimulationPreview";
 import { RejectedOperations } from "./RejectedOperations";
 import { publishAssistantJob, presenceState } from "./useAssistantPresence";
-import { Orb } from "./Orb";
+import { Companion } from "./Companion";
 import { assistantText, SURFACE_LABELS } from "./surfaces";
+import { AttachmentTray, SentAttachments, type ComposerAttachment } from "./Attachments";
+import { Receipt } from "./Receipt";
+import type { AutonomyPolicy, InteractionMode } from "./copilotPrefs";
 
 /** The durable worker can leave the job running far longer than a request
  * timeout — the dock polls the job record and renders the stored result
@@ -70,6 +76,17 @@ type Turn = {
   transcriptIndex: number;
   appliedOps: Set<number>;
   declinedOps: Set<number>;
+  /** Sealed on the user turn: mode, effective policy and attachments. */
+  mode?: InteractionMode;
+  attachments?: SealedAttachment[];
+};
+
+export type SealedAttachment = {
+  id: string;
+  file_name: string;
+  kind: string;
+  status?: string;
+  file_sha256?: string;
 };
 
 interface TranscriptAgentTurn {
@@ -87,13 +104,21 @@ interface TranscriptAgentTurn {
   rejected?: { op?: string; reason?: string }[];
   artifacts?: unknown[];
   code?: string;
+  interaction_mode?: InteractionMode;
+  attachments?: SealedAttachment[];
 }
 
 /** Transcript → thread: user entries pair with the agent/error entry that
  * answers them; a trailing user entry is a round still in flight. */
 function threadFromJob(job: AiJobDetail): Turn[] {
   const turns: Turn[] = [];
-  let pending: { text: string; replay: boolean; sig: string | null } | null = null;
+  let pending: {
+    text: string;
+    replay: boolean;
+    sig: string | null;
+    mode?: InteractionMode;
+    attachments?: SealedAttachment[];
+  } | null = null;
   const entries = (job.transcript ?? []) as TranscriptAgentTurn[];
   for (const [index, entry] of entries.entries()) {
     if (!entry || typeof entry !== "object") continue;
@@ -102,6 +127,8 @@ function threadFromJob(job: AiJobDetail): Turn[] {
         text: String(entry.text ?? ""),
         replay: Boolean(entry.replay),
         sig: typeof entry.product_sig === "string" ? entry.product_sig : null,
+        mode: entry.interaction_mode,
+        attachments: Array.isArray(entry.attachments) ? entry.attachments : undefined,
       };
     } else if (entry.role === "agent") {
       turns.push({
@@ -114,6 +141,8 @@ function threadFromJob(job: AiJobDetail): Turn[] {
         transcriptIndex: index,
         appliedOps: new Set(),
         declinedOps: new Set(),
+        mode: pending?.mode,
+        attachments: pending?.attachments,
       });
       pending = null;
     } else if (entry.role === "error") {
@@ -127,6 +156,8 @@ function threadFromJob(job: AiJobDetail): Turn[] {
         transcriptIndex: index,
         appliedOps: new Set(),
         declinedOps: new Set(),
+        mode: pending?.mode,
+        attachments: pending?.attachments,
       });
       pending = null;
     }
@@ -142,11 +173,29 @@ function threadFromJob(job: AiJobDetail): Turn[] {
       transcriptIndex: entries.length - 1,
       appliedOps: new Set(),
       declinedOps: new Set(),
+      mode: pending.mode,
+      attachments: pending.attachments,
     });
   }
   // Jobs settled before transcript turns carried the result shape still
   // hold the aggregate in `result` — surface it as the last turn rather
   // than rendering an empty conversation.
+  // A first round still queued/running has no transcript yet (the worker
+  // writes it at the end): show the sent request instead of an empty thread.
+  if (!turns.length && !job.result && job.goal && LIVE_STATES.has(job.state)) {
+    turns.push({
+      goal: job.goal,
+      replay: false,
+      result: null,
+      errorCode: null,
+      product: null,
+      productSig: null,
+      transcriptIndex: 0,
+      appliedOps: new Set(),
+      declinedOps: new Set(),
+      mode: (job.interaction_mode as InteractionMode | null | undefined) ?? undefined,
+    });
+  }
   if (!turns.some((turn) => turn.result !== null) && job.result) {
     turns.push({
       goal: job.goal ?? "",
@@ -169,34 +218,6 @@ function asDesignOps(step: AiAgentStep): DesignOperation[] {
 
 export { SURFACE_LABELS };
 
-/** §08-WG — communication workflows are goals on the project/quotation
- * surface: the dock already binds the project refs, so a preset turns the
- * generic grounded agent into the five customer communications without a
- * separate surface. They only prefill the goal — the human edits before
- * sending, and the answer stays evidence-bound either way. */
-const GOAL_CHIPS: Record<string, string[]> = {
-  project: [
-    "Cambia todo el 2º piso a termopanel Low-E. Muestra el cambio de precio y la autoridad térmica disponible.",
-    "Convierte todas las fijas del proyecto en abatibles.",
-    "Copia el vidrio del primer vano a todos los demás.",
-    "Redacta el correo para enviar la cotización al cliente.",
-    "Resume los cambios de la última revisión para el cliente.",
-    "Redacta un recordatorio de pago pendiente.",
-    "Redacta una actualización del estado de producción para el cliente.",
-    "Redacta el aviso de entrega programada.",
-  ],
-  position: [
-    "Propón una división vertical 1/3–2/3 en la hoja seleccionada.",
-    "Revisa la compatibilidad de herrajes de esta posición.",
-  ],
-  quotation: [
-    "Explica por qué subió el total de esta revisión.",
-    "Redacta el correo para enviar la cotización al cliente.",
-    "Resume los cambios de la última revisión para el cliente.",
-    "Redacta un recordatorio de pago pendiente.",
-  ],
-};
-
 /** The DEKOPEN agent: a goal turns into a server-side observe → plan loop.
  * The backend executes the queries and validates every step; this panel
  * renders provenance (what it consulted), lets the human apply design ops
@@ -209,11 +230,31 @@ export function AgentBody({
   refs,
   onJobState,
   onComposing,
+  threadId,
+  onThread,
+  interactionMode,
+  autonomy,
+  onInteractionMode,
+  prefill,
+  contextLabel,
+  onClearContext,
 }: {
   organizationId: string;
   userId?: string | null;
+  /** Read context of the next send (route + selection). It never re-keys
+   * the conversation: the thread is the identity. */
   surface: string;
   refs: Record<string, string>;
+  /** The conversation this body shows; null = a new one opens on send. */
+  threadId: string | null;
+  onThread?: (threadId: string) => void;
+  interactionMode: InteractionMode;
+  autonomy: AutonomyPolicy;
+  onInteractionMode?: (mode: InteractionMode) => void;
+  /** A delegation from a manual surface: prefilled text the person sends. */
+  prefill?: { text: string; nonce: number } | null;
+  contextLabel?: string | null;
+  onClearContext?: () => void;
   /** Lifts the bound job's lifecycle up to the dock header orb. */
   onJobState?: (state: string | null) => void;
   /** Lifts composition state — while a goal is typed the orb reads INPUT. */
@@ -226,6 +267,13 @@ export function AgentBody({
   const [undone, setUndone] = useState(new Set<string>());
   const [goal, setGoal] = useState("");
   const [busy, setBusy] = useState(false);
+  const [attachments, setAttachments] = useState<ComposerAttachment[]>([]);
+  /** Earlier entries of this thread (older jobs and legacy chat turns). */
+  const [earlier, setEarlier] = useState<AiTimelineEntry[]>([]);
+  const [earlierCursor, setEarlierCursor] = useState<string | null>(null);
+  /** The thread id this body just received from its own send — adopting it
+   * must not reset the live conversation. */
+  const adoptedThread = useRef<string | null>(null);
   /** The job this dock is bound to — found by continuity on mount, created
    * by the next send when none applies. */
   const [job, setJob] = useState<AiJobDetail | null>(null);
@@ -246,6 +294,8 @@ export function AgentBody({
   /** One operation key per goal — a retried submit replays the audited loop
    * (each round is suffixed server-side) instead of debiting twice. */
   const operationKey = useRef<{ key: string; goal: string } | null>(null);
+  /** The request just sent, shown until the worker writes its turn. */
+  const sentTurn = useRef<Turn | null>(null);
   const requestSeq = useRef(0);
   const pollTimer = useRef<number | null>(null);
   const pollFailures = useRef(0);
@@ -253,11 +303,6 @@ export function AgentBody({
    * just can't see it right now. */
   const [offline, setOffline] = useState(false);
   const headers = { headers: { "X-Organization-ID": organizationId } };
-
-  // Continuity keys on the stable identity refs — a canvas selection change
-  // must not re-run the bind (it would churn the dock on every click), while
-  // the full refs still travel with each request for context.
-  const refsKey = JSON.stringify(stableRefs(refs));
 
   function clearPoll(): void {
     if (pollTimer.current !== null) {
@@ -306,11 +351,25 @@ export function AgentBody({
             }
           }
         }
+        // Until the worker writes the new user turn, keep showing it.
+        const last = built.at(-1);
+        if (
+          sentTurn.current &&
+          LIVE_STATES.has(next.state) &&
+          (!last || last.result !== null || last.errorCode !== null)
+        ) {
+          built.push({ ...sentTurn.current, transcriptIndex: (last?.transcriptIndex ?? -1) + 1 });
+        }
+        if (!LIVE_STATES.has(next.state)) sentTurn.current = null;
         setThread(built);
         if (LIVE_STATES.has(next.state)) {
           pollTimer.current = window.setTimeout(() => void tick(), POLL_MS);
         } else {
           setBusy(false);
+          // Changes the round saved itself (Omitir todo) must show at once
+          // in Mesa and Estudio — the same work, re-read from the server.
+          if (next.receipt?.objects.some((item) => item.status === "applied"))
+            void queryClient.invalidateQueries();
           // Queued instructions flush in the job-state effect — it runs
           // after this render commits, even if one queued mid-settle.
         }
@@ -328,28 +387,34 @@ export function AgentBody({
     void tick();
   }
 
-  /** Continuity: the dock re-binds to the newest job for this
-   * (surface, refs) pair — a conversation started in the workspace or a
-   * previous dock session resumes instead of resetting to a blank thread. */
+  /** Continuity is the thread: reopening the popup, navigating or choosing
+   * another sheet keeps the same conversation. Loading it is a pure read —
+   * the timeline and the job record, never a model call. */
   useEffect(() => {
+    if (threadId !== null && threadId === adoptedThread.current) return;
+    adoptedThread.current = threadId;
     const seq = ++requestSeq.current;
     setThread([]);
     setJob(null);
+    setEarlier([]);
+    setEarlierCursor(null);
     setMessage("");
     setBusy(false);
     pendingRef.current = [];
     setPending([]);
     operationKey.current = null;
+    if (!threadId) return;
     let cancelled = false;
     void (async () => {
       try {
-        const presence = await aiPresenceGet({ surface, refs: refsKey }, headers);
-        if (cancelled || seq !== requestSeq.current || presence.status !== 200) return;
-        const match = presence.data.job;
-        if (!match) return;
-        const detail = await aiJobRetrieve(match.id, headers);
-        if (cancelled || seq !== requestSeq.current) return;
-        if (detail.status !== 200) return;
+        const timeline = await aiThreadTimeline(threadId, undefined, headers);
+        if (cancelled || seq !== requestSeq.current || timeline.status !== 200) return;
+        const [latest, ...older] = timeline.data.items;
+        setEarlier(latest && latest.kind === "job" ? older : timeline.data.items);
+        setEarlierCursor(timeline.data.next_cursor);
+        if (!latest || latest.kind !== "job") return;
+        const detail = await aiJobRetrieve(latest.id, headers);
+        if (cancelled || seq !== requestSeq.current || detail.status !== 200) return;
         setJob(detail.data);
         setThread(threadFromJob(detail.data));
         if (LIVE_STATES.has(detail.data.state)) {
@@ -357,27 +422,62 @@ export function AgentBody({
           watch(detail.data.id, seq);
         }
       } catch {
-        // Continuity is best-effort — a failed lookup leaves a fresh dock.
+        // Recovery is best-effort — the thread stays openable from history.
       }
     })();
     return () => {
       cancelled = true;
       clearPoll();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- refsKey is the
-    // stable serialization of refs; surface/refs changes re-run the lookup.
-  }, [organizationId, surface, refsKey]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the thread id
+    // is the identity; read context changes never reload the conversation.
+  }, [organizationId, threadId]);
+
+  async function loadEarlier(): Promise<void> {
+    if (!threadId || !earlierCursor) return;
+    try {
+      const page = await aiThreadTimeline(threadId, { cursor: earlierCursor }, headers);
+      if (page.status !== 200) return;
+      setEarlier((previous) => [...previous, ...page.data.items]);
+      setEarlierCursor(page.data.next_cursor);
+    } catch {
+      setMessage("No pudimos cargar mensajes anteriores. Inténtalo de nuevo.");
+    }
+  }
+
+  // A delegation from a manual surface prefills the composer; the person
+  // reviews and sends it (opening never calls the model).
+  useEffect(() => {
+    if (!prefill) return;
+    setGoal(prefill.text);
+    inputRef.current?.focus();
+  }, [prefill]);
 
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
+
+  /** A follow-up continues the current task only while the person is still
+   * on that task's work (same surface, work and window). A new message
+   * written while another work or window is open is a new task about what
+   * is open — it never writes into the earlier task's work. A running task
+   * keeps its sealed destination whatever the person navigates to. */
+  function continuesJob(candidate: AiJobDetail | null): AiJobDetail | null {
+    if (!candidate || TERMINAL_STATES.has(candidate.state)) return null;
+    if (LIVE_STATES.has(candidate.state)) return candidate;
+    const sealed = (candidate.refs ?? {}) as Record<string, string>;
+    if (candidate.surface !== surface) return null;
+    if ((sealed.project_id ?? "") !== (refs.project_id ?? "")) return null;
+    if ((sealed.position_id ?? "") !== (refs.position_id ?? "")) return null;
+    return candidate;
+  }
 
   async function run(): Promise<void> {
     const trimmed = goal.trim();
     if (!trimmed) return;
     // A terminal job can't take follow-ups — start a fresh one instead of
     // bouncing the message off a 409.
-    const followTarget = job && !TERMINAL_STATES.has(job.state) ? job : null;
+    const followTarget = continuesJob(job);
     if (followTarget && LIVE_STATES.has(followTarget.state)) {
       // Mid-run instructions are accepted and delivered once the run
       // settles — the claim chain can't interleave a second run anyway.
@@ -390,8 +490,15 @@ export function AgentBody({
     await send(trimmed);
   }
 
-  async function send(trimmed: string): Promise<void> {
-    const followTarget = job && !TERMINAL_STATES.has(job.state) ? job : null;
+  async function send(trimmed: string, modeOverride?: InteractionMode): Promise<void> {
+    const followTarget = continuesJob(job);
+    const mode = modeOverride ?? interactionMode;
+    const ready = attachments.filter((item) => item.state === "ready" && item.id);
+    if (attachments.some((item) => item.state === "uploading")) {
+      setMessage("Espera a que terminen de subir los archivos.");
+      return;
+    }
+    const attachmentIds = ready.map((item) => item.id as string);
     setBusy(true);
     setMessage("");
     if (!operationKey.current || operationKey.current.goal !== trimmed) {
@@ -421,6 +528,9 @@ export function AgentBody({
             refs,
             ...(product ? { product: designAssistProduct(product as ProductJson) } : {}),
             ...(productSig ? { product_sig: productSig } : {}),
+            autonomy,
+            interaction_mode: mode,
+            ...(attachmentIds.length ? { attachment_ids: attachmentIds } : {}),
           },
           {
             headers: {
@@ -434,6 +544,29 @@ export function AgentBody({
         }
         jobId = followTarget.id;
       } else {
+        if (job) {
+          // The earlier task of this conversation stays readable above.
+          const previous = job;
+          setEarlier((items) => [
+            {
+              kind: "job",
+              id: previous.id,
+              created_at: previous.created_at,
+              goal: previous.goal,
+              state: previous.state,
+              surface: previous.surface,
+              refs: previous.refs ?? {},
+              interaction_mode: previous.interaction_mode ?? "work",
+              autonomy: previous.autonomy ?? "propose",
+              receipt: previous.receipt ?? null,
+              error_code: previous.error_code ?? null,
+              question: null,
+              answer: null,
+            },
+            ...items.filter((item) => item.id !== previous.id),
+          ]);
+          setThread([]);
+        }
         const response = await aiAgent(
           {
             surface,
@@ -443,6 +576,10 @@ export function AgentBody({
             ...(productSig ? { product_sig: productSig } : {}),
             history: [],
             operation_key: operationKey.current.key,
+            autonomy,
+            interaction_mode: mode,
+            ...(threadId ? { thread_id: threadId } : {}),
+            ...(attachmentIds.length ? { attachment_ids: attachmentIds } : {}),
           },
           headers,
         );
@@ -450,10 +587,33 @@ export function AgentBody({
           throw new ApiError(response.status, response.data);
         }
         jobId = String(response.data.job_id);
+        const opened = response.data.thread_id ? String(response.data.thread_id) : null;
+        if (opened && opened !== threadId) {
+          adoptedThread.current = opened;
+          onThread?.(opened);
+        }
       }
       if (seq !== requestSeq.current) return;
       // Optimistic user turn — the transcript rebuild replaces it on the
       // first poll, but the goal should be visible immediately.
+      const optimistic: Turn = {
+        goal: trimmed,
+        replay: false,
+        result: null,
+        errorCode: null,
+        product,
+        productSig,
+        transcriptIndex: 0,
+        appliedOps: new Set(),
+        declinedOps: new Set(),
+        mode,
+        attachments: ready.map((item) => ({
+          id: item.id as string,
+          file_name: item.name,
+          kind: item.kind ?? "",
+        })),
+      };
+      sentTurn.current = optimistic;
       setThread((prev) => [
         ...prev,
         {
@@ -466,9 +626,16 @@ export function AgentBody({
           transcriptIndex: prev.length ? (prev[prev.length - 1]?.transcriptIndex ?? -1) + 1 : 0,
           appliedOps: new Set(),
           declinedOps: new Set(),
+          mode,
+          attachments: ready.map((item) => ({
+            id: item.id as string,
+            file_name: item.name,
+            kind: item.kind ?? "",
+          })),
         },
       ]);
       setGoal("");
+      setAttachments([]);
       operationKey.current = null;
       watch(jobId, seq, product);
       return;
@@ -514,6 +681,31 @@ export function AgentBody({
     }
   }
 
+  /** «Con aprobación»: one approval applies the prepared coherent set (and
+   * the price + draft PDF of flow A11) with the person's own session. */
+  async function approveAll(): Promise<void> {
+    if (!job || busy) return;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await aiJobApprove(job.id, headers);
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      setJob(response.data as AiJobDetail);
+      setThread(threadFromJob(response.data as AiJobDetail));
+      void queryClient.invalidateQueries();
+    } catch (error) {
+      setMessage(
+        error instanceof ApiError && typeof error.payload === "object" && error.payload !== null
+          ? String(
+              (error.payload as { error?: { detail?: unknown } }).error?.detail ?? t("agent.error"),
+            )
+          : t("agent.error"),
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
   function startFresh(): void {
     requestSeq.current += 1;
     clearPoll();
@@ -526,6 +718,7 @@ export function AgentBody({
     // leaving them queued would post them onto the NEXT job the dock binds.
     pendingRef.current = [];
     setPending([]);
+    setAttachments([]);
     inputRef.current?.focus();
   }
 
@@ -639,8 +832,80 @@ export function AgentBody({
   }, [job]);
 
   const live = job !== null && LIVE_STATES.has(job.state);
+  // An encargo on the open window arrives with apply_requested: it lands in
+  // the drawing at once (unsaved, undoable), exactly as the «Aplicar» click.
+  const autoApplied = useRef(new Set<string>());
+  useEffect(() => {
+    if (autonomy !== "draft" || !bridge || !job) return;
+    const last = thread.length - 1;
+    const turn = thread[last];
+    if (!turn?.result?.steps) return;
+    turn.result.steps.forEach((step, stepIndex) => {
+      const coordinate = `${job.id}:${turn.transcriptIndex}:${stepIndex}`;
+      if (
+        step.kind !== "ops" ||
+        !(step as { apply_requested?: boolean }).apply_requested ||
+        autoApplied.current.has(coordinate) ||
+        turn.appliedOps.has(stepIndex) ||
+        turn.declinedOps.has(stepIndex) ||
+        (step.simulation != null && (step.simulation as { valid?: boolean }).valid !== true) ||
+        (turn.product !== null && turn.product !== bridge.product)
+      )
+        return;
+      const ops = asDesignOps(step);
+      if (!ops.length) return;
+      autoApplied.current.add(coordinate);
+      applyOps(last, stepIndex, ops);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- applyOps is stable per render
+  }, [thread, job?.id, autonomy, bridge]);
+  // «Omitir todo» continues the delegated chain without asking: the quote
+  // step (price + draft PDF) runs through the approval endpoint with the
+  // person's session once the round settles. Once per job round.
+  const autoContinued = useRef(new Set<string>());
+  useEffect(() => {
+    if (!job || autonomy !== "draft" || interactionMode !== "work") return;
+    if (job.state !== "WAITING_FOR_APPROVAL") return;
+    const last = thread.at(-1);
+    const steps = last?.result?.steps ?? [];
+    const waiting = steps.some(
+      (step) =>
+        step.kind === "quote_draft" &&
+        (step as { apply_requested?: boolean }).apply_requested &&
+        !(step as { applied?: unknown }).applied &&
+        !(step as { apply_error?: string }).apply_error,
+    );
+    const key = `${job.id}:${last?.transcriptIndex ?? -1}`;
+    if (!waiting || autoContinued.current.has(key)) return;
+    autoContinued.current.add(key);
+    void approveAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- approveAll is stable per render
+  }, [job, thread, autonomy, interactionMode]);
+  const approvable =
+    job !== null &&
+    job.state === "WAITING_FOR_APPROVAL" &&
+    (thread.at(-1)?.result?.steps ?? []).some(
+      (step) =>
+        ["project_ops", "document_layout", "quote_draft"].includes(step.kind) &&
+        !(step as { applied?: unknown }).applied &&
+        !(step as { apply_error?: string }).apply_error,
+    );
+  const lastTurn = thread.at(-1);
+  const chatProposal =
+    lastTurn?.mode === "chat" &&
+    (lastTurn.result?.steps ?? []).some((step) =>
+      ["ops", "batch_ops", "project_ops", "document_layout", "quote_draft"].includes(step.kind),
+    );
+  // Settled task about another work or window: the next message starts a
+  // new task on what is open (said plainly, no action required).
+  const nextIsNewTask = job !== null && !LIVE_STATES.has(job.state) && continuesJob(job) === null;
   const retryable = job !== null && job.state === "FAILED_RETRYABLE";
   const terminal = job !== null && TERMINAL_STATES.has(job.state);
+  const failures = thread.filter((turn) => turn.errorCode);
+  const lastFailure = failures.at(-1)?.errorCode ?? "";
+  // A plan or balance limit is not a failure to retry: say it calmly and
+  // point to where it is solved.
+  const accountLimit = ["jobs.fail.plan", "jobs.fail.credits"].includes(jobErrorKey(lastFailure));
   const liveProgress =
     job?.live && typeof job.live.progress === "number"
       ? Math.min(99, Math.max(0, job.live.progress))
@@ -648,14 +913,77 @@ export function AgentBody({
 
   return (
     <>
-      <div className="ask-dock__thread">
-        {thread.some((turn) => turn.errorCode) ? (
-          <div className="ask-dock__errorTurn">
+      <div className="ask-dock__thread" aria-live="polite">
+        {earlier.length ? (
+          <details className="copilot-earlier">
+            <summary>
+              {earlier.length} {earlier.length === 1 ? "entrada anterior" : "entradas anteriores"}{" "}
+              en esta conversación
+            </summary>
+            <ol>
+              {[...earlier].reverse().map((entry) => (
+                <li key={entry.id}>
+                  <span className="copilot-earlier__text">
+                    {entry.kind === "job" ? entry.goal : entry.question}
+                  </span>
+                  {entry.kind === "ask" && entry.answer ? (
+                    <span className="copilot-earlier__answer">{assistantText(entry.answer)}</span>
+                  ) : null}
+                  {entry.receipt ? (
+                    <span className="copilot-earlier__meta">{entry.receipt.summary}</span>
+                  ) : entry.state ? (
+                    <span className="copilot-earlier__meta">
+                      {entry.state === "CANCELED"
+                        ? "Cancelado"
+                        : entry.state === "FAILED" || entry.state === "FAILED_RETRYABLE"
+                          ? "Con error"
+                          : "Trabajo anterior"}
+                    </span>
+                  ) : null}
+                </li>
+              ))}
+            </ol>
+            {earlierCursor ? (
+              <button
+                type="button"
+                className="ask-dock__meta-link"
+                onClick={() => void loadEarlier()}
+              >
+                Cargar anteriores
+              </button>
+            ) : null}
+          </details>
+        ) : null}
+        {thread.some((turn) => turn.errorCode) && !retryable && !terminal ? (
+          // Earlier failed attempts of a task that later recovered: history,
+          // not a live alert.
+          <details className="ui-tech">
+            <summary>
+              {thread.filter((turn) => turn.errorCode).length === 1
+                ? "1 intento anterior falló"
+                : `${thread.filter((turn) => turn.errorCode).length} intentos anteriores fallaron`}
+            </summary>
+            <ol>
+              {thread
+                .filter((turn) => turn.errorCode)
+                .map((turn, index) => (
+                  <li key={index}>{t(jobErrorKey(turn.errorCode ?? ""))}</li>
+                ))}
+            </ol>
+          </details>
+        ) : null}
+        {thread.some((turn) => turn.errorCode) && (retryable || terminal) ? (
+          <div className={`ask-dock__errorTurn${accountLimit ? " is-limit" : ""}`}>
             <p>
-              {thread.filter((turn) => turn.errorCode).length} intentos fallidos ·{" "}
-              {t(jobErrorKey(thread.filter((turn) => turn.errorCode).at(-1)?.errorCode ?? ""))}
+              {accountLimit || failures.length === 1
+                ? t(jobErrorKey(lastFailure))
+                : `${failures.length} intentos fallidos · ${t(jobErrorKey(lastFailure))}`}
             </p>
-            {retryable ? (
+            {accountLimit ? (
+              <Link className="ask-dock__action" to="/settings/billing">
+                Ver plan y créditos
+              </Link>
+            ) : retryable ? (
               <button
                 type="button"
                 className="ask-dock__action"
@@ -682,7 +1010,7 @@ export function AgentBody({
         ) : null}
         {thread.length === 0 && !live ? (
           <div className="ask-dock__welcome">
-            <BotFigure state={presenceState(job)} size={160} welcome />
+            <Companion state={presenceState(job)} size={96} />
             <p className="ask-dock__hint">{t("agent.hint")}</p>
           </div>
         ) : (
@@ -699,6 +1027,9 @@ export function AgentBody({
                         <span className="ask-dock__replay">{t("aiws.replayed")}</span>
                       ) : null}
                     </p>
+                  ) : null}
+                  {turn.attachments?.length ? (
+                    <SentAttachments organizationId={organizationId} items={turn.attachments} />
                   ) : null}
                   {turn.result === null ? null : (
                     <>
@@ -724,7 +1055,9 @@ export function AgentBody({
                       ) : null}
                       {turn.result.reply &&
                       !turn.result.steps?.some((step) =>
-                        ["ops", "batch_ops", "project_ops", "prepare"].includes(step.kind),
+                        ["ops", "batch_ops", "project_ops", "prepare", "document_layout"].includes(
+                          step.kind,
+                        ),
                       ) ? (
                         <p className="ask-dock__answer">{assistantText(turn.result.reply)}</p>
                       ) : null}
@@ -836,13 +1169,17 @@ export function AgentBody({
                                 />
                               );
                             }
-                            if (step.kind === "project_ops" && refs.project_id && job) {
+                            const stepProject =
+                              (step.simulation as { project_id?: string } | undefined)
+                                ?.project_id ?? refs.project_id;
+                            if (step.kind === "project_ops" && stepProject && job) {
                               return (
                                 <ProjectOpsStep
                                   key={stepIndex}
                                   step={step}
                                   organizationId={organizationId}
-                                  projectId={refs.project_id}
+                                  projectId={stepProject}
+                                  linkToProject={stepProject !== refs.project_id}
                                   operationKey={`ai:${job.id}:${turn.transcriptIndex}:${stepIndex}`}
                                   declined={(job.outcomes ?? []).some((value) => {
                                     const outcome = value as {
@@ -858,6 +1195,32 @@ export function AgentBody({
                                   })}
                                   onSettled={(action, ops) =>
                                     reportOutcome(turn.transcriptIndex, stepIndex, action, ops)
+                                  }
+                                />
+                              );
+                            }
+                            if (step.kind === "document_layout" && job) {
+                              return (
+                                <DocumentLayoutStep
+                                  key={stepIndex}
+                                  step={step}
+                                  organizationId={organizationId}
+                                  declined={(job.outcomes ?? []).some((value) => {
+                                    const outcome = value as {
+                                      turn_index?: number;
+                                      step_index?: number;
+                                      action?: string;
+                                    };
+                                    return (
+                                      outcome.turn_index === turn.transcriptIndex &&
+                                      outcome.step_index === stepIndex &&
+                                      outcome.action === "declined"
+                                    );
+                                  })}
+                                  onSettled={(action) =>
+                                    reportOutcome(turn.transcriptIndex, stepIndex, action, [
+                                      { op: "document_layout" },
+                                    ])
                                   }
                                 />
                               );
@@ -921,7 +1284,7 @@ export function AgentBody({
                                     </ul>
                                   ) : null}
                                   <p className="operation-state">
-                                    <Orb
+                                    <Companion
                                       state={
                                         wasUndone
                                           ? "canceled"
@@ -1047,6 +1410,42 @@ export function AgentBody({
                       ) : null}
                     </>
                   )}
+                  {turnIndex === thread.length - 1 && job?.receipt && !live ? (
+                    <Receipt receipt={job.receipt} onOpen={(path) => navigate(path)} />
+                  ) : null}
+                  {turnIndex === thread.length - 1 && approvable && !live ? (
+                    <div className="copilot-approve">
+                      <p>
+                        {autonomy === "draft"
+                          ? "Quedan cambios por aplicar."
+                          : "El conjunto está preparado. Revísalo y apruébalo una vez."}
+                      </p>
+                      <button
+                        type="button"
+                        className="ui-button ui-button--primary ui-button--compact"
+                        disabled={busy}
+                        onClick={() => void approveAll()}
+                      >
+                        Aprobar y aplicar
+                      </button>
+                    </div>
+                  ) : null}
+                  {turnIndex === thread.length - 1 && chatProposal && !live ? (
+                    <div className="copilot-approve">
+                      <p>En Chat nada se aplica. Puedes pasar este encargo a Trabajo.</p>
+                      <button
+                        type="button"
+                        className="ui-button ui-button--secondary ui-button--compact"
+                        disabled={busy}
+                        onClick={() => {
+                          onInteractionMode?.("work");
+                          void send(turn.goal, "work");
+                        }}
+                      >
+                        Hacer en Trabajo
+                      </button>
+                    </div>
+                  ) : null}
                   {turnIndex === thread.length - 1 && job ? (
                     <p className="ask-dock__meta">
                       <button
@@ -1058,7 +1457,7 @@ export function AgentBody({
                       </button>
                       {" · "}
                       <button type="button" className="ask-dock__meta-link" onClick={startFresh}>
-                        {t("aiws.new")}
+                        Nuevo encargo
                       </button>
                     </p>
                   ) : null}
@@ -1096,22 +1495,8 @@ export function AgentBody({
           </button>
         </p>
       ) : null}
-      {thread.length === 0 && !goal.trim() && !terminal && (GOAL_CHIPS[surface] ?? []).length ? (
-        <div className="ask-dock__chips">
-          {(GOAL_CHIPS[surface] ?? []).map((preset) => (
-            <button
-              key={preset}
-              type="button"
-              className="ask-dock__chip"
-              onClick={() => {
-                setGoal(preset);
-                inputRef.current?.focus();
-              }}
-            >
-              {preset}
-            </button>
-          ))}
-        </div>
+      {nextIsNewTask && !live && contextLabel ? (
+        <p className="copilot-destination">Tu próximo mensaje trabajará sobre: {contextLabel}.</p>
       ) : null}
       {pending.length > 0 ? (
         <ul className="ask-dock__pending" aria-label={t("agent.pending")}>
@@ -1139,6 +1524,27 @@ export function AgentBody({
             run().catch(() => undefined);
           }}
         >
+          {contextLabel ? (
+            <p className="copilot-context">
+              <span>Sobre: {contextLabel}</span>
+              {onClearContext ? (
+                <button
+                  type="button"
+                  className="ui-icon-button copilot__icon"
+                  aria-label="Quitar el contexto de lectura"
+                  onClick={onClearContext}
+                >
+                  <Icon name="close" size={16} />
+                </button>
+              ) : null}
+            </p>
+          ) : null}
+          <AttachmentTray
+            organizationId={organizationId}
+            threadId={threadId}
+            items={attachments}
+            onChange={setAttachments}
+          />
           <textarea
             ref={inputRef}
             value={goal}
@@ -1148,16 +1554,33 @@ export function AgentBody({
             aria-label={t("agent.placeholder")}
             onChange={(event) => setGoal(event.target.value)}
             onKeyDown={(event) => {
-              if (event.key === "Enter" && !event.shiftKey) {
+              // IME composition owns Enter until it commits.
+              if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
                 event.preventDefault();
                 run().catch(() => undefined);
               }
             }}
             disabled={busy && !live}
           />
-          <button type="submit" disabled={(busy && !live) || !goal.trim()}>
-            {t("agent.send")}
-          </button>
+          <div className="ask-dock__compose-row">
+            <span className="copilot-mode-hint">
+              {interactionMode === "chat"
+                ? "Solo responde. No cambia nada."
+                : autonomy === "propose"
+                  ? "Solo proponer: nada se aplica."
+                  : autonomy === "approve"
+                    ? "Con aprobación: preparo el conjunto y lo apruebas una vez."
+                    : "Omitir todo: aplico lo reversible y te muestro el recibo."}
+            </span>
+            <button
+              type="submit"
+              className="ui-button ui-button--primary ui-button--compact"
+              disabled={(busy && !live) || !goal.trim()}
+            >
+              <Icon name="send" size={16} />
+              {interactionMode === "chat" ? "Enviar" : "Encargar"}
+            </button>
+          </div>
         </ValidatedForm>
       ) : null}
     </>

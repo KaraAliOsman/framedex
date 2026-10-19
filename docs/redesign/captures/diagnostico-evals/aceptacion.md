@@ -1,3 +1,6 @@
+> Informe histórico de esta corrida. Consulte [aceptación final](../../acceptance-2026-10-12.md) y
+> [ubicación de las capturas archivadas](../README.md) para continuar.
+
 # IA1 · aceptación del diagnóstico
 
 IA1 entrega una medición de resultado y su línea base, sin cambiar el comportamiento de la IA. La referencia ejecutada, la configuración de proveedor pública y cada resultado están en [los JSON y el informe](../../../ai/evals/README.md). El SHA del squash se registra al integrar.
@@ -19,10 +22,10 @@ La corrida final completa sobre `dd4ce1cca555d5e8fa1fa130c8b538c7c5c1aa43` cumpl
 
 | Recorrido | Claro | Oscuro |
 |---|---|---|
-| Editor y panel contextual | [1440](flujo/editor-light-1440-antes.png) | [1440](flujo/editor-dark-1440-antes.png) |
-| Trabajo con resultado real | [1440](flujo/trabajo-light-1440-despues.png) | [1440](flujo/trabajo-dark-1440-despues.png) |
-| Trabajo, ancho intermedio | [1280](flujo/trabajo-light-1280-despues.png) | [1280](flujo/trabajo-dark-1280-despues.png) |
-| Trabajo, ancho mínimo escritorio | [1024](flujo/trabajo-light-1024-despues.png) | [1024](flujo/trabajo-dark-1024-despues.png) |
+| Editor y panel contextual | [1440](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/diagnostico-evals/flujo/editor-light-1440-antes.png) | [1440](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/diagnostico-evals/flujo/editor-dark-1440-antes.png) |
+| Trabajo con resultado real | [1440](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/diagnostico-evals/flujo/trabajo-light-1440-despues.png) | [1440](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/diagnostico-evals/flujo/trabajo-dark-1440-despues.png) |
+| Trabajo, ancho intermedio | [1280](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/diagnostico-evals/flujo/trabajo-light-1280-despues.png) | [1280](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/diagnostico-evals/flujo/trabajo-dark-1280-despues.png) |
+| Trabajo, ancho mínimo escritorio | [1024](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/diagnostico-evals/flujo/trabajo-light-1024-despues.png) | [1024](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/diagnostico-evals/flujo/trabajo-dark-1024-despues.png) |
 
 [Resultados del recorrido](flujo/resultados.json), [ux:capture antes](antes/report.json) y [después](despues/report.json).
 

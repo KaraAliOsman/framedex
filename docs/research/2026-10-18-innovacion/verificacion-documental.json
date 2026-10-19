@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-18",
+  "scope": "documentation only; no product implementation, runtime tests, provider calls or payments",
+  "documents": 7,
+  "primary_sources": 25,
+  "accessible_pages": 23,
+  "indexed_only": 2,
+  "opportunities": 24,
+  "open_bets": 6,
+  "local_links_checked": 167,
+  "external_urls_referenced": 25,
+  "protected_sha256": {
+    "engine/tests/golden_analytics.json": "F6A97BEBCED724C4C80FBBA0170B43019BD6C409E62901E472E420138EEAC8B3",
+    "docs/design/CONSTITUCION.md": "76C7156685145CBB006E6AFBD26F662A955D3038FE0FA8D6975EA656B8D2286B"
+  },
+  "documents_sha256": {
+    "01-fuentes.md": "0cc8a6aa23294357e29c7889993a4e258f55e24620b1aca66f8868da1a8db128",
+    "02-base-actual.md": "818f5c9016f1b0b2d29ce566f70496eebf95d2f7fc89838ac81bdf7ec6c902af",
+    "03-oportunidades.md": "d35c915a88c39b111ff40c88dcd7c513cce8c9bd2252ffccd9d50e2ba03256bf",
+    "04-recomendacion.md": "2ace4821b10e9ffe40404c495a35a89236b7030a082df8ffb5acd56074948935",
+    "05-validacion-y-negocio.md": "f844f7a788c112d962d6feac0ddf0f7e2b285773c084ec194abc5ca2cf69fce8",
+    "06-archivos-y-mejoras-con-sentido.md": "6e932960b5372c78539dfc2df0b6ce70c086e5506805f11ee8a43fc229d0ba65",
+    "README.md": "9942701b67c5b5e7784e95bd1217894d4450b6256ce2494aac5cd054de39c6fc"
+  },
+  "errors": [],
+  "supplementary_recommendations": 3,
+  "validation_wiki_paths": [
+    "docs/wiki/research/innovation-2026-10-18.md",
+    "docs/wiki/sources/owner-innovation-review-2026-10-18.md",
+    "docs/wiki/sources/owner-attachments-and-innovation-2026-10-18.md",
+    "docs/wiki/index.md"
+  ]
+}

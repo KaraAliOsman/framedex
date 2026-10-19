@@ -330,18 +330,7 @@
 .pricing-page header p {
   color: var(--theme-text-secondary);
 }
-.pricing-services-link {
-  color: var(--interactive);
-}
-.pricing-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin: 1rem 0;
-}
-.pricing-tabs [aria-pressed="true"] {
-  outline: 2px solid var(--theme-accent);
-}
+
 .pricing-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(18rem, 1fr);
@@ -478,35 +467,6 @@
   }
 }
 
-.pricing-extras {
-  border: 1px solid var(--theme-border-subtle);
-  border-radius: var(--r-2);
-  margin: var(--space-2) 0;
-  padding: var(--space-2) var(--space-3);
-}
-
-.pricing-extras legend {
-  font-size: var(--type-dense);
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  padding: 0 0.25rem;
-  text-transform: uppercase;
-}
-
-.pricing-extras__row {
-  align-items: center;
-  display: grid;
-  gap: 0.5rem;
-  grid-template-columns: minmax(7rem, 10rem) minmax(0, 1fr) minmax(6rem, 9rem) auto;
-  margin-top: 0.375rem;
-}
-
-@media (max-width: 760px) {
-  .pricing-extras__row {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
 .field-hint {
   color: var(--theme-text-secondary);
   font-size: var(--type-dense);
@@ -599,9 +559,6 @@
   gap: 0.75rem;
 }
 
-.pricing-fix {
-  font-weight: 600;
-}
 .pricing-page a {
   color: var(--interactive);
 }

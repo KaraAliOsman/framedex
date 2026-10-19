@@ -68,6 +68,8 @@ _FONTS = "".join(
 _DEMO_NOTICE_CSS = """
 .demo-notice { position: running(demoNotice); border-bottom: 0.5pt solid #465158; padding: 1mm 0; font-size: 8pt; }
 @page { @top-left { content: element(demoNotice); } }
+.draft-notice { position: running(draftNotice); border: 0.75pt dashed #B25E09; color: #7A3D05; padding: 1mm 2mm; font-size: 8pt; }
+@page { @top-right { content: element(draftNotice); width: 60%; } }
 """
 
 _CSS = _FONTS + """
@@ -1074,16 +1076,25 @@ def _revision_header(
     return f'<main class="{class_name}">{titleblock}{header}', bom_hash
 
 
-def _doc01(snapshot: dict[str, object], *, portal_url: str | None = None) -> str:
+def _doc01(snapshot: dict[str, object], *, portal_url: str | None = None, layout: str | None = None) -> str:
     from documents.quotation import render
-    return render(snapshot, portal_url=portal_url)
+    return render(snapshot, portal_url=portal_url, layout_name=layout)
 
 
-def _doc03(snapshot: dict[str, object]) -> str:
+def _require_production(snapshot: dict[str, object]) -> None:
+    """Shop documents need a production-cleared revision. A quick draft is
+    the exception: never stored, never issued, stamped «Borrador» on every
+    page, so the person can read the cut list before the work is cleared."""
+    if snapshot.get("draft") is True:
+        return
     if snapshot.get("production_allowed") is not True:
         raise DocumentaryError("production_document_blocked")
     if snapshot.get("documentary_complete") is not True:
         raise DocumentaryError("manufacturing_document_incomplete")
+
+
+def _doc03(snapshot: dict[str, object]) -> str:
+    _require_production(snapshot)
     facts = [_object(item, "invalid_manufacturing_fact")
              for item in _array(snapshot.get("manufacturing"), "invalid_frozen_revision_snapshot")]
     positions_list = [
@@ -1641,10 +1652,7 @@ def _location(labels: dict[str, dict[object, str]], bay_id: object, leaf_id: obj
 
 
 def _doc05(snapshot: dict[str, object]) -> str:
-    if snapshot.get("production_allowed") is not True:
-        raise DocumentaryError("production_document_blocked")
-    if snapshot.get("documentary_complete") is not True:
-        raise DocumentaryError("manufacturing_document_incomplete")
+    _require_production(snapshot)
     purchase = _object(snapshot.get("purchase_requirements"), "invalid_purchase_projection")
     groups = [_object(item, "invalid_stock_group")
               for item in _array(purchase.get("stock_groups"), "invalid_purchase_projection")]
@@ -1706,10 +1714,7 @@ def _doc05(snapshot: dict[str, object]) -> str:
 
 
 def _doc06(snapshot: dict[str, object]) -> str:
-    if snapshot.get("production_allowed") is not True:
-        raise DocumentaryError("production_document_blocked")
-    if snapshot.get("documentary_complete") is not True:
-        raise DocumentaryError("manufacturing_document_incomplete")
+    _require_production(snapshot)
     inspector = [_object(item, "invalid_inspector_evidence")
                  for item in _array(snapshot.get("inspector"), "invalid_frozen_revision_snapshot")]
     body, _ = _revision_header(snapshot, "Checklist de control final", "DOC-06", workshop=True)
@@ -2080,12 +2085,27 @@ def _doc08(snapshot: dict[str, object]) -> str:
 
 
 def render_pdf_document(
-    document_type: str, snapshot: dict[str, object], *, pdf_identifier: str, portal_url: str | None = None
+    document_type: str, snapshot: dict[str, object], *, pdf_identifier: str, portal_url: str | None = None,
+    layout: str | None = None,
 ) -> tuple[bytes, str]:
+    """One sealed payload, one or more compositions: DOC-01 Esencial/Proyecto/
+    Alternativas; DOC-05 Secuencia (estándar), Lista compacta, Pedido por obra."""
     from weasyprint import HTML
 
     if document_type == "DOC-01":
-        body = _doc01(snapshot, portal_url=portal_url)
+        body = _doc01(snapshot, portal_url=portal_url, layout=layout)
+    elif document_type == "DOC-05" and layout == "COMPACTA":
+        from documents.workshop_layouts import cut_compact
+        body = cut_compact(snapshot)
+    elif document_type == "DOC-03" and layout == "PLANO":
+        from documents.workshop_layouts import technical_plan
+        body = technical_plan(snapshot)
+    elif document_type == "DOC-05" and layout == "VENTANA":
+        from documents.workshop_layouts import cut_by_window
+        body = cut_by_window(snapshot)
+    elif document_type == "DOC-05" and layout == "OBRA":
+        from documents.workshop_layouts import purchase_by_work
+        body = purchase_by_work(snapshot)
     elif document_type == "DOC-02":
         body = _doc02(snapshot)
     elif document_type == "DOC-03":
@@ -2113,6 +2133,11 @@ def render_pdf_document(
         body = (
             '<p class="demo-notice"><strong>DEMO</strong> · Catálogo sintético, sin certificación. Medidas y precios de prueba.</p>'
             + body
+        )
+    if snapshot.get("draft") is True and document_type != "DOC-01":
+        body = (
+            '<p class="draft-notice"><strong>BORRADOR</strong> · No es un documento emitido ni autoriza '
+            'fabricar. Revisa medidas y datos de taller antes de cortar.</p>' + body
         )
     # Order-scoped payloads (DOC-02/DOC-04/DOC-07) carry `order`, not
     # `project` — resolve the code from whichever envelope the snapshot is.

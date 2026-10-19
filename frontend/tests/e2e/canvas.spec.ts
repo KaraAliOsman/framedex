@@ -248,14 +248,13 @@ test("G1 canvas uses runtime discovery, transactional dimensions, snapping and <
   const snappedRequest = await snappedRequestPromise;
   expect(snappedRequest.postDataJSON().nominal_width_mm).toBe("1050.00");
 
-  const lightStroke = await page
+  // One light theme (constitution 2026-10): the glass keeps a visible stroke
+  // and there is no theme switch to alter it.
+  const stroke = await page
     .getByTestId("fixed-glass")
     .evaluate((element) => getComputedStyle(element).stroke);
-  await page.getByRole("button", { name: "Cambiar tema" }).click();
-  const darkStroke = await page
-    .getByTestId("fixed-glass")
-    .evaluate((element) => getComputedStyle(element).stroke);
-  expect(darkStroke).not.toBe(lightStroke);
+  expect(stroke).not.toBe("none");
+  await expect(page.getByRole("button", { name: "Cambiar tema" })).toHaveCount(0);
 
   await commitDimension(page, "Ancho nominal (mm)", "1060");
   const durations: number[] = [];
@@ -271,14 +270,14 @@ test("G1 canvas uses runtime discovery, transactional dimensions, snapping and <
   }
 });
 
-for (const theme of ["light", "dark"] as const) {
+// The product has a single light theme (constitution 2026-10).
+for (const theme of ["light"] as const) {
   test(`SHOT-07 ${theme}: real modal, BFD, preview, rollback and recomputed semaphore`, async ({
     page,
   }) => {
     await authenticate(page, await setupEstimator());
     await page.goto("/projects/demo/positions/g1/edit");
     await expect(page.getByTestId("technical-frame")).toHaveText("1\u2009006 mm");
-    if (theme === "dark") await page.getByRole("button", { name: "Cambiar tema" }).click();
     const optimization = page.waitForResponse(
       (response) =>
         response.url().endsWith("/api/v1/engine/optimize-cut/") && response.status() === 200,

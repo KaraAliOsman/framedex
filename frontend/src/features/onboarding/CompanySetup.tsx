@@ -64,7 +64,7 @@ export function CompanySetup({
             />
             {step === 1 && owner && (
               <>
-                <p>IVA y banda de margen se configuran con la autoridad comercial existente.</p>
+                <p>IVA y banda de margen se configuran en Precios.</p>
                 <PricingRulesSettings orgId={orgId} />
               </>
             )}

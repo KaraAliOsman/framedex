@@ -12,7 +12,6 @@ const identity = vi.hoisted(() => ({ id: "tenant-a", role: "WORKSHOP_MANAGER" })
 vi.mock("../../auth/AuthSessionProvider", () => ({
   useAuthSession: () => ({ me: { active_organization: identity } }),
 }));
-vi.mock("../../theme/ThemeProvider", () => ({ useTheme: () => ({ theme: "dark" }) }));
 vi.mock("../../api/apiMutator", () => ({ apiMutator: vi.fn(), ApiError: class extends Error {} }));
 
 const mutator = apiMutator as ReturnType<typeof vi.fn>;
@@ -131,7 +130,10 @@ describe("ProductionPage", () => {
     );
     const orderButton = await screen.findByRole("button", { name: /OT-REV-A-01/ });
     fireEvent.click(orderButton);
-    await waitFor(() => expect(screen.getAllByText("Corte").length).toBeGreaterThan(0));
+    // Three readings of the order; station tools (Corte, Piezas…) live in «Trabajo».
+    expect(await screen.findByRole("tab", { name: "Resumen" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Trabajo" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Trazabilidad" })).toBeTruthy();
     expect(screen.getByText(stationCodeLabel("ASSEMBLE"))).toBeTruthy();
     // Only the next actionable step shows START (backend rejects the rest) +
     // a single action region stays with the selected step.

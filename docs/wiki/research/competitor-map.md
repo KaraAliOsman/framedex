@@ -1,16 +1,35 @@
 ---
 type: research
 status: active
-updated: 2026-09-28
+updated: 2026-10-18
 volatility: medium
 sources:
   - public vendor material
   - owner competitor references
+  - docs/research/2026-10-17-claude/02-competencia-y-fuentes.md
 ---
 
 # Competitor capability map
 
 This is a research guide, not a ranking.
+
+The [18 October synthesis](revision-profunda-2026-10-18.md) adds fifteen product
+families, a uniform eighteen-axis matrix (270 cells), 176 competitive URLs,
+selected visual evidence and bounded REA analysis. Moxisys is a distribution
+channel for WindoorCraft, not an additional independent engine. WinMaker 10 and
+Windowmaker are separate products. Historical screenshots, commercial claims,
+manual procedures and actual local execution keep different evidence labels.
+There is no invented numerical ranking of private suites. See the
+[complete dossier](../../research/2026-10-18-revision-profunda/README.md).
+
+The [17 October research ledger](../../research/2026-10-17-claude/02-competencia-y-fuentes.md)
+adds primary vendor sources for NuveraPRO, Moxisys, Winart, Logikal, Windowmaker,
+Klaes, A+W, RA Workshop and Lepton. It distinguishes documentation, vendor claims,
+re-examined historical video frames and unperformed private/product tests.
+Windowmaker's public material already describes contextual AI; this is not a
+unique DEKOPEN claim. Moxisys module maturity and machine-specific CNC scope must
+be checked rather than generalized. The owner's “Sistemas Z” reference remains
+unidentified. No universal superiority ranking is supported by this evidence.
 
 DEKOPEN should study competitors for domain coverage and workflow lessons without copying legacy UI.
 

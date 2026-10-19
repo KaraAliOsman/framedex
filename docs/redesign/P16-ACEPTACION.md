@@ -45,11 +45,11 @@ seis etapas de la auditoría y los candidatos revisados.
   del dueño, foco de las tres políticas ausentes y acción de revisión en ficha.
 - [Capturas generales](captures/catalogo-tecnico/despues/report.json): ocho
   combinaciones de ancho/tema, incluidos 390 px, sin hallazgos finales.
-- [Antes](captures/catalogo-tecnico/antes-sistema-1440-claro.png) y
-  [después](captures/catalogo-tecnico/despues-sistema-1440-light.png).
-- [Corrección de sección](captures/catalogo-tecnico/importacion-correccion-seccion-1440-light.png),
-  [diff](captures/catalogo-tecnico/importacion-diff-1440-light.png) y
-  [ficha](captures/catalogo-tecnico/importacion-ficha-fuente-1440-light.png).
+- [Antes](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/catalogo-tecnico/antes-sistema-1440-claro.png) y
+  [después](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/catalogo-tecnico/despues-sistema-1440-light.png).
+- [Corrección de sección](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/catalogo-tecnico/importacion-correccion-seccion-1440-light.png),
+  [diff](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/catalogo-tecnico/importacion-diff-1440-light.png) y
+  [ficha](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/catalogo-tecnico/importacion-ficha-fuente-1440-light.png).
 
 Los archivos de prueba y sus datos son sintéticos, sin certificación. La ruta
 multimodal reutiliza el transporte de IA3: los valores de una imagen sin literal
@@ -57,7 +57,7 @@ comprobable permanecen LOW/UNKNOWN y requieren contraste humano. Nunca adquieren
 autoridad por la confianza declarada por el proveedor.
 La [foto rasterizada](captures/catalogo-tecnico/recorrido-foto.json) produce un
 candidato con MiMo real, desmarcado y sin publicar. El
-[PDF original](captures/catalogo-tecnico/fixture-fuente.pdf) queda como evidencia
+[PDF original](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/catalogo-tecnico/fixture-fuente.pdf) queda como evidencia
 sintética reproducible; no contiene datos comerciales reales.
 
 ## Pase editorial: dos rondas

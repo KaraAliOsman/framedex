@@ -1,7 +1,15 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render as renderDom, screen } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { ReactElement } from "react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { billingRetrieve } from "../../api/generated/dekopen";
 import { BillingPage } from "./BillingPage";
+
+// The plans overview reads the capability resolution through react-query.
+function render(element: ReactElement) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return renderDom(<QueryClientProvider client={client}>{element}</QueryClientProvider>);
+}
 
 const identity = vi.hoisted(() => ({ id: "tenant-a", role: "OWNER" }));
 vi.mock("../../auth/AuthSessionProvider", () => ({
@@ -9,6 +17,7 @@ vi.mock("../../auth/AuthSessionProvider", () => ({
 }));
 vi.mock("../../api/generated/dekopen", () => ({
   billingRetrieve: vi.fn(),
+  capabilitiesRetrieve: vi.fn(async () => ({ status: 503, data: {} })),
   commerceRetrieve: vi.fn(async () => ({
     status: 200,
     data: {

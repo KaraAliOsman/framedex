@@ -6,6 +6,8 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { CurrencyEnum } from "./currencyEnum";
+import type { DesignDefaults } from "./designDefaults";
+import type { EffectiveDesignDefaults } from "./effectiveDesignDefaults";
 import type { PositionResponse } from "./positionResponse";
 import type { ProjectResponseStatusEnum } from "./projectResponseStatusEnum";
 import type { ProjectVersionResponse } from "./projectVersionResponse";
@@ -33,6 +35,8 @@ export interface ProjectResponse {
   delivery_address?: string;
   notes_commercial?: string;
   notes_internal?: string;
+  design_defaults?: DesignDefaults;
+  effective_design_defaults?: EffectiveDesignDefaults;
   /** @nullable */
   accepted_version_id?: string | null;
   /** @nullable */

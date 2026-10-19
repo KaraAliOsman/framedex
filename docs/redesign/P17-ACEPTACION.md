@@ -3,7 +3,7 @@
 Base `4d3f220451c7b06562e944b0465d8718314db3a8`, rama
 `codex/P17-asistente-trabajos-orb`. Verificado el 09-10-2026.
 Implementación `7d29a6aa6be776e2409ddc209991cd85680b3f27`.
-La [evidencia](captures/asistente-trabajos-orb/) conserva antes, después,
+La [evidencia](https://github.com/KaraAliOsman/framedex/tree/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/asistente-trabajos-orb) conserva antes, después,
 recorridos y estados. P17 integrado en PR [#136](https://github.com/KaraAliOsman/framedex/pull/136),
 squash `d5500d69bbc843162a9c189805a00d8904d11264` con los cuatro checks PASA sobre el HEAD final.
 
@@ -53,10 +53,10 @@ La [comparación](captures/asistente-trabajos-orb/comparacion.json) mantiene
 los detectores y distingue los roles adicionales. Todos los PNG se comprimen
 sin pérdida y se comprueba que sus píxeles no cambian.
 
-- [Asistente antes](captures/asistente-trabajos-orb/antes/asistente/asistente__ESTIMATOR__light__1440x900.png), [después](captures/asistente-trabajos-orb/despues/asistente/asistente__ESTIMATOR__light__1440x900.png).
-- [Trabajos antes](captures/asistente-trabajos-orb/antes/trabajos/trabajos__ESTIMATOR__dark__1440x900.png), [después](captures/asistente-trabajos-orb/despues/trabajos/trabajos__ESTIMATOR__dark__1440x900.png).
-- [Propuesta dibujada](captures/asistente-trabajos-orb/recorrido/01-propuesta-antes-despues.png), [aplicada](captures/asistente-trabajos-orb/recorrido/02-aplicado.png), [auditoría](captures/asistente-trabajos-orb/recorrido/04-auditoria.png).
-- [Low-E, dibujo y precio](captures/asistente-trabajos-orb/recorrido/06-lote-lowe.png), [artefacto completo](captures/asistente-trabajos-orb/recorrido/06-lote-artefacto-completo.png), [deshacer](captures/asistente-trabajos-orb/recorrido/08-lote-deshacer.png).
+- [Asistente antes](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/asistente-trabajos-orb/antes/asistente/asistente__ESTIMATOR__light__1440x900.png), [después](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/asistente-trabajos-orb/despues/asistente/asistente__ESTIMATOR__light__1440x900.png).
+- [Trabajos antes](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/asistente-trabajos-orb/antes/trabajos/trabajos__ESTIMATOR__dark__1440x900.png), [después](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/asistente-trabajos-orb/despues/trabajos/trabajos__ESTIMATOR__dark__1440x900.png).
+- [Propuesta dibujada](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/asistente-trabajos-orb/recorrido/01-propuesta-antes-despues.png), [aplicada](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/asistente-trabajos-orb/recorrido/02-aplicado.png), [auditoría](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/asistente-trabajos-orb/recorrido/04-auditoria.png).
+- [Low-E, dibujo y precio](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/asistente-trabajos-orb/recorrido/06-lote-lowe.png), [artefacto completo](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/asistente-trabajos-orb/recorrido/06-lote-artefacto-completo.png), [deshacer](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/asistente-trabajos-orb/recorrido/08-lote-deshacer.png).
 
 ## Pase editorial
 

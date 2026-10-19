@@ -1,55 +1,45 @@
 import { type PropsWithChildren, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AiModeBadge } from "../features/assistant/AiModeBadge";
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 
 import { t } from "../i18n/es-CL";
-import { BrandMark, Wordmark } from "../brand/Brand";
-
+import { Wordmark, BrandMark } from "../brand/Brand";
 import { useAuthSession } from "../auth/AuthSessionProvider";
 import { MOD_K_HINT } from "../platform";
 import { telemetry } from "../telemetry/telemetry";
-import { useTheme } from "../theme/ThemeProvider";
 import { CommandPalette } from "../features/commands/CommandPalette";
-import type { AiJob } from "../api/generated/models/aiJob";
-import { AiPresence } from "../features/assistant/AiPresence";
-import { AskDekopen } from "../features/assistant/AskDekopen";
-import { STATE_LABELS } from "../features/assistant/states";
+import { AiModeBadge } from "../features/assistant/AiModeBadge";
+import { Companion } from "../features/assistant/Companion";
+import { CopilotWindow } from "../features/assistant/CopilotWindow";
+import { useCopilotStatus } from "../features/assistant/copilotStatus";
 import { AssistantSurfaceProvider } from "../features/assistant/assistantContext";
+import { useCapabilities } from "../features/plans/useCapabilities";
+import { CopilotProvider } from "../features/assistant/copilotBridge";
+import { Icon } from "../ui/Icon";
+import { Popover } from "../ui/Overlays";
 import { AttentionBell } from "./AttentionBell";
 import { OrgSwitcher } from "./OrgSwitcher";
-import { ProjectSwitcher } from "./ProjectSwitcher";
-import { RailIcon } from "./railIcons";
 import { ShellCrumbs, crumbsFor, useProjectName } from "./ShellCrumbs";
 import { ShellLeafContext } from "./shellLeaf";
 import { roleLabel } from "./shellUtils";
-import { navigationFor } from "./navigation";
+import { areaFor, homeFor, navigationFor } from "./navigation";
 import { ShortcutHelp } from "./ShortcutHelp";
 
+/** The product shell (constitution §5.1): four everyday areas plus Empresa,
+ * a 56 px top bar with search, notices and the assistant, and the area's own
+ * sections as tabs on its list pages. Detail pages keep the full height. */
 export function AppShell({ children }: PropsWithChildren): JSX.Element {
   const auth = useAuthSession();
   const location = useLocation();
+  const navigate = useNavigate();
   const org = auth.me?.active_organization;
   const role = org?.role;
   const workshop =
     location.pathname.startsWith("/production") || role === "OPERATOR" || role === "INSTALLER";
-  const officeDefault = window.matchMedia("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
-  const { theme, toggleTheme } = useTheme(workshop ? "dark" : officeDefault);
-  const navigate = useNavigate();
   const [leaf, setLeafState] = useState<string | null>(null);
   const setLeaf = useCallback((label: string | null) => setLeafState(label), []);
   const leafContext = useMemo(() => ({ leaf, setLeaf }), [leaf, setLeaf]);
   const [paletteRequest, setPaletteRequest] = useState(0);
   const [assistantRequest, setAssistantRequest] = useState(0);
-  const [presenceJob, setPresenceJob] = useState<AiJob | null>(null);
-  const onActiveJob = useCallback(
-    (job: AiJob | null) =>
-      setPresenceJob((previous) =>
-        previous?.id === job?.id && previous?.state === job?.state ? previous : job,
-      ),
-    [],
-  );
   const [railOpen, setRailOpen] = useState(false);
   const railRef = useRef<HTMLElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
@@ -61,8 +51,8 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
     }
   });
 
-  // Close the drawer nav on route change and on Escape — the drawer only
-  // exists below the tablet breakpoint; desktop keeps the rail always.
+  // The drawer only exists below the tablet breakpoint; it closes on route
+  // change and on Escape, and traps focus while open.
   useEffect(() => setRailOpen(false), [location.pathname]);
   useEffect(() => {
     function onKey(event: KeyboardEvent): void {
@@ -71,7 +61,6 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, []);
-
   useEffect(() => {
     if (!railOpen) return;
     const panel = railRef.current;
@@ -109,18 +98,38 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
   useEffect(() => {
     telemetry.capture("shell_route_viewed", { route_name: location.pathname });
   }, [location.pathname]);
+  useEffect(() => {
+    const open = () => setAssistantRequest((value) => value + 1);
+    window.addEventListener("dekopen:assistant-open", open);
+    return () => window.removeEventListener("dekopen:assistant-open", open);
+  }, []);
 
-  const canUseAssistant = role === "OWNER" || role === "ESTIMATOR" || role === "WORKSHOP_MANAGER";
+  // The copilot exists only for organizations whose plan includes the AI core
+  // (server resolution). The manual plan mounts no button, presence, popup or
+  // polling — the quoter is complete without it.
+  const capabilities = useCapabilities();
+  const copilotStatus = useCopilotStatus();
+  const copilotPose = copilotStatus.state;
+  const canUseAssistant =
+    capabilities.aiEntitled &&
+    (role === "OWNER" || role === "ESTIMATOR" || role === "WORKSHOP_MANAGER");
   const parts = location.pathname.split("/").filter(Boolean);
   const projectId = parts[0] === "projects" && parts[1] !== undefined ? parts[1] : null;
   const isStudio = parts[0] === "projects" && parts[2] === "positions" && parts.length >= 4;
   const compact = isStudio || collapsed;
-  const domainGroups = navigationFor(role);
-  const navItems = domainGroups.flatMap((group) => group.items);
+  const areas = navigationFor(role);
+  const everyday = areas.filter((area) => area.id !== "company");
+  const company = areas.find((area) => area.id === "company");
+  const activeArea = areaFor(location.pathname, role);
+  const tabs =
+    activeArea &&
+    activeArea.sections.length > 1 &&
+    activeArea.sections.some((section) => section.to === location.pathname)
+      ? activeArea.sections
+      : null;
   const projectName = useProjectName(projectId !== "demo" ? projectId : null);
 
-  // Browser tab title tracks the same crumbs the shell renders — tabs and
-  // history entries stop all saying "DEKOPEN".
+  // Browser tab title tracks the same crumbs the shell renders.
   useEffect(() => {
     const crumbs = crumbsFor(location.pathname, projectName, leaf);
     const head = crumbs
@@ -130,255 +139,208 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
     document.title = head ? `${head} · DEKOPEN` : "DEKOPEN";
   }, [location.pathname, projectName, leaf]);
 
+  const paletteItems = areas.flatMap((area) =>
+    area.sections.map((section) => ({ to: section.to, label: t(section.label) })),
+  );
+
   return (
     <ShellLeafContext.Provider value={leafContext}>
       <AssistantSurfaceProvider>
-        <div
-          className={`app-shell${railOpen ? " rail-open" : ""}${compact ? " rail-collapsed" : ""}`}
-          data-studio={isStudio || undefined}
-          data-density={workshop ? "workshop" : "office"}
-          data-theme={theme}
-          data-testid="app-shell"
-        >
-          <a href="#workspace-main" className="skip-link">
-            {t("shell.skipToContent")}
-          </a>
-          <button
-            type="button"
-            className="rail-scrim"
-            aria-label="Cerrar navegación"
-            aria-hidden={!railOpen}
-            tabIndex={railOpen ? 0 : -1}
-            onClick={() => setRailOpen(false)}
-          />
-          <aside
-            className="app-rail"
-            ref={railRef}
-            role={railOpen ? "dialog" : undefined}
-            aria-modal={railOpen || undefined}
-            aria-label="Navegación"
+        <CopilotProvider available={canUseAssistant}>
+          <div
+            className={`app-shell${railOpen ? " rail-open" : ""}${compact ? " rail-collapsed" : ""}`}
+            data-studio={isStudio || undefined}
+            data-density={workshop ? "workshop" : "office"}
+            data-testid="app-shell"
           >
-            <div className="app-rail__brand">
-              <span className="rail-brand-full">
-                <Wordmark width={120} />
-              </span>
-              <span className="rail-brand-compact">
-                <BrandMark size={24} title="DEKOPEN" />
-              </span>
-            </div>
-            <nav className="app-rail__nav" aria-label={t("shell.navigation")}>
-              {domainGroups.map((group) => (
-                <div key={group.id} className="rail-group">
-                  {group.title && <p className="rail-group__title">{t(group.title)}</p>}
-                  {group.items.map((item) => (
-                    <NavLink
-                      className="rail-item"
-                      key={item.to}
-                      to={item.to}
-                      title={t(item.label)}
-                      aria-label={t(item.label)}
-                    >
-                      <RailIcon to={item.to} />
-                      <span>{t(item.label)}</span>
-                    </NavLink>
-                  ))}
-                </div>
-              ))}
-            </nav>
+            <a href="#workspace-main" className="skip-link">
+              {t("shell.skipToContent")}
+            </a>
             <button
               type="button"
-              className="rail-collapse"
-              aria-label={collapsed ? "Expandir navegación" : "Contraer navegación"}
-              aria-pressed={collapsed}
-              onClick={() =>
-                setCollapsed((value) => {
-                  try {
-                    localStorage.setItem("dekopen.rail-collapsed", String(!value));
-                  } catch {
-                    /* Session preference remains usable. */
-                  }
-                  return !value;
-                })
-              }
+              className="rail-scrim"
+              aria-label="Cerrar navegación"
+              aria-hidden={!railOpen}
+              tabIndex={railOpen ? 0 : -1}
+              onClick={() => setRailOpen(false)}
+            />
+            <aside
+              className="app-rail"
+              ref={railRef}
+              role={railOpen ? "dialog" : undefined}
+              aria-modal={railOpen || undefined}
+              aria-label="Navegación"
             >
-              <svg
-                aria-hidden="true"
-                viewBox="0 0 24 24"
-                width="16"
-                height="16"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-              >
-                <path d={collapsed ? "m9 6 6 6-6 6" : "m15 6-6 6 6 6"} />
-              </svg>
-              <span>{collapsed ? "Expandir" : "Contraer"}</span>
-            </button>
-            <div className="app-rail__user">
-              <div className="app-rail__identity">
-                <span className="app-rail__email" title={auth.me?.user.email ?? undefined}>
-                  {auth.me?.user.email ? auth.me.user.email.split("@")[0] : "—"}
+              <Link className="app-rail__brand" to={homeFor(role)} aria-label="DEKOPEN · inicio">
+                <span className="rail-brand-full">
+                  <Wordmark width={116} />
                 </span>
-                {role && <span className="app-rail__role">{t(roleLabel[role])}</span>}
-              </div>
-              <div className="app-rail__user-actions">
-                <button
-                  type="button"
-                  className="rail-icon-button"
-                  onClick={toggleTheme}
-                  aria-label={t("theme.toggle")}
-                  title={t(theme === "light" ? "theme.toDark" : "theme.toLight")}
-                >
-                  <svg
-                    aria-hidden="true"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
+                <span className="rail-brand-compact">
+                  <BrandMark size={26} title="DEKOPEN" />
+                </span>
+              </Link>
+              <nav className="app-rail__nav" aria-label={t("shell.navigation")}>
+                {everyday.map((area) => (
+                  <NavLink
+                    className={() => `rail-item${activeArea?.id === area.id ? " active" : ""}`}
+                    key={area.id}
+                    to={area.to}
+                    title={t(area.label)}
+                    aria-current={activeArea?.id === area.id ? "page" : undefined}
                   >
-                    {theme === "light" ? (
-                      <path d="M19 15a8 8 0 0 1-10-10A8 8 0 1 0 19 15Z" />
-                    ) : (
-                      <>
-                        <circle cx="12" cy="12" r="4" />
-                        <path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2" />
-                      </>
-                    )}
-                  </svg>
-                </button>
-                <button
-                  type="button"
-                  className="rail-icon-button"
-                  onClick={() => void auth.signOut()}
-                  aria-label={t("auth.signOut")}
-                  title={t("auth.signOut")}
-                >
-                  <svg
-                    aria-hidden="true"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
+                    <Icon name={area.icon} className="rail-item__icon" />
+                    <span>{t(area.label)}</span>
+                  </NavLink>
+                ))}
+              </nav>
+              <div className="app-rail__foot">
+                {company ? (
+                  <NavLink
+                    className={() => `rail-item${activeArea?.id === "company" ? " active" : ""}`}
+                    to={company.to}
+                    title={t(company.label)}
+                    aria-current={activeArea?.id === "company" ? "page" : undefined}
                   >
-                    <path d="M10 3H4v18h6M8 12h12m-5-5 5 5-5 5" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </aside>
-          <div className="app-body">
-            <header className="app-topbar">
-              <button
-                type="button"
-                className="rail-toggle"
-                ref={toggleRef}
-                aria-expanded={railOpen}
-                aria-label={t("shell.menu")}
-                onClick={() => setRailOpen((value) => !value)}
-              >
-                <svg
-                  aria-hidden="true"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
+                    <Icon name={company.icon} className="rail-item__icon" />
+                    <span>{t(company.label)}</span>
+                  </NavLink>
+                ) : null}
+                <Popover
+                  label={t("shell.account")}
+                  trigger={
+                    <button type="button" className="rail-account" aria-label={t("shell.account")}>
+                      <span className="rail-account__avatar" aria-hidden>
+                        {(auth.me?.user.email ?? "?").slice(0, 1).toUpperCase()}
+                      </span>
+                      <span className="rail-account__text">
+                        <span className="rail-account__name">{org?.name ?? "—"}</span>
+                        {role ? (
+                          <span className="rail-account__role">{t(roleLabel[role])}</span>
+                        ) : null}
+                      </span>
+                    </button>
+                  }
                 >
-                  <path d="M3 6h18M3 12h18M3 18h18" />
-                </svg>
-              </button>
-              <ShellCrumbs leaf={leaf} />
-              <div className="app-topbar__actions">
-                <OrgSwitcher />
-                <ProjectSwitcher />
-                {canUseAssistant && <AiModeBadge />}
-                <button
-                  type="button"
-                  className="topbar-search"
-                  aria-label="Buscar o ejecutar un comando"
-                  title="Buscar o ejecutar · Ctrl K"
-                  onClick={() => {
-                    window.dispatchEvent(new Event("dekopen:shell-overlay"));
-                    setPaletteRequest((value) => value + 1);
-                  }}
-                >
-                  <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden>
-                    <circle cx="5.6" cy="5.6" r="4.1" stroke="currentColor" strokeWidth="1.3" />
-                    <path
-                      d="m8.7 8.7 2.8 2.8"
-                      stroke="currentColor"
-                      strokeWidth="1.3"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <span>{t("shell.searchHint")}</span>
-                  <kbd>{MOD_K_HINT}</kbd>
-                  <kbd>/</kbd>
-                </button>
-                <AttentionBell key={`${org?.id}:${auth.me?.user.id}:${role}`} />
-                <ShortcutHelp key={org?.id} />
-                {/* INSTALLER has no AI surface — every ai endpoint is gated to
-                    _AGENT_CALLERS, so the orb would offer a 403 wall. */}
-                {canUseAssistant ? (
-                  <>
-                    {/* The orb always opens the dock — a pressing job gets its
-                        own chip so an unlucky FAILED_RETRYABLE can never make
-                        the dock unreachable (AI review P1-1). */}
+                  <div className="account-menu">
+                    <p className="account-menu__email">{auth.me?.user.email}</p>
+                    <OrgSwitcher />
                     <button
                       type="button"
-                      className="topbar-button topbar-ai"
-                      aria-label={t("shell.aiEntry")}
-                      title={t("shell.aiEntry")}
+                      className="account-menu__item"
+                      onClick={() => window.dispatchEvent(new Event("dekopen:shortcuts"))}
+                    >
+                      <Icon name="keyboard" />
+                      {t("shell.shortcuts")}
+                    </button>
+                    <button
+                      type="button"
+                      className="account-menu__item"
+                      onClick={() => void auth.signOut()}
+                    >
+                      <Icon name="logout" />
+                      {t("auth.signOut")}
+                    </button>
+                  </div>
+                </Popover>
+                <button
+                  type="button"
+                  className="rail-collapse"
+                  aria-label={collapsed ? "Expandir navegación" : "Contraer navegación"}
+                  aria-pressed={collapsed}
+                  onClick={() =>
+                    setCollapsed((value) => {
+                      try {
+                        localStorage.setItem("dekopen.rail-collapsed", String(!value));
+                      } catch {
+                        /* Session preference remains usable. */
+                      }
+                      return !value;
+                    })
+                  }
+                >
+                  <Icon name="sidebar" size={20} />
+                </button>
+              </div>
+            </aside>
+            <div className="app-body">
+              <header className="app-topbar">
+                <button
+                  type="button"
+                  className="rail-toggle"
+                  ref={toggleRef}
+                  aria-expanded={railOpen}
+                  aria-label={t("shell.menu")}
+                  onClick={() => setRailOpen((value) => !value)}
+                >
+                  <Icon name="menu" />
+                </button>
+                <ShellCrumbs leaf={leaf} />
+                <div className="app-topbar__actions">
+                  {canUseAssistant && <AiModeBadge />}
+                  <button
+                    type="button"
+                    className="topbar-search"
+                    aria-label="Buscar o ejecutar un comando"
+                    onClick={() => {
+                      window.dispatchEvent(new Event("dekopen:shell-overlay"));
+                      setPaletteRequest((value) => value + 1);
+                    }}
+                  >
+                    <Icon name="search" size={16} />
+                    <span className="topbar-search__hint">{t("shell.searchHint")}</span>
+                    <kbd>{MOD_K_HINT}</kbd>
+                  </button>
+                  <AttentionBell key={`${org?.id}:${auth.me?.user?.id}:${role}`} />
+                  <ShortcutHelp key={org?.id} />
+                  {/* INSTALLER has no AI surface — every AI endpoint is gated to
+                    the agent callers, so the companion would offer a 403. */}
+                  {canUseAssistant ? (
+                    <button
+                      type="button"
+                      className="topbar-assistant"
                       onClick={() => setAssistantRequest((value) => value + 1)}
                     >
-                      <AiPresence
-                        userId={auth.me?.user.id ?? null}
-                        organizationId={org?.id ?? null}
-                        size={22}
-                        onActiveJob={onActiveJob}
-                      />
-                      <span className="topbar-ai-label">{t("shell.aiEntry")}</span>
+                      {/* The figure follows the popup's real task, never
+                        the route; showing it polls nothing. */}
+                      <Companion state={copilotPose} size={28} />
+                      <span>{t("shell.assistant")}</span>
+                      {copilotStatus.working ? (
+                        <span className="topbar-assistant__state">Trabajando</span>
+                      ) : null}
                     </button>
-                    {presenceJob ? (
-                      <button
-                        type="button"
-                        className="topbar-button topbar-ai-job"
-                        data-state={presenceJob?.state.toLowerCase()}
-                        title={t("aiws.presenceOpen")}
-                        onClick={() => navigate(`/assistant?job=${presenceJob.id}`)}
-                      >
-                        {t(STATE_LABELS[presenceJob.state] ?? "aiws.jobs")}
-                      </button>
-                    ) : null}
-                  </>
-                ) : null}
-              </div>
-            </header>
-            <main className="workspace" id="workspace-main" tabIndex={-1}>
-              {children}
-            </main>
-          </div>
-          <CommandPalette
-            openRequested={paletteRequest}
-            contextKey={`${location.pathname}${location.search}`}
-            navItems={navItems.map((item) => ({ to: item.to, label: t(item.label) }))}
-            onNavigate={(to) => navigate(to)}
-            organizationId={org?.id ?? null}
-          />
-          {canUseAssistant ? (
-            <AskDekopen
-              openRequested={assistantRequest}
-              hideTrigger
+                  ) : null}
+                </div>
+              </header>
+              {tabs ? (
+                <nav className="area-tabs" aria-label={t(activeArea!.label)}>
+                  {tabs.map((section) => (
+                    <NavLink key={section.to} to={section.to} end className="area-tabs__item">
+                      {t(section.label)}
+                    </NavLink>
+                  ))}
+                </nav>
+              ) : null}
+              <main className="workspace" id="workspace-main" tabIndex={-1}>
+                {children}
+              </main>
+            </div>
+            <CommandPalette
+              openRequested={paletteRequest}
+              contextKey={`${location.pathname}${location.search}`}
+              navItems={paletteItems}
+              onNavigate={(to) => navigate(to)}
               organizationId={org?.id ?? null}
-              userId={auth.me?.user.id ?? null}
             />
-          ) : null}
-        </div>
+            {canUseAssistant && org?.id ? (
+              <CopilotWindow
+                key={`${org.id}:${auth.me?.user?.id ?? ""}`}
+                openRequested={assistantRequest}
+                organizationId={org.id}
+                userId={auth.me?.user?.id ?? null}
+              />
+            ) : null}
+          </div>
+        </CopilotProvider>
       </AssistantSurfaceProvider>
     </ShellLeafContext.Provider>
   );

@@ -85,12 +85,10 @@ PREPARE_TOOLS = {
     "emit_revision": "emit_revision",
     "release_work_order": "release_work_order",
     "optimize_work_order": "optimize_work_order",
-    "register_payment": "register_payment",
     "upload_document": "upload_document",
     "review_catalog": "create_catalog_candidates",
     "upload_certificate": "upload_certificate",
     "prepare_purchase": "prepare_purchase",
-    "prepare_payment_link": "prepare_payment_link",
 }
 
 ARTIFACT_TOOLS = {
@@ -121,9 +119,14 @@ def _limit(name, default, maximum):
 
 
 MAX_STEPS = _limit("MAX_STEPS", 20, 50)
-MAX_QUERIES = _limit("MAX_QUERIES", 6, 12)
-MAX_ROUNDS = _limit("MAX_ROUNDS", 6, 12)
-TOTAL_TIMEOUT_S = _limit("TOTAL_TIMEOUT_S", 180, 600)
+MAX_QUERIES = _limit("MAX_QUERIES", 10, 12)
+# A document-to-quotation encargo chains create → catalog → windows →
+# quote; with no usual values the catalog exploration alone takes rounds.
+MAX_ROUNDS = _limit("MAX_ROUNDS", 10, 12)
+# Measured on MiMo 2.6 Pro (REVIEW, 18-10-2026): 20–47 s per round and up to
+# six rounds for a document-to-quotation task. The run lives on the durable
+# worker (lease renewed), so the budget is the task's, not an HTTP request's.
+TOTAL_TIMEOUT_S = _limit("TOTAL_TIMEOUT_S", 540, 600)
 # A reply that fails numeric grounding gets one corrective provider round
 # before the job fails — conversational enumerations are fixable, invented
 # figures are not.
@@ -158,23 +161,121 @@ BATCH_OPS = {
 # that kind so 'todas las hojas'/'todas las uniones' mean exactly that.
 BATCH_WILDCARD_FIELDS = {"module", "coupling"}
 
+# The assistant never operates payments (owner decision O09): no payment
+# registration or payment-link card exists here, not even as a route.
 # Consequential actions the agent may PREPARE as a card. Each action binds to
 # the real route where the action lives — the human still confirms there; the
 # agent never executes. {placeholder}s must be filled with a UUID a projection
 # showed this turn; a path that doesn't match its action's template is dropped.
 PREPARE_ROUTES: dict[str, tuple[str, tuple[str, ...]]] = {
     "emit_revision": ("/projects/{project_id}/pricing", ("project_id",)),
-    "register_payment": ("/projects/{project_id}", ("project_id",)),
     "upload_document": ("/projects/{project_id}", ("project_id",)),
     "release_work_order": ("/production", ()),
     "optimize_work_order": ("/production", ()),
     "review_catalog": ("/catalogs/systems", ()),
     "upload_certificate": ("/settings/general", ()),
     "prepare_purchase": ("/purchasing", ()),
-    "prepare_payment_link": ("/projects/{project_id}", ("project_id",)),
 }
 
 AGENT_SYSTEM = Path(__file__).with_name("prompts").joinpath("agent-v2.md").read_text(encoding="utf-8")
+
+# Roles that may let the assistant save reversible drafts on their behalf.
+DRAFT_ROLES = ("OWNER", "ESTIMATOR")
+
+
+def _like(text: str) -> str:
+    return text.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+
+
+def _create_project_draft(org_id: UUID, user_id: UUID, step: dict) -> dict:
+    """A draft work for a quotation the person asked to prepare. The client is
+    linked only when one active client matches unambiguously; otherwise the
+    name stays as typed (no match) or blank with the candidates returned so
+    the assistant asks (several matches). Never a fabricated client."""
+    name = str(step.get("name") or "").strip()[:255] or "Cotización preparada por el asistente"
+    client_query = str(step.get("client") or "").strip()[:255]
+    data: dict[str, Any] = {"name": name, "client_name": ""}
+    candidates: list[str] = []
+    if client_query:
+        found = rows(
+            "SELECT id, name, rut, email, phone, address, giro, comuna FROM public.clients "
+            "WHERE org_id=%s AND is_active AND name ILIKE %s ESCAPE '\\' ORDER BY name LIMIT 6",
+            [org_id, f"%{_like(client_query)}%"],
+        )
+        if len(found) == 1:
+            client = found[0]
+            data.update({
+                "client_id": client["id"],
+                "client_name": client["name"] or client_query,
+                "client_rut": client["rut"] or "",
+                "client_email": client["email"] or "",
+                "client_phone": client["phone"] or "",
+                "client_address": client["address"] or "",
+                "client_giro": client["giro"] or "",
+                "client_comuna": client["comuna"] or "",
+            })
+        elif not found:
+            data["client_name"] = client_query
+        else:
+            candidates = [str(row["name"]) for row in found]
+    project = projects_service.create_project(org_id, user_id, data)
+    return {
+        "project_id": str(project["id"]),
+        "code": project["code"],
+        "name": project["name"],
+        "client": project["client_name"] or None,
+        "client_linked": bool(project.get("client_id")),
+        "client_candidates": candidates,
+    }
+
+
+def _document_layout_step(item: dict, *, refs: dict, context: dict | None, may_draft: bool, rejected: list) -> dict | None:
+    """The quotation document's composition (design, blocks, texts) — the
+    same object the editor changes. Never numbers: those come from the price."""
+    from documents.quote_serializers import QuotationLayoutSerializer
+
+    if not refs.get("project_id") or not (context or {}).get("editable", True):
+        rejected.append({"op": "document_layout", "reason": "project_not_editable"})
+        return None
+    serializer = QuotationLayoutSerializer(data=item.get("layout") if isinstance(item.get("layout"), dict) else {})
+    if not serializer.is_valid() or not serializer.validated_data:
+        rejected.append({"op": "document_layout", "reason": "layout_invalid"})
+        return None
+    return {
+        "kind": "document_layout",
+        "tool": "quotation_layout",
+        "label": str(item.get("label") or "").strip()[:MAX_LABEL] or "Cambios en el documento",
+        "layout": dict(serializer.validated_data),
+        "project_id": str(refs["project_id"]),
+        "apply_requested": item.get("apply") is True and may_draft,
+    }
+
+
+def _apply_document_layout(org_id: UUID, step: dict) -> dict:
+    """Saves the composition over this work's current one and keeps the
+    previous one, so the receipt can undo it with the same save."""
+    from documents import issuance
+
+    project_id = UUID(step["project_id"])
+    previous = issuance.get_layout(org_id=org_id, project_id=project_id)["layout"]
+    saved = issuance.save_layout(org_id=org_id, project_id=project_id, layout={**previous, **step["layout"]})
+    return {"previous": previous, "layout": saved["layout"], "project_id": step["project_id"]}
+
+
+def _apply_reversible(org_id: UUID, user_id: UUID, step: dict, key: str) -> dict:
+    """Save a reversible project change the person asked for, through the same
+    idempotent service the manual review uses (preview → apply → undo)."""
+    from projects.project_ops import apply_project_operations
+
+    simulation = step.get("simulation") or {}
+    applied = apply_project_operations(
+        org_id,
+        user_id,
+        UUID(str(simulation["project_id"])),
+        {"ops": step["ops"], "before_sig": simulation["before_sig"], "operation_key": key},
+    )
+    return {"operation_id": applied["operation_id"], "state": applied["state"],
+            "project_id": str(simulation["project_id"])}
 
 
 # §08-WH — workflow surfaces ride the same agent runtime but answer with a
@@ -819,6 +920,13 @@ def _act(
     history_trusted: bool = False,
     job_id: UUID | None = None,
     progress: Any = None,
+    may_draft: bool = False,
+    interaction_mode: str = "work",
+    autonomy: str = "propose",
+    attachment_parts: list | None = None,
+    attachment_manifest: list | None = None,
+    attachment_texts: list | None = None,
+    may_prepare_destination: bool = False,
 ) -> dict:
     def _report(value: float, phase: str = "CONSULTING_PROJECT") -> None:
         # Progress lands on the job_runs row — the only channel a reader can
@@ -840,6 +948,11 @@ def _act(
     engine_tools = EngineTools(org_id=org_id, user_id=user_id, refs=refs, product=product,
                                observed_refs=observed_refs, goal=trusted_goal, max_calls=MAX_QUERIES)
     engine_tools.numeric_evidence |= _grounding_values(context, "")
+    if attachment_texts:
+        # Literal values of the attached files are evidence (cited with
+        # their origin); an image read visually adds none — its candidates
+        # stay unvalidated until a person confirms them.
+        engine_tools.numeric_evidence |= _grounding_values({"attachments": attachment_texts}, "")
     has_tree = bool(product and isinstance(product, dict) and any(
         isinstance(module.get("tree"), dict) for module in product.get("modules", product.get("assembly", {}).get("modules", []))
     ))
@@ -857,6 +970,8 @@ def _act(
     document: Any = {}
     tool_messages: list[dict] = []
     test_mode = False
+    created_project: dict | None = None
+    follow_through_used = False
     for round_index in range(MAX_ROUNDS):
         remaining = TOTAL_TIMEOUT_S - (time.monotonic() - started)
         if remaining <= 0:
@@ -886,12 +1001,22 @@ def _act(
                 "tool_messages": list(tool_messages),
                 "response_schema": AGENT_SCHEMA,
             },
+            # Attached files ride the wire beside the payload; the sealed
+            # manifest (ids, hashes, coverage) is part of the audited input.
+            attachment_parts=attachment_parts or None,
             input_payload={
                 "goal": goal,
                 "surface": surface,
                 "context": context,
                 "observations": all_observations,
                 "history": history,
+                **({"attachments": attachment_manifest} if attachment_manifest else {}),
+                "conversation": {
+                    # chat: answer and prepare proposals, never mutate.
+                    # work: execute the delegated objective under the policy.
+                    "interaction_mode": interaction_mode,
+                    "autonomy": autonomy,
+                },
                 "actions": {
                     "query_surfaces": sorted(REQUIRED_REFS),
                     "prepare_actions": sorted(PREPARE_ROUTES),
@@ -899,6 +1024,10 @@ def _act(
                         action: route for action, (route, _params) in PREPARE_ROUTES.items()
                     },
                     "ops_available": surface == "position" and product is not None,
+                    # Whether this conversation lets the assistant save the
+                    # reversible drafts the person asks for (apply:true).
+                    "may_draft": may_draft,
+                    "created_project": created_project,
                 },
                 "product": product,
                 "operations": provider_operation_specs(),
@@ -936,6 +1065,35 @@ def _act(
                 "El agente devolvió una respuesta inválida.",
             )
         _report(round_progress + max(1, 27 // MAX_ROUNDS), "CALCULATING_ENGINE")
+        # A requested draft work is created once per run, inside the job's
+        # transaction (a failed run rolls it back), so the next round can add
+        # the requested windows to it.
+        extra_observations: list[dict] = []
+        create = next((step for step in document.get("steps") or []
+                       if isinstance(step, dict) and step.get("kind") == "create_project"), None)
+        if create is not None and created_project is None:
+            # «Con aprobación» may open the empty draft destination of a new
+            # quotation so the coherent set can be simulated against it; its
+            # windows still wait for the person's approval.
+            if refs.get("project_id") or refs.get("position_id"):
+                # The person is working inside a work (or one of its windows):
+                # the encargo edits THAT work. Opening another quotation
+                # elsewhere is never the answer to «edita esto».
+                extra_observations.append({"surface": "create_project", "context": {
+                    "error": "project_in_context",
+                    "detail": ("Ya hay una obra abierta en el contexto. Trabaja sobre esa obra y sus ventanas "
+                               "con project_ops u ops; no crees otra cotización.")}})
+            elif not (may_draft or may_prepare_destination):
+                extra_observations.append({"surface": "create_project", "context": {
+                    "error": "draft_not_allowed",
+                    "detail": "Esta conversación solo propone cambios; ofrece crear la obra y espera la confirmación."}})
+            else:
+                created_project = _create_project_draft(org_id, user_id, create)
+                refs = {**refs, "project_id": created_project["project_id"]}
+                engine_tools.refs = refs
+                observed_refs = observed_refs | {created_project["project_id"]}
+                engine_tools.observed_refs = observed_refs
+                extra_observations.append({"surface": "create_project", "context": created_project})
         observations, new_observed = _queries(
             org_id=org_id,
             document=document,
@@ -943,6 +1101,7 @@ def _act(
             observed=observed_refs,
             limit=max(0, MAX_QUERIES - (len(seen_queries) - 1) - len(engine_tools.calls)),
         )
+        observations.extend(extra_observations)
         observed_refs = observed_refs | new_observed
         engine_tools.observed_refs = observed_refs
         engine_tools.max_calls = MAX_QUERIES - (len(seen_queries) - 1)
@@ -974,6 +1133,22 @@ def _act(
                 if fresh and "error" not in output:
                     observed_refs |= _context_refs(output)
                     engine_tools.observed_refs = observed_refs
+        # Follow-through: in Trabajo a round that ends announcing work («pido
+        # la vista previa…», «voy a revisar…») without steps or questions has
+        # not done the encargo. One explicit round asks it to emit the steps
+        # (or the grouped questions) instead of a promise.
+        actionable = [step for step in document.get("steps") or []
+                      if isinstance(step, dict) and step.get("kind") not in (None, "query", "navigate")]
+        if (not observations and interaction_mode == "work" and not actionable and not follow_through_used
+                and not document.get("questions") and not document.get("clarify")
+                and round_index < MAX_ROUNDS - 1 and (engine_tools.calls or attachment_texts or created_project)):
+            follow_through_used = True
+            observations = [{"surface": "follow_through", "context": {
+                "reason": "work_without_steps",
+                "instruction": ("Este es un encargo en Trabajo: emite ahora los pasos del registro (project_ops, "
+                                "quote_draft, document_layout…) con lo observado, o agrupa en questions lo que "
+                                "falta. No anuncies acciones futuras."),
+            }}]
         all_observations.extend(observations)
         # Any observation — success or error — informs the next round; an
         # entity that doesn't exist for this caller is a finding the model
@@ -1001,7 +1176,8 @@ def _act(
         if isinstance(turn, dict) and turn.get("role") in ("user", "agent")
     )
     grounding = _grounding_values(
-        {"context": context, "observations": all_observations}, declared_text
+        {"context": context, "observations": all_observations, "attachments": attachment_texts or []},
+        declared_text,
     )
     # Word quantities are declared intent too ("tres paños", "cuatro copias").
     grounding |= design_assist._declared_values(declared_text)
@@ -1132,12 +1308,15 @@ def _act(
             continue  # executed above — `queries` reports them as provenance
         if kind == "project_ops":
             try:
-                simulation, _ = engine_tools.call("preview_project_operations", {"ops": item.get("ops")})
+                simulation, _ = engine_tools.call("preview_project_operations", {"ops": item.get("ops")}, validation=True)
             except OperationError as error:
                 simulation = {"valid": False, "error": error.code}
             if simulation.get("valid"):
                 steps.append({"kind": "project_ops", "tool": "preview_project_operations", "ops": simulation["ops"],
-                              "simulation": simulation, "label": str(item.get("label") or "Cambios de posiciones")[:MAX_LABEL]})
+                              "simulation": simulation, "label": str(item.get("label") or "Cambios de posiciones")[:MAX_LABEL],
+                              # The person asked to do it (not a hypothetical): the
+                              # server may save it when the run allows drafts.
+                              "apply_requested": item.get("apply") is True})
                 added = [change["after"] for change in simulation["diff"] if change["kind"] == "add"]
                 if added:
                     project_drafts.append({"kind": "project_draft", "title": "Posiciones propuestas", "payload": {"positions": added},
@@ -1163,7 +1342,7 @@ def _act(
             simulation = None
             if has_tree:
                 try:
-                    simulation, _ = engine_tools.call("simulate_ops", {"ops": item.get("ops")})
+                    simulation, _ = engine_tools.call("simulate_ops", {"ops": item.get("ops")}, validation=True)
                 except OperationError as error:
                     simulation = {"valid": False, "error": error.code}
                 if simulation.get("valid"):
@@ -1182,8 +1361,33 @@ def _act(
                         **({"simulation": simulation} if simulation is not None else {}),
                         "label": str(item.get("label") or "").strip()[:MAX_LABEL]
                         or "Cambios de diseño",
+                        # An encargo on the open window: the editor applies it to
+                        # the drawing (unsaved, with undo) when drafts are allowed.
+                        "apply_requested": item.get("apply") is True and may_draft,
                     }
                 )
+            continue
+        if kind == "document_layout":
+            out = _document_layout_step(item, refs=refs, context=context, may_draft=may_draft, rejected=rejected)
+            if out is not None:
+                steps.append(out)
+            continue
+        if kind == "quote_draft":
+            # Flow A11: engine price with the company's current rules and the
+            # canonical «Borrador» PDF of the work. It runs after the
+            # positions with the person's own session (price authority, MFA);
+            # it never emits nor consumes a commercial number.
+            project_id = str(refs.get("project_id") or "")
+            if not project_id:
+                rejected.append({"op": "quote_draft", "reason": "project_required"})
+                continue
+            steps.append({
+                "kind": "quote_draft",
+                "tool": "quotation_draft_preview",
+                "label": str(item.get("label") or "").strip()[:MAX_LABEL] or "Precio y borrador PDF",
+                "project_id": project_id,
+                "apply_requested": item.get("apply") is True and (may_draft or may_prepare_destination),
+            })
             continue
         if kind == "batch_ops":
             out = _batch_ops_step(
@@ -1355,6 +1559,7 @@ def _act(
         # Human names for the ids claims/reference may cite — the transcript
         # stores ids; the workspace renders the entity behind each one.
         "evidence_labels": _evidence_labels(context, all_observations),
+        "created_project": created_project,
     }
 
 
@@ -1373,6 +1578,10 @@ def act(
     product_sig: str = "",
     history_trusted: bool = False,
     progress: Any = None,
+    autonomy: str = "propose",
+    role: str | None = None,
+    interaction_mode: str = "work",
+    attachments: list | None = None,
 ) -> dict:
     """§07-B — every agent run is a durable job. The transcript carries the
     user's turn plus the model's grounded round; artifacts, claims and
@@ -1394,6 +1603,34 @@ def act(
         # it so the UI shows a retry, not a message the user never wrote
         # again.
         turn["replay"] = True
+    # Effective policy sealed on the turn: chat never mutates; «approve»
+    # prepares the coherent set for one approval; only «draft» in work mode
+    # (and a write role verified at run time) saves reversible changes.
+    if interaction_mode not in ("chat", "work"):
+        interaction_mode = "work"
+    if autonomy not in ("propose", "approve", "draft"):
+        autonomy = "propose"
+    effective = "propose" if interaction_mode == "chat" else autonomy
+    executes = effective == "draft" and role in DRAFT_ROLES
+    turn["interaction_mode"] = interaction_mode
+    turn["autonomy"] = effective
+    sealed = list(attachments or [])
+    if sealed:
+        turn["attachments"] = sealed
+    else:
+        # Continuity: a follow-up in the same task keeps reading the files the
+        # earlier turns sealed (newest first, by id), still re-validated by
+        # owner and hash below. Only this turn's own files are sealed on it.
+        seen: set[str] = set()
+        for previous in reversed(transcript):
+            for item in (previous.get("attachments") or []) if isinstance(previous, dict) else []:
+                if isinstance(item, dict) and item.get("id") and str(item["id"]) not in seen and len(sealed) < 6:
+                    seen.add(str(item["id"]))
+                    sealed.append(item)
+    from ai_gateway import attachments as attachment_service
+
+    parts, manifest = attachment_service.wire_parts(org_id=org_id, user_id=user_id, sealed=sealed)
+    evidence = attachment_service.text_evidence(org_id=org_id, user_id=user_id, sealed=sealed)
     transcript.append(turn)
     result = _act(
         org_id=org_id,
@@ -1407,7 +1644,41 @@ def act(
         history_trusted=history_trusted,
         job_id=UUID(job["id"]) if job.get("id") else None,
         progress=progress,
+        may_draft=executes,
+        interaction_mode=interaction_mode,
+        autonomy=effective,
+        attachment_parts=parts,
+        attachment_manifest=manifest,
+        attachment_texts=evidence,
+        may_prepare_destination=effective == "approve" and role in DRAFT_ROLES,
     )
+
+    # Reversible drafts the person asked for are saved now, inside this job's
+    # transaction, through the same idempotent project service the manual
+    # review uses. Each keeps its undo. Everything else stays a proposal.
+    agent_turn = len(transcript)
+    assistant_outcomes: list[dict] = []
+    if executes and job.get("id"):
+        for index, step in enumerate(result["steps"]):
+            if step.get("kind") not in ("project_ops", "document_layout") or not step.get("apply_requested"):
+                continue
+            try:
+                step["applied"] = (
+                    _apply_document_layout(org_id, step) if step["kind"] == "document_layout"
+                    else _apply_reversible(org_id, user_id, step, f"ai:{job['id']}:{agent_turn}:{index}")
+                )
+            except Exception as error:  # noqa: BLE001 — a stale draft stays a proposal
+                step["apply_error"] = str(getattr(error, "public_detail", None) or "El proyecto cambió; revisa la propuesta.")[:240]
+                continue
+            assistant_outcomes.append({
+                "turn_index": agent_turn,
+                "step_index": index,
+                "action": "applied",
+                "ops": ([str(op.get("op") if isinstance(op, dict) else op)[:80] for op in step["ops"]][:200]
+                        if step["kind"] == "project_ops" else ["document_layout"]),
+                "recorded_by": "assistant",
+                **({"operation_id": step["applied"]["operation_id"]} if step["kind"] == "project_ops" else {}),
+            })
 
     # Approvals are sticky across rounds: a no-op follow-up must not flip a
     # job whose earlier rounds still have gated steps awaiting a decision.
@@ -1418,12 +1689,13 @@ def act(
         if isinstance(o, dict) and o.get("action") in ("applied", "declined", "undone")
     }
     pending_approvals = any(
-        step.get("kind") in ("prepare", "ops", "batch_ops", "project_ops")
+        step.get("kind") in ("prepare", "ops", "batch_ops", "project_ops", "document_layout", "quote_draft")
         and (turn_index, step_index) not in resolved
         for turn_index, turn_row in enumerate(transcript)
         for step_index, step in enumerate(turn_row.get("steps") or [])
     ) or any(
-        step.get("kind") in ("prepare", "ops", "batch_ops", "project_ops")
+        step.get("kind") in ("prepare", "ops", "batch_ops", "project_ops", "document_layout", "quote_draft")
+        and not step.get("applied")
         for step in result["steps"]
     ) or any(
         artifact.get("kind") == "quote_draft" and artifact.get("payload", {}).get("confirmed") is False
@@ -1468,6 +1740,27 @@ def act(
         warnings=result["warnings"],
         result=result,
     )
+    if assistant_outcomes:
+        jobs.record_assistant_outcomes(job_id=UUID(job["id"]), entries=assistant_outcomes)
+    # Typed postconditions re-read the saved objects: the receipt — not the
+    # provider text — says complete, partial, proposal or blocked.
+    from ai_gateway.postconditions import build_receipt
+
+    receipt = build_receipt(
+        org_id=org_id,
+        result=result,
+        interaction_mode=interaction_mode,
+        autonomy=effective,
+        attachments=manifest,
+        outcomes=[*(job.get("outcomes") or []), *assistant_outcomes],
+        turn_index=agent_turn,
+    )
+    jobs.set_receipt(job_id=UUID(job["id"]), receipt=receipt)
+    result["receipt"] = receipt
+    if result.get("created_project"):
+        # The conversation continues in the work it just created.
+        jobs.update_refs(job_id=UUID(job["id"]),
+                         refs={**dict(job.get("refs") or {}), "project_id": result["created_project"]["project_id"]})
     result["job_id"] = job["id"]
     result["state"] = state
     result["transcript"] = transcript

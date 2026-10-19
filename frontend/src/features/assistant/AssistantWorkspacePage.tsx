@@ -1,3 +1,5 @@
+import { CompanionCatalog } from "./CompanionCatalog";
+import { useCapabilities } from "../plans/useCapabilities";
 import { StatusBadge } from "../../ui/StatusBadge";
 import { ValidatedForm } from "../../ui/FormValidation";
 import { DeniedState, ErrorState, LoadingState } from "../../ui";
@@ -9,14 +11,12 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { ApiError } from "../../api/apiMutator";
 import {
-  aiAgent,
   aiJobCancel,
   aiJobList,
   aiJobMessageCreate,
   aiJobOutcomeCreate,
   aiJobRetrieve,
   aiJobRetry,
-  projectsList,
 } from "../../api/generated/dekopen";
 import type { AiAgentStep } from "../../api/generated/models/aiAgentStep";
 import type { AiJob } from "../../api/generated/models/aiJob";
@@ -32,9 +32,8 @@ import { RejectedOperations } from "./RejectedOperations";
 import { BatchOpsStep } from "./BatchOpsStep";
 import { ProjectOpsStep } from "./ProjectOpsStep";
 import { SimulationPreview } from "./SimulationPreview";
-import { BotFigure } from "./BotFigure";
 import { publishAssistantJob, presenceState } from "./useAssistantPresence";
-import { Orb, orbStateFor } from "./Orb";
+import { Companion, companionStateFor } from "./Companion";
 import { STATE_LABELS } from "./states";
 import { assistantText, SURFACE_LABELS } from "./surfaces";
 import { jobErrorKey } from "../jobs/jobError";
@@ -49,46 +48,6 @@ import { t } from "../../i18n/es-CL";
 
 const LIVE_STATES = new Set(["QUEUED", "PLANNING", "RUNNING"]);
 const WAITING_STATES = new Set(["WAITING_FOR_USER", "WAITING_FOR_APPROVAL"]);
-
-const NEW_JOB_SURFACES = [
-  "morning_brief",
-  "purchase_plan",
-  "production_plan",
-  "quotation_complete",
-  "project_from_documents",
-  "catalog_compiler",
-  "customer_comms",
-  "dashboard",
-  "projects",
-  "clients",
-  "catalog",
-  "production",
-  "purchasing",
-];
-
-const GOAL_PRESETS: Record<string, string> = {
-  morning_brief: "Genera el brief del día: qué necesita atención hoy y sobre qué entidades.",
-  purchase_plan:
-    "Prepara el plan de compras: líneas sin cubrir, proveedores elegibles y órdenes abiertas.",
-  production_plan:
-    "Propone el plan de producción: prioridad por entrega, material listo y estación que bloquea.",
-  quotation_complete:
-    "Diagnostica la cotización del proyecto: qué está listo, qué falta (diseño, precio, emisión, aprobación) y el siguiente paso.",
-  project_from_documents:
-    "Convierte los candidatos extraídos de los documentos del proyecto en un borrador de posiciones con su tipología.",
-  catalog_compiler:
-    "Compila la última importación de catálogo: qué candidatos confirman solos, qué colisiones o ambigüedades reviso yo, y qué queda bloqueado.",
-  customer_comms: "Redacta el correo para enviar la cotización del proyecto al cliente.",
-};
-
-// Surfaces whose job is bound to a project — the form asks which one. The
-// backend REQUIRED_REFS list is the authority; only project-bound workflows
-// are launchable from the workspace (position/work_order bind via the dock).
-const REF_BOUND_PROJECT_SURFACES = new Set([
-  "quotation_complete",
-  "project_from_documents",
-  "customer_comms",
-]);
 
 const ARTIFACT_KIND_LABELS: Record<string, string> = {
   product_draft: "aiws.artifact.product",
@@ -222,7 +181,7 @@ function JobRail({
                 className={`aiws-job ${job.id === selected ? "aiws-job--active" : ""}`}
                 onClick={() => onSelect(job.id)}
               >
-                <Orb state={orbStateFor(job.state)} size={20} />
+                <Companion state={companionStateFor(job.state)} size={20} />
                 <span className="aiws-job__body">
                   <span className="aiws-job__goal">{job.goal}</span>
                   <span className="aiws-job__meta">
@@ -444,7 +403,7 @@ function AgentTurnView({
   const workCount = (turn.queries?.length ?? 0) + (turn.claims?.length ?? 0);
   return (
     <div className="aiws-turn aiws-turn--agent">
-      <Orb state={isLatest ? presenceState(job) : "idle"} size={28} />
+      <Companion state={isLatest ? presenceState(job) : "idle"} size={28} />
       <div className="aiws-turn__body">
         {turn.plan?.length ? (
           <ol className="aiws-plan">
@@ -553,7 +512,7 @@ function AgentTurnView({
                 className="aiws-artifact"
                 onClick={() => onArtifact(artifact)}
               >
-                <Orb state="idle" size={18} />
+                <Companion state="idle" size={18} />
                 <strong>{artifact.title ?? artifactKindLabel(artifact.kind)}</strong>
                 <small>{artifactKindLabel(artifact.kind)}</small>
               </button>
@@ -581,7 +540,7 @@ function ErrorTurnView({
 }): JSX.Element {
   return (
     <div className="aiws-turn aiws-turn--error">
-      <Orb state="error" size={28} />
+      <Companion state="error" size={28} />
       <div className="aiws-turn__body">
         <p className="aiws-error__text">
           {turn.code ? t(jobErrorKey(turn.code)) : t("jobs.fail.generic")}
@@ -612,18 +571,17 @@ export function AssistantWorkspacePage(): JSX.Element {
   const bridge = useDesignOpsBridge();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { aiEntitled } = useCapabilities();
   const orgId = auth.me?.active_organization?.id ?? null;
   const selectedId = searchParams.get("job");
   const artParam = searchParams.get("art");
   const [draft, setDraft] = useState("");
-  const [newSurface, setNewSurface] = useState("dashboard");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [olderJobs, setOlderJobs] = useState<AiJob[]>([]);
   const [hasMoreJobs, setHasMoreJobs] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [artifact, setArtifact] = useState<Artifact | null>(null);
-  const [newProjectId, setNewProjectId] = useState("");
   const transcriptEnd = useRef<HTMLDivElement>(null);
   // One operation key per draft: a retry/double-submit of the same message
   // replays server-side instead of re-debiting the wallet for a fresh round.
@@ -663,23 +621,14 @@ export function AssistantWorkspacePage(): JSX.Element {
         queryClient,
         {
           organizationId: orgId,
-          userId: auth.me?.user.id,
+          userId: auth.me?.user?.id,
           surface: job.surface,
           refs: job.refs as Record<string, string>,
         },
         job,
       );
-  }, [job, queryClient, orgId, auth.me?.user.id]);
+  }, [job, queryClient, orgId, auth.me?.user?.id]);
 
-  const projectPickerQuery = useQuery({
-    queryKey: ["ai", "project-picker", orgId],
-    enabled: Boolean(orgId && REF_BOUND_PROJECT_SURFACES.has(newSurface) && !job),
-    queryFn: async () => {
-      const response = await projectsList(headers);
-      if (response.status !== 200) throw new ApiError(response.status, response.data);
-      return response.data.items;
-    },
-  });
   const transcript = (job?.transcript ?? []) as TranscriptTurn[];
   const live = job !== null && LIVE_STATES.has(job.state);
 
@@ -770,28 +719,6 @@ export function AssistantWorkspacePage(): JSX.Element {
         if (response.status !== 202) {
           throw new ApiError(response.status, response.data);
         }
-      } else {
-        const needsProject = REF_BOUND_PROJECT_SURFACES.has(newSurface);
-        if (needsProject && !newProjectId) {
-          setError(t("aiws.project_required"));
-          setBusy(false);
-          return;
-        }
-        const response = await aiAgent(
-          {
-            surface: newSurface,
-            refs: needsProject ? { project_id: newProjectId } : {},
-            goal: message,
-            history: [],
-            operation_key: operationKey.current.key,
-          },
-          headers,
-        );
-        if (response.status !== 202) {
-          throw new ApiError(response.status, response.data);
-        }
-        const jobId = (response.data as { job_id?: string }).job_id;
-        if (jobId) setSearchParams({ job: jobId });
       }
       setDraft("");
       operationKey.current = null;
@@ -926,7 +853,7 @@ export function AssistantWorkspacePage(): JSX.Element {
       <div className="aiws-main">
         {job ? (
           <header className="aiws-head">
-            <Orb state={presenceState(job)} size={28} />
+            <Companion state={presenceState(job)} size={28} />
             <div>
               <h1>{job.goal}</h1>
               <p className="aiws-head__meta">
@@ -979,7 +906,10 @@ export function AssistantWorkspacePage(): JSX.Element {
         ) : null}
         {job && WAITING_STATES.has(job.state) ? (
           <p className="aiws-waiting" role="status">
-            <Orb state={job.state === "WAITING_FOR_APPROVAL" ? "approval" : "waiting"} size={20} />
+            <Companion
+              state={job.state === "WAITING_FOR_APPROVAL" ? "approval" : "waiting"}
+              size={20}
+            />
             {job.state === "WAITING_FOR_APPROVAL"
               ? t("aiws.waitingApprovalBanner")
               : t("aiws.waitingUserBanner")}
@@ -995,7 +925,7 @@ export function AssistantWorkspacePage(): JSX.Element {
                 className="aiws-shelf__item"
                 onClick={() => setArtifact(item)}
               >
-                <Orb state={presenceState(job)} size={16} />
+                <Companion state={presenceState(job)} size={16} />
                 {item.title ?? artifactKindLabel(item.kind)}
               </button>
             ))}
@@ -1036,16 +966,34 @@ export function AssistantWorkspacePage(): JSX.Element {
           {transcript.length === 0 && !job ? (
             <>
               <div className="aiws-hero">
-                <BotFigure size={120} />
                 <div>
-                  <h1 className="aiws-hero__title">{t("aiws.title")}</h1>
+                  <h1 className="aiws-hero__title">Actividad del asistente</h1>
+                  <p className="aiws-empty">
+                    Aquí quedan los encargos, lo que el asistente guardó y lo que espera tu
+                    decisión. Para pedir algo nuevo, abre el asistente desde la pantalla en la que
+                    trabajas.
+                  </p>
+                  {aiEntitled ? (
+                    <button
+                      type="button"
+                      className="ui-button ui-button--primary"
+                      onClick={() => window.dispatchEvent(new Event("dekopen:assistant-open"))}
+                    >
+                      Abrir el asistente
+                    </button>
+                  ) : (
+                    <p className="aiws-empty">
+                      Tu plan actual es Manual completo: el historial propio queda disponible para
+                      lectura y no se inician tareas nuevas de IA.
+                    </p>
+                  )}
                   <details className="aiws-metrics">
-                    <summary>Revisar actividad y costo de IA</summary>
+                    <summary>Uso y costo de la IA</summary>
                     <AiMetricsCard organizationId={orgId ?? ""} />
                   </details>
                 </div>
               </div>
-              <p className="aiws-empty">{t("aiws.hint")}</p>
+              {searchParams.get("poses") === "1" ? <CompanionCatalog /> : null}
             </>
           ) : (
             <>
@@ -1099,7 +1047,7 @@ export function AssistantWorkspacePage(): JSX.Element {
           )}
           {live ? (
             <p className="aiws-live">
-              <Orb state={presenceState(job)} size={28} />
+              <Companion state={presenceState(job)} size={28} />
               {job ? livePhase(job.live) : t("agent.thinking")}
             </p>
           ) : null}
@@ -1110,100 +1058,64 @@ export function AssistantWorkspacePage(): JSX.Element {
             {error}
           </p>
         ) : null}
-        <ValidatedForm
-          className="aiws-composer"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void send();
-          }}
-        >
-          {!job ? (
-            <select
-              value={newSurface}
-              onChange={(event) => {
-                const surface = event.target.value;
-                setNewSurface(surface);
-                const preset = GOAL_PRESETS[surface];
-                setDraft((current) =>
-                  preset && (!current.trim() || Object.values(GOAL_PRESETS).includes(current))
-                    ? preset
-                    : current,
-                );
-              }}
-              aria-label={t("aiws.surface")}
-            >
-              {NEW_JOB_SURFACES.map((surface) => (
-                <option key={surface} value={surface}>
-                  {SURFACE_LABELS[surface] ?? surface}
-                </option>
-              ))}
-            </select>
-          ) : null}
-          {!job && REF_BOUND_PROJECT_SURFACES.has(newSurface) ? (
-            <select
-              value={newProjectId}
-              onChange={(event) => setNewProjectId(event.target.value)}
-              aria-label={t("aiws.project")}
-              disabled={projectPickerQuery.isLoading}
-            >
-              <option value="">{t("aiws.project_pick")}</option>
-              {(projectPickerQuery.data ?? []).map((project) => (
-                <option key={project.id} value={project.id}>
-                  {project.code} — {project.name}
-                </option>
-              ))}
-            </select>
-          ) : null}
-          <Orb state={live ? orbStateFor(job?.state) : draft.trim() ? "input" : "idle"} size={20} />
-          <textarea
-            value={draft}
-            rows={2}
-            maxLength={2000}
-            placeholder={job ? t("aiws.followup") : t("agent.placeholder")}
-            aria-label={job ? t("aiws.followup") : t("agent.placeholder")}
-            onChange={(event) => setDraft(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" && !event.shiftKey) {
-                event.preventDefault();
-                void send();
-              }
+        {job ? (
+          <ValidatedForm
+            className="aiws-composer"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void send();
             }}
-            disabled={busy || live}
-          />
-          <button
-            type="submit"
-            disabled={
-              busy ||
-              live ||
-              !draft.trim() ||
-              (!job && REF_BOUND_PROJECT_SURFACES.has(newSurface) && !newProjectId)
-            }
           >
-            {t("agent.send")}
-          </button>
-        </ValidatedForm>
+            <Companion
+              state={live ? companionStateFor(job?.state) : draft.trim() ? "input" : "idle"}
+              size={20}
+            />
+            <textarea
+              value={draft}
+              rows={2}
+              maxLength={2000}
+              placeholder={job ? t("aiws.followup") : t("agent.placeholder")}
+              aria-label={job ? t("aiws.followup") : t("agent.placeholder")}
+              onChange={(event) => setDraft(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && !event.shiftKey) {
+                  event.preventDefault();
+                  void send();
+                }
+              }}
+              disabled={busy || live}
+            />
+            <button
+              type="submit"
+              className="ui-button ui-button--primary"
+              disabled={busy || live || !draft.trim()}
+            >
+              {t("agent.send")}
+            </button>
+          </ValidatedForm>
+        ) : null}
       </div>
-      <aside className="aiws-inspector" aria-label={t("aiws.inspector")}>
-        {artifact ? (
-          <div className="aiws-artifact-detail">
-            <header>
-              <h2>{artifact.title ?? artifactKindLabel(artifact.kind)}</h2>
-              <p className="aiws-head__meta">{artifactKindLabel(artifact.kind)}</p>
-            </header>
-            {artifact.references?.length ? (
-              <p className="aiws-evidence">
-                {t("aiws.evidence")}:{" "}
-                {artifact.references
-                  .map((ref) => evidenceLabels[ref] ?? `${ref.slice(0, 8)}…`)
-                  .join(", ")}
-              </p>
-            ) : null}
-            <ArtifactDetail artifact={artifact} />
-          </div>
-        ) : (
-          <p className="aiws-empty">{t("aiws.inspectorEmpty")}</p>
-        )}
-      </aside>
+      {artifact ? (
+        <aside className="aiws-inspector" aria-label={t("aiws.inspector")}>
+          {artifact ? (
+            <div className="aiws-artifact-detail">
+              <header>
+                <h2>{artifact.title ?? artifactKindLabel(artifact.kind)}</h2>
+                <p className="aiws-head__meta">{artifactKindLabel(artifact.kind)}</p>
+              </header>
+              {artifact.references?.length ? (
+                <p className="aiws-evidence">
+                  {t("aiws.evidence")}:{" "}
+                  {artifact.references
+                    .map((ref) => evidenceLabels[ref] ?? `${ref.slice(0, 8)}…`)
+                    .join(", ")}
+                </p>
+              ) : null}
+              <ArtifactDetail artifact={artifact} />
+            </div>
+          ) : null}
+        </aside>
+      ) : null}
     </section>
   );
 }

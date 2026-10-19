@@ -1,0 +1,33 @@
+# Search scope only: these files remain versioned and usable by tools/tests.
+# Read a known file directly, or use rg --no-ignore PATTERN SPECIFIC_DIRECTORY.
+# Current source, test code, migrations, PRD and domain wiki stay searchable.
+
+# Generated contract/client: start API changes at backend views/serializers.
+/backend/openapi.yaml
+/frontend/src/api/generated/
+
+# Regression truth: keep test code visible; open payloads for a specific case.
+/engine/tests/golden_*.json
+
+# The v1 mandate is complete. Its scoped marker remains discoverable.
+/docs/cola/**
+!/docs/cola/AGENTS.md
+
+# Dated evidence: current global acceptance and fixtures remain discoverable.
+/docs/redesign/captures/
+/docs/redesign/phase*.md
+/docs/redesign/P??-ACEPTACION.md
+/docs/redesign/D??-ACEPTACION.md
+/docs/redesign/ED?-ACEPTACION.md
+/docs/redesign/P20-ARRANQUE.md
+/docs/redesign/P20-RENDIMIENTO.md
+/docs/redesign/progress.md
+/docs/redesign/evidence-index.md
+/docs/redesign/route-map.md
+/docs/redesign/blocked-inputs.md
+/docs/redesign/decisions.md
+/docs/ai/evals/*.json
+/docs/wiki/log.md
+
+# Owner-requested functional snapshots: read only for a report/history task.
+/docs/reports/DEKOPEN-FUNCIONALIDAD-*.md

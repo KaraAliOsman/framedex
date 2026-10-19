@@ -17,6 +17,7 @@ from typing import Any
 from uuid import UUID
 
 from authentication.errors import contract_error
+from billing import capabilities, holds
 from ai_gateway.providers import ProviderError, provider_for
 from billing import wallet
 from documents.repository import DocumentaryError, documentary_backend, rows
@@ -183,8 +184,8 @@ def _audit(
         "org_id, user_id, tool_name, model_used, prompt_version, retention_until,"
         " input_payload, output_payload, points_debited,"
         " tokens_prompt, tokens_completion, latency_ms, state_hash_before,"
-        " operation_key, route_id)"
-        " VALUES(%s,%s,%s,%s,%s, now() + %s * interval '1 day',%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        " operation_key, route_id, consumption_policy)"
+        " VALUES(%s,%s,%s,%s,%s, now() + %s * interval '1 day',%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
         " ON CONFLICT (org_id, operation_key) WHERE operation_key IS NOT NULL DO NOTHING"
         " RETURNING *",
         [
@@ -206,6 +207,8 @@ def _audit(
             _input_hash(input_payload),
             operation_key,
             str(route["id"]),
+            # Sealed per operation: the fixed route debit (legacy_route_v1).
+            holds.CONSUMPTION_POLICY,
         ],
     )
     if inserted:
@@ -238,6 +241,7 @@ def invoke(
     input_payload: dict,
     tool_name: str | None = None,
     provider_options: dict | None = None,
+    attachment_parts: list | None = None,
 ) -> dict[str, Any]:
     # provider_options is server-side transport config (system prompt, output
     # mode). It is deliberately NOT part of input_payload: that hash covers the
@@ -263,10 +267,7 @@ def invoke(
         )
         if replay is not None:
             return replay
-        if (
-            organization["subscription_tier"] == "STARTER"
-            or not organization["subscription_active"]
-        ):
+        if not capabilities.entitled(organization):
             raise contract_error(
                 409,
                 "ai_entitlement_required",
@@ -280,8 +281,8 @@ def invoke(
                 "La capacidad de IA solicitada no está disponible.",
             )
         credits = int(route["credits_cost"])
-        # Pre-invocation hook: balance is checked while the org row is locked,
-        # before any provider request exists — never debit after the fact.
+        # Pre-invocation hook: an obviously short balance is refused while the
+        # org row is locked; the durable hold below closes the concurrent case.
         if int(organization["credits_balance"]) < credits:
             raise contract_error(
                 409,
@@ -292,24 +293,44 @@ def invoke(
         # active org; the provider signs exactly that path at wire time —
         # never a path the request supplied.
         document_path = _source_document_path(org_id, input_payload.get("source"))
+    # Durable admission: the fixed cost is retained (spendable = balance −
+    # active/uncertain holds) in its own short transaction, so two concurrent
+    # operations cannot both pass a balance that covers only one of them.
+    job = usage._job.get()
+    holds.admit(org_id=org_id, user_id=user_id, operation_key=operation_key, credits=credits,
+                capability=capability, ai_job_id=job[1] if job else None)
     # The provider call runs OUTSIDE the wallet lock — holding the org row
     # FOR UPDATE across a network call would serialize every tenant request
     # behind provider latency (and a hung provider behind its full timeout).
-    reservation = usage.begin(org_id=org_id, user_id=user_id, route=route,
-                              operation_key=operation_key, input_hash=input_hash)
+    try:
+        reservation = usage.begin(org_id=org_id, user_id=user_id, route=route,
+                                  operation_key=operation_key, input_hash=input_hash)
+    except Exception:
+        holds.finish_without_debit(org_id=org_id, operation_key=operation_key, reason="admission_refused")
+        raise
     try:
         result = provider_for(route).invoke(
             route=route, capability=capability, input_payload=input_payload,
             provider_options=provider_options, document_path=document_path,
+            # Parts are resolved server-side from owned, hash-sealed files;
+            # their manifest is inside input_payload (and its hash).
+            **({"attachment_parts": attachment_parts} if attachment_parts else {}),
             # Provider-level deduplication must include the tenant.
             operation_key=f"{org_id}:{operation_key}",
         )
     except ProviderError as error:
         usage.finish(reservation, result=getattr(error, "usage", None), error_code=error.code)
+        # No commercial debit for a failed exchange; a timeout stays uncertain.
+        holds.finish_without_debit(org_id=org_id, operation_key=operation_key, reason=error.code)
+        raise
+    except Exception:
+        usage.finish(reservation, error_code="ai_provider_error")
+        holds.finish_without_debit(org_id=org_id, operation_key=operation_key, reason="ai_provider_error")
         raise
     usage.finish(reservation, result=result)
     result["usage_id"] = str(reservation["id"]) if reservation else None
     if len(str(result["output"])) > MAX_OUTPUT_CHARS:
+        holds.finish_without_debit(org_id=org_id, operation_key=operation_key, reason="ai_provider_output_too_large")
         raise ProviderError("ai_provider_output_too_large")
     with wallet.financial_transaction(org_id):
         wallet.reconcile(org_id)
@@ -323,6 +344,7 @@ def invoke(
             input_hash=input_hash,
         )
         if replay is not None:
+            holds.finish_without_debit(org_id=org_id, operation_key=operation_key, reason="replayed")
             return replay
         audit = _audit(
             org_id=org_id,
@@ -347,6 +369,7 @@ def invoke(
         if audit is None:
             # The loser of a concurrent same-key invoke replays the winner's
             # stored response instead of double-debiting.
+            holds.finish_without_debit(org_id=org_id, operation_key=operation_key, reason="replayed")
             return _replay(
                 org_id=org_id,
                 operation_key=operation_key,
@@ -354,7 +377,9 @@ def invoke(
                 tool_name=tool_name,
                 input_hash=input_hash,
             )
-        wallet.debit(org_id, credits, audit["id"])
+        entry = wallet.debit(org_id, credits, audit["id"])
+        if entry:
+            holds.settle(org_id=org_id, operation_key=operation_key, ledger_id=entry["id"])
         return _response(audit=audit, capability=capability, route=route, result=result)
 
 

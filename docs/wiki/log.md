@@ -1564,3 +1564,490 @@ acredita producción/certificación ni dinero. Véase
 ## 2026-10-12 · P20 integrado
 
 [PR #156](https://github.com/KaraAliOsman/framedex/pull/156), squash `c99d25b577cc2726d28465dbab59f142c2c7cd73`; cuatro checks de CI PASA sobre `c8ac0612aa1ff10008ab666c9527eccc67a9bc4c`. Los 39 encargos quedan cerrados en ESTADO. El cierre documental conserva los refs de cada corrida, límites de sandbox/DEMO y fallos del proveedor. La revisión hacia main se entrega al dueño sin merge.
+
+## 2026-10-12 · main integrado y workspace depurado
+
+Por instrucción del dueño, [PR #157](https://github.com/KaraAliOsman/framedex/pull/157)
+integra v1 a main en `2db4e13171884b93a989e68508a55f5590f9b34d`, con los
+cuatro checks SUCCESS en ambas corridas. Los 39 encargos permanecen mergeados.
+
+La limpieza retira 6,979 archivos de evidencia histórica
+(1,560,471,278 bytes) del checkout; el SHA anterior y los enlaces archivados
+permiten recuperarlos. Los 2,185 archivos de aceptación final y las
+entradas QR/reportes usados por herramientas permanecen. Los mapas de progreso
+y estado se condensan con acceso explícito a sus originales; no se borra
+historia de decisiones ni este log. Véase `docs/redesign/captures/README.md`.
+
+Se retiran 34,146 archivos temporales locales (2,587,938,566 bytes) a la
+Papelera de Windows, conservando perfiles Brave, launchers, propiedad REVIEW,
+PRIMARY, WSL registrado, dependencias, bases y `.env`. La reducción del workspace
+es 3.86 GiB; no se atribuye a una poda del historial ni de la Papelera.
+`docs/operations/WORKSPACE.md`, `.gitignore` y `.rgignore` establecen retención
+y búsqueda para futuros agentes. Verificación de archivos, hashes de launchers,
+metadatos de evidencia, enlaces y refs; sin pruebas funcionales, navegador ni IA.
+
+## 2026-10-12 · Entrada de agentes por tarea y stack vigente
+
+Sobre `d078f550`, el dueño pide reducir el ruido que había desviado a otras
+IA. `AGENTS.md`, el índice y el protocolo de wiki pasan a seleccionar dominio,
+código, pruebas y especificación antes de consultar historia. La cola completa
+y los informes de rediseño reciben marcas de contexto histórico; se preservan
+sus archivos, decisiones y recibos. La constitución mantenida sigue en
+`docs/design/CONSTITUCION.md`.
+
+`.rgignore` retira del descubrimiento general generados, goldens JSON y
+payloads/historia. En esta estación, `rg --files` pasa de 3,238 a 1,657 archivos
+y de 78,469,177 a 30,026,202 bytes. El material
+permanece accesible por ruta explícita; esta medida describe descubrimiento,
+no una mejora medida de ejecución del producto.
+
+La skill local pasa de 451 a 100 líneas y de 62,391 a 4,958 bytes, basada en
+los scripts actuales: REVIEW posee sus recursos, inicia API/web/worker y carga
+`.env` en memoria; el gate limpio exige un proyecto sin datos previos. Se
+retiran recetas de otra estación, defectos históricos y manipulación manual de
+Auth del procedimiento activo, con acceso a la versión anterior por SHA.
+README alinea Node mínimo con `frontend/package.json` (`22.22.2`).
+
+Validación estática: skill válida, 134 enlaces locales y 63 rutas comprobados;
+el código sigue visible y los payloads se leen por ruta explícita. Sin pruebas
+funcionales locales, llamadas al proveedor ni recorridos del navegador. Código,
+goldens, migraciones, CI, aceptación, datos y sesiones locales se preservan.
+Recibo local: `.run/context-optimization-2026-10-12.json`.
+
+## 2026-10-12 · Reporte integral de funcionalidad solicitado por el dueño
+
+Sobre `0a9f057ba5338bc6be39181b9ca001915b2f2a59`, se compila
+`docs/reports/DEKOPEN-FUNCIONALIDAD-2026-10-12.md`: 57 capítulos funcionales y
+siete anexos con permisos, entradas/resultados, estados, guardas, fuentes,
+activación y límites. El código de producto coincide con la integración v1
+`2db4e13171884b93a989e68508a55f5590f9b34d` de PR #157; limpieza/documentación
+posteriores no se atribuyen como nuevas pruebas funcionales.
+
+El inventario estático recoge 334 operaciones HTTP sobre 265 paths,
+55 operaciones compartidas, 55 módulos del motor, 21 enums del modelo físico,
+43 declaraciones de rutas, 149 nombres de CREATE TABLE del historial y
+144 schemas de solicitud con 806 propiedades. Los 899 componentes OpenAPI no
+se cuentan como funciones. Se corrige `docs/ai/OPERACIONES.md`: 55 operaciones
+registradas —38 diseño, 2 posición, 11 proyecto, 4 preparación— frente al límite
+de 50 por lote. La historia de IA2 conserva su cifra de aquella fase.
+
+La aceptación histórica mantiene sus refs y límites: MiMo P20 21/26,
+E/J 18/21, cinco casos fallidos conservados, DEMO/sandbox sin autoridad de
+fabricación ni tributación. El reporte enlaza ACTIVACION y no acredita
+conexiones externas nuevas. No se ejecutan pruebas del producto, llamadas IA,
+emisiones, pagos ni navegador; no se alteran stack, datos ni sesiones.
+
+La proyección HTML autónoma con índice, búsqueda, temas e impresión queda
+local en `.run/reports/`, con recibo de construcción/validación. El snapshot
+versionado se enlaza bajo demanda y se excluye en `.rgignore` para no volver
+a introducir carga documental en el arranque de los agentes.
+
+## 2026-10-17 · Investigación de experiencia y prompts preparados
+
+Por petición del dueño se prepara
+[el plan de experiencia](https://github.com/KaraAliOsman/framedex/blob/d97245987276784c9195662657cd807109c89fa1/docs/ux/2026-10-17/README.md): auditoría con 35 hallazgos,
+competencia/fuentes, flujos, dirección visual, renderer, IA/catálogos,
+documentos/operación, método y doce encargos más prompt maestro. Incluye tres
+láminas conceptuales HTML y doce imágenes propias seleccionadas con manifiesto.
+La implementación espera «inicia»; no se modifica código del producto.
+
+Se inspecciona código en `edcfd2844d2c2fc7cbb0d3b543b50e9089ab9b3f` y se reutiliza
+REVIEW sin rebuild/fixture/reset, con roles de estimación y taller. El SHA del
+build de los contenedores no se verificó. Se observa un cambio IA de ancho que
+produce propuesta correcta y se descarta; no se aplica. Se leen documentos
+existentes y se renderiza un plan de taller existente bajo RLS/transacción de
+solo lectura, sin emisión nueva. La escena omite ingletes 3D; el plano de
+ensamblaje observado corta/solapa códigos. Las filas de stock parecidas no se
+atribuyen a duplicación de BD.
+
+La cadena completa de catálogo ya tiene transporte multimodal por pasarela:
+imágenes/páginas sin texto. El helper limita PDF a 20 páginas y envía texto en
+vez de imagen si la página tiene texto; falta representación integral de
+layout/regiones/relaciones. Se corrige el diagnóstico inicial que confundía el
+payload textual del compilador con el transporte completo. No se registra una
+ausencia de visión inexistente.
+
+Se observan tramos de vídeos de NuveraPRO, Winart/Haustek, Moxisys y Logikal,
+con fuentes primarias y distinción entre observado/documentado/comercial/histórico.
+No se operan licencias comerciales ni se afirma un inventario privado exhaustivo.
+La nueva fuente del dueño conserva tema único, IA práctica, PDF como entrada,
+calidad de uso y pruebas al final. La propuesta clara/neutra no se convierte en
+preferencia detallada ya confirmada. Constitución y aceptaciones anteriores se
+conservan; se enlaza la futura reconciliación.
+
+Sin suites del producto ni nueva aceptación funcional. Validación documental de
+enlaces/estructura/manifiesto/diff al cierre. El navegador de la sesión rechazó
+el protocolo local file:// para las láminas; su renderizado no se da por verificado
+ni se intenta eludir esa restricción. Stack y sesiones del dueño se conservan.
+
+## 2026-10-17 · Implementación autorizada de la experiencia y cierre local
+
+La instrucción posterior «ahora empieza» autoriza construir. En
+`codex/v1-experiencia`, sobre `edcfd2844d2c2fc7cbb0d3b543b50e9089ab9b3f`, se
+integra tema claro único, navegación por rol, obra directa sin cliente obligatorio,
+biblioteca con decisiones heredadas e inspector progresivo. La IA contextual
+prepara precio con preferencias reales y continúa al PDF privado desde la muestra;
+la presentación de PDF/portal usa operaciones tipadas, firma de concurrencia,
+MFA/dueño, idempotencia e historial/deshacer. El dueño confirma usar preferencias
+guardadas y preguntar solo por datos imprescindibles.
+
+El catálogo entra por PDF con lectura multimodal por bloques recuperables. Se
+añaden uniones 45/90 y veta por eje, documentos comerciales/taller revisados,
+visor local PDF.js, relación materiales/dibujo y agrupación de causas/faltantes.
+Se preservan motor/Decimal, RLS/org, emitidos y clic humano para consecuencias.
+REVIEW se reconstruye sin fixture/reset y conserva datos; la campaña DB usa
+proyectos aislados que se detienen al finalizar.
+
+Campaña local posterior a la construcción: motor 1.064 + dos xfail esperados,
+backend 1.583, frontend completo 1.147 antes de los últimos ajustes (con corridas
+afectadas posteriores), integración 605 y pgTAP 1.483/97 archivos pasan. PG16
+limpio/poblado pasa. Los 19 escenarios de navegador quedan verdes en su última
+ejecución: 16 generales, editor afectado y dos recorridos finales de emisión/obra;
+no es una nueva corrida completa de 19. El cierre verifica render PDF, revisión
+a ancho completo y bytes del adjunto recibido en Mailpit. Lint/TypeScript/formato,
+build, guardas y generación API pasan. Se conserva el aviso de tamaño del chunk
+3D y siete avisos npm preexistentes; PDF.js no introduce los avisos reportados.
+
+Tres encargos con proveedor/worker reales en DEMO no son un nuevo resultado del
+harness IA. El tercero, `P-000016`, aplica el precio del motor y prepara un PDF de
+tres páginas desde la muestra. API confirma borrador, cero emitidos y cero correos;
+los antecedentes del fixture se prepararon mediante APIs de dominio. Seis
+[capturas seleccionadas](https://github.com/KaraAliOsman/framedex/blob/d97245987276784c9195662657cd807109c89fa1/docs/ux/2026-10-17/evidencia/README.md) y
+el [registro de construcción](https://github.com/KaraAliOsman/framedex/blob/d97245987276784c9195662657cd807109c89fa1/docs/ux/2026-10-17/10-implementacion.md)
+conservan procedencia y límites. El cambio ajeno de `golden_analytics.json` queda
+fuera de la entrega; `golden_extras.json` solo normaliza finales de línea.
+
+No se declara aceptación definitiva: faltan corpus fabricante/OCR regional,
+activos físicos aprobados y aceptación profesional independiente. El PDF usa un
+renderer separado; no existe una transacción única diseño/precio/PDF y varias
+superficies del negocio conservan su composición anterior.
+
+Referencia fija del código de cierre: `42ccac96823f53ee1b33e9d8baba00fb698e204d`.
+
+## 2026-10-17 · Segunda reconstrucción tras el rechazo del dueño
+
+El dueño rechaza la primera dirección por apariencia genérica, poca claridad y
+exceso de ceremonia. Confirma referencias «grok bot y dots de gpt»; mantiene logo,
+defaults guardados, IA capaz de preparar trabajo completo y revisión antes de
+consecuencias externas. La nueva dirección de Constitución usa papel blanco,
+tinta azul, azul de acción y acento cálido; es una decisión de implementación,
+sin atribuir al dueño la elección de cada token ni aceptación definitiva.
+
+En `codex/v1-experiencia`, [PR #159](https://github.com/KaraAliOsman/framedex/pull/159),
+P13–P20 quedan autoejecutados. Se reconstruyen Hoy/Obras, biblioteca, controles,
+iconos, lienzo/inspector y conversación compartida entre página y dock. La
+biblioteca mantiene cabecera/acción visibles en móvil. Catálogo usa foto o
+ilustración de familia y conserva la sección declarada separada. Fotos privadas
+de perfiles/acabados se normalizan, firman y restauran con eventos inmutables;
+API/RLS conservan el permiso de catálogo. Los PDF nuevos sellan presentación v2,
+sin alterar emitidos ni renderers anteriores. Clientes, cobranza y analítica
+heredan la base y navegación; no se reconstruye su composición completa.
+
+La investigación amplía fuentes públicas con Windowmaker, Klaes y A+W, y estudia
+Grok Bot/Dots oficiales. El [registro vigente](https://github.com/KaraAliOsman/framedex/blob/d97245987276784c9195662657cd807109c89fa1/docs/ux/2026-10-17/11-reconstruccion.md)
+separa vídeo observado, documentación, publicidad, construcción y límites. No
+acredita inspección privada exhaustiva ni superioridad universal. Proline y
+Aluminios 2000 no se han adjuntado; no se declara su importación probada.
+
+Campaña final: 2.662 motor/backend y dos xfail esperados; 1.167 frontend/106
+archivos en la corrida completa, con dos casos nuevos y corridas afectadas
+posteriores. Base aislada: 612 integración, 1.483 pgTAP/97 archivos y siete casos
+de fotos pasan. Los 19 escenarios de navegador tienen resultado verde en su
+última ejecución: 18/19 generales y ocho del editor tras corregir altura útil,
+sin presentar la suma como otra corrida completa. PostgreSQL 16 desde base
+limpia y actualizaciones pobladas pasa; el gate aislado termina con salida 0.
+Ruff, mypy, Django, ESLint/TypeScript, formato,
+guardas, generación API y build pasan; permanece el aviso de tamaño del chunk 3D.
+
+Dos muestras sintéticas recorren API y Storage privado con 201/200 y restauración.
+El job IA real `4a40661a-a045-41f3-a860-655d3683c272` conserva el fallo de alcance
+anterior y la corrección: «solo esta ventana» devuelve 498.769 CLP indicativos,
+iguales al motor, conserva ancho guardado y reconoce el cambio pendiente; no
+pregunta otra vez ni aplica, emite o envía. No es una evaluación nueva del harness.
+Se inspeccionan previews PDF de nueve páginas y pack de taller de diecinueve;
+no se emite una revisión nueva. Nueve [capturas seleccionadas](https://github.com/KaraAliOsman/framedex/blob/d97245987276784c9195662657cd807109c89fa1/docs/ux/2026-10-17/evidencia/README.md)
+conservan procedencia y hash sin redistribuir documentos de terceros.
+
+REVIEW se reconstruye sin fixture/reset, preservando datos y sesiones; los gates
+usan bases aisladas. El cambio ajeno `engine/tests/golden_analytics.json` queda
+excluido con SHA-256 `F6A97BEBCED724C4C80FBBA0170B43019BD6C409E62901E472E420138EEAC8B3`.
+Referencia fija del código de cierre: `dca9454bd7989f57a3f1b001bf1920b3f83a0a8d`.
+
+## 2026-10-17 · Reversión completa del rediseño por instrucción del dueño
+
+El dueño rechaza el resultado y pide «revierte los cambios». Se revierten las
+cinco confirmaciones de experiencia posteriores a `edcfd2844d2c2fc7cbb0d3b543b50e9089ab9b3f`,
+incluidas ambas direcciones visuales, IA, catálogo y documentos. El código del
+producto vuelve a ese ref; la limpieza previa y el cambio local ajeno de
+`engine/tests/golden_analytics.json` permanecen intactos. No continuar ni volver
+a aplicar los prompts del rediseño sin una nueva instrucción del dueño.
+
+La investigación, planes y capturas retirados del checkout permanecen en
+[el snapshot rechazado](https://github.com/KaraAliOsman/framedex/tree/d97245987276784c9195662657cd807109c89fa1/docs/ux/2026-10-17).
+Las entradas anteriores son históricas y no describen aceptación vigente. Sus
+enlaces a archivos retirados apuntan al snapshot de Git.
+
+REVIEW se reconstruye con el código restaurado: web, API y worker, sin fixture,
+reset, downgrade destructivo ni eliminación de datos/sesiones. Las dos migraciones
+aditivas ya aplicadas y su historial local se conservan sin uso por el código
+restaurado. El build web y el arranque API/worker pasan; se comprueba la respuesta
+HTTP y la igualdad de fuentes del producto con el ref anterior. El navegador
+local está deshabilitado en Work; no se afirma una inspección visual nueva.
+La PR #159 se retira sin merge ni despliegue productivo.
+
+## 2026-10-17 · Auditoría e investigación para Claude, sin implementación
+
+Por nueva instrucción del dueño se prepara el
+[paquete de investigación](../research/2026-10-17-claude/README.md): encargo
+trazable, auditoría con evidencia por archivo/ref, fuentes competitivas, recorridos,
+dirección visual, dibujos/texturas, documentos, IA trabajadora, catálogos/OCR,
+operación/CNC, plan de ejecución, criterios de cierre y once prompts no ejecutados.
+Se incorpora la [fuente de intención](sources/owner-research-handoff-2026-10.md)
+y se enlaza desde decisiones, dominios y mapa competitivo.
+
+Ref auditado `6f78e3299d93816991fb7c2fe2a2044458fc5e7a`, producto restaurado
+al estado `edcfd2844d2c2fc7cbb0d3b543b50e9089ab9b3f`. Se comprueban soporte
+existente de texturas/IA multimodal, límite de 20 páginas del helper, revisión
+tabular, folio/firma actuales y salida CNC neutra. Se conservan diferencias entre
+hecho de fuente, evidencia visual histórica, intención y propuesta futura.
+
+Se consultan fuentes públicas de nueve familias competitivas, Grok Bot/Dots,
+diseño, parsing documental y recomendaciones oficiales de Claude Opus 5.5.
+Se reexaminan capturas históricas de tres videos, sin afirmar reproducción nueva
+de todos ni acceso privado exhaustivo. La conexión de navegador no funciona tras
+la activación declarada; no hay visita visual nueva. Los PDF exactos Proline y
+Aluminios 2000 y la homologación física CNC siguen pendientes.
+
+El plan de construcción futuro agrupa bug fixing y pruebas al final, conforme al
+dueño, conservando invariantes y checks de cierre. No se cambia código de producto,
+no se ejecutan prompts, no se reinicia el stack y no se tocan datos/sesiones.
+El golden ajeno mantiene SHA-256
+`F6A97BEBCED724C4C80FBBA0170B43019BD6C409E62901E472E420138EEAC8B3`.
+
+## 2026-10-18 · Implementación v1 en curso (etapas 01–06, sin commit)
+
+La rama `claude/v1-implementacion` ejecuta los prompts 01–10 por instrucción del dueño.
+No hay commit ni PR. El
+[registro de estado](../research/2026-10-17-claude/estado-implementacion.md) es la
+fuente viva de las etapas, decisiones e incidencias. Estado de la etapa 06, verificado
+en el árbol de trabajo:
+
+- Hay numeración comercial por empresa. El valor por defecto es «N.º 1», con prefijo y
+  siguiente número editables. El número se asigna al preparar la primera versión emitible,
+  de forma idempotente y bloqueando la fila. Las revisiones heredan el número. Migración
+  `20270130000300`.
+- Hay tres composiciones de cotización: Esencial, Proyecto y Alternativas.
+  - Las condiciones aparecen una sola vez.
+  - La huella no aparece en el cuerpo comercial y la URL se muestra corta.
+  - La aceptación sigue la política: por defecto no hay, y un enlace sirve para consultar.
+- Hay cuatro variantes de taller y compra sobre los mismos datos sellados de DOC-05:
+  secuencia, lista compacta, por ventana y pedido por obra.
+- Editor del documento en Cotización:
+  - borrador real sin número;
+  - diseño, bloques, textos y presentación;
+  - deshacer y rehacer;
+  - guardar en la obra o como diseño de la empresa.
+- Paso de IA `document_layout`: modifica el mismo objeto de forma reversible y nunca
+  modifica cifras.
+- Las muestras PDF se renderizaron localmente y se inspeccionaron como imagen con
+  fixtures DEMO. No hubo revisión en navegador ni stack real.
+- La edición de PDF externos queda pendiente de una decisión de licencia:
+  [evaluación](../research/2026-10-17-claude/evaluacion-editor-pdf-externo.md).
+
+## 2026-10-18 · Implementación v1: etapas 07–09 (sin commit)
+
+Árbol de trabajo de `claude/v1-implementacion`; detalle en el
+[registro de estado](../research/2026-10-17-claude/estado-implementacion.md).
+
+- Etapa 07:
+  - «Materiales y corte» de la obra (`projects/materials.py`) lee los resultados del
+    motor guardados por ventana y separa consumo, borrador de corte y barras a comprar.
+  - El corte usa `optimize_cut` con barras y perfil de corte declarados. Cuando falta un
+    dato, se listan las causas exactas.
+  - Hay un botón «Orden de corte» en la obra y en el editor.
+  - El lenguaje de «autoridad» se reemplazó por causas y acciones en precio y editor.
+- Etapa 08:
+  - El tablero de taller agrupa las decisiones por causa.
+  - Hay un contrato de adaptadores CNC: solo intercambio neutro, y homologar exige
+    evidencia física.
+  - Al crear un cliente se muestran clientes parecidos.
+  - El acceso por enlace muestra el correo y permite reenviar.
+- Etapa 09:
+  - El asistente ya no tiene tarjetas de cobro (O09).
+  - Se retiraron reglas CSS huérfanas.
+  - Se hizo una pasada editorial: nombre de obra antes que código.
+
+No hubo revisión en navegador ni proveedor IA real. Las pruebas y la verificación se
+concentran en la etapa 10.
+
+
+## 2026-10-18 · REVIEW con la implementación de Claude
+
+Verificado en el árbol de trabajo de `claude/v1-implementacion`, sin commit:
+API, worker e interfaz reconstruidos para revisar en `http://127.0.0.1:5179`.
+Se conservó la base poblada. Su historial local tenía `20270130000000`
+(`presentation_changes`) y `20270131000000` (`catalog_visual_references`) de
+una revisión anterior; el SQL actual de valores habituales se aplicó mediante
+un alias local `20270130000001`, sin reemplazar el historial. El adaptador
+local y los recibos están en `.run/review/`; no forman parte de las migraciones
+canónicas del repositorio.
+
+La carga real detectó un permiso de lectura faltante en las columnas nuevas de
+`projects`: la migración `20270130000400_v1_project_read_grants.sql` concede
+SELECT de `design_defaults` y `commercial_number` al rol `authenticated`.
+RLS permanece habilitado y `anon` sigue sin lectura de esas columnas.
+Comprobación acotada: build de frontend aprobado, inicio Proyectos visible
+con la navegación nueva, y API autenticada de lista, detalle y materiales
+con HTTP 200. No constituye el cierre de la campaña de pruebas de la etapa 10.
+
+## 2026-10-18 · Investigación profunda y elección pendiente
+
+Incorporada la nueva [fuente del dueño](sources/owner-revision-profunda-2026-10-18.md):
+rechazo de la experiencia de Claude, asistente Chat/Trabajo y **Omitir todo**,
+catálogos reales y tres propuestas antes de implementar. La
+[síntesis](research/revision-profunda-2026-10-18.md) y el
+[dossier](../research/2026-10-18-revision-profunda/README.md) reúnen quince familias,
+18 ejes, 270 casillas, 176 URLs competitivas y 28 imágenes seleccionadas.
+Se delimitan manuales, material comercial, fotogramas y REA parcial sin acceso
+a suites privadas ni algoritmos de fabricación.
+
+Auditoría local en `claude/v1-implementacion`, HEAD `6f78e329` más cambios locales
+de Claude: historial existente pero continuidad confusa; Completado con ventanas
+pendientes; lista plana DEMO; una apertura reversible sí funcionó; Corte requiere
+mejor exponer el requisito/rol. No es aceptación final. Se actualizan intención,
+asistente, catálogo, diseño y mapa competitivo con enlaces y límites fechados.
+Estudio/Mesa de obra/Centro de encargos y el prompt para Claude quedan pendientes
+de elección del dueño; no se implementó el rediseño ni se borraron demos.
+
+## 2026-10-18 · Dirección final del dueño y paquete integrado para Claude
+
+La [corrección posterior](sources/owner-final-direction-2026-10-18.md) resuelve
+Mesa de obra + Estudio como dos vistas del mismo producto manual, Mesa inicial
+recomendada y copiloto opcional en popup global. El usuario trabaja y delega;
+el plan base es completo sin IA. Los píxeles de los conceptos previos no quedan
+aprobados. Desarrollo primero y campaña de pruebas/corrección al final.
+
+Tres revisiones especializadas integradas en el
+[paquete final](../research/2026-10-18-direccion-final/README.md): producto/editor,
+copiloto/planes y diseño/documentos/operación. Incluye dirección final, tres
+contratos, prompt maestro, siete etapas y criterios de entrega. Reutiliza la
+investigación competitiva anterior con sus límites; no la presenta como nuevas
+sesiones privadas ni convierte REA público en fórmulas de fabricación.
+
+Se contrastó código del árbol `claude/v1-implementacion`, HEAD `6f78e329` más
+cambios locales, sin ejecutar el rediseño ni nuevas pruebas de producto.
+Se conserva editor/operaciones/documentos/billing existentes. PRODUCT y cláusulas
+de Constitución requieren conciliación al implementar; las invariantes no
+cambian. Se actualizan decisiones, visión, asistente, proyecto, catálogo, diseño,
+índice y síntesis; el dossier anterior señala los prompts/composición superados.
+No se publica catálogo, activa cobro, borra demo ni declara aceptación final.
+
+## 2026-10-18 · Créditos comunes, referencias profesionales y personaje Grok Bot
+
+La [aclaración del dueño](sources/owner-credits-and-grokbot-2026-10-18.md) confirma MiMo para todos los planes IA hasta cambio expreso, diferencias por créditos/capacidad y posible valor profesional adicional. DeepSeek queda candidato futuro sin validar/configurar; anual 30/49/99/149 es referencia, no tarifa. La fidelidad a Grok Bot se centra en el personaje animado, con estilos compatibles con DEKOPEN.
+
+Se amplía el [paquete para Claude](../research/2026-10-18-direccion-final/README.md) a seis contratos y siete prompts: PRD-03/billing real, cuotas versionadas y reservas, veinte referencias profesionales y personaje/estados/movimiento. Se distinguen débito fijo actual, costo físico, saldo y presupuesto; no se activan ofertas, cambian cuotas legacy ni migran contratos. La campaña 07 incorpora casos de modelo común, anualidad, packs, concurrencia y movimiento.
+
+Evidencia externa nueva: 17 fuentes oficiales adicionales a tres sectoriales, tres imágenes inspeccionadas y demo pública Grok Bot con cuatro capturas seleccionadas. REA analiza tres de 62 scripts públicos, con grafo parcial/truncado; el lanzamiento de runtime recibió WAF, por lo que no acredita la interfaz del bot. No se operaron licencias privadas. Se actualizan fuente, decisiones, visión, asistente, proveedor, diseño, suscripción/créditos, síntesis e índice. No se implementó código del producto ni se ejecutaron suites, proveedores o pagos.
+
+## 2026-10-18 · Versión definitiva antes de las conexiones de producción
+
+La [aclaración del dueño](sources/owner-launch-boundary-2026-10-18.md) exige
+todo el alcance funcional listo para revisión; solo pueden quedar las conexiones
+y configuración finales de Railway, Supabase y pagos de producción. Se precisan
+preparación de archivos/comandos/migraciones y entrega de `production-handoff.md`.
+Persistencia, auth/RLS, IA, créditos y lógica de pagos no quedan aplazados. Una
+función obligatoria o fuente técnica ausente sigue impidiendo la entrega completa.
+
+Se actualizan README, dirección, prompt maestro, criterios y 07 del paquete,
+decisiones, síntesis e índice. Desarrollo y cierre técnico preceden a revisión y
+aprobación del dueño; conexiones y pruebas del entorno de lanzamiento siguen a
+esa aprobación antes de publicar. Este cambio es documental: no ejecuta Claude,
+servicios, suites, pagos ni despliegues y no acredita aceptación del producto.
+
+## 2026-10-18 · Revisión abierta desde dirección de innovación
+
+El [nuevo encargo](sources/owner-innovation-review-2026-10-18.md) solicita
+investigar mejoras/adiciones y pensar ampliamente. El
+[dossier](../research/2026-10-18-innovacion/README.md) reúne veinte fuentes
+primarias de quince organizaciones, dieciocho páginas accesibles y dos Odoo
+indexadas cuya apertura falló. Reutiliza la investigación sectorial anterior
+y contrasta puntos de entrada de código en `claude/v1-implementacion`, HEAD
+`6f78e329` más cambios locales, sin nuevas pruebas de runtime.
+
+Se proponen veinticuatro oportunidades, seis apuestas abiertas y seis prioridades:
+revisión por etapa, catálogo con impacto, alternativas, consecuencias de cambios,
+primera propuesta propia y aprendizaje de margen. Se distinguen capacidades ya
+existentes, cierre comprometido y ampliación opcional. La muestra/pilotos y
+beneficios comerciales son hipótesis, no entrevistas o ahorro demostrado.
+Se añade síntesis e índice; no se modifica el prompt de implementación ni se
+aprueban nuevas funciones, tarifas, proveedores, pagos o despliegues.
+
+## 2026-10-18 · Adjuntos del copiloto y refinamientos con sentido
+
+El [seguimiento del dueño](sources/owner-attachments-and-innovation-2026-10-18.md)
+recibe favorablemente las ideas y añade documentos, imágenes y demás archivos
+compatibles. Se integra ese requisito en contrato 03, prompt maestro/05,
+criterios A15–A17 y cierre 07. Formatos, persistencia, cobertura real y evidencia
+por campo quedan especificados; no se declara implementación ni prueba.
+
+La [nota adicional](../research/2026-10-18-innovacion/06-archivos-y-mejoras-con-sentido.md)
+consulta cinco páginas oficiales de MiMo/Adobe/Microsoft/Autodesk y contrasta
+extractores, ingestión y transporte del árbol local existente. MiMo documenta
+visión para 2.6 Pro; no hubo llamada a la cuenta configurada. Propone fuentes
+reutilizables de obra, contradicciones localizadas y selección con nota como
+refinamientos, distinguiéndolos de requisitos ya comprometidos. La valoración
+general del dueño no convierte toda la cartera en alcance simultáneo de salida.
+Se actualizan fuentes, decisiones, asistente, síntesis e índice. Solo documentación;
+sin tocar producto, fórmulas, golden, Constitución, cobros ni configuración.
+
+## 2026-10-18 · Inventario de conexiones para lanzamiento
+
+La consulta del dueño sobre Railway, Supabase, Flow, dominio y Cloudflare se
+contrasta con configuración y documentación oficial. La [síntesis](quality/production-connections.md)
+conserva Redis exigido por producción, servicios/cron existentes, SMTP para Auth
+y Django, credenciales MiMo y diferencias Flow plataforma/taller. Railway
+documenta SMTP desde Pro; Hobby requiere adaptar envío a HTTPS. El respaldo de
+base Supabase no incluye objetos de Storage. Se distingue requisito, opción y
+configuración histórica del runbook; sin contratar, activar ni probar producción.
+
+## 2026-10-19 · Candidata definitiva: desarrollo 01–06 y campaña 07
+
+Claude implementa la dirección final (Mesa/Estudio, cotizador manual, copiloto
+en popup con hilos, adjuntos, tres autonomías, recibo, resolvedor de
+capacidades, retenciones de créditos y planes) y ejecuta la campaña 07 con MiMo
+real en REVIEW. La campaña corrige un defecto crítico de destino sellado y
+nueve altos/medios. Estado verificado resumido en
+[estado vigente](state/current-reality.md); evidencia en
+`docs/redesign/2026-10-18-final/acceptance.md`. Sin commit, despliegue ni
+activación comercial; pendiente la aprobación del dueño.
+
+## 2026-10-18 America/Santiago (19-10 UTC) · Revisión local de la candidata comprometida
+
+Se verifica HEAD `de6cfcab` en `claude/v1-implementacion` y se reutiliza REVIEW
+sin reconstruir ni alterar datos. Se abren las pantallas para el dueño, se
+ejercita una apertura y se deshace, se recupera historial del popup al navegar,
+y se descarga/renderiza una cotización real de dos páginas. Se documentan
+pendientes falsos del checklist, iframe PDF vacío en IAB, límites visuales y
+catálogo Proline todavía no cotizable. Se actualiza el ref de estado vigente;
+sin cambios de producto, emisión, cobros, nuevas llamadas IA ni despliegue.
+Detalle en [revisión local](quality/review-2026-10-18.md).
+
+## 2026-10-19 · PDF rápidos y destino del asistente
+
+Tras la revisión del dueño («con nombre y una ventana ya puedes generar
+cualquier PDF»; «le dije que edite y me hizo otra cotización»), Claude agrega
+borradores rápidos sin persistencia (cotización, corte, plano, materiales),
+fija el destino del asistente a la obra/ventana abierta y calma Obra, Inicio,
+editor y popup. Prototipo actualizado en el lienzo de diseño. Estado en
+[estado vigente](state/current-reality.md). Sin commit ni despliegue.
+
+## 2026-10-19 · Ejecución local para revisión del dueño
+
+Se revisa `6695c9d2` y el trabajo pendiente de Claude, se reconstruyen API y
+worker de REVIEW preservando datos y configuración, y se deja abierta la obra
+P-000023 con popup contextual. Se descargan los cuatro PDF rápidos y se
+comprueba tras recarga que sigue en borrador sin precio aplicado. Pasan 61
+tests backend y 11 frontend dirigidos. Sin nuevas llamadas IA, emisión,
+reset ni despliegue. Alcance y límites en
+[revisión local del 19-10](quality/review-2026-10-19.md).

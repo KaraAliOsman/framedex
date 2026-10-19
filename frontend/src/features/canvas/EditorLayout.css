@@ -491,7 +491,6 @@
 .starter-family h4 {
   margin: var(--space-3) 0 var(--space-2);
   font-size: var(--type-label);
-  text-transform: uppercase;
 }
 .starter-family > div {
   display: grid;
@@ -512,13 +511,6 @@
 .editor-library .starter-search input {
   width: 100%;
   box-sizing: border-box;
-}
-.editor-assistant {
-  padding: var(--space-3);
-  border-top: 1px solid var(--border-default);
-}
-.editor-assistant > summary {
-  cursor: pointer;
 }
 .editor-operation-message {
   position: absolute;
@@ -661,5 +653,36 @@
   }
   .assembly-canvas .model3d-toggle {
     display: none;
+  }
+}
+
+/* The drawing owns the editor's height: the face/elevation choices float over
+   the sheet's top-left corner instead of taking a row of their own. */
+.assembly-editor .assembly-elevation > .assembly-view-choices {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  z-index: var(--z-island);
+}
+
+/* One strip row on desktop: below 1600px the backlink, code and name
+   compact so the strip never wraps into a second row over the drawing. */
+@media (max-width: 1599px) {
+  .position-editor .position-strip {
+    gap: var(--space-6px);
+    min-height: 48px;
+    padding-block: var(--space-6px);
+  }
+  .position-editor .position-strip .editor-position-code {
+    display: none;
+  }
+  .position-editor .editor-project-link {
+    max-width: 8rem;
+  }
+  .position-editor .position-strip .editor-location {
+    width: clamp(8rem, 11vw, 13rem);
+  }
+  .position-editor .editor-system-chip {
+    max-width: 11rem;
   }
 }

@@ -1,9 +1,9 @@
 import { StatusBadge } from "../../ui/StatusBadge";
 import { ValidatedForm } from "../../ui/FormValidation";
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import { ApiError } from "../../api/apiMutator";
 import { UnsavedChangesGuard } from "../../app/UnsavedChangesGuard";
@@ -42,26 +42,30 @@ import { projectNameWrite } from "./projectNames";
 import { useProjectView } from "./useProject";
 import "./projects.css";
 import "./project-workspace.css";
+import "./project-head.css";
+import { QuickPdfMenu } from "./QuickPdfMenu";
 import { PositionThumb } from "./PositionThumb";
 import { PositionCollection, positionReadiness } from "./PositionCollection";
 import { ProjectBom } from "./ProjectPositionEditor";
 import { ProjectQuotationPanel } from "./ProjectQuotationPanel";
+import { QuotationDocument } from "./QuotationDocument";
+import { PositionEditorHost } from "./ProjectPositionEditor";
+import { StudioStrip, WorkViewSwitch } from "./StudioStrip";
+import { useProjectWorkspaceState } from "./ProjectWorkspaceState";
+import { newCreationId } from "./positionDraft";
+import "./studio.css";
 import { ProjectImportsPanel } from "./ProjectImportsPanel";
 import { ProjectPaymentsPanel } from "./ProjectPaymentsPanel";
 import { ProjectServicesPanel } from "./ProjectServicesPanel";
 import { MeasurementPanel } from "./MeasurementPanel";
 import { ProjectThermalPanel, PositionThermal } from "./ProjectThermalPanel";
 import { RectificationPanel } from "./RectificationPanel";
-import {
-  Button,
-  DeniedState,
-  DimLoader,
-  EmptyState,
-  PageHeader,
-  Tabs,
-  Drawer,
-  useConfirm,
-} from "../../ui";
+import { ProjectsHome } from "./ProjectsHome";
+import { ProjectDesignDefaults } from "./DesignDefaults";
+import { InlineEdit } from "../../ui/InlineEdit";
+import { Icon } from "../../ui/Icon";
+import { Menu, type MenuItem } from "../../ui/Overlays";
+import { DeniedState, Loading, Tabs, Drawer, useConfirm } from "../../ui";
 
 const ProjectFlowPanels = lazy(() =>
   import("./ProjectFlowPanels").then((module) => ({ default: module.ProjectFlowPanels })),
@@ -88,18 +92,6 @@ const statuses: Record<ProjectResponse["status"], TranslationKey> = {
   IN_PRODUCTION: "projects.production",
   COMPLETED: "projects.completed",
   CANCELLED: "projects.cancelled",
-};
-
-/** Status-only next step for the list row — the list payload has no
- * payments/approvals, so this stays a coarse hint; the detail header runs the
- * full `projectNextAction` once those queries exist. */
-const listNextKeys: Record<ProjectResponse["status"], TranslationKey> = {
-  DRAFT: "projects.nextDraft",
-  QUOTED: "projects.nextQuoted",
-  APPROVED: "projects.nextApproved",
-  IN_PRODUCTION: "projects.nextInProduction",
-  COMPLETED: "projects.nextCompleted",
-  CANCELLED: "projects.nextCancelled",
 };
 
 function metadata(project?: ProjectResponse): ProjectWriteRequest {
@@ -243,7 +235,7 @@ function ProjectMetadataForm({
           const props = {
             name,
             value: draft.value[name] ?? "",
-            required: true,
+            required: name === "name",
             maxLength,
             "aria-label": t(label),
             onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
@@ -256,12 +248,17 @@ function ProjectMetadataForm({
             <label key={name}>
               <span>
                 {t(label)}
-                <span className="form-required" aria-hidden="true">
-                  {" "}
-                  *
-                </span>
+                {name === "name" ? (
+                  <span className="form-required" aria-hidden="true">
+                    {" "}
+                    *
+                  </span>
+                ) : null}
               </span>
               {type === "textarea" ? <textarea {...props} /> : <input {...props} type={type} />}
+              {name === "client_name" ? (
+                <small>Puedes dejarlo para después; se necesita para emitir la cotización.</small>
+              ) : null}
             </label>
           );
         })}
@@ -309,7 +306,11 @@ function ProjectMetadataForm({
           </p>
         )}
         <div className="form-actions">
-          <button type="submit" disabled={disabled || fieldError !== null}>
+          <button
+            type="submit"
+            className="ui-button ui-button--primary"
+            disabled={disabled || fieldError !== null}
+          >
             {t("projects.save")}
           </button>
           <button type="button" disabled={disabled} onClick={onCancel}>
@@ -336,6 +337,37 @@ export type FactsSection =
   | "activity"
   | "imports"
   | "compare";
+
+/** Four views of the work (constitution §5.3). Specialised panels stay one
+ * click away inside their view instead of eight permanent tabs. */
+type ProjectView = "windows" | "quote" | "materials" | "activity";
+const VIEW_ENTRY: Record<ProjectView, FactsSection | null> = {
+  windows: null,
+  quote: "quote",
+  materials: "production",
+  activity: "activity",
+};
+const VIEW_PARTS: Record<ProjectView, [FactsSection, string][]> = {
+  windows: [],
+  quote: [
+    ["quote", "Propuesta"],
+    ["pricing", "Precio y margen"],
+    ["payments", "Cobros"],
+    ["thermal", "Térmica"],
+  ],
+  materials: [],
+  activity: [
+    ["activity", "Actividad"],
+    ["documents", "Documentos"],
+    ["compare", "Comparar revisiones"],
+  ],
+};
+function viewOf(section: FactsSection | null): ProjectView {
+  if (section === null || section === "imports") return "windows";
+  if (["quote", "pricing", "payments", "thermal"].includes(section)) return "quote";
+  if (section === "production") return "materials";
+  return "activity";
+}
 
 interface SnapshotPosition {
   position_index: number;
@@ -610,12 +642,20 @@ function ProjectHeader({
   canWrite,
   canRelease,
   onOpenSection,
+  onRename,
+  onEditDetails,
+  menu = [],
+  viewSwitch,
 }: {
   project: ProjectResponse;
   orgId: string;
   canWrite: boolean;
   canRelease: boolean;
   onOpenSection: (section: FactsSection) => void;
+  onRename?: (name: string) => void;
+  onEditDetails?: () => void;
+  menu?: MenuItem[];
+  viewSwitch?: JSX.Element;
 }): JSX.Element {
   const payments = useQuery({
     queryKey: ["projects", "payments-summary", orgId, project.id],
@@ -674,114 +714,140 @@ function ProjectHeader({
     approvalsList,
     now,
   );
+  const actionLabel = action
+    ? t(action.labelKey).replace("{count}", String(action.count ?? ""))
+    : null;
+  // The commercial track follows a quotation once it left the draft; while
+  // drafting, every document is already available from «Sacar PDF».
+  const showTrack = project.status !== "DRAFT";
   return (
     <div className="project-head">
       <div className="project-head__row">
-        <div>
-          <h1>{project.name || project.code}</h1>
+        <div className="project-head__identity">
+          <h1 className="project-head__title">
+            {canWrite && onRename ? (
+              <InlineEdit
+                value={project.name || project.code}
+                ariaLabel="Nombre de la obra"
+                onCommit={onRename}
+              />
+            ) : (
+              project.name || project.code
+            )}
+          </h1>
           <p className="project-head__meta">
-            {project.name ? <span className="project-head__code">{project.code}</span> : null}
-            <StatusBadge
-              showIcon={false}
-              className="status-chip"
-              data-status={project.status.toLowerCase()}
-            >
+            <StatusBadge showIcon={false} data-status={project.status.toLowerCase()}>
               {t(statuses[project.status])}
             </StatusBadge>
-            {project.client_name && (
-              <>
-                {" · "}
-                {project.client_id ? (
-                  <Link to={`/clients/${project.client_id}`}>{project.client_name}</Link>
-                ) : (
-                  <span>{project.client_name}</span>
-                )}
-              </>
+            {project.client_name ? (
+              project.client_id ? (
+                <Link to={`/clients/${project.client_id}`}>{project.client_name}</Link>
+              ) : (
+                <span>{project.client_name}</span>
+              )
+            ) : canWrite && onEditDetails ? (
+              <button type="button" className="project-head__add" onClick={onEditDetails}>
+                <Icon name="plus" size={16} />
+                Agregar cliente
+              </button>
+            ) : (
+              <span className="project-head__missing">Sin cliente</span>
             )}
-            {" · "}
-            <time dateTime={project.updated_at}>{formatDate(project.updated_at)}</time>
+            <span className="project-head__code" title="Código de la obra">
+              {project.code}
+            </span>
+            {project.current_revision ? (
+              <span className="project-head__revision">
+                {formatRevision(project.current_revision)}
+              </span>
+            ) : null}
+            {project.status === "DRAFT" && project.current_pricing_operation_id ? (
+              <span className="project-head__lock">Borrador · precio aplicado</span>
+            ) : null}
           </p>
         </div>
-        {action && (
-          <div className="project-head__action">
-            {action.to ? (
-              <Link className="primary-action" to={action.to}>
-                {t(action.labelKey).replace("{count}", String(action.count ?? ""))}
+        {viewSwitch}
+        <div className="project-head__side">
+          <div className="project-head__total">
+            <span>Total con IVA</span>
+            <strong>
+              {project.pricing_current
+                ? formatMoney(project.total_price_gross, project.currency)
+                : "Sin precio"}
+            </strong>
+          </div>
+          {canWrite && project.status === "DRAFT" && (project.position_count ?? 0) > 0 ? (
+            <QuickPdfMenu projectId={project.id} orgId={orgId} />
+          ) : (canWrite || canRelease) && (project.position_count ?? 0) > 0 ? (
+            <Link className="ui-button" to={`/projects/${project.id}?section=production&tab=cut`}>
+              <Icon name="cut" size={16} /> Orden de corte
+            </Link>
+          ) : null}
+          {action && actionLabel ? (
+            action.to ? (
+              <Link className="ui-button ui-button--primary" to={action.to}>
+                {actionLabel}
               </Link>
             ) : (
               <button
-                className="primary-action"
+                className="ui-button ui-button--primary"
                 onClick={() => action.section && onOpenSection(action.section)}
                 type="button"
               >
-                {t(action.labelKey).replace("{count}", String(action.count ?? ""))}
+                {actionLabel}
               </button>
-            )}
-          </div>
-        )}
+            )
+          ) : null}
+          {menu.length > 0 ? <Menu label="Más" items={menu} /> : null}
+        </div>
       </div>
-      <dl className="project-head__facts">
-        <div>
-          <dt>Obra · dirección de entrega</dt>
-          <dd>
-            {project.delivery_address || "Sin dato · declara la dirección en Editar proyecto"}
-          </dd>
-        </div>
-        <div>
-          <dt>
-            Total con IVA · {formatRevision(project.accepted_revision || project.current_revision)}
-          </dt>
-          <dd className="project-number">
-            {project.pricing_current
-              ? formatMoney(project.total_price_gross, project.currency)
-              : "Sin dato · calcula y aplica el precio"}
-          </dd>
-          <dd>
-            {project.pricing_current
-              ? project.accepted_source || "Fuente: precio aplicado del motor comercial"
-              : "El borrador aún no tiene precio aplicado"}
-          </dd>
-        </div>
-        <div>
-          <dt>Vigencia</dt>
-          <dd>
-            {project.quotation_valid_until
-              ? formatDate(project.quotation_valid_until)
-              : "Sin dato · declárala en Cotización"}
-          </dd>
-          <dd>{project.quotation_validity_source || "La fecha se revisa antes de emitir"}</dd>
-        </div>
-      </dl>
-      {(project.client_email ||
-        project.client_phone ||
-        project.notes_commercial ||
-        project.notes_internal) && (
-        <details className="project-head__contact">
-          <summary>Contacto y notas de la obra</summary>
-          {project.client_email && <p>{project.client_email}</p>}
-          {project.client_phone && <p>{project.client_phone}</p>}
-          {project.notes_commercial && (
-            <p>
-              Condiciones comerciales: <span>{project.notes_commercial}</span>
-            </p>
-          )}
-          {project.notes_internal && (
-            <p>
-              Nota interna: <span>{project.notes_internal}</span>
-            </p>
-          )}
-        </details>
-      )}
-      <ol aria-label={t("projects.lifecycle")} className="commercial-track">
-        {steps.map((step) => (
-          <li className="commercial-step" data-state={step.state} key={step.key}>
-            <span className="commercial-step__marker" aria-hidden="true" />
-            <span className="commercial-step__label">{t(step.labelKey)}</span>
-            {step.detail && <span className="commercial-step__detail">{step.detail}</span>}
-          </li>
-        ))}
-      </ol>
+      {showTrack ? (
+        <ol aria-label={t("projects.lifecycle")} className="commercial-track">
+          {steps.map((step) => (
+            <li className="commercial-step" data-state={step.state} key={step.key}>
+              <span className="commercial-step__marker" aria-hidden="true" />
+              <span className="commercial-step__label">{t(step.labelKey)}</span>
+              {step.detail && <span className="commercial-step__detail">{step.detail}</span>}
+            </li>
+          ))}
+        </ol>
+      ) : null}
     </div>
+  );
+}
+
+/** Work and client details that used to crowd the header: shown with the
+ * activity, editable from «Datos de la obra y del cliente». */
+function ProjectFacts({ project }: { project: ProjectResponse }): JSX.Element {
+  const rows: [string, string][] = [
+    ["Dirección de obra", project.delivery_address || "Sin dato"],
+    ["Correo del cliente", project.client_email || "Sin dato"],
+    ["Teléfono", project.client_phone || "Sin dato"],
+    [
+      "Vigencia de la cotización",
+      project.quotation_valid_until
+        ? formatDate(project.quotation_valid_until)
+        : "Se define al emitir",
+    ],
+    ["Condiciones comerciales", project.notes_commercial || "Sin notas"],
+    ["Nota interna", project.notes_internal || "Sin notas"],
+  ];
+  return (
+    <section className="project-facts" aria-labelledby="project-facts-title">
+      <h3 id="project-facts-title">Datos de la obra</h3>
+      <dl>
+        {rows.map(([label, value]) => (
+          <div key={label}>
+            <dt>{label}</dt>
+            <dd
+              className={value === "Sin dato" || value === "Sin notas" ? "is-missing" : undefined}
+            >
+              {value}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </section>
   );
 }
 
@@ -1192,6 +1258,7 @@ export function ProjectPages(): JSX.Element {
       key={`${identity}:${id ?? "list"}`}
       identity={identity}
       orgId={org.id}
+      orgName={org.name}
       id={id}
       canWrite={org.role === "OWNER" || org.role === "ESTIMATOR"}
       canSendEnvio={org.role === "OWNER" || org.role === "WORKSHOP_MANAGER"}
@@ -1208,6 +1275,7 @@ type View = {
 function ProjectWorkspace({
   identity,
   orgId,
+  orgName,
   id,
   canWrite,
   canSendEnvio,
@@ -1215,6 +1283,7 @@ function ProjectWorkspace({
 }: {
   identity: string;
   orgId: string;
+  orgName: string;
   id?: string;
   canWrite: boolean;
   canSendEnvio: boolean;
@@ -1255,6 +1324,7 @@ function ProjectWorkspace({
   const [mustReload, setMustReload] = useState(false);
   const lifetime = useRef<AbortController | null>(null);
   const locked = useRef(false);
+  const routeLocation = useLocation();
 
   useEffect(() => {
     const requested = params.get("correo") === "cotizacion" ? "quote" : params.get("section");
@@ -1302,6 +1372,36 @@ function ProjectWorkspace({
     refetchOnReconnect: false,
   });
   const query = id ? detailQuery : listQuery;
+  const work = useProjectWorkspaceState({
+    userId: identity.split(":")[0]!,
+    orgId,
+    project: id ? (detailQuery.data?.project ?? null) : null,
+    section: openSection,
+  });
+  // A creation keeps one stable id while its route is open (draft identity).
+  const creationId = useMemo(
+    () => newCreationId(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [work.editorRoute?.kind, routeLocation.key],
+  );
+  /** Navigations that keep the same work and editing session pass the
+   * guards silently; leaving the work or switching the edited position asks. */
+  const sameSession = useCallback(
+    (next: { pathname: string; search: string }) => {
+      if (!id) return false;
+      const base = `/projects/${id}`;
+      if (next.pathname !== base && !next.pathname.startsWith(`${base}/positions/`)) return false;
+      const session = work.sessionId;
+      const edit = /\/positions\/([^/]+)\/edit$/.exec(next.pathname);
+      if (edit) return !session || edit[1] === session;
+      if (next.pathname.endsWith("/positions/new")) return !session || session === "new";
+      const nextParams = new URLSearchParams(next.search);
+      const studio = nextParams.get("view") === "estudio" && !nextParams.get("section");
+      const position = nextParams.get("position");
+      return !studio || !session || !position || position === session;
+    },
+    [id, work.sessionId],
+  );
 
   // Workspace-first pattern (same as /clients and /production): land on the
   // first vano's detail card rather than an empty hint pane.
@@ -1436,6 +1536,35 @@ function ProjectWorkspace({
     }
   }
 
+  async function rename(project: ProjectResponse, name: string): Promise<void> {
+    const controller = lifetime.current;
+    if (!controller || controller.signal.aborted || locked.current || mustReload) return;
+    locked.current = true;
+    setBusy(true);
+    setError("");
+    try {
+      const response = await projectsUpdate(
+        project.id,
+        { name, expected_updated_at: project.updated_at },
+        { signal: controller.signal, headers: { "X-Organization-ID": orgId } },
+      );
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      if (controller.signal.aborted) return;
+      projectNameWrite(orgId, project.id, name);
+      void query.refetch();
+    } catch (caught) {
+      if (controller.signal.aborted) return;
+      const status = caught instanceof ApiError ? caught.status : null;
+      setError(t(status === 409 || status === 412 ? "projects.conflict" : "projects.uncertain"));
+      setMustReload(status === 409 || status === 412);
+    } finally {
+      if (!controller.signal.aborted) {
+        locked.current = false;
+        setBusy(false);
+      }
+    }
+  }
+
   async function clone(project: ProjectResponse): Promise<void> {
     const controller = lifetime.current;
     if (!controller || controller.signal.aborted || locked.current || mustReload) return;
@@ -1490,7 +1619,7 @@ function ProjectWorkspace({
     return () => window.removeEventListener("scroll", onScroll);
   }, [id, orgId, query.data]);
 
-  if (query.isPending) return <DimLoader label={t("projects.loading")} />;
+  if (query.isPending) return <Loading label={t("projects.loading")} />;
   if (query.isError) {
     return (
       <section className="projects-page">
@@ -1510,416 +1639,384 @@ function ProjectWorkspace({
   const { project, items } = query.data;
   const disabled = busy || query.isFetching || mustReload;
   const editable = canWrite && project?.status === "DRAFT" && !project.pricing_current;
-  // List state lives in the URL — search, status filter and sort survive a
-  // back-navigation from a project detail without a bespoke store.
-  const search = params.get("q") ?? "";
-  const setSearch = (value: string) => {
-    setParams(
-      (current) => {
-        const next = new URLSearchParams(current);
-        if (value) next.set("q", value);
-        else next.delete("q");
-        return next;
-      },
-      { replace: true },
-    );
-  };
-  const sortKey = params.get("sort") ?? "updated";
-  const needle = search.toLocaleLowerCase("es-CL");
-
-  // Deep-linkable triage filter — the dashboard attention queue lands on
-  // /projects?status=QUOTED so the promised list is already filtered.
-  const statusFilter = params.get("status") ?? "";
-  const visible = items
-    .filter(
-      (item) =>
-        (statusFilter === "" || item.status === statusFilter) &&
-        `${item.code} ${item.name} ${item.client_name}`.toLocaleLowerCase("es-CL").includes(needle),
-    )
-    .sort((a, b) => {
-      if (sortKey === "name") return (a.name || a.code).localeCompare(b.name || b.code, "es-CL");
-      if (sortKey === "code") return a.code.localeCompare(b.code, "es-CL");
-      return b.updated_at.localeCompare(a.updated_at);
-    });
 
   return (
     <section className="projects-page" aria-busy={busy || query.isFetching}>
       <UnsavedChangesGuard
         dirty={draft !== null || quotationDirty || paymentsDirty || importsDirty || thermalDirty}
         message={t("projects.leaveUnsaved")}
+        allow={(next) => {
+          // Same editing session (positions routes) or the same section of
+          // this work (view/selection changes): nothing unsaved unmounts.
+          // Changing section would drop the open form, so it asks.
+          if (!id) return false;
+          if (next.pathname.startsWith(`/projects/${id}/positions/`)) return true;
+          if (next.pathname !== `/projects/${id}`) return false;
+          return new URLSearchParams(next.search).get("section") === params.get("section");
+        }}
       />
-      {!project && (
-        <PageHeader
-          actions={
-            canWrite ? (
-              <Button
-                disabled={disabled || draft !== null}
-                onClick={() => setDraft({ value: metadata() })}
-                variant="primary"
-              >
-                {t("projects.create")}
-              </Button>
-            ) : undefined
-          }
-          title={t("projects.title")}
-        />
-      )}
-      {project ? (
-        <ProjectHeader
-          canWrite={canWrite}
-          canRelease={canSendEnvio}
-          orgId={orgId}
-          onOpenSection={(section) => {
-            setOpenSection(section);
-          }}
-          project={project}
-        />
-      ) : null}
-      {error && <p role="alert">{error}</p>}
-      {notice && <p role="status">{notice}</p>}
-      {mustReload && (
-        <button disabled={busy} onClick={() => void reload()}>
-          {t("projects.reload")}
-        </button>
-      )}
-
-      {draft ? (
-        <ProjectMetadataForm
-          draft={draft}
-          clients={clientsQuery.data ?? []}
-          disabled={disabled}
-          onChange={setDraft}
-          onSave={() => void save()}
-          onCancel={() => {
-            void confirm({ title: t("projects.discard") }).then((ok) => {
-              if (ok) {
-                setDraft(null);
-                setError("");
-              }
-            });
-          }}
-        />
-      ) : project ? (
-        <div className="projects-actions">
-          <Link className="ui-backlink ui-backlink--back" to="/projects">
-            {t("projects.back")}
-          </Link>
-          {editable && (
-            <button
-              disabled={disabled}
-              onClick={() =>
-                setDraft({
-                  value: metadata(project!),
-                  expectedUpdatedAt: project!.updated_at,
-                })
-              }
-            >
-              {t("projects.edit")}
-            </button>
-          )}
-          {canWrite && (
-            <button disabled={disabled} onClick={() => void clone(project)}>
-              {t("projects.cloneDraft")}
-            </button>
-          )}
-        </div>
-      ) : null}
-
-      {project ? (
-        <>
-          <Tabs
-            label="Flujo del proyecto"
-            value={openSection ?? "positions"}
-            onChange={(value) =>
-              setOpenSection(value === "positions" ? null : (value as FactsSection))
+      <div className="project-chrome" hidden={work.presentation === "expanded"}>
+        {project ? (
+          <ProjectHeader
+            viewSwitch={<WorkViewSwitch view={work.view} onChange={work.setView} />}
+            canWrite={canWrite}
+            canRelease={canSendEnvio}
+            orgId={orgId}
+            onOpenSection={(section) => {
+              setOpenSection(section);
+            }}
+            onRename={editable && !disabled ? (name) => void rename(project, name) : undefined}
+            onEditDetails={
+              editable && !disabled
+                ? () =>
+                    setDraft({ value: metadata(project), expectedUpdatedAt: project.updated_at })
+                : undefined
             }
-            items={[
-              { id: "positions", label: "Posiciones" },
-              { id: "thermal", label: "Térmica" },
-              { id: "quote", label: "Cotización" },
-              { id: "pricing", label: "Precio" },
-              { id: "payments", label: "Cobranza" },
-              { id: "production", label: "Producción" },
-              { id: "documents", label: "Documentos" },
-              { id: "activity", label: "Actividad" },
+            menu={[
+              ...(editable
+                ? [
+                    {
+                      id: "details",
+                      label: "Datos de la obra y del cliente",
+                      disabledReason: disabled
+                        ? "Espera a que termine la acción en curso"
+                        : undefined,
+                      onSelect: () =>
+                        setDraft({
+                          value: metadata(project),
+                          expectedUpdatedAt: project.updated_at,
+                        }),
+                    },
+                  ]
+                : []),
+              ...(canWrite
+                ? [
+                    {
+                      id: "clone",
+                      label: t("projects.cloneDraft"),
+                      disabledReason: disabled
+                        ? "Espera a que termine la acción en curso"
+                        : undefined,
+                      onSelect: () => void clone(project),
+                    },
+                  ]
+                : []),
+              {
+                id: "imports",
+                label: "Importar planilla o plano",
+                onSelect: () => setOpenSection("imports"),
+              },
             ]}
+            project={project}
           />
-          <div hidden={openSection !== null}>
-            {canWrite && !editable && (
-              <p className="project-locked" role="status">
-                {t(project.status === "DRAFT" ? "projects.lockedPriced" : "projects.lockedQuoted")}{" "}
-                <button type="button" onClick={() => setOpenSection("quote")}>
-                  {t("projects.goToQuote")}
-                </button>
-              </p>
-            )}
-            <PositionCollection
-              project={project}
-              orgId={orgId}
-              editable={editable}
-              disabled={disabled}
-              selectedId={selectedId}
-              onSelected={setSelectedId}
-              onChanged={() => query.refetch()}
-              onImport={() => setOpenSection("imports")}
-              onDetails={() => setShowPosition(true)}
+        ) : null}
+        {error && <p role="alert">{error}</p>}
+        {notice && <p role="status">{notice}</p>}
+        {mustReload && (
+          <button disabled={busy} onClick={() => void reload()}>
+            {t("projects.reload")}
+          </button>
+        )}
+
+        {draft ? (
+          <ProjectMetadataForm
+            draft={draft}
+            clients={clientsQuery.data ?? []}
+            disabled={disabled}
+            onChange={setDraft}
+            onSave={() => void save()}
+            onCancel={() => {
+              void confirm({ title: t("projects.discard") }).then((ok) => {
+                if (ok) {
+                  setDraft(null);
+                  setError("");
+                }
+              });
+            }}
+          />
+        ) : null}
+
+        {project ? (
+          <>
+            <Tabs
+              label="Destinos de la obra"
+              value={viewOf(openSection)}
+              onChange={(value) => setOpenSection(VIEW_ENTRY[value as ProjectView] ?? null)}
+              items={[
+                { id: "windows", label: "Ventanas" },
+                { id: "quote", label: "Cotización" },
+                { id: "materials", label: "Materiales y corte" },
+                { id: "activity", label: "Actividad" },
+              ]}
             />
-            <ProjectServicesPanel
-              key={`${orgId}:${project.id}:${project.current_revision}`}
-              projectId={project.id}
-              orgId={orgId}
-              canWrite={canWrite}
-            />
-          </div>
-          {visited.has("quote") && (
-            <div className="project-quotation-workspace" hidden={openSection !== "quote"}>
-              <ProjectQuotationPanel
+            {VIEW_PARTS[viewOf(openSection)].length > 1 ? (
+              <div className="project-subviews ui-segmented" role="radiogroup" aria-label="Sección">
+                {VIEW_PARTS[viewOf(openSection)].map(([section, label]) => (
+                  <button
+                    key={section}
+                    type="button"
+                    role="radio"
+                    aria-checked={(openSection ?? "positions") === section}
+                    onClick={() => setOpenSection(section)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+            <div hidden={openSection !== null || work.view === "estudio"}>
+              {canWrite && !editable && (
+                <p className="project-locked" role="status">
+                  {t(
+                    project.status === "DRAFT" ? "projects.lockedPriced" : "projects.lockedQuoted",
+                  )}{" "}
+                  <button type="button" onClick={() => setOpenSection("quote")}>
+                    {t("projects.goToQuote")}
+                  </button>
+                </p>
+              )}
+              <ProjectDesignDefaults
+                project={project}
+                orgId={orgId}
+                editable={editable && !disabled}
+                onChanged={() => query.refetch()}
+              />
+              <PositionCollection
+                project={project}
+                orgId={orgId}
+                editable={editable}
+                disabled={disabled}
+                selectedId={work.activeId ?? selectedId}
+                onSelected={(positionId) => {
+                  setSelectedId(positionId);
+                  work.setActiveId(positionId);
+                }}
+                onOpen={(positionId) =>
+                  navigate(`/projects/${project.id}/positions/${positionId}/edit?view=${work.view}`)
+                }
+                onChanged={() => query.refetch()}
+                onImport={() => setOpenSection("imports")}
+                onDetails={() => setShowPosition(true)}
+              />
+              <ProjectServicesPanel
                 key={`${orgId}:${project.id}:${project.current_revision}`}
-                project={project}
-                orgId={orgId}
-                canWrite={canWrite}
-                canRelease={canSendEnvio}
-                onChanged={() => query.refetch()}
-                onDirtyChange={setQuotationDirty}
-              />
-            </div>
-          )}
-          {visited.has("thermal") && (
-            <div hidden={openSection !== "thermal"}>
-              <ProjectThermalPanel
-                project={project}
-                orgId={orgId}
-                canWrite={canWrite}
-                onChanged={() => query.refetch()}
-                onDirtyChange={setThermalDirty}
-              />
-            </div>
-          )}
-          {visited.has("payments") && (
-            <div className="project-collection-workspace" hidden={openSection !== "payments"}>
-              <ProjectPaymentsPanel
-                key={`${orgId}:${project.id}`}
                 projectId={project.id}
                 orgId={orgId}
                 canWrite={canWrite}
-                canSendEnvio={canSendEnvio}
-                isOwner={isOwner}
-                onDirtyChange={setPaymentsDirty}
               />
             </div>
-          )}
-          {visited.has("imports") && (
-            <div hidden={openSection !== "imports"}>
-              <h2>Importar documento o plano</h2>
-              <button onClick={() => setOpenSection(null)}>Volver a posiciones</button>
-              <ProjectImportsPanel
-                projectId={project.id}
-                orgId={orgId}
-                canWrite={editable}
-                onChanged={() => query.refetch()}
-                onDirtyChange={setImportsDirty}
-              />
-            </div>
-          )}
-          {openSection === "compare" && (
-            <section>
-              <h2>Comparar revisiones</h2>
-              <button onClick={() => setOpenSection("documents")}>Volver a documentos</button>
-              <RevisionComparePanel project={project} />
-            </section>
-          )}
-          {openSection === "activity" && (
-            <section>
-              <h2>Actividad de la obra</h2>
-              <ProjectActivity project={project} orgId={orgId} />
-            </section>
-          )}
-          {["pricing", "production", "documents"].includes(openSection ?? "") && (
-            <Suspense fallback={<p role="status">Cargando el flujo de la obra…</p>}>
-              <ProjectFlowPanels
-                project={project}
-                orgId={orgId}
-                section={openSection}
-                isOwner={isOwner}
-                onChanged={() => query.refetch()}
-                onCompare={() => setOpenSection("compare")}
-              />
-            </Suspense>
-          )}
-          {showPosition &&
-            (() => {
-              const selected = project.positions?.find((position) => position.id === selectedId);
-              if (!selected) return null;
-              return (
-                <Drawer
-                  title={`Posición ${selected.position_index} · ${selected.location_tag || "Sin ubicación"}`}
-                  onClose={() => setShowPosition(false)}
-                >
-                  <PositionThumb design={selected.design} />
-                  <p className="project-number">
-                    {fmtMm(selected.design.nominal_width_mm)} ×{" "}
-                    {fmtMm(selected.design.nominal_height_mm)} mm · cantidad {selected.quantity}
-                  </p>
-                  <p>Vista interior · fabricación guardada del motor.</p>
-                  <PositionThermal projectId={project.id} orgId={orgId} positionId={selected.id} />
-                  {editable && (
-                    <Link to={`/projects/${project.id}/positions/${selected.id}/edit`}>
-                      {t("projects.openPosition")}
-                    </Link>
-                  )}
-                  <ProjectBom result={selected.bom} />
-                  <MeasurementPanel
-                    position={selected}
+            {visited.has("quote") && (
+              <div className="project-quotation-workspace" hidden={openSection !== "quote"}>
+                {project.status === "DRAFT" && project.position_count > 0 ? (
+                  <QuotationDocument
+                    key={`${orgId}:${project.id}:${project.current_revision}`}
+                    projectId={project.id}
                     orgId={orgId}
-                    canConfirm={canWrite}
-                    closed={project.status !== "DRAFT"}
-                    onSaved={() => void query.refetch()}
+                    canWrite={canWrite}
+                    isOwner={isOwner}
                   />
-                  {["DRAFT", "QUOTED", "APPROVED"].includes(project.status) && (
-                    <RectificationPanel
-                      position={selected}
-                      project={project}
+                ) : null}
+                <ProjectQuotationPanel
+                  key={`${orgId}:${project.id}:${project.current_revision}`}
+                  project={project}
+                  orgId={orgId}
+                  canWrite={canWrite}
+                  canRelease={canSendEnvio}
+                  onChanged={() => query.refetch()}
+                  onDirtyChange={setQuotationDirty}
+                />
+              </div>
+            )}
+            {visited.has("thermal") && (
+              <div hidden={openSection !== "thermal"}>
+                <ProjectThermalPanel
+                  project={project}
+                  orgId={orgId}
+                  canWrite={canWrite}
+                  onChanged={() => query.refetch()}
+                  onDirtyChange={setThermalDirty}
+                />
+              </div>
+            )}
+            {visited.has("payments") && (
+              <div className="project-collection-workspace" hidden={openSection !== "payments"}>
+                <ProjectPaymentsPanel
+                  key={`${orgId}:${project.id}`}
+                  projectId={project.id}
+                  orgId={orgId}
+                  canWrite={canWrite}
+                  canSendEnvio={canSendEnvio}
+                  isOwner={isOwner}
+                  onDirtyChange={setPaymentsDirty}
+                />
+              </div>
+            )}
+            {visited.has("imports") && (
+              <div hidden={openSection !== "imports"}>
+                <div className="project-section-head">
+                  <h2>Importar planilla o plano</h2>
+                  <button type="button" className="ui-button" onClick={() => setOpenSection(null)}>
+                    Volver a ventanas
+                  </button>
+                </div>
+                <ProjectImportsPanel
+                  projectId={project.id}
+                  orgId={orgId}
+                  canWrite={editable}
+                  onChanged={() => query.refetch()}
+                  onDirtyChange={setImportsDirty}
+                />
+              </div>
+            )}
+            {openSection === "compare" && (
+              <section>
+                <h2 className="sr-only">Comparar revisiones</h2>
+                <RevisionComparePanel project={project} />
+              </section>
+            )}
+            {openSection === "activity" && (
+              <section>
+                <h2 className="sr-only">Actividad de la obra</h2>
+                <ProjectFacts project={project} />
+                <ProjectActivity project={project} orgId={orgId} />
+              </section>
+            )}
+            {["pricing", "production", "documents"].includes(openSection ?? "") && (
+              <Suspense fallback={<p role="status">Cargando el flujo de la obra…</p>}>
+                <ProjectFlowPanels
+                  project={project}
+                  orgId={orgId}
+                  section={openSection}
+                  isOwner={isOwner}
+                  onChanged={() => query.refetch()}
+                  onCompare={() => setOpenSection("compare")}
+                />
+              </Suspense>
+            )}
+            {showPosition &&
+              (() => {
+                const selected = project.positions?.find(
+                  (position) => position.id === (work.activeId ?? selectedId),
+                );
+                if (!selected) return null;
+                return (
+                  <Drawer
+                    title={`Posición ${selected.position_index} · ${selected.location_tag || "Sin ubicación"}`}
+                    onClose={() => setShowPosition(false)}
+                  >
+                    <PositionThumb design={selected.design} />
+                    <p className="project-number">
+                      {fmtMm(selected.design.nominal_width_mm)} ×{" "}
+                      {fmtMm(selected.design.nominal_height_mm)} mm · cantidad {selected.quantity}
+                    </p>
+                    <p>Vista interior · fabricación guardada del motor.</p>
+                    <PositionThermal
+                      projectId={project.id}
                       orgId={orgId}
+                      positionId={selected.id}
+                    />
+                    {editable && (
+                      <Link to={`/projects/${project.id}/positions/${selected.id}/edit`}>
+                        {t("projects.openPosition")}
+                      </Link>
+                    )}
+                    <ProjectBom result={selected.bom} />
+                    <MeasurementPanel
+                      position={selected}
+                      orgId={orgId}
+                      canConfirm={canWrite}
+                      closed={project.status !== "DRAFT"}
                       onSaved={() => void query.refetch()}
                     />
-                  )}
-                </Drawer>
-              );
-            })()}
-        </>
-      ) : (
-        <>
-          <div className="projects-list-bar">
-            <div className="ui-field projects-search">
-              <label className="ui-field__label" htmlFor="projects-search">
-                {t("projects.search")}
-              </label>
-              <input
-                className="ui-field__input"
-                id="projects-search"
-                onChange={(event) => setSearch(event.target.value)}
-                value={search}
+                    {["DRAFT", "QUOTED", "APPROVED"].includes(project.status) && (
+                      <RectificationPanel
+                        position={selected}
+                        project={project}
+                        orgId={orgId}
+                        onSaved={() => void query.refetch()}
+                      />
+                    )}
+                  </Drawer>
+                );
+              })()}
+          </>
+        ) : (
+          <ProjectsHome items={items} orgId={orgId} orgName={orgName} canWrite={canWrite} />
+        )}
+      </div>
+      {project ? (
+        <div
+          className="project-studio"
+          data-presentation={work.presentation}
+          hidden={work.presentation === "hidden"}
+        >
+          {work.presentation === "studio" ? (
+            <StudioStrip
+              project={project}
+              activeId={work.sessionId === "new" ? null : work.activeId}
+              canAdd={editable}
+              onSelect={(positionId) => work.setActiveId(positionId)}
+            />
+          ) : null}
+          {work.presentation === "studio" && (project.positions?.length ?? 0) === 0 ? (
+            <div className="ui-empty studio-empty">
+              <p className="ui-empty__title">La obra todavía no tiene ventanas</p>
+              <p className="ui-empty__body">
+                Añade la primera ventana para diseñarla en el lienzo amplio.
+              </p>
+              {editable ? (
+                <div className="ui-empty__action">
+                  <Link
+                    className="ui-button ui-button--primary"
+                    to={`/projects/${project.id}/positions/new?view=estudio`}
+                  >
+                    Añadir ventana
+                  </Link>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+          {work.sessionId ? (
+            <div className="project-studio__editor">
+              <PositionEditorHost
+                projectId={project.id}
+                positionId={work.sessionId === "new" ? null : work.sessionId}
+                copyId={work.editorRoute?.kind === "new" ? (params.get("copy") ?? "") : ""}
+                creationId={creationId}
+                preferredSystem={work.editorRoute?.kind === "new" ? params.get("system") : null}
+                presentation={work.presentation}
+                allowNavigation={sameSession}
+                onBack={() =>
+                  work.presentation === "studio"
+                    ? work.setView("mesa")
+                    : navigate(work.workPath({ section: null }))
+                }
+                onOpenSection={(section) => {
+                  if (work.presentation === "expanded") navigate(work.workPath({ section }));
+                  else setOpenSection(section as FactsSection);
+                }}
+                onOpenPosition={(positionId) =>
+                  work.presentation === "expanded"
+                    ? navigate(
+                        `/projects/${project.id}/positions/${positionId}/edit?view=${work.view}`,
+                      )
+                    : work.setActiveId(positionId)
+                }
+                onCreated={(created) =>
+                  work.presentation === "expanded"
+                    ? navigate(
+                        `/projects/${project.id}/positions/${created}/edit?view=${work.view}`,
+                        {
+                          replace: true,
+                        },
+                      )
+                    : work.setActiveId(created)
+                }
               />
             </div>
-            <div className="ui-field">
-              <label className="ui-field__label" htmlFor="projects-status">
-                {t("projects.status")}
-              </label>
-              <select
-                className="ui-field__input"
-                id="projects-status"
-                onChange={(event) =>
-                  setParams(
-                    (current) => {
-                      const next = new URLSearchParams(current);
-                      if (event.target.value) next.set("status", event.target.value);
-                      else next.delete("status");
-                      return next;
-                    },
-                    { replace: true },
-                  )
-                }
-                value={statusFilter}
-              >
-                <option value="">{t("projects.filterAll")}</option>
-                {(Object.keys(statuses) as ProjectResponse["status"][]).map((status) => (
-                  <option key={status} value={status}>
-                    {t(statuses[status])}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="ui-field">
-              <label className="ui-field__label" htmlFor="projects-sort">
-                {t("projects.sortLabel")}
-              </label>
-              <select
-                className="ui-field__input"
-                id="projects-sort"
-                onChange={(event) =>
-                  setParams(
-                    (current) => {
-                      const next = new URLSearchParams(current);
-                      if (event.target.value === "updated") next.delete("sort");
-                      else next.set("sort", event.target.value);
-                      return next;
-                    },
-                    { replace: true },
-                  )
-                }
-                value={sortKey}
-              >
-                <option value="updated">{t("projects.sortUpdated")}</option>
-                <option value="name">{t("projects.sortName")}</option>
-                <option value="code">{t("projects.sortCode")}</option>
-              </select>
-            </div>
-          </div>
-          <div className="ui-table-wrap projects-table">
-            <table className="ui-table">
-              <caption>{t("projects.title")}</caption>
-              <thead>
-                <tr>
-                  <th scope="col">{t("projects.name")}</th>
-                  <th scope="col">{t("projects.client")}</th>
-                  <th scope="col">{t("projects.status")}</th>
-                  <th scope="col">{t("projects.revision")}</th>
-                  <th scope="col">{t("projects.positions")}</th>
-                  <th scope="col">{t("projects.updated")}</th>
-                  <th scope="col">{t("projects.total")}</th>
-                  <th scope="col">{t("projects.nextStep")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visible.map((item) => (
-                  <tr key={item.id}>
-                    <td>
-                      {draft ? (
-                        `${item.name || item.code}`
-                      ) : (
-                        <Link to={`/projects/${encodeURIComponent(item.id)}`}>
-                          {item.name || item.code}
-                        </Link>
-                      )}
-                      {item.name ? <span className="projects-row__code">{item.code}</span> : null}
-                    </td>
-                    <td>{item.client_name}</td>
-                    <td>
-                      <StatusBadge
-                        showIcon={false}
-                        className="status-chip"
-                        data-status={item.status.toLowerCase()}
-                      >
-                        {t(statuses[item.status])}
-                      </StatusBadge>
-                    </td>
-                    <td>
-                      {item.current_revision ? (
-                        <span className="projects-row__rev">
-                          {formatRevision(item.current_revision)}
-                        </span>
-                      ) : (
-                        "—"
-                      )}
-                    </td>
-                    <td className="ui-table__num">{item.position_count}</td>
-                    <td>
-                      <time dateTime={item.updated_at}>{formatDateTime(item.updated_at)}</time>
-                    </td>
-                    <td className="ui-table__num">
-                      {item.pricing_current
-                        ? formatMoney(item.total_price_gross, item.currency)
-                        : t("projects.unpriced")}
-                    </td>
-                    <td className="projects-row__next">{t(listNextKeys[item.status])}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {visible.length === 0 && <EmptyState title={t("projects.empty")} />}
-        </>
-      )}
+          ) : null}
+        </div>
+      ) : null}
     </section>
   );
 }

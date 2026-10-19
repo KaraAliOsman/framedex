@@ -52,10 +52,8 @@
   color: var(--theme-text-muted);
   font-size: var(--type-dense);
   font-weight: 600;
-  letter-spacing: 0.06em;
   margin: 0;
   padding: 0.55rem 0.75rem;
-  text-transform: uppercase;
 }
 .tree-root,
 .tree-children {
@@ -283,9 +281,7 @@
 .module-opening {
   fill: none;
 }
-.module-opening--lite {
-  fill: var(--theme-glass-pane);
-}
+
 .member-sash {
   stroke-width: 2;
 }

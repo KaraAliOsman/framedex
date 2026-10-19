@@ -8,6 +8,7 @@
 import type { AiAgentResult } from "./aiAgentResult";
 import type { AiJobDetailLive } from "./aiJobDetailLive";
 import type { AiJobDetailRefs } from "./aiJobDetailRefs";
+import type { AiReceipt } from "./aiReceipt";
 
 export interface AiJobDetail {
   id: string;
@@ -29,5 +30,12 @@ export interface AiJobDetail {
   updated_at: string;
   /** @nullable */
   completed_at?: string | null;
+  /** @nullable */
+  thread_id?: string | null;
+  /** @nullable */
+  interaction_mode?: string | null;
+  /** @nullable */
+  autonomy?: string | null;
+  receipt?: AiReceipt | null;
   transcript: unknown[];
 }

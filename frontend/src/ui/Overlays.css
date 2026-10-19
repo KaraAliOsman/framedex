@@ -13,11 +13,12 @@
   width: 34rem;
   max-width: calc(100vw - 2rem);
   max-height: 85vh;
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-3);
   background: var(--surface-panel);
   color: var(--text-primary);
   box-shadow: var(--e3);
+  overflow: hidden;
 }
 .ui-dialog--s {
   width: 24rem;
@@ -31,7 +32,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-8px);
-  padding: var(--space-12px) var(--space-16px);
+  padding: var(--space-16px) var(--space-24px);
 }
 .ui-dialog__header {
   border-bottom: 1px solid var(--border-subtle);
@@ -42,12 +43,12 @@
 }
 .ui-dialog__title {
   margin: 0;
-  font-size: var(--type-title-l);
-  line-height: var(--line-title-l);
+  font-size: var(--type-subtitle);
+  line-height: var(--line-subtitle);
   font-weight: 600;
 }
 .ui-dialog__body {
-  padding: var(--space-16px);
+  padding: var(--space-16px) var(--space-24px) var(--space-24px);
   overflow-y: auto;
 }
 .ui-dialog__text {
@@ -125,6 +126,25 @@
 .ui-menu__item:hover,
 .ui-command-list [aria-selected="true"] {
   background: var(--surface-selected);
+}
+.ui-menu__text {
+  display: grid;
+  gap: 2px;
+  padding: var(--space-4px) 0;
+  text-align: left;
+}
+.ui-menu__hint {
+  color: var(--text-secondary);
+  font-size: var(--type-dense);
+  line-height: var(--line-dense);
+}
+.ui-menu__note {
+  margin: 0;
+  padding: var(--space-8px) var(--space-8px) var(--space-4px);
+  max-width: 22rem;
+  color: var(--text-secondary);
+  font-size: var(--type-dense);
+  line-height: var(--line-dense);
 }
 .ui-menu__item.is-danger {
   color: var(--state-danger-ink);

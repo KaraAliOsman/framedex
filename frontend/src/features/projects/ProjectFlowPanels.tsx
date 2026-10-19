@@ -10,11 +10,12 @@ import { ApiError } from "../../api/apiMutator";
 import type { ProjectResponse } from "../../api/generated/models";
 import { formatDateTime, formatRevision } from "../../format";
 import { domainLabel } from "../../i18n/domainLabels";
-import { DimLoader, StatusBadge } from "../../ui";
+import { Loading, StatusBadge } from "../../ui";
 import { ProjectPrices } from "../pricing/ProjectPrices";
 import { usePricingRequest } from "../pricing/PricingPage";
 import { actionErrorDetail } from "../errors";
 import type { FactsSection } from "./ProjectPages";
+import { ProjectMaterials } from "./ProjectMaterials";
 
 function ProjectPricePanel({
   project,
@@ -67,10 +68,9 @@ function ProjectProductionPanel({
     },
   });
   return (
-    <section>
-      <h2>Producción de la obra</h2>
+    <div className="project-production">
       {query.isPending ? (
-        <DimLoader label="Cargando órdenes de trabajo" />
+        <Loading label="Cargando órdenes de trabajo" />
       ) : query.isError ? (
         <p role="alert">
           No se pudieron cargar las OT. Revisa la conexión.{" "}
@@ -78,8 +78,8 @@ function ProjectProductionPanel({
         </p>
       ) : query.data.length === 0 ? (
         <p>
-          Esta obra aún no tiene OT liberadas. Revisa su aprobación y la autoridad de fabricación en
-          Cotización.
+          Aún no hay órdenes liberadas. Se liberan en Producción cuando la cotización está aprobada
+          y completa para taller.
         </p>
       ) : (
         <ul className="project-production-list">
@@ -104,17 +104,28 @@ function ProjectProductionPanel({
           ))}
         </ul>
       )}
-    </section>
+    </div>
   );
 }
+// Mirrors backend/documents/renderers.py titles.
 const names: Record<string, string> = {
   "DOC-01": "Cotización",
+  "DOC-02": "Pedido de vidrios",
   "DOC-03": "Orden de trabajo",
-  "DOC-04": "Lista de corte",
-  "DOC-05": "Etiquetas",
-  "DOC-06": "Pedido de vidrio",
-  "DOC-07": "Pedido de herrajes",
+  "DOC-04": "Pedido de perfiles",
+  "DOC-05": "Orden de corte",
+  "DOC-06": "Control final",
+  "DOC-07": "Informe de costos",
   "DOC-08": "Orden de compra",
+};
+const layouts: Record<string, string> = {
+  ESENCIAL: "Esencial",
+  PROYECTO: "Proyecto",
+  ALTERNATIVAS: "Alternativas",
+  PLANO: "plano técnico",
+  COMPACTA: "lista compacta",
+  VENTANA: "por ventana",
+  OBRA: "pedido por obra",
 };
 function ProjectDocumentPanel({
   project,
@@ -171,7 +182,7 @@ function ProjectDocumentPanel({
       <button onClick={onCompare}>Comparar revisiones</button>
       {error && <p role="alert">{error}</p>}
       {query.isPending ? (
-        <DimLoader label="Cargando documentos de la obra" />
+        <Loading label="Cargando documentos de la obra" />
       ) : query.isError ? (
         <p role="alert">
           No se pudieron cargar los documentos.{" "}
@@ -189,10 +200,16 @@ function ProjectDocumentPanel({
             .map((artifact) => (
               <li key={artifact.id}>
                 <strong>
-                  {names[artifact.document_type] ?? "Documento técnico"} ·{" "}
-                  {formatRevision(artifact.revision_code)} · {artifact.format}
+                  {names[artifact.document_type] ?? "Documento técnico"}
+                  {artifact.layout && layouts[artifact.layout]
+                    ? ` · ${layouts[artifact.layout]}`
+                    : ""}{" "}
+                  · {formatRevision(artifact.revision_code)} · {artifact.format}
                 </strong>
                 <time dateTime={artifact.created_at}>{formatDateTime(artifact.created_at)}</time>
+                {artifact.revision_code !== project.current_revision ? (
+                  <StatusBadge>Histórico · revisión anterior</StatusBadge>
+                ) : null}
                 <button disabled={Boolean(busy)} onClick={() => void open(artifact.id)}>
                   {busy === artifact.id ? "Abriendo documento…" : "Abrir documento sellado"}
                 </button>
@@ -222,7 +239,14 @@ export function ProjectFlowPanels({
     return (
       <ProjectPricePanel project={project} orgId={orgId} isOwner={isOwner} onChanged={onChanged} />
     );
-  if (section === "production") return <ProjectProductionPanel project={project} orgId={orgId} />;
+  if (section === "production")
+    return (
+      <ProjectMaterials
+        project={project}
+        orgId={orgId}
+        production={<ProjectProductionPanel project={project} orgId={orgId} />}
+      />
+    );
   if (section === "documents")
     return <ProjectDocumentPanel project={project} orgId={orgId} onCompare={onCompare} />;
   return null;

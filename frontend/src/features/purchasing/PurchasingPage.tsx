@@ -298,7 +298,13 @@ const DOCUMENT_ROLES: Record<string, string[]> = {
   "DOC-08": ["OWNER", "WORKSHOP_MANAGER"],
 };
 
-type DocumentAction = { type: string; format: string; label: Parameters<typeof t>[0] };
+type DocumentAction = {
+  type: string;
+  format: string;
+  label: Parameters<typeof t>[0];
+  /** Composition of the same sealed data (backend documents/artifacts.py). */
+  layout?: "STANDARD" | "PLANO" | "COMPACTA" | "VENTANA" | "OBRA";
+};
 
 function orderDocuments(order: Order, role: string): DocumentAction[] {
   let docs: DocumentAction[] = [];
@@ -325,7 +331,11 @@ function revisionDocuments(role: string): DocumentAction[] {
     [
       { type: "DOC-01", format: "PDF", label: "purchasing.doc01" },
       { type: "DOC-03", format: "PDF", label: "purchasing.doc03" },
+      { type: "DOC-03", format: "PDF", label: "purchasing.doc03Plan", layout: "PLANO" },
       { type: "DOC-05", format: "PDF", label: "purchasing.doc05" },
+      { type: "DOC-05", format: "PDF", label: "purchasing.doc05Compact", layout: "COMPACTA" },
+      { type: "DOC-05", format: "PDF", label: "purchasing.doc05Window", layout: "VENTANA" },
+      { type: "DOC-05", format: "PDF", label: "purchasing.doc05Work", layout: "OBRA" },
       { type: "DOC-06", format: "PDF", label: "purchasing.doc06" },
       { type: "DOC-07", format: "PDF", label: "purchasing.doc07" },
     ] as DocumentAction[]
@@ -483,6 +493,7 @@ function PurchasingWorkspace({
     documentType: string,
     format: string,
     orderId?: string,
+    layout: DocumentAction["layout"] = "STANDARD",
   ): Promise<void> {
     if (!state?.version) return;
     // The artifact resolves after an async job — opening the tab inside the
@@ -500,8 +511,9 @@ function PurchasingWorkspace({
             format,
             project_version_id: state.version.id,
             order_id: orderId ?? null,
+            layout,
           },
-          idempotency_key: `${documentType.toLowerCase()}:${format.toLowerCase()}:${state.version.id}:${orderId ?? ""}`,
+          idempotency_key: `${documentType.toLowerCase()}:${format.toLowerCase()}:${state.version.id}:${orderId ?? ""}${layout === "STANDARD" ? "" : `:${layout.toLowerCase()}`}`,
         },
         { headers: { "X-Organization-ID": orgId } },
       );
@@ -758,12 +770,12 @@ function PurchasingWorkspace({
           <h2>{t("purchasing.documents")}</h2>
           <ul>
             {revisionDocuments(role).map((doc) => (
-              <li key={`${doc.type}-${doc.format}`}>
+              <li key={`${doc.type}-${doc.format}-${doc.layout ?? "STANDARD"}`}>
                 <span>{t(doc.label)}</span>
                 <button
                   type="button"
                   disabled={busy}
-                  onClick={() => void openDocument(doc.type, doc.format)}
+                  onClick={() => void openDocument(doc.type, doc.format, undefined, doc.layout)}
                 >
                   {t("purchasing.openDocument")}
                 </button>

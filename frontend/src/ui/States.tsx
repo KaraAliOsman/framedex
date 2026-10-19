@@ -2,7 +2,7 @@ import { type PropsWithChildren, type ReactNode, useEffect, useState } from "rea
 
 import { t } from "../i18n/es-CL";
 import { Button } from "./Controls";
-import { DimLoader } from "./Signature";
+import { Loading } from "./Signature";
 import { EmptyIllustration, type EmptyIllustrationKind } from "./EmptyIllustration";
 
 export function EmptyState({
@@ -112,7 +112,7 @@ export function LoadingState({
   return (
     <div className="ui-loading-state" aria-busy="true" aria-label={label} role="status">
       {shape ?? <Skeleton />}
-      {long ? <DimLoader label={label} /> : null}
+      {long ? <Loading label={label} /> : null}
       <span className="ui-visually-hidden">{label}</span>
     </div>
   );

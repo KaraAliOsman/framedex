@@ -5,7 +5,7 @@ import { ApiError } from "../../api/apiMutator";
 import type { DesignOperationRequest } from "../../api/generated/models";
 import { domainLabel } from "../../i18n/domainLabels";
 import { parseDecimalInput } from "../../format";
-import { DimLoader } from "../../ui";
+import { Loading } from "../../ui";
 import { EditorFlyout } from "../canvas/EditorFlyout";
 import { StarterGallery } from "../canvas/StarterGallery";
 import { starterNominalSize, type StarterDefinition } from "../canvas/designLibrary";
@@ -113,7 +113,7 @@ export function ProjectPositionLibrary({
           </p>
         ) : null}
         {systems.isPending || (Boolean(systemId) && catalog.isPending) ? (
-          <DimLoader label="Cargando biblioteca compatible" />
+          <Loading label="Cargando biblioteca compatible" />
         ) : null}
         {catalog.data && (
           <>

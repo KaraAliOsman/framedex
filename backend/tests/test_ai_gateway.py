@@ -2337,3 +2337,35 @@ def test_job_message_enqueue_failure_restores_state(monkeypatch):
     response = _post_message(client, job_id, message="dale")
     assert response.status_code == 409
     assert restored == ["SUCCEEDED"]
+
+
+def test_job_message_keeps_the_sealed_destination(monkeypatch):
+    """Dirección final 05 · 3: navigating to another work after sending never
+    redirects the task. Live refs only refresh the selection of the job's own
+    work; another work's refs are dropped and the stored destination wins."""
+    from ai_gateway import jobs
+    from jobs import service as job_service
+
+    client, _, _ = _agent_client(monkeypatch)
+    job_id = uuid4()
+    seen: dict = {}
+    monkeypatch.setattr(
+        jobs, "get_job",
+        lambda **kw: {
+            "id": str(job_id), "surface": "dashboard", "state": "WAITING_FOR_USER",
+            "refs": {"project_id": "sealed-project"}, "transcript": [{"role": "user", "text": "cotiza"}],
+        },
+    )
+    monkeypatch.setattr(job_service, "job_backend", lambda: contextlib.nullcontext())
+    monkeypatch.setattr(jobs, "mark_queued", lambda **kw: True)
+    monkeypatch.setattr(job_service, "enqueue", lambda **kw: seen.update(kw) or ({"id": uuid4()}, True))
+
+    other = _post_message(client, job_id, message="continúa",
+                          refs={"project_id": "opened-project", "position_id": "p9"})
+    assert other.status_code == 202
+    assert seen["payload"]["refs"] == {"project_id": "sealed-project"}
+
+    same = _post_message(client, job_id, message="continúa",
+                         refs={"project_id": "sealed-project", "selection": "b2"})
+    assert same.status_code == 202
+    assert seen["payload"]["refs"] == {"project_id": "sealed-project", "selection": "b2"}

@@ -1,9 +1,10 @@
 ---
 type: synthesis
 status: active
-updated: 2026-09-28
+updated: 2026-10-18
 volatility: low
 sources:
+  - docs/wiki/sources/owner-final-direction-2026-10-18.md
   - docs/PRODUCT.md
   - docs/ENGINEERING.md
   - owner decisions through 2026-09-28
@@ -13,7 +14,22 @@ sources:
 
 ## One sentence
 
-DEKOPEN is a modern, AI-native engineering and operations system in which a window/door product is designed once and becomes the trustworthy source for commercial, manufacturing and machine workflows.
+DEKOPEN is a complete manual engineering, quoting and operations system in which
+a window/door product is designed once and becomes the trustworthy source for
+commercial, manufacturing and machine workflows. Higher plans add an optional
+copilot that executes delegated work through the same domain functions.
+
+The owner's [18 October correction](../sources/owner-final-direction-2026-10-18.md)
+chooses Mesa de obra + Estudio and a global optional popup. Earlier AI-native/core
+interface language in PRODUCT and historical plans does not require AI to work.
+The [final package](../../research/2026-10-18-direccion-final/README.md) is an
+implementation brief, not an implemented redesign or visual acceptance.
+
+The [later clarification](../sources/owner-credits-and-grokbot-2026-10-18.md)
+keeps MiMo common to every AI plan until the owner changes it; credits/usage
+and concrete professional extras distinguish plans. The animated Grok Bot
+character is the visual reference, while conversation styling fits DEKOPEN.
+Indicative annual figures are not approved commercial terms.
 
 ## The product center
 
@@ -42,7 +58,7 @@ Legacy sector software often has domain depth but dated interaction patterns. Mo
 
 DEKOPEN's opportunity is the combination:
 
-**fenestration depth + deterministic engineering + modern direct manipulation + end-to-end operations + AI-native work.**
+**fenestration depth + deterministic engineering + modern direct manipulation + end-to-end operations + optional delegated AI work.**
 
 ## Trust contract
 

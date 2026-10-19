@@ -1,7 +1,7 @@
 import { webcrypto, createHash } from "node:crypto";
 // frontend/src/features/projects/ProjectPages.test.tsx
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
@@ -191,6 +191,8 @@ function mount(path = "/projects/project-a") {
     [
       { path: "/projects", element: <ProjectPages /> },
       { path: "/projects/:id", element: <ProjectPages /> },
+      // The editor session routes share the work's layout in the app.
+      { path: "/projects/:id/positions/*", element: <ProjectPages /> },
     ],
     { initialEntries: [path] },
   );
@@ -222,8 +224,32 @@ function change(label: Parameters<typeof t>[0], value: string): void {
   });
 }
 
+/** Header actions live in the «Más» menu of the work. */
+async function openMenuAction(item: string, scope?: HTMLElement): Promise<void> {
+  await screen.findByRole("heading", { level: 1 });
+  const header = document.querySelector<HTMLElement>(".project-head");
+  const root = scope ? within(scope) : header ? within(header) : screen;
+  fireEvent.click(await root.findByRole("button", { name: "Más" }));
+  fireEvent.click(await screen.findByRole("menuitem", { name: item }));
+}
+
 async function editMetadata(): Promise<void> {
-  fireEvent.click(await screen.findByRole("button", { name: t("projects.edit") }));
+  await openMenuAction("Datos de la obra y del cliente");
+}
+
+/** The quotation preparation save (PUT inputs) — the document editor also
+ * reads its layout and branding, so calls are found by intent, not index. */
+function inputsSave() {
+  return vi
+    .mocked(apiMutator)
+    .mock.calls.find(
+      ([url, options]) =>
+        String(url).endsWith("/inputs/") && (options as RequestInit | undefined)?.method === "PUT",
+    )!;
+}
+
+function selectionLabel(position: PositionResponse): string {
+  return `Seleccionar ${position.location_tag || `Ventana ${position.position_index}`}`;
 }
 
 function submit(): void {
@@ -373,8 +399,10 @@ it("creates a project, navigates to the server ID and renders persisted metadata
   vi.mocked(projectsCreate).mockResolvedValue(response(201, created));
   vi.mocked(projectsRetrieve).mockResolvedValue(response(200, created));
 
-  const router = mount("/projects");
-  fireEvent.click(await screen.findByRole("button", { name: t("projects.create") }));
+  // The full metadata form opens with ?create=1 (the home's «Nueva
+  // cotización» starts a dated draft directly — covered below).
+  const router = mount("/projects?create=1");
+  await screen.findByLabelText(t("projects.name"));
   change("projects.name", "Nombre ingresado");
   change("projects.client", "Cliente ingresado");
   change("projects.email", "ingresado@example.test");
@@ -388,8 +416,10 @@ it("creates a project, navigates to the server ID and renders persisted metadata
   // The project code stays visible as secondary metadata, not as the title.
   expect(screen.getByText("P-1042")).toBeInTheDocument();
   expect(router.state.location.pathname).toBe("/projects/server-created-id");
-  expect(screen.getByText("Cliente persistido")).toBeInTheDocument();
-  expect(screen.getByText("persistido@example.test")).toBeInTheDocument();
+  expect(screen.getAllByText("Cliente persistido").length).toBeGreaterThan(0);
+  // Contact details and internal notes live in the work's «Actividad» facts.
+  fireEvent.click(screen.getByRole("tab", { name: "Actividad" }));
+  expect(await screen.findByText("persistido@example.test")).toBeInTheDocument();
   expect(screen.getByText("Nota recuperada desde detalle")).toBeInTheDocument();
   expect(screen.queryByDisplayValue("Nombre ingresado")).not.toBeInTheDocument();
 
@@ -442,8 +472,9 @@ it("PATCHes the exact original timestamp and reloads persisted metadata", async 
     level: 1,
     name: "Casa actualizada",
   });
-  expect(screen.getByText(saved.client_phone!)).toBeInTheDocument();
   expect(screen.getByRole("status")).toHaveTextContent(t("projects.saved"));
+  fireEvent.click(screen.getByRole("tab", { name: "Actividad" }));
+  expect(await screen.findByText(saved.client_phone!)).toBeInTheDocument();
   expect(screen.queryByLabelText(t("projects.name"))).not.toBeInTheDocument();
 
   expect(projectsUpdate).toHaveBeenCalledTimes(1);
@@ -504,7 +535,7 @@ it("clones a draft to the returned ID without mutating the source", async () => 
   vi.mocked(projectsClone).mockResolvedValue(response(201, copy));
 
   const router = mount();
-  fireEvent.click(await screen.findByRole("button", { name: t("projects.cloneDraft") }));
+  await openMenuAction(t("projects.cloneDraft"));
   await screen.findByRole("heading", {
     level: 1,
     name: "Copia de Casa original",
@@ -521,7 +552,7 @@ it("clones a draft to the returned ID without mutating the source", async () => 
   expect(projectsCreate).not.toHaveBeenCalled();
   expect(positionsDestroy).not.toHaveBeenCalled();
 
-  fireEvent.click(screen.getByRole("button", { name: t("projects.edit") }));
+  await editMetadata();
   change("projects.name", "Cambio local de la copia");
   expect(source).toEqual(originalSnapshot);
 });
@@ -539,8 +570,11 @@ function deletionProposal(position: PositionResponse) {
 }
 
 async function prepareDeletion(position: PositionResponse): Promise<void> {
-  fireEvent.click(await screen.findByLabelText(`Seleccionar posición ${position.position_index}`));
-  fireEvent.click(screen.getByRole("button", { name: "Eliminar lote" }));
+  fireEvent.click(await screen.findByLabelText(selectionLabel(position)));
+  await openMenuAction(
+    "Eliminar",
+    screen.getByRole("region", { name: "Acciones sobre las ventanas elegidas" }),
+  );
   await decide(true);
   await screen.findByRole("button", { name: "Aplicar cambios revisados" });
 }
@@ -561,7 +595,7 @@ it("previews deletion before the explicit apply and uses the guarded server sign
   expect(projectOperationsApply).not.toHaveBeenCalled();
   expect(screen.getByText("Dormitorio principal")).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Aplicar cambios revisados" }));
-  expect(await screen.findByText("Agrega la primera posición")).toBeInTheDocument();
+  expect(await screen.findByText("Agrega la primera ventana")).toBeInTheDocument();
   expect(screen.queryByText("Dormitorio principal")).not.toBeInTheDocument();
   const [id, data, options] = vi.mocked(projectOperationsApply).mock.calls[0]!;
   expect(id).toBe(position.project_id);
@@ -687,15 +721,19 @@ it("prepares and explicitly emits the current priced revision", async () => {
   await issueReviewedPdf();
 
   await screen.findAllByText(t("projects.quoted"));
-  expect(screen.getAllByText("Revisión A")).toHaveLength(2);
-  expect(apiMutator).toHaveBeenCalledTimes(4);
-  expect(vi.mocked(apiMutator).mock.calls.map(([url]) => url)).toEqual([
+  // Track, version badge and the work header's revision.
+  expect(screen.getAllByText("Revisión A")).toHaveLength(3);
+  const lifecycle = vi
+    .mocked(apiMutator)
+    .mock.calls.filter(([url]) => /\/(inputs|quotation-preview|issue)\/$/.test(String(url)));
+  expect(lifecycle).toHaveLength(4);
+  expect(lifecycle.map(([url]) => url)).toEqual([
     "/api/v1/documents/projects/project-a/inputs/",
     "/api/v1/documents/projects/project-a/inputs/",
     "/api/v1/documents/projects/project-a/quotation-preview/",
     "/api/v1/documents/projects/project-a/issue/",
   ]);
-  const saveRequest = vi.mocked(apiMutator).mock.calls[1]!;
+  const saveRequest = inputsSave();
   expect(JSON.parse(String((saveRequest[1] as RequestInit).body))).toMatchObject({
     payment_terms: "50% anticipo",
     quotation_valid_until: "2026-10-19",
@@ -751,7 +789,10 @@ it("guards unsaved quotation preparation edits against navigation and cancel", a
   await screen.findByLabelText(t("quotation.paymentTerms"));
   change("quotation.paymentTerms", "50% anticipo");
 
-  fireEvent.click(screen.getByRole("link", { name: t("projects.back") }));
+  // Leaving the work for the list would unmount the open form.
+  act(() => {
+    void router.navigate("/projects");
+  });
   const leaveDialog = await screen.findByRole("dialog");
   expect(leaveDialog).toHaveTextContent(t("projects.leaveUnsaved"));
   await decide(false);
@@ -773,13 +814,17 @@ it("guards unsaved quotation preparation edits against navigation and cancel", a
   fireEvent.click(screen.getByRole("button", { name: t("quotation.prepare") }));
   await screen.findByLabelText(t("quotation.paymentTerms"));
   change("quotation.validUntil", "2026-10-19");
-  fireEvent.click(screen.getByRole("link", { name: t("projects.back") }));
+  act(() => {
+    void router.navigate("/projects");
+  });
   const leaveDialog2 = await screen.findByRole("dialog");
   expect(leaveDialog2).toHaveTextContent(t("projects.leaveUnsaved"));
   await decide(false);
   expect(router.state.location.pathname).toBe("/projects/project-a");
 
-  fireEvent.click(screen.getByRole("link", { name: t("projects.back") }));
+  act(() => {
+    void router.navigate("/projects");
+  });
   await decide(true);
   await waitFor(() => expect(router.state.location.pathname).toBe("/projects"));
 });
@@ -911,7 +956,7 @@ it("saves handle placement intents for operable leaves before emitting", async (
   await issueReviewedPdf();
 
   await screen.findAllByText(t("projects.quoted"));
-  const saveRequest = vi.mocked(apiMutator).mock.calls[1]!;
+  const saveRequest = inputsSave();
   const body = JSON.parse(String((saveRequest[1] as RequestInit).body));
   expect(body.positions[0].handle_intents).toEqual([
     {
@@ -1083,7 +1128,7 @@ it("reconciles handle intents when the handle policy changes", async () => {
   await issueReviewedPdf();
 
   await screen.findAllByText(t("projects.quoted"));
-  const saveRequest = vi.mocked(apiMutator).mock.calls[1]!;
+  const saveRequest = inputsSave();
   const body = JSON.parse(String((saveRequest[1] as RequestInit).body));
   // B2's SECONDARY slot does not exist under handle-b: dropped. B1 survives
   // but LEAF_TOP is not permitted there: reset to the only permitted value.
@@ -1220,7 +1265,7 @@ it("keeps a manually edited height when the handle policy changes", async () => 
   await issueReviewedPdf();
 
   await screen.findAllByText(t("projects.quoted"));
-  const saveRequest = vi.mocked(apiMutator).mock.calls[1]!;
+  const saveRequest = inputsSave();
   const body = JSON.parse(String((saveRequest[1] as RequestInit).body));
   // The estimator typed 750 — the v2 reseed (bounds 700–900 → midpoint 800)
   // must not overwrite it with its own recomputed value.
@@ -1467,7 +1512,7 @@ it("asks before cloning away from dirty quotation preparation edits", async () =
   await screen.findByLabelText(t("quotation.paymentTerms"));
   change("quotation.paymentTerms", "50% anticipo");
 
-  fireEvent.click(screen.getByRole("button", { name: t("projects.cloneDraft") }));
+  await openMenuAction(t("projects.cloneDraft"));
   const leaveDialog = await screen.findByRole("dialog");
   expect(leaveDialog).toHaveTextContent(t("projects.leaveUnsaved"));
   await decide(false);
@@ -1475,7 +1520,7 @@ it("asks before cloning away from dirty quotation preparation edits", async () =
   expect(router.state.location.pathname).toBe("/projects/project-a");
   expect(screen.getByLabelText(t("quotation.paymentTerms"))).toHaveValue("50% anticipo");
 
-  fireEvent.click(screen.getByRole("button", { name: t("projects.cloneDraft") }));
+  await openMenuAction(t("projects.cloneDraft"));
   await decide(true);
   await screen.findByRole("heading", { level: 1, name: "Casa original" });
   expect(router.state.location.pathname).toBe("/projects/copy-server-id");
@@ -1498,7 +1543,7 @@ it("opens one idempotent editable successor from a quoted revision", async () =>
   const dialog = await screen.findByRole("dialog");
   expect(dialog).toHaveTextContent(t("quotation.successorConfirm"));
   await decide(true);
-  await screen.findByText("Revisión B");
+  expect((await screen.findAllByText("Revisión B")).length).toBeGreaterThan(0);
   expect(apiMutator).toHaveBeenCalledTimes(1);
   expect(vi.mocked(apiMutator).mock.calls[0]?.[0]).toBe("/api/v1/projects/project-a/successor/");
 });
@@ -1537,10 +1582,10 @@ it("explicitly retires current draft pricing with an audit reason before editing
       }),
     ),
   );
-  fireEvent.click(screen.getByRole("tab", { name: "Posiciones" }));
-  expect(
-    await screen.findByRole("button", { name: "Agregar desde biblioteca" }),
-  ).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("tab", { name: "Ventanas" }));
+  expect((await screen.findAllByRole("link", { name: /Añadir ventana/ })).length).toBeGreaterThan(
+    0,
+  );
 });
 
 it("persists list search/status/sort in the URL across back navigation", async () => {
@@ -1563,32 +1608,30 @@ it("persists list search/status/sort in the URL across back navigation", async (
   vi.mocked(projectsList).mockResolvedValue(response(200, { items: [quoted, draft] }));
 
   const router = mount("/projects");
-  await screen.findByRole("link", { name: "Casa B" });
-  fireEvent.change(screen.getByLabelText(t("projects.search")), {
+  await screen.findByRole("link", { name: /Casa B/ });
+  fireEvent.change(screen.getByLabelText("Buscar obra o cliente"), {
     target: { value: "casa" },
   });
-  fireEvent.change(screen.getByLabelText(t("projects.status")), {
-    target: { value: "QUOTED" },
-  });
-  fireEvent.change(screen.getByLabelText(t("projects.sortLabel")), {
-    target: { value: "code" },
+  fireEvent.click(screen.getByRole("radio", { name: "Cotizados" }));
+  fireEvent.change(screen.getByLabelText("Ordenar"), {
+    target: { value: "name" },
   });
 
   const search = router.state.location.search;
   expect(search).toContain("q=casa");
   expect(search).toContain("status=QUOTED");
-  expect(search).toContain("sort=code");
-  expect(screen.queryByRole("link", { name: "Casa A" })).not.toBeInTheDocument();
+  expect(search).toContain("sort=name");
+  expect(screen.queryByRole("link", { name: /Casa A/ })).not.toBeInTheDocument();
 
   // Leave for a detail and come back — controls keep their state because
   // they read the URL, not component memory.
   vi.mocked(projectsRetrieve).mockResolvedValue(response(200, quoted));
-  fireEvent.click(screen.getByRole("link", { name: "Casa B" }));
+  fireEvent.click(screen.getByRole("link", { name: /Casa B/ }));
   await screen.findByRole("heading", { name: "Casa B" });
   await router.navigate(-1);
-  await screen.findByLabelText(t("projects.search"));
-  expect(screen.getByLabelText(t("projects.search"))).toHaveValue("casa");
-  expect(screen.getByLabelText(t("projects.status"))).toHaveValue("QUOTED");
+  await screen.findByLabelText("Buscar obra o cliente");
+  expect(screen.getByLabelText("Buscar obra o cliente")).toHaveValue("casa");
+  expect(screen.getByRole("radio", { name: "Cotizados" })).toHaveAttribute("aria-checked", "true");
 });
 
 it("lists human timeline events once the activity section opens", async () => {
@@ -1809,17 +1852,38 @@ it("windows a hundred real elevations and filters by declared site grouping with
     response(200, makeProject({ position_count: 100, positions })),
   );
   mount();
-  const first = (await screen.findByLabelText("Seleccionar posición 1")).closest(".position-row")!;
+  const first = (await screen.findByLabelText("Seleccionar Dormitorio 1")).closest(
+    ".position-row",
+  )!;
   expect(first.querySelector("svg")).toBeInTheDocument();
   expect(
-    within(screen.getByRole("list", { name: "Posiciones" })).getAllByRole("listitem").length,
+    within(screen.getByRole("list", { name: "Ventanas" })).getAllByRole("listitem").length,
   ).toBeLessThan(15);
-  fireEvent.click(screen.getByLabelText("Seleccionar posición 1"));
-  fireEvent.change(screen.getByLabelText("Filtrar piso, recinto, eje o ubicación"), {
+  fireEvent.click(screen.getByLabelText("Seleccionar Dormitorio 1"));
+  fireEvent.change(screen.getByLabelText("Buscar por ubicación, piso, vidrio o tipología"), {
     target: { value: "Piso 2" },
   });
-  expect(screen.getByText("1 seleccionadas")).toBeInTheDocument();
-  expect(screen.queryByLabelText("Seleccionar posición 1")).not.toBeInTheDocument();
+  // The selection survives the filter and says it stays in the batch.
+  expect(screen.getByText("1 ventana elegida")).toBeInTheDocument();
+  expect(screen.getByText(/1 está fuera del filtro/)).toBeInTheDocument();
+  expect(screen.queryByLabelText("Seleccionar Dormitorio 1")).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: /Filtros/ }));
   fireEvent.change(screen.getByLabelText("Agrupar"), { target: { value: "floor" } });
-  expect(screen.getByRole("heading", { name: "Piso 2 · 50 posiciones" })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "Piso 2 · 50 ventanas" })).toBeInTheDocument();
+});
+
+it("starts a dated draft quotation from the home and opens its first window", async () => {
+  const created = makeProject({ id: "quick-draft", code: "P-2000", name: "Cotización del día" });
+  vi.mocked(projectsList).mockResolvedValue(response(200, { items: [] }));
+  vi.mocked(projectsCreate).mockResolvedValue(response(201, created));
+  vi.mocked(projectsRetrieve).mockResolvedValue(response(200, created));
+  const router = mount("/projects");
+  fireEvent.click((await screen.findAllByRole("button", { name: "Nueva cotización" }))[0]!);
+  await waitFor(() =>
+    expect(router.state.location.pathname).toBe("/projects/quick-draft/positions/new"),
+  );
+  expect(projectsCreate).toHaveBeenCalledTimes(1);
+  const [body, options] = vi.mocked(projectsCreate).mock.calls[0]!;
+  expect(body).toMatchObject({ client_name: "" });
+  expect(options).toEqual({ headers: { "X-Organization-ID": "org-a" } });
 });

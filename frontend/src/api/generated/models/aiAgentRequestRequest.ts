@@ -8,6 +8,8 @@
 import type { AiAgentHistoryRequest } from "./aiAgentHistoryRequest";
 import type { AiAgentRequestRequestProduct } from "./aiAgentRequestRequestProduct";
 import type { AiAgentRequestRequestRefs } from "./aiAgentRequestRequestRefs";
+import type { AutonomyEnum } from "./autonomyEnum";
+import type { InteractionModeEnum } from "./interactionModeEnum";
 
 export interface AiAgentRequestRequest {
   /**
@@ -30,4 +32,10 @@ export interface AiAgentRequestRequest {
    * @maxLength 120
    */
   operation_key: string;
+  /** @nullable */
+  thread_id?: string | null;
+  interaction_mode?: InteractionModeEnum;
+  /** @maxItems 6 */
+  attachment_ids?: string[];
+  autonomy?: AutonomyEnum;
 }

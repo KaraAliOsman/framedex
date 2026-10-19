@@ -46,9 +46,11 @@ export {
 export { Checkbox, Radio, Combobox, SegmentedControl, Switch } from "./Choices";
 export { DataTable } from "./DataTable";
 export type { TableColumn, TableState } from "./DataTable";
-export { StatusChip, OpeningGlyph, Icon } from "./Glyphs";
+export { StatusChip, OpeningGlyph } from "./Glyphs";
+export { Icon } from "./Icon";
+export type { IconName } from "./Icon";
 export type { OpeningKind, IconKind } from "./Glyphs";
-export { UnknownValue, DemoBadge, DimLoader, SheetSurface, TraceButton } from "./Signature";
+export { UnknownValue, DemoBadge, Loading, SheetSurface, TraceButton } from "./Signature";
 export type { ValueTrace } from "./Signature";
 export {
   Area,

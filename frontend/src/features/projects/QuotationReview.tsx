@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { QuotationPreview } from "../../api/generated/models";
 import { formatDate, formatMoney } from "../money";
 import { formatDateTime, formatRevision } from "../../format";
-import { DimLoader } from "../../ui/Signature";
+import { Loading } from "../../ui/Signature";
 
 /** Opens ancestor disclosures before scrolling and focusing the exact missing field. */
 export function focusQuotationField(id: string): void {
@@ -137,7 +137,7 @@ export function QuotationReview({
             </div>
           ) : objectUrl === "" ? (
             <p>
-              <DimLoader label="Abriendo el PDF" /> Abriendo el PDF…
+              <Loading label="Abriendo el PDF" />
             </p>
           ) : (
             <iframe

@@ -16,7 +16,7 @@ import type {
 } from "../../api/generated/models";
 import { applyAppBrand } from "../../brand/head";
 import { formatDate, formatDateTime, formatRevision, isValidRut } from "../../format";
-import { DemoBadge, DimLoader, Money, StatusBadge, UnknownValue, ValidatedForm } from "../../ui";
+import { DemoBadge, Loading, Money, StatusBadge, UnknownValue, ValidatedForm } from "../../ui";
 import { actionErrorDetail } from "../errors";
 import { ProposalDrawing, ProposalThumb } from "./proposalDrawing";
 import "./portal.css";
@@ -513,7 +513,7 @@ export function PortalQuotePage(): JSX.Element {
       <main className="portal-page" data-density="document">
         <section className="portal-card portal-card--narrow">
           <h1>Consultando su cotización</h1>
-          <DimLoader label="Consultando la propuesta sellada" />
+          <Loading label="Consultando la propuesta sellada" />
         </section>
       </main>
     );

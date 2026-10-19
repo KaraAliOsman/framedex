@@ -84,7 +84,7 @@ it("keeps exact entity and phase/currency links, and preserves ordered actions a
   fireEvent.click(screen.getByRole("button", { name: "Anterior" }));
   expect(within(queue).getByRole("heading", { name: "Completa la entrega 1" })).toBeVisible();
   fireEvent.click(screen.getByRole("button", { name: "Atención pendiente" }));
-  expect(await screen.findByRole("link", { name: "Ver todo mi trabajo" })).toHaveAttribute(
+  expect(await screen.findByRole("link", { name: "Ver todos los pendientes" })).toHaveAttribute(
     "href",
     "/dashboard",
   );

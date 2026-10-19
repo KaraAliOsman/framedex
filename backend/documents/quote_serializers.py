@@ -42,6 +42,33 @@ class CommercialTermsSerializer(StrictSerializer):
         return value
 
 
+QUOTATION_BLOCKS = ["intro", "client", "hero", "summary", "positions", "alternatives", "commercial", "terms", "services", "acceptance", "closing"]
+
+
+class LayoutTextsSerializer(StrictSerializer):
+    intro = serializers.CharField(max_length=2000, allow_blank=True, required=False)
+    closing = serializers.CharField(max_length=2000, allow_blank=True, required=False)
+    notes = serializers.CharField(max_length=2000, allow_blank=True, required=False)
+
+
+class QuotationLayoutSerializer(StrictSerializer):
+    """Editable composition of a quotation: family, block order/visibility,
+    editorial texts and presentation. Never numbers: those come sealed from
+    the calculation."""
+
+    template = serializers.ChoiceField(choices=["ESENCIAL", "PROYECTO", "ALTERNATIVAS"], required=False)
+    order = serializers.ListField(child=serializers.ChoiceField(choices=QUOTATION_BLOCKS), required=False, max_length=20)
+    hidden = serializers.ListField(child=serializers.ChoiceField(choices=QUOTATION_BLOCKS), required=False, max_length=20)
+    texts = LayoutTextsSerializer(required=False)
+    drawing_size = serializers.ChoiceField(choices=["S", "M", "L"], required=False)
+    unit_prices = serializers.BooleanField(required=False)
+
+    def validate_hidden(self, value):
+        if {"positions", "commercial"} & set(value):
+            raise serializers.ValidationError("Las ventanas y el resumen comercial no se pueden ocultar.")
+        return value
+
+
 class DocumentPreferencesSerializer(StrictSerializer):
     portal_successor_link = serializers.BooleanField(required=False)
     piece_label_paper = serializers.ChoiceField(choices=["LETTER", "A4", "ROLL_100_50"], required=False)
@@ -53,6 +80,9 @@ class DocumentPreferencesSerializer(StrictSerializer):
     accent = serializers.ChoiceField(choices=["TEAL", "TEAL_DARK", "GRAPHITE"])
     legal_footer = serializers.CharField(max_length=240, allow_blank=True)
     commercial_terms = CommercialTermsSerializer()
+    quotation_template = serializers.ChoiceField(choices=["ESENCIAL", "PROYECTO", "ALTERNATIVAS"], required=False)
+    acceptance_mode = serializers.ChoiceField(choices=["NONE", "PORTAL", "SIGNATURE"], required=False)
+    quotation_layout = QuotationLayoutSerializer(required=False)
 
 
 class DocumentPreferencesPatchSerializer(DocumentPreferencesSerializer):

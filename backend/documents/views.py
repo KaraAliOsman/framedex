@@ -389,6 +389,7 @@ class ArtifactGenerateView(APIView):
                 order_id=data.get("order_id"),
                 document_type=data["document_type"],
                 file_format=data["format"],
+                layout=data.get("layout") or "STANDARD",
             )
         return Response(output, status=201 if created else 200)
 

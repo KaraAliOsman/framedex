@@ -69,10 +69,10 @@ conservan consulta e historia, sin acciones físicas incompatibles.
 
 ## Evidencia
 
-- [Antes, Compras](captures/compras-inventario/antes-purchasing-1440-claro.png) y
-  [antes, Inventario](captures/compras-inventario/antes-inventory-1440-claro.png).
-- [Después, Compras](captures/compras-inventario/despues/compras-1440-claro.png) y
-  [Inventario 1024 oscuro](captures/compras-inventario/despues/inventario-1024-oscuro.png).
+- [Antes, Compras](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/compras-inventario/antes-purchasing-1440-claro.png) y
+  [antes, Inventario](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/compras-inventario/antes-inventory-1440-claro.png).
+- [Después, Compras](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/compras-inventario/despues/compras-1440-claro.png) y
+  [Inventario 1024 oscuro](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/compras-inventario/despues/inventario-1024-oscuro.png).
 - [Recorrido](captures/compras-inventario/recorrido/resultados.json),
   [reutilización](captures/compras-inventario/recorrido/reutilizacion.json),
   [correo](captures/compras-inventario/recorrido/correo-resultados.json),

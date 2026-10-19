@@ -3,10 +3,10 @@ import { lazy, StrictMode, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 
 import { PublicProposalApp, isPublicProposalPath } from "./features/portal/PublicProposalApp";
-import { DimLoader } from "./ui/Signature";
+import { Loading } from "./ui/Signature";
 import "./index.css";
 import "./styles/tokens.css";
-import { ThemeProvider } from "./theme/ThemeProvider";
+import { applyAppBrand } from "./brand/head";
 import { ConfirmProvider, ToastProvider } from "./ui";
 import "./ui/ui.css";
 
@@ -23,24 +23,25 @@ const queryClient = new QueryClient({
   },
 });
 
+// One light theme for the whole product (constitution §3.1).
+if (!isPublicProposalPath(window.location.pathname)) applyAppBrand("light");
+
 const PrivateApplication = lazy(() => import("./PrivateApplication"));
 
 createRoot(container).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <ConfirmProvider>
-          <ToastProvider>
-            <Suspense fallback={<DimLoader label="Cargando su espacio de trabajo" />}>
-              {isPublicProposalPath(window.location.pathname) ? (
-                <PublicProposalApp />
-              ) : (
-                <PrivateApplication />
-              )}
-            </Suspense>
-          </ToastProvider>
-        </ConfirmProvider>
-      </ThemeProvider>
+      <ConfirmProvider>
+        <ToastProvider>
+          <Suspense fallback={<Loading label="Cargando su espacio de trabajo" />}>
+            {isPublicProposalPath(window.location.pathname) ? (
+              <PublicProposalApp />
+            ) : (
+              <PrivateApplication />
+            )}
+          </Suspense>
+        </ToastProvider>
+      </ConfirmProvider>
     </QueryClientProvider>
   </StrictMode>,
 );

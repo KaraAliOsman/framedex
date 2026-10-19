@@ -11,7 +11,7 @@
   max-width: 180px;
   height: auto;
   border: 1px solid var(--border-default);
-  border-radius: var(--radius-sm);
+  border-radius: var(--r-1);
   background: var(--surface-panel);
 }
 
@@ -62,8 +62,25 @@
   color: var(--text-secondary);
 }
 
-.section-preview[data-provenance="APPROXIMATE"] figcaption::before {
+.section-preview[data-provenance="APPROXIMATE"] figcaption::before,
+.section-preview[data-provenance="ILLUSTRATIVE"] figcaption::before {
   content: "◌ ";
+}
+.section-family__shape {
+  stroke-width: 0.8;
+  vector-effect: non-scaling-stroke;
+}
+.section-family__chamber {
+  fill: none;
+  stroke-width: 0.5;
+  vector-effect: non-scaling-stroke;
+  opacity: 0.7;
+}
+.section-family__break {
+  opacity: 0.8;
+}
+.section-preview[data-provenance="ILLUSTRATIVE"] svg {
+  background: var(--bg-app);
 }
 
 .section-preview[data-provenance="POLYGON"] figcaption::before,

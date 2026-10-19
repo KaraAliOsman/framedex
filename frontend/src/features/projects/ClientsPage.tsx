@@ -29,6 +29,7 @@ import {
   useConfirm,
 } from "../../ui";
 import { ClientEditor, customerKinds } from "./ClientEditor";
+import { SimilarClients } from "./SimilarClients";
 import { CustomerHistory } from "./CustomerHistory";
 import "./clients.css";
 
@@ -212,6 +213,9 @@ function ClientsWorkspace({ orgId, canWrite }: { orgId: string; canWrite: boolea
         </p>
       )}
       {notice && <p role="status">{notice}</p>}
+      {draft && !editing ? (
+        <SimilarClients orgId={orgId} name={draft.name ?? ""} rut={draft.rut ?? ""} />
+      ) : null}
       {draft ? (
         <ClientEditor
           value={draft}

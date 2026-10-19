@@ -5,7 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
-import type { OutcomeEnum } from "./outcomeEnum";
+import type { FlowSimulationRequestOutcomeEnum } from "./flowSimulationRequestOutcomeEnum";
 
 export interface FlowSimulationRequestRequest {
   /**
@@ -13,5 +13,5 @@ export interface FlowSimulationRequestRequest {
    * @maxLength 100
    */
   token: string;
-  outcome: OutcomeEnum;
+  outcome: FlowSimulationRequestOutcomeEnum;
 }

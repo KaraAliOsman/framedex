@@ -10,6 +10,8 @@ import {
   companyInvite,
   companyInvitationRevoke,
   companyNumbering,
+  quotationNumberingGet,
+  quotationNumberingSave,
   projectsList,
   projectsRetrieve,
   getCompanyDocumentPreviewUrl,
@@ -458,6 +460,114 @@ export function UsersCard({ orgId, canEdit }: { orgId: string; canEdit: boolean 
   );
 }
 
+/** Company quotation numbering: «N.º 1» by default. The number is assigned
+ * once, when a work first prepares a version to issue; its revisions keep it. */
+export function QuotationNumberingCard({
+  orgId,
+  canEdit,
+}: {
+  orgId: string;
+  canEdit: boolean;
+}): JSX.Element {
+  const headers = useMemo(() => ({ "X-Organization-ID": orgId }), [orgId]);
+  const query = useQuery({
+    queryKey: ["quotation-numbering", orgId],
+    queryFn: async ({ signal }) => {
+      const r = await quotationNumberingGet({ headers, signal });
+      if (r.status !== 200) throw new ApiError(r.status, r.data);
+      return r.data;
+    },
+  });
+  const [prefix, setPrefix] = useState<string | null>(null);
+  const [next, setNext] = useState<number | null>(null);
+  const [status, setStatus] = useState("");
+  const [busy, setBusy] = useState(false);
+  if (query.isPending) return <LoadingState label="Consultando numeración de cotizaciones" />;
+  if (query.isError)
+    return (
+      <ErrorState
+        body="No pudimos consultar la numeración de cotizaciones."
+        onRetry={() => void query.refetch()}
+      />
+    );
+  const data = query.data;
+  const shownPrefix = prefix ?? data.prefix;
+  const shownNext = next ?? data.next_number;
+  const minimum = (data.highest_assigned ?? 0) + 1;
+  const example = shownPrefix + String(shownNext || minimum);
+  return (
+    <section className="settings-card">
+      <h2>Numeración de cotizaciones</h2>
+      <p>
+        Cada obra recibe su número al preparar la primera versión para emitir. Sus revisiones
+        conservan el mismo número y los documentos emitidos nunca se renumeran.
+      </p>
+      <ValidatedForm
+        className="settings-form"
+        onSubmit={async (event) => {
+          event.preventDefault();
+          setBusy(true);
+          setStatus("");
+          try {
+            const r = await quotationNumberingSave(
+              { prefix: shownPrefix, next_number: shownNext },
+              { headers },
+            );
+            if (r.status !== 200) throw new ApiError(r.status, r.data);
+            setPrefix(null);
+            setNext(null);
+            await query.refetch();
+            setStatus("Numeración guardada.");
+          } catch (error) {
+            setStatus(actionErrorDetail(error, "No se pudo guardar la numeración."));
+          } finally {
+            setBusy(false);
+          }
+        }}
+      >
+        <fieldset disabled={!canEdit || busy}>
+          <label>
+            Prefijo
+            <input
+              maxLength={20}
+              value={shownPrefix}
+              onChange={(event) => setPrefix(event.target.value)}
+            />
+            <small>Se imprime antes del número. Puede quedar vacío.</small>
+          </label>
+          <label>
+            Próximo número
+            <input
+              type="number"
+              min={minimum}
+              step={1}
+              required
+              value={shownNext}
+              onChange={(event) => setNext(event.target.valueAsNumber)}
+            />
+            <small>
+              {data.highest_assigned
+                ? `Debe ser mayor que el último asignado (${data.highest_assigned}).`
+                : "Aún no hay cotizaciones numeradas."}
+            </small>
+          </label>
+        </fieldset>
+        <p>
+          Así se verá la próxima: <strong>{example}</strong>
+        </p>
+        {status ? <p role="status">{status}</p> : null}
+        {canEdit ? (
+          <Button type="submit" variant="primary" loading={busy}>
+            Guardar numeración
+          </Button>
+        ) : (
+          <p>Solo el dueño cambia la numeración.</p>
+        )}
+      </ValidatedForm>
+    </section>
+  );
+}
+
 export function NumberingCard({ orgId }: { orgId: string }): JSX.Element {
   const query = useQuery({
     queryKey: ["company-numbering", orgId],
@@ -502,8 +612,8 @@ export function NumberingCard({ orgId }: { orgId: string }): JSX.Element {
         ))}
       </dl>
       <p>
-        Las cotizaciones se identifican por proyecto y revisión; las OT y documentos de cobro
-        conservan el código reservado en su emisión.
+        Las cotizaciones usan su propia numeración, arriba. Las OT y documentos de cobro conservan
+        el código reservado en su emisión.
       </p>
       <Button onClick={() => void query.refetch()}>Actualizar referencia</Button>
     </section>

@@ -2,12 +2,13 @@ import type { ProfileSection } from "../../api/generated/models";
 import { fmtMm } from "../../format";
 import { t } from "../../i18n/es-CL";
 import { memberSurface } from "./materials";
+import { FAMILY_LABEL, FamilyIllustration, familyDepth, familyForRole } from "./profileFamilies";
 import "./SectionPreviewSvg.css";
 
-/** True-scale profile cross-section preview (mandate §15).
- * A declared polygon renders filled with its axes; when the catalog carries no
- * section the fallback is a dashed box labeled approximate — visibly different
- * from a declared shape, never mistaken for one. */
+/** Profile cross-section preview, in a fixed order of authority: a declared
+ * polygon (true scale, with its axes) → a recognisable family illustration
+ * scaled to the declared face width and labelled illustrative → a dashed
+ * approximate box. A declared shape is never mistaken for an illustration. */
 
 const PAD_MM = 10;
 const AXIS_LABELS: Record<string, string> = {
@@ -36,15 +37,23 @@ export function SectionPreviewSvg({
   faceWidthMm,
   depthMm,
   material,
+  role,
 }: {
   section: ProfileSection | null | undefined;
   faceWidthMm: number;
   depthMm?: number;
   material?: string;
+  /** Catalog role; enables the family illustration when no section exists. */
+  role?: string | null;
 }) {
   const declared = section?.polygon?.length ? section : null;
+  const family = !declared && role && faceWidthMm > 0 ? familyForRole(role) : null;
   const widthMm = declared ? polygonBounds(declared).width : Math.max(faceWidthMm, 1);
-  const heightMm = declared ? polygonBounds(declared).height : Math.max(depthMm ?? faceWidthMm, 1);
+  const heightMm = declared
+    ? polygonBounds(declared).height
+    : family
+      ? familyDepth(family, depthMm)
+      : Math.max(depthMm ?? faceWidthMm, 1);
   const bounds = declared
     ? polygonBounds(declared)
     : { minX: 0, minY: 0, width: widthMm, height: heightMm };
@@ -57,12 +66,14 @@ export function SectionPreviewSvg({
     ? declared.source === "DXF_REFERENCE"
       ? t("assembly.sectionExact")
       : t("assembly.sectionDeclared")
-    : t("assembly.sectionApproximate");
+    : family
+      ? `${FAMILY_LABEL[family]} · ilustración de la familia, no es la sección de fabricación`
+      : t("assembly.sectionApproximate");
 
   return (
     <figure
       className="section-preview"
-      data-provenance={declared ? declared.source : "APPROXIMATE"}
+      data-provenance={declared ? declared.source : family ? "ILLUSTRATIVE" : "APPROXIMATE"}
     >
       <svg
         viewBox={`${viewX} ${viewY} ${viewW} ${viewH}`}
@@ -76,6 +87,15 @@ export function SectionPreviewSvg({
             points={declared.polygon
               .map((point) => `${Number(point.x_mm)},${Number(point.y_mm)}`)
               .join(" ")}
+          />
+        ) : family ? (
+          <FamilyIllustration
+            family={family}
+            widthMm={widthMm}
+            depthMm={heightMm}
+            material={material ?? "PVC"}
+            fill={surface.fill}
+            edge={surface.edge}
           />
         ) : (
           <rect
@@ -100,7 +120,11 @@ export function SectionPreviewSvg({
         ))}
       </svg>
       <figcaption>
-        <span className="section-preview__dims">{`${fmtMm(widthMm)} × ${fmtMm(heightMm)} mm`}</span>
+        <span className="section-preview__dims">
+          {family && !depthMm
+            ? `Cara ${fmtMm(widthMm)} mm`
+            : `${fmtMm(widthMm)} × ${fmtMm(heightMm)} mm`}
+        </span>
         <span>{provenance}</span>
         {declared?.axes?.length ? (
           <dl className="section-preview__axes" aria-label="Ejes de la sección">

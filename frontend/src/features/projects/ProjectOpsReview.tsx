@@ -12,7 +12,7 @@ import type {
 } from "../../api/generated/models";
 import { ApiError } from "../../api/apiMutator";
 import { fmtMm, formatMoney } from "../../format";
-import { DimLoader } from "../../ui";
+import { Loading } from "../../ui";
 import { actionErrorDetail } from "../errors";
 import { SimulationPreview } from "../assistant/SimulationPreview";
 
@@ -129,6 +129,40 @@ export function useProjectOperations(
       if (!controller.signal.aborted) setBusy(false);
     }
   }
+  /** Reversible, low-consequence change (duplicate a window): the engine still
+   * previews and seals it, but it applies at once and offers «Deshacer». */
+  async function run(ops: DesignOperationRequest[], done: string): Promise<boolean> {
+    if (lock.current || !lifetime.current || lifetime.current.signal.aborted) return false;
+    const controller = lifetime.current;
+    lock.current = true;
+    setBusy(true);
+    setError("");
+    setNotice("");
+    setProposal(null);
+    try {
+      const preview = await projectOperationsPreview(project.id, { ops }, options());
+      if (preview.status !== 200) throw new ApiError(preview.status, preview.data);
+      if (controller.signal.aborted) return false;
+      const result = await projectOperationsApply(
+        project.id,
+        { ops, before_sig: preview.data.before_sig, operation_key: crypto.randomUUID() },
+        options(),
+      );
+      if (result.status !== 200) throw new ApiError(result.status, result.data);
+      if (controller.signal.aborted) return false;
+      setUndoId(result.data.operation_id);
+      setNotice(done);
+      await onChanged();
+      return true;
+    } catch (cause) {
+      if (!controller.signal.aborted)
+        setError(actionErrorDetail(cause, "No se pudo aplicar el cambio. Vuelve a intentarlo."));
+      return false;
+    } finally {
+      lock.current = false;
+      if (!controller.signal.aborted) setBusy(false);
+    }
+  }
   return {
     proposal,
     busy,
@@ -136,6 +170,7 @@ export function useProjectOperations(
     notice,
     undoId,
     propose,
+    run,
     apply,
     undo,
     cancel: () => setProposal(null),
@@ -178,7 +213,7 @@ export function ProjectOpsReview({
   const { proposal } = operations;
   return (
     <div className="project-ops-review" aria-live="polite">
-      {operations.busy && <DimLoader label="Revisando el cambio con el motor" />}
+      {operations.busy && <Loading label="Revisando el cambio con el motor" />}
       {operations.error && <p role="alert">{operations.error}</p>}
       {operations.notice && <p role="status">{operations.notice}</p>}
       {operations.undoId && (

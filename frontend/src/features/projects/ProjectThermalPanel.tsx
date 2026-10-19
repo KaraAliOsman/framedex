@@ -15,7 +15,7 @@ import {
   formatPercent,
   parseDecimalInput,
 } from "../../format";
-import { Button, DimLoader, EmptyState, TraceButton, ValidatedForm } from "../../ui";
+import { Button, Loading, EmptyState, TraceButton, ValidatedForm } from "../../ui";
 import { actionErrorDetail } from "../errors";
 import { useProjectOperations, ProjectOpsReview } from "./ProjectOpsReview";
 import {
@@ -171,7 +171,7 @@ export function PositionThermal({
   positionId: string;
 }) {
   const query = useThermalReport(projectId, orgId);
-  if (query.isPending) return <DimLoader label="Calculando Uw con sus fuentes" />;
+  if (query.isPending) return <Loading label="Calculando Uw con sus fuentes" />;
   if (query.isError)
     return (
       <p role="alert">
@@ -288,7 +288,7 @@ export function ProjectThermalPanel({
       "Alternativa térmica con menor precio que cumple",
     );
   }
-  if (query.isPending) return <DimLoader label="Calculando el informe térmico" />;
+  if (query.isPending) return <Loading label="Calculando el informe térmico" />;
   if (query.isError)
     return (
       <section role="alert">
@@ -333,7 +333,7 @@ export function ProjectThermalPanel({
       )}
       {error && <p role="alert">{error}</p>}
       {notice && <p role="status">{notice}</p>}
-      {busy && <DimLoader label="Revisando datos y catálogo" />}
+      {busy && <Loading label="Revisando datos y catálogo" />}
       {current && (
         <details open={!report.inputs.zone && !report.sealed} className="thermal-inputs">
           <summary>Zona, envolvente y anexo técnico</summary>

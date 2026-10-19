@@ -1,0 +1,731 @@
+{
+  "research_date": "2026-10-18",
+  "competitors": [
+    {
+      "id": "nuverapro",
+      "name": "NuveraPRO",
+      "category": "Cotización local para talleres de PVC y aluminio",
+      "sources": [
+        {
+          "id": "N1",
+          "title": "Primeros pasos",
+          "url": "https://nuverapro.com/cotizadorpvcaluminio/primeros-pasos.html",
+          "type": "official_page",
+          "access": "texto oficial leído",
+          "limit": "",
+          "accessed": "2026-10-18"
+        },
+        {
+          "id": "N2",
+          "title": "Marcas y series",
+          "url": "https://nuverapro.com/cotizadorpvcaluminio/Marcas.html",
+          "type": "official_page",
+          "access": "texto oficial leído",
+          "limit": "",
+          "accessed": "2026-10-18"
+        },
+        {
+          "id": "N3",
+          "title": "Producto e informes",
+          "url": "https://nuverapro.com/cotizadorpvcaluminio/index.html",
+          "type": "official_page",
+          "access": "texto oficial leído",
+          "limit": "",
+          "accessed": "2026-10-18"
+        },
+        {
+          "id": "N4",
+          "title": "Captura selección de ítem",
+          "url": "https://nuverapro.com/cotizadorpvcaluminio/img/SeleccionaItem.jpg",
+          "type": "official_image",
+          "access": "imagen dentro de página inspeccionada",
+          "limit": "No aplicación ejecutada.",
+          "accessed": "2026-10-18"
+        },
+        {
+          "id": "N5",
+          "title": "Canal de tutoriales",
+          "url": "https://www.youtube.com/@nuverapro/videos",
+          "type": "video_index",
+          "access": "localizado; vídeos no reproducidos",
+          "limit": "",
+          "accessed": "2026-10-18"
+        }
+      ],
+      "flows": [
+        "Empresa → proveedor/serie → medidas y tipología → cotización e informes. Reconstrucción de la guía, sin sesión ejecutada.",
+        "Proveedor faltante → contacto de soporte → revisión de compatibilidad. No se envió solicitud ni se obtuvo catálogo privado."
+      ],
+      "limits": [
+        "No se creó cuenta ni se importó Proline.",
+        "Una marca comercial agrupada no es autoridad física de todas sus series."
+      ],
+      "rubric18": [
+        {
+          "order": 1,
+          "title": "Entrada y onboarding",
+          "status": "DOC",
+          "observation": "La guía enlaza cuenta, empresa, proveedor, dibujo e informes. El plazo comercial anunciado no se midió.",
+          "sources": [
+            "N1"
+          ],
+          "lesson": "Separar preparación de empresa de preparación de autoridad técnica."
+        },
+        {
+          "order": 2,
+          "title": "Marcas, series y catálogos",
+          "status": "DOC",
+          "observation": "PVC se organiza comercialmente por proveedor; el aluminio se agrupa bajo Gestión VAP. La lista exacta de sistemas cubiertos no fue validada.",
+          "sources": [
+            "N2"
+          ],
+          "lesson": "Mantener fabricante real incluso si el plan factura un paquete de aluminio."
+        },
+        {
+          "order": 3,
+          "title": "Editor y aperturas",
+          "status": "DOC+VIS",
+          "observation": "La guía pide medidas y tipología; la captura publicada sitúa la selección del ítem antes de configurarlo. No se cambiaron aperturas.",
+          "sources": [
+            "N1",
+            "N4"
+          ],
+          "lesson": "Elegir una configuración comprensible, con miniatura, antes de editar detalles."
+        },
+        {
+          "order": 4,
+          "title": "2D y 3D",
+          "status": "NV",
+          "observation": "No se verificó 3D ni sincronización entre vistas. La presencia de dibujos en la web no acredita comportamiento del editor.",
+          "sources": [
+            "N4"
+          ],
+          "lesson": "Distinguir miniatura comercial, elevación técnica y modelo 3D."
+        },
+        {
+          "order": 5,
+          "title": "Materiales y componentes",
+          "status": "DOC",
+          "observation": "Se anuncian informes de materiales y vidrios. Compatibilidad de herrajes y trazabilidad de cada componente quedan sin prueba.",
+          "sources": [
+            "N3"
+          ],
+          "lesson": "Hacer que cada informe vuelva a posición, sistema y revisión."
+        },
+        {
+          "order": 6,
+          "title": "Precios, margen y privacidad",
+          "status": "NV",
+          "observation": "No se inspeccionaron costos de compra privados, cascadas de margen ni permisos. El precio de la suscripción es un dato diferente.",
+          "sources": [
+            "N3"
+          ],
+          "lesson": "Probar privacidad de costos entre roles, no deducirla del cotizador."
+        },
+        {
+          "order": 7,
+          "title": "Cotización y PDF",
+          "status": "DOC",
+          "observation": "La guía incluye identidad de empresa y cotización con logo. No se ejecutó emisión ni una revisión posterior.",
+          "sources": [
+            "N1"
+          ],
+          "lesson": "Vista previa del documento con identidad propia y vínculo a la revisión."
+        },
+        {
+          "order": 8,
+          "title": "Cortes y retazos",
+          "status": "DOC/NV",
+          "observation": "Se ofrecen pautas de corte; no se probó optimización ni inventario físico de sobrantes.",
+          "sources": [
+            "N3"
+          ],
+          "lesson": "Separar cálculo de piezas, distribución en barras y reserva física."
+        },
+        {
+          "order": 9,
+          "title": "Compras y stock",
+          "status": "DOC/NV",
+          "observation": "El listado ayuda a pedir materiales. No acredita órdenes, recepción parcial, reserva o devolución.",
+          "sources": [
+            "N3"
+          ],
+          "lesson": "Compras necesita continuidad hasta recepción, no solo un PDF."
+        },
+        {
+          "order": 10,
+          "title": "Taller y CNC",
+          "status": "NV",
+          "observation": "No se comprobó estación productiva, postprocesador ni salida CNC operativa.",
+          "sources": [
+            "N3"
+          ],
+          "lesson": "Delimitar qué sirve para cotizar y qué está aprobado para fabricar."
+        },
+        {
+          "order": 11,
+          "title": "QR y terreno",
+          "status": "NV",
+          "observation": "La web menciona uso en terreno, pero no se observó medición, escaneo QR ni incidencia vinculada a unidad.",
+          "sources": [
+            "N3"
+          ],
+          "lesson": "Dar al QR un objeto y una tarea verificables."
+        },
+        {
+          "order": 12,
+          "title": "IA",
+          "status": "NV",
+          "observation": "No se encontró evidencia operativa de un agente en las páginas revisadas. No implica ausencia en producto privado.",
+          "sources": [
+            "N1",
+            "N3"
+          ],
+          "lesson": "Diferenciar a DEKOPEN mediante ejecución demostrable y continuidad."
+        },
+        {
+          "order": 13,
+          "title": "Historial y deshacer",
+          "status": "NV",
+          "observation": "Sin sesión de usuario no se verificaron historial, versiones ni recuperación.",
+          "sources": [
+            "N1"
+          ],
+          "lesson": "El primer recorrido debe enseñar cómo volver al trabajo anterior."
+        },
+        {
+          "order": 14,
+          "title": "Roles",
+          "status": "NV",
+          "observation": "Usuarios sin límite comercial no demuestra roles ni aislamiento entre empresas.",
+          "sources": [
+            "N3"
+          ],
+          "lesson": "Separar acceso comercial de autorización de datos y operaciones."
+        },
+        {
+          "order": 15,
+          "title": "Claridad visual",
+          "status": "VIS",
+          "observation": "Se inspeccionaron la guía y la captura embebida. La secuencia de selección es reconocible; no hay base para puntuar la UI completa.",
+          "sources": [
+            "N1",
+            "N4"
+          ],
+          "lesson": "Usar una imagen útil y una acción concreta por paso; evitar un catálogo visualmente vacío."
+        },
+        {
+          "order": 16,
+          "title": "Teclado y móvil",
+          "status": "DOC/NV",
+          "observation": "Se declara acceso online desde dispositivos. No se verificaron atajos, accesibilidad ni paridad móvil.",
+          "sources": [
+            "N1"
+          ],
+          "lesson": "Medir cotización en escritorio y consulta/medición en teléfono por separado."
+        },
+        {
+          "order": 17,
+          "title": "Interoperabilidad",
+          "status": "NV",
+          "observation": "No se confirmó API, contrato de importación o exportación estructurada en el alcance consultado.",
+          "sources": [
+            "N1",
+            "N3"
+          ],
+          "lesson": "Publicar formatos y diagnósticos, no promesas genéricas de integración."
+        },
+        {
+          "order": 18,
+          "title": "Madurez y precio",
+          "status": "DOC",
+          "observation": "Oferta mensual chilena por cantidad de marcas; el sitio muestra valores públicos más IVA. Son oferta del proveedor, sin compra ni cálculo de costo total.",
+          "sources": [
+            "N2",
+            "N3"
+          ],
+          "lesson": "Comparar datos, capacitación y soporte incluidos; no competir solo por cantidad de pantallas."
+        }
+      ]
+    },
+    {
+      "id": "winart",
+      "name": "Winart / Haustek",
+      "category": "Herramienta chilena ligada a proveedor",
+      "sources": [
+        {
+          "id": "H1",
+          "title": "Producto, condiciones e informes",
+          "url": "https://haustek.cl/winart/",
+          "type": "official_page",
+          "access": "texto oficial leído",
+          "limit": "",
+          "accessed": "2026-10-18"
+        },
+        {
+          "id": "H2",
+          "title": "Tutorial oficial Winart",
+          "url": "https://www.youtube.com/watch?v=26qVxUTQP3A",
+          "type": "official_video",
+          "access": "fotogramas observados ~00:30, 01:16, ~02:30 y 04:35",
+          "limit": "Duración mostrada 05:05; no visionado continuo completo.",
+          "accessed": "2026-10-18"
+        },
+        {
+          "id": "H3",
+          "title": "Presentación oficial",
+          "url": "https://www.youtube.com/watch?v=Ifu3mTq3jPg",
+          "type": "official_video",
+          "access": "enlace localizado; no reproducido",
+          "limit": "",
+          "accessed": "2026-10-18"
+        },
+        {
+          "id": "H4",
+          "title": "Imagen de acceso Winart",
+          "url": "https://haustek.cl/wp-content/uploads/2026/06/software-winart-haustek-gestion-ventanas-pvc-768x597.webp",
+          "type": "official_image",
+          "access": "vista en la landing",
+          "limit": "Es login; no editor.",
+          "accessed": "2026-10-18"
+        }
+      ],
+      "flows": [
+        "Obra → elemento → propiedades → tabla de perfiles. Fotogramas del tutorial; transiciones no ejecutadas por el investigador.",
+        "Conjunto de elementos → Plan de Ejecución PDF → secciones de herrajes/materiales. Fotograma 04:35; no se verificó consistencia de cifras."
+      ],
+      "limits": [
+        "Se inspeccionaron fotogramas seleccionados, no todo el vídeo.",
+        "La palabra Winhouse asociada al proveedor no autoriza equivalencia con Winhaus.cl."
+      ],
+      "rubric18": [
+        {
+          "order": 1,
+          "title": "Entrada y onboarding",
+          "status": "DOC",
+          "observation": "Acceso gestionado con el equipo de Haustek; gratuito para sus clientes. No se solicitó licencia ni capacitación.",
+          "sources": [
+            "H1"
+          ],
+          "lesson": "Mostrar elegibilidad y datos disponibles antes de abrir el editor."
+        },
+        {
+          "order": 2,
+          "title": "Marcas, series y catálogos",
+          "status": "VIS+DOC",
+          "observation": "El tutorial muestra un proyecto y perfiles identificados. La oferta es de proveedor; no se verificó un catálogo mult fabricante.",
+          "sources": [
+            "H1",
+            "H2"
+          ],
+          "lesson": "La ficha de marca debe decir quién suministra y quién mantiene las reglas."
+        },
+        {
+          "order": 3,
+          "title": "Editor y aperturas",
+          "status": "VIS",
+          "observation": "Fotogramas muestran un elemento acotado y un formulario de nuevo elemento. No se operaron sus controles ni se validó el mecanismo de aperturas.",
+          "sources": [
+            "H2"
+          ],
+          "lesson": "Posiciones legibles, selección inequívoca y propiedades locales al objeto."
+        },
+        {
+          "order": 4,
+          "title": "2D y 3D",
+          "status": "VIS/NV",
+          "observation": "Se vieron elevación y simbología sobre el dibujo. No se verificó 3D ni movimiento físico.",
+          "sources": [
+            "H2"
+          ],
+          "lesson": "El dibujo debe conservar cara y apertura sin depender del color."
+        },
+        {
+          "order": 5,
+          "title": "Materiales y componentes",
+          "status": "VIS",
+          "observation": "A ~01:16 aparece una tabla de perfiles por elemento, código, corte y lado. Las cifras son del ejemplo del proveedor, no reglas transferibles.",
+          "sources": [
+            "H2"
+          ],
+          "lesson": "Materiales consultables desde la ventana y desde toda la obra."
+        },
+        {
+          "order": 6,
+          "title": "Precios, margen y privacidad",
+          "status": "DOC/NV",
+          "observation": "Se anuncian costos y márgenes. No se inspeccionaron permisos o separación entre costo privado y precio al cliente.",
+          "sources": [
+            "H1"
+          ],
+          "lesson": "Evitar que un PDF comercial herede costos o metadatos internos."
+        },
+        {
+          "order": 7,
+          "title": "Cotización y PDF",
+          "status": "DOC+VIS",
+          "observation": "La oferta incluye presupuesto; a 04:35 se observa un PDF Plan de Ejecución con secciones de componentes. No se emitió un documento.",
+          "sources": [
+            "H1",
+            "H2"
+          ],
+          "lesson": "Separar documento comercial y documento de fabricación por destinatario."
+        },
+        {
+          "order": 8,
+          "title": "Cortes y retazos",
+          "status": "DOC/NV",
+          "observation": "Se anuncia optimización de cortes. No se ejecutó una corrida ni se verificó reincorporación de retazos.",
+          "sources": [
+            "H1"
+          ],
+          "lesson": "Mostrar barras, piezas no ubicadas y sobrantes con recibo de cálculo."
+        },
+        {
+          "order": 9,
+          "title": "Compras y stock",
+          "status": "DOC/NV",
+          "observation": "Se describen órdenes de accesorios, perfiles y vidrios. No se vio recepción, reserva o inventario físico.",
+          "sources": [
+            "H1"
+          ],
+          "lesson": "La orden necesita su siguiente paso y estado, no quedar como descarga aislada."
+        },
+        {
+          "order": 10,
+          "title": "Taller y CNC",
+          "status": "DOC+VIS",
+          "observation": "Se ofrece plan de ejecución y el tutorial muestra ese informe. No acredita captura de planta o CNC.",
+          "sources": [
+            "H1",
+            "H2"
+          ],
+          "lesson": "Una hoja de taller legible es distinta de una estación con progreso."
+        },
+        {
+          "order": 11,
+          "title": "QR y terreno",
+          "status": "NV",
+          "observation": "No se observó QR, trazabilidad de unidad o incidencia de instalación.",
+          "sources": [
+            "H1",
+            "H2"
+          ],
+          "lesson": "Definir etiquetas separadas de perfil, vidrio y unidad terminada."
+        },
+        {
+          "order": 12,
+          "title": "IA",
+          "status": "NV",
+          "observation": "Sin evidencia operativa de IA en las fuentes consultadas.",
+          "sources": [
+            "H1"
+          ],
+          "lesson": "IA como trabajador sobre las mismas operaciones que la UI manual."
+        },
+        {
+          "order": 13,
+          "title": "Historial y deshacer",
+          "status": "NV",
+          "observation": "El tutorial no demuestra historial persistente, recuperación o deshacer entre sesiones.",
+          "sources": [
+            "H2"
+          ],
+          "lesson": "Persistir conversación, encargos, revisiones y recibos como entidades distintas."
+        },
+        {
+          "order": 14,
+          "title": "Roles",
+          "status": "DOC/NV",
+          "observation": "Se anuncian usuarios por empresa sin límite; no se validó RBAC o aislamiento.",
+          "sources": [
+            "H1"
+          ],
+          "lesson": "No equiparar cantidad de usuarios con permisos correctos."
+        },
+        {
+          "order": 15,
+          "title": "Claridad visual",
+          "status": "VIS",
+          "observation": "El vídeo usa navegación azul oscuro, acción principal violeta, canvas claro y propiedades/tablas en modal. Son píxeles históricos del vídeo, no UI 2026 ejecutada.",
+          "sources": [
+            "H2"
+          ],
+          "lesson": "Diferenciar navegación, acción, selección y contenido técnico sin pintar todo igual."
+        },
+        {
+          "order": 16,
+          "title": "Teclado y móvil",
+          "status": "NV",
+          "observation": "Online no prueba diseño móvil o teclado eficiente. No se probaron dispositivos.",
+          "sources": [
+            "H1"
+          ],
+          "lesson": "No trasladar el editor de escritorio a móvil reduciendo toda la pantalla."
+        },
+        {
+          "order": 17,
+          "title": "Interoperabilidad",
+          "status": "NV",
+          "observation": "No se verificaron formatos, API ni integración con sistemas externos.",
+          "sources": [
+            "H1"
+          ],
+          "lesson": "Cada salida necesita formato, revisión y destinatario."
+        },
+        {
+          "order": 18,
+          "title": "Madurez y precio",
+          "status": "DOC",
+          "observation": "Gratis y exclusivo para clientes Haustek; acceso con gestión comercial/técnica. Esa condición no es una tarifa SaaS abierta.",
+          "sources": [
+            "H1"
+          ],
+          "lesson": "DEKOPEN debe justificar independencia mult proveedor y preparación real de datos."
+        }
+      ]
+    },
+    {
+      "id": "winmaker10",
+      "name": "WinMaker 10 / Lepton",
+      "category": "Suite regional de cotización y fabricación para Windows",
+      "sources": [
+        {
+          "id": "WM1",
+          "title": "WinMaker 10",
+          "url": "https://www.lepton.com.ar/web/productos/software-para-carpinteria-de-aluminio-y-pvc",
+          "type": "official_page",
+          "access": "texto oficial leído",
+          "limit": "",
+          "accessed": "2026-10-18"
+        },
+        {
+          "id": "WM2",
+          "title": "WinMaker Starter",
+          "url": "https://www.lepton.com.ar/web/productos/winmaker-starter",
+          "type": "official_page",
+          "access": "texto oficial leído",
+          "limit": "",
+          "accessed": "2026-10-18"
+        },
+        {
+          "id": "WM3",
+          "title": "Tutoriales y ayuda",
+          "url": "https://www.lepton.com.ar/web/soporte/tutoriales-ayuda",
+          "type": "official_page",
+          "access": "texto oficial leído",
+          "limit": "",
+          "accessed": "2026-10-18"
+        },
+        {
+          "id": "WM4",
+          "title": "Página de producto capturada",
+          "url": "https://www.lepton.com.ar/web/productos/software-para-carpinteria-de-aluminio-y-pvc",
+          "type": "browser_capture",
+          "access": "página y miniatura inspeccionadas",
+          "limit": "No editor instalado ni vídeo reproducido.",
+          "accessed": "2026-10-18"
+        }
+      ],
+      "flows": [
+        "Diseño → presupuesto → alternativa de otra línea mediante módulo. Reconstrucción documental; no se ejecutó conversión.",
+        "Consumo → optimización → órdenes/etiquetas → salida CNC anunciada. No se inspeccionó máquina ni archivo."
+      ],
+      "limits": [
+        "WinMaker de Lepton y Windowmaker son productos diferentes.",
+        "No se atribuye a WinMaker una función de Leptonpack ni una noticia web antigua."
+      ],
+      "rubric18": [
+        {
+          "order": 1,
+          "title": "Entrada y onboarding",
+          "status": "DOC",
+          "observation": "Starter incluye instalación inicial remota; el fabricante ofrece material grabado y PDF. No se midió preparación de datos.",
+          "sources": [
+            "WM2",
+            "WM3"
+          ],
+          "lesson": "Primer éxito debe tener catálogo y caso verificable, no solo instalación."
+        },
+        {
+          "order": 2,
+          "title": "Marcas, series y catálogos",
+          "status": "DOC",
+          "observation": "Oferta por extrusora y módulos de conversión entre líneas/marcas. No se verificó cobertura Proline chilena.",
+          "sources": [
+            "WM1",
+            "WM2"
+          ],
+          "lesson": "La conversión entre marcas debe recalcular y explicar incompatibilidades."
+        },
+        {
+          "order": 3,
+          "title": "Editor y aperturas",
+          "status": "DOC",
+          "observation": "Se anuncian frentes y planos de tipologías. No se probaron selección de hoja, apertura o límites geométricos.",
+          "sources": [
+            "WM1"
+          ],
+          "lesson": "No atribuir precisión ni facilidad de edición a una lista comercial de funciones."
+        },
+        {
+          "order": 4,
+          "title": "2D y 3D",
+          "status": "NV",
+          "observation": "No se inspeccionó una vista 3D de ventanas. El módulo de piezas 3D de Leptonpack pertenece a otro producto.",
+          "sources": [
+            "WM1"
+          ],
+          "lesson": "Evitar transferir prestaciones entre productos de la misma empresa."
+        },
+        {
+          "order": 5,
+          "title": "Materiales y componentes",
+          "status": "DOC",
+          "observation": "Se ofrecen despiece y consumo de componentes. La consistencia con geometría y herraje queda sin prueba.",
+          "sources": [
+            "WM1",
+            "WM2"
+          ],
+          "lesson": "Todas las cantidades deben volver al motor y a su revisión."
+        },
+        {
+          "order": 6,
+          "title": "Precios, margen y privacidad",
+          "status": "DOC/NV",
+          "observation": "Multimoneda y módulo de listas con márgenes; no se verificó aislamiento de costos.",
+          "sources": [
+            "WM1"
+          ],
+          "lesson": "Cotización alternativa y moneda necesitan reglas y fechas visibles."
+        },
+        {
+          "order": 7,
+          "title": "Cotización y PDF",
+          "status": "DOC",
+          "observation": "Presupuesto y documentos de fabricación anunciados. No se emitió, recuperó ni revisó un PDF.",
+          "sources": [
+            "WM1",
+            "WM2"
+          ],
+          "lesson": "Plantilla visual editable sin alterar números calculados."
+        },
+        {
+          "order": 8,
+          "title": "Cortes y retazos",
+          "status": "DOC",
+          "observation": "Se anuncian perfiles/vidrios y etiquetas de sobrantes. No se midió el algoritmo ni reserva física.",
+          "sources": [
+            "WM1",
+            "WM2"
+          ],
+          "lesson": "Separar optimización de barras, vidrio y vida del retazo."
+        },
+        {
+          "order": 9,
+          "title": "Compras y stock",
+          "status": "DOC",
+          "observation": "Control de stock es módulo adicional; se describe reutilización de perfiles, vidrio y accesorios. Recepción parcial no probada.",
+          "sources": [
+            "WM1",
+            "WM2"
+          ],
+          "lesson": "Relacionar necesidad, compra y existencia, dejando claros los módulos requeridos."
+        },
+        {
+          "order": 10,
+          "title": "Taller y CNC",
+          "status": "DOC",
+          "observation": "Se anuncia salida de plano de corte a CNC. No se verificó máquina, postprocesador ni puesta a cero.",
+          "sources": [
+            "WM1"
+          ],
+          "lesson": "No llamar CNC listo a una exportación genérica."
+        },
+        {
+          "order": 11,
+          "title": "QR y terreno",
+          "status": "DOC/NV",
+          "observation": "Starter lista etiquetas para componentes y producto terminado. No prueba QR ni aplicación de terreno.",
+          "sources": [
+            "WM2"
+          ],
+          "lesson": "Identidad de etiqueta y permiso de consulta definidos por objeto."
+        },
+        {
+          "order": 12,
+          "title": "IA",
+          "status": "NV",
+          "observation": "No se encontró prueba de agente IA en las fuentes consultadas.",
+          "sources": [
+            "WM1",
+            "WM3"
+          ],
+          "lesson": "Comparar por resultado del usuario, no por tener chat en una esquina."
+        },
+        {
+          "order": 13,
+          "title": "Historial y deshacer",
+          "status": "DOC/NV",
+          "observation": "Multipresupuesto documentado; no equivale a historial técnico o deshacer de agente.",
+          "sources": [
+            "WM2"
+          ],
+          "lesson": "Conservar alternativas comerciales sin sobrescribir el original."
+        },
+        {
+          "order": 14,
+          "title": "Roles",
+          "status": "DOC/NV",
+          "observation": "Existe opción multiusuario en la familia; Starter limita a un usuario. No se probó matriz de permisos.",
+          "sources": [
+            "WM1",
+            "WM2"
+          ],
+          "lesson": "Distinguir licencia, colaboración y rol autorizado."
+        },
+        {
+          "order": 15,
+          "title": "Claridad visual",
+          "status": "NV",
+          "observation": "Se inspeccionó la landing y su miniatura; no bastan para valorar el editor.",
+          "sources": [
+            "WM4"
+          ],
+          "lesson": "Solicitar una tarea real antes de puntuar su jerarquía o eficiencia."
+        },
+        {
+          "order": 16,
+          "title": "Teclado y móvil",
+          "status": "DOC/NV",
+          "observation": "Producto Windows con requisitos publicados. No se verificó teclado ni equivalente web/móvil actual de esta edición.",
+          "sources": [
+            "WM1",
+            "WM2"
+          ],
+          "lesson": "No confundir una noticia antigua Winmaker Web con paridad actual."
+        },
+        {
+          "order": 17,
+          "title": "Interoperabilidad",
+          "status": "DOC",
+          "observation": "Enlace con gestión administrativa anunciado; formato, dirección y recuperación no probados.",
+          "sources": [
+            "WM1"
+          ],
+          "lesson": "Contrato de integración por dato y revisión."
+        },
+        {
+          "order": 18,
+          "title": "Madurez y precio",
+          "status": "DOC",
+          "observation": "Starter es una oferta argentina con una extrusora, llave USB y condiciones locales. No se propone un precio comparable chileno sin cotización.",
+          "sources": [
+            "WM2"
+          ],
+          "lesson": "Comparar costo completo de datos, soporte, módulos y actualización."
+        }
+      ]
+    }
+  ]
+}

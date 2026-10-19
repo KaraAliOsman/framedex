@@ -1,4 +1,4 @@
-import { Icon } from "./Glyphs";
+import { Icon } from "./Icon";
 import type { HTMLAttributes, ReactNode } from "react";
 
 export type StatusTone =
@@ -121,11 +121,12 @@ export function StatusBadge({
     >
       {showIcon ? (
         <Icon
-          kind={
+          size={16}
+          name={
             resolvedTone === "success"
               ? "check"
               : resolvedTone === "danger"
-                ? "stop"
+                ? "blocked"
                 : resolvedTone === "blocked" ||
                     resolvedTone === "warning" ||
                     resolvedTone === "person"

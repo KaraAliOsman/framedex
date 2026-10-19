@@ -46,9 +46,7 @@
   color: var(--theme-text-secondary);
   font-size: var(--type-dense);
   font-weight: 600;
-  letter-spacing: 0.04em;
   margin: 0.6rem 0 0.3rem;
-  text-transform: uppercase;
 }
 .frameless-rows {
   display: grid;
@@ -128,15 +126,7 @@
   stroke-dasharray: 6 4;
   vector-effect: non-scaling-stroke;
 }
-.plan-dimension {
-  fill: var(--theme-text-secondary);
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  pointer-events: none;
-}
-.plan-dimension--total {
-  fill: var(--theme-text-primary);
-}
+
 .assembly-status {
   border: 1px solid var(--theme-border-subtle);
   font-size: var(--type-title-m);

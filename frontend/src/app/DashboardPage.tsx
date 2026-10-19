@@ -12,7 +12,7 @@ export function DashboardPage(): JSX.Element {
   const auth = useAuthSession();
   const org = auth.me?.active_organization;
   if (!org) return <DeniedState reason="Selecciona una organización para ver tu trabajo de hoy." />;
-  return <TodayWorkspace key={[org.id, auth.me?.user.id, org.role].join(":")} />;
+  return <TodayWorkspace key={[org.id, auth.me?.user?.id, org.role].join(":")} />;
 }
 
 function TodayWorkspace(): JSX.Element {
@@ -30,7 +30,7 @@ function TodayWorkspace(): JSX.Element {
   return (
     <section className="today-page" aria-labelledby="page-title">
       <PageHeader
-        title="Hoy"
+        title="Pendientes"
         headingId="page-title"
         context={org.name}
         actions={

@@ -1,3 +1,6 @@
+> Informe histórico de esta corrida. Consulte [aceptación final](../../acceptance-2026-10-12.md) y
+> [ubicación de las capturas archivadas](../README.md) para continuar.
+
 # IA2 · aceptación de operaciones compartidas
 
 Código verificado: `5224dbfba0f3f6c7d218639704bb013eceeb88dd`. Fecha: 07-10-2026.
@@ -30,12 +33,12 @@ el stack ni los datos del otro repositorio. La clave real se cargó en memoria.
 
 | Flujo | Resultado | Evidencia |
 | --- | --- | --- |
-| E02, fijo + oscilobatiente | PASA: hoja física, bisagra izquierda/manilla derecha, aplicar y guardar | [Propuesta](recorrido/E02-propuesta-light-1440.png) |
-| E04, travesaño desde arriba | PASA: 400 mm exactos, aplicar y persistir | [Propuesta](recorrido/E04-propuesta-light-1440.png) |
-| E08, manilla desde piso | PASA: pregunta antepecho, continúa el mismo trabajo, referencia piso 1 000 mm con antepecho 600 mm; altura local igual al motor | [Pregunta](recorrido/E08-aclaracion-light-1440.png), [continuación](recorrido/E08-continuacion-light-1440.png) |
-| J02, serie histórica incompatible | PASA: causa del catálogo, cero escrituras | [Incompatibilidad](recorrido/J02-incompatibilidad-light-1440.png) |
-| J03, cuatro dormitorios | PASA: 4 → 8 vanos, recargar, deshacer, recargar; restaura los 4 IDs originales | [Diff](recorrido/J03-diff-light-1440.png), [aplicado](recorrido/J03-aplicado-restaurado-light-1440.png), [deshecho](recorrido/J03-deshacer-restaurado-light-1440.png) |
-| E06, composición sin alternativa compatible | PASA: chip real del catálogo, foco visible, Enter y continuación del mismo trabajo | [Opciones reales](recorrido/E06-alternativas-reales-light-1440.png) |
+| E02, fijo + oscilobatiente | PASA: hoja física, bisagra izquierda/manilla derecha, aplicar y guardar | [Propuesta](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/operaciones-herramientas/recorrido/E02-propuesta-light-1440.png) |
+| E04, travesaño desde arriba | PASA: 400 mm exactos, aplicar y persistir | [Propuesta](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/operaciones-herramientas/recorrido/E04-propuesta-light-1440.png) |
+| E08, manilla desde piso | PASA: pregunta antepecho, continúa el mismo trabajo, referencia piso 1 000 mm con antepecho 600 mm; altura local igual al motor | [Pregunta](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/operaciones-herramientas/recorrido/E08-aclaracion-light-1440.png), [continuación](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/operaciones-herramientas/recorrido/E08-continuacion-light-1440.png) |
+| J02, serie histórica incompatible | PASA: causa del catálogo, cero escrituras | [Incompatibilidad](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/operaciones-herramientas/recorrido/J02-incompatibilidad-light-1440.png) |
+| J03, cuatro dormitorios | PASA: 4 → 8 vanos, recargar, deshacer, recargar; restaura los 4 IDs originales | [Diff](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/operaciones-herramientas/recorrido/J03-diff-light-1440.png), [aplicado](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/operaciones-herramientas/recorrido/J03-aplicado-restaurado-light-1440.png), [deshecho](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/operaciones-herramientas/recorrido/J03-deshacer-restaurado-light-1440.png) |
+| E06, composición sin alternativa compatible | PASA: chip real del catálogo, foco visible, Enter y continuación del mismo trabajo | [Opciones reales](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/operaciones-herramientas/recorrido/E06-alternativas-reales-light-1440.png) |
 
 La matriz comprende editor, proyecto y espacio del asistente en 1440×900,
 1280×800 y 1024×768, claro/oscuro: 18 capturas; las propuestas y su continuación
@@ -43,9 +46,9 @@ aportan 9 capturas más. [Resultado: 27 capturas sin hallazgos de texto,
 presentación, desborde ni errores de página](recorrido/resultados.json).
 
 Los cinco estados tienen 10 capturas, claro/oscuro a 1024×768:
-[carga](estados/cargando-light-1024.png), [error](estados/error-light-1024.png),
-[sin permiso](estados/sin-permiso-light-1024.png),
-[bloqueado](estados/bloqueado-light-1024.png), [vacío](estados/vacio-light-1024.png).
+[carga](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/operaciones-herramientas/estados/cargando-light-1024.png), [error](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/operaciones-herramientas/estados/error-light-1024.png),
+[sin permiso](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/operaciones-herramientas/estados/sin-permiso-light-1024.png),
+[bloqueado](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/operaciones-herramientas/estados/bloqueado-light-1024.png), [vacío](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/operaciones-herramientas/estados/vacio-light-1024.png).
 El error 503, permiso 403 y bloqueo 422 se interceptaron en Playwright para
 verificar su presentación y reintento sin escritura; no fueron caídas reales
 del servidor. Las integraciones verifican además permisos reales por rol/tenant.

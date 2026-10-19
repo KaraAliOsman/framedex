@@ -14,4 +14,6 @@ export interface ProfileChoice {
   material: string;
   face_width_mm: string;
   section?: ProfileSection | null;
+  /** @nullable */
+  corner_cut_deg?: number | null;
 }

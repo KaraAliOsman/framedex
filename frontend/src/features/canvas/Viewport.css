@@ -162,8 +162,6 @@
   color: var(--theme-text-secondary);
   font-size: var(--type-micro);
   font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
 }
 .canvas-technical-results dd {
   font-family: var(--font-mono);

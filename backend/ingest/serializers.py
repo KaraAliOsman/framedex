@@ -174,6 +174,8 @@ class CatalogImportResponseSerializer(serializers.Serializer):
     warnings = serializers.ListField(child=serializers.CharField())
     result = serializers.ListField(child=serializers.DictField())
     error_code = serializers.CharField(allow_null=True)
+    # Real page progress of a PDF processed in internal batches.
+    progress = serializers.DictField(required=False)
     created_at = serializers.DateTimeField()
     updated_at = serializers.DateTimeField()
 

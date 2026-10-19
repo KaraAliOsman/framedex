@@ -6,9 +6,12 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { AccentEnum } from "./accentEnum";
+import type { AcceptanceModeEnum } from "./acceptanceModeEnum";
 import type { CommercialTerms } from "./commercialTerms";
 import type { PaperEnum } from "./paperEnum";
 import type { PieceLabelPaperEnum } from "./pieceLabelPaperEnum";
+import type { QuotationLayout } from "./quotationLayout";
+import type { QuotationTemplateEnum } from "./quotationTemplateEnum";
 
 export interface DocumentPreferences {
   portal_successor_link?: boolean;
@@ -35,4 +38,7 @@ export interface DocumentPreferences {
   /** @maxLength 240 */
   legal_footer: string;
   commercial_terms: CommercialTerms;
+  quotation_template?: QuotationTemplateEnum;
+  acceptance_mode?: AcceptanceModeEnum;
+  quotation_layout?: QuotationLayout;
 }

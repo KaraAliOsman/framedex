@@ -28,7 +28,7 @@ export const messages = {
   "glass.reviewRules": "Revisar cambios de reglas",
   "glass.rulesDiff": "Cambios de reglas",
   "glass.rulesConsequence":
-    "Se aplican a nuevas evaluaciones. Las revisiones emitidas conservan su autoridad.",
+    "Se aplican a nuevas evaluaciones. Las revisiones emitidas conservan sus valores.",
   "glass.applyRules": "Aplicar reglas",
   "glass.discard": "Descartar cambios",
   "glass.undoRules": "Revisar restauración de reglas anteriores",
@@ -604,7 +604,7 @@ export const messages = {
   "quotation.refLeafTop": "Desde el borde superior de la hoja",
   "quotation.refLeafBottom": "Desde el borde inferior de la hoja",
   "quotation.reinforcementPolicy": "Criterio de refuerzos",
-  "quotation.choosePolicy": "Seleccionar autoridad técnica",
+  "quotation.choosePolicy": "Elegir regla técnica",
   "quotation.confirm":
     "Confirmo la emisión: esta revisión, sus precios y su evidencia quedarán inmutables.",
   "quotation.missingTitle": "Para emitir falta:",
@@ -635,7 +635,8 @@ export const messages = {
   "quotation.documentEmitted": "PDF emitido",
   "quotation.documentError": "No se pudo generar o abrir la cotización emitida.",
   "quotation.documentGenerating": "Generando cotización emitida…",
-  "quotation.loadError": "No pudimos preparar la emisión. Revisa las autoridades técnicas.",
+  "quotation.loadError":
+    "No pudimos preparar la emisión. Revisa las reglas de herraje y refuerzo de cada ventana.",
   "quotation.error":
     "No se pudo emitir. Conservamos los datos para que puedas corregir y reintentar.",
   "quotation.inspectorAffected": "Pieza afectada",
@@ -780,7 +781,7 @@ export const messages = {
   "pricing.fixInCostLists": "Resolver en Costos y precios →",
   "pricing.fixAskOwner": "Pide al propietario completar este dato en Costos y precios.",
   "pricing.costComposition": "Composición del costo",
-  "pricing.authorities": "Autoridades usadas",
+  "pricing.authorities": "Fuentes del precio",
   "pricing.materials": "Materiales",
   "pricing.bom": "Desglose técnico",
   "pricing.wasteShort": "Merma",
@@ -875,7 +876,7 @@ export const messages = {
   "pricing.auditActor.other": "Desconocido",
   "pricing.auditMore": "cambios más",
   "pricing.coverage": "Cobertura de precios",
-  "pricing.bandSettings": "Precios: banda de margen y autoridades",
+  "pricing.bandSettings": "Precios: banda de margen y reglas",
   "pricing.coverageNoPrice": "SKUs sin precio vigente en listas activas",
   "pricing.coverageShowAll": "Mostrar todos",
   "pricing.coverageOnlyMissing": "Solo sin cobertura",
@@ -926,7 +927,7 @@ export const messages = {
   "pricing.extrasNet": "Cargos netos",
   "pricing.preview": "Calcular y revisar",
   "pricing.calculateError":
-    "No se pudo cotizar. Revisa autoridades de costo, tarifas, diseño, vigencia y margen.",
+    "No se pudo cotizar. Revisa costos, tarifas, diseño, vigencia y margen.",
   "pricing.applyError":
     "No se aplicó el precio. La revisión puede estar desactualizada o requerir aprobación del propietario.",
   "pricing.net": "Neto",
@@ -1214,7 +1215,7 @@ export const messages = {
   "nav.quotes": "Cotizaciones",
   "nav.prices": "Precios",
   "nav.technicalCatalog": "Catálogo técnico",
-  "nav.inventory": "Inventario",
+  "nav.inventory": "Existencias",
   "nav.groupWork": "Trabajo",
   "nav.groupOps": "Operación",
   "nav.groupAccount": "Cuenta",
@@ -1226,7 +1227,7 @@ export const messages = {
   "nav.context.queue": "Cola",
   "nav.context.shortage": "Sin material",
   "nav.context.dispatch": "Despacho",
-  "shell.searchHint": "Buscar o ejecutar…",
+  "shell.searchHint": "Buscar obra, cliente o acción",
   "shell.notifications": "Notificaciones",
   "shell.notificationsAll": "Ver todo en el panel",
   "shell.notificationsEmpty": "Sin pendientes por atender.",
@@ -1331,12 +1332,16 @@ export const messages = {
   "jobs.fail.notFound":
     "No encuentra su referencia — el proyecto o la revisión cambió. Reemite desde el proyecto.",
   "jobs.fail.missingAuthority":
-    "Falta una autoridad de precios (lista de costos o configuración). Revisa Precios → Catálogo antes de reintentar.",
+    "Falta una lista de costos o la configuración de precios. Revísala en Precios → Catálogo antes de reintentar.",
   "jobs.fail.permission": "Tu rol no permite completar este trabajo.",
   "jobs.fail.storage":
     "El almacenamiento de documentos falló. Reintenta; si persiste, revisa la configuración.",
   "jobs.fail.stale": "El contenido cambió desde que se encoló el trabajo. Vuelve a encolarlo.",
   "jobs.fail.provider": "El proveedor externo no respondió. Reintenta en unos minutos.",
+  "jobs.fail.plan":
+    "Tu plan actual no incluye el asistente o la prueba terminó. Todo lo manual sigue disponible.",
+  "jobs.fail.credits":
+    "No quedan créditos de IA para este encargo. Todo lo manual sigue disponible.",
   "jobs.fail.aiBudget":
     "La IA alcanzó el presupuesto mensual. El dueño puede ajustarlo en Ajustes › Inteligencia artificial; las funciones manuales siguen disponibles.",
   "jobs.fail.providerQuota":
@@ -1352,7 +1357,7 @@ export const messages = {
   "jobs.type.document.artifact.generate": "Generación de documento",
   "jobs.type.automation.prep_forecast": "Pronóstico de materiales",
   "jobs.type.automation.purchase_task": "Tarea de compra por faltantes",
-  "jobs.type.automation.catalog_task": "Resolver autoridad de catálogo",
+  "jobs.type.automation.catalog_task": "Completar datos de catálogo",
   "jobs.type.automation.commercial_refresh": "Actualizar estado comercial",
   "jobs.type.automation.step_advance": "Avance de estación",
   "jobs.type.ai.agent.run": "Trabajo del asistente",
@@ -1741,11 +1746,15 @@ export const messages = {
   "purchasing.doc02": "DOC-02 · Pedido de vidrio (XLSX)",
   "purchasing.doc02Pdf": "DOC-02 · Pedido de vidrio (PDF)",
   "purchasing.doc03": "DOC-03 · Matriz de ensamble (PDF)",
+  "purchasing.doc03Plan": "Plano técnico · una hoja por posición (PDF)",
   "purchasing.doc04Pdf": "DOC-04 · Pedido de perfiles (PDF)",
   "purchasing.doc04Xlsx": "DOC-04 · Pedido de perfiles (XLSX)",
   "purchasing.doc08Pdf": "Orden de compra (PDF)",
   "purchasing.doc08Xlsx": "Orden de compra (XLSX)",
-  "purchasing.doc05": "DOC-05 · Plan de corte (PDF)",
+  "purchasing.doc05": "Corte · secuencia por barra (PDF)",
+  "purchasing.doc05Compact": "Corte · lista compacta (PDF)",
+  "purchasing.doc05Window": "Corte · por ventana (PDF)",
+  "purchasing.doc05Work": "Pedido · por obra, preparación interna (PDF)",
   "purchasing.doc06": "DOC-06 · Checklist QC en blanco (PDF)",
   "purchasing.doc07": "DOC-07 · Informe de costos (PDF)",
   "purchasing.loadError": "No se pudieron cargar las compras. Reintenta con Recargar.",
@@ -1935,7 +1944,7 @@ export const messages = {
   "production.cncIssue_handle_without_member":
     "Posición de manilla sin pieza anfitriona — la preparación no se puede ubicar",
   "production.cncIssue_declared_intent_not_emitted":
-    "Se declaró trabajo de taller que no generó operaciones — revisa la autoridad del proceso",
+    "Se declaró trabajo de taller que no generó operaciones — revisa la regla del proceso en el catálogo",
   "production.cncRequiredTools": "Códigos de herramienta que deben existir en el magazine",
   "production.cncToolCodeHint":
     "El código debe coincidir con el tool_id que piden las operaciones (p. ej. drill, end_mill, saw) — el detalle del bloqueo indica cuál falta.",
@@ -2053,7 +2062,7 @@ export const messages = {
   "production.stockShort": "Faltante",
   "production.stockConsumed": "Consumido",
   "production.stockConsumedAt": "Consumida el",
-  "production.stockUnmapped": "Sin autoridad de compra declarada",
+  "production.stockUnmapped": "Sin referencia de compra declarada",
   "production.traceTitle": "Trazabilidad",
   "production.traceLoad": "Ver cadena completa",
   "production.traceLoading": "Cargando…",
@@ -3110,8 +3119,9 @@ export const messages = {
   "assistant.state.success": "completado",
   "assistant.state.error": "con error",
   "assistant.state.canceled": "cancelado",
+  "assistant.state.unavailable": "no disponible",
   "agent.hint":
-    "Dile qué necesitas lograr — el agente consulta los datos reales, propone pasos y prepara acciones. Tú confirmas lo que cambia.",
+    "Pregunta lo que necesites o encárgale una tarea. Trabaja sobre lo que tienes abierto y te muestra qué cambió.",
   "agent.placeholder": "¿Qué necesitas lograr?",
   "agent.send": "Ejecutar",
   "agent.thinking": "Trabajando…",
@@ -3312,7 +3322,7 @@ export const messages = {
   "cmd.threeBaysInward": "Partir en tres, centro fijo, laterales abatibles hacia el centro",
 
   "crumb.label": "Ruta de navegación",
-  "crumb.dashboard": "Hoy",
+  "crumb.dashboard": "Pendientes",
   "crumb.projects": "Proyectos",
   "crumb.projectFallback": "Proyecto",
   "crumb.positionNew": "Nuevo vano",
@@ -3542,6 +3552,21 @@ export const messages = {
   "benchmark.fixture.frameless": "Sin marco",
   "benchmark.fixture.trapezoid": "Trapecio",
   "benchmark.fixture.arch": "Arco",
+  "nav.catalogs": "Catálogos",
+  "nav.workshop": "Taller",
+  "nav.company": "Empresa",
+  "nav.orders": "Órdenes",
+  "nav.station": "Mi estación",
+  "nav.agenda": "Mi agenda",
+  "nav.preferences": "Preferencias",
+  "nav.costs": "Costos y reglas de venta",
+  "nav.plan": "Plan y créditos",
+  "nav.sheetFormats": "Formatos de lámina",
+  "nav.assistantActivity": "Actividad del asistente",
+  "shell.assistant": "Asistente",
+  "shell.account": "Cuenta",
+  "shell.shortcuts": "Atajos de teclado",
+  "nav.finishSamples": "Muestras propias",
 } as const;
 
 export type TranslationKey = keyof typeof messages;

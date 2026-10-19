@@ -5,7 +5,7 @@
 import { Link } from "react-router-dom";
 
 import { t } from "../../i18n/es-CL";
-import { Orb } from "../assistant/Orb";
+import { Companion } from "../assistant/Companion";
 import { Wordmark } from "../../brand/Brand";
 
 import "./landing.css";
@@ -47,7 +47,7 @@ export function LandingPage(): JSX.Element {
             </a>
           </div>
           <p className="landing-hero__note">
-            <Orb size={20} title={t("landing.botName")} /> {t("landing.heroBot")}
+            <Companion size={20} title={t("landing.botName")} /> {t("landing.heroBot")}
           </p>
         </div>
         <figure className="landing-hero__shot">
@@ -80,7 +80,7 @@ export function LandingPage(): JSX.Element {
       </section>
 
       <section className="landing-assistant">
-        <Orb size={44} title={t("landing.botName")} />
+        <Companion size={44} title={t("landing.botName")} />
         <div>
           <h2>{t("landing.assistantTitle")}</h2>
           <p>{t("landing.assistantBody")}</p>

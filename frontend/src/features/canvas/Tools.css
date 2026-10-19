@@ -170,9 +170,7 @@
   color: var(--theme-text-muted);
   font-size: var(--type-micro);
   font-weight: 600;
-  letter-spacing: 0.04em;
   margin-left: auto;
-  text-transform: uppercase;
 }
 .model3d-inset .model3d-view .model3d-canvas {
   flex: 1;
@@ -193,7 +191,6 @@
   cursor: help;
   font-size: var(--type-micro);
   font-weight: 600;
-  letter-spacing: 0.02em;
   padding: 0.08rem 0.4rem;
 }
 .model3d-diag--handle_out_of_range,
@@ -217,13 +214,7 @@
   padding: var(--space-3);
   gap: var(--space-2);
 }
-.model3d-fallback__text {
-  color: var(--theme-text-secondary);
-  font-size: var(--type-title-m);
-  margin: 0;
-  max-width: 22rem;
-  text-align: center;
-}
+
 .model3d-loading {
   align-items: center;
   color: var(--theme-text-muted);

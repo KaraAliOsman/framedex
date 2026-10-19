@@ -148,17 +148,23 @@ Fix what can be fixed from evidence. Flag unresolved gaps.
 
 An agent entering DEKOPEN with no chat context should:
 
-1. read root `AGENTS.md`;
-2. read `docs/PRODUCT.md`;
-3. read `docs/ENGINEERING.md`;
-4. read `docs/wiki/index.md`;
-5. read `docs/wiki/decisions/owner-decisions.md`;
-6. read the relevant domain wiki pages;
-7. read the tail of `docs/wiki/log.md`;
-8. inspect current branch, open PRs and affected code before making current-state assertions;
-9. run/use the product when UX behavior matters.
+1. read root `AGENTS.md` and the current owner's request;
+2. inspect current branch and working-tree changes;
+3. use the domain routes in `docs/wiki/index.md` to select affected source,
+   tests, specification and wiki pages;
+4. read applicable invariants in `docs/ENGINEERING.md` and, for product-direction
+   decisions, `docs/PRODUCT.md` and `docs/wiki/decisions/owner-decisions.md`;
+5. inspect target code/ref and relevant PRs before making current-state assertions;
+6. read `state/current-reality.md` when overall integration state matters;
+   use the log's dated tail or historical evidence to resolve a specific gap;
+7. exercise the affected capability when the task calls for verification,
+   respecting the owner's current scope and testing instructions.
 
 The wiki should reduce rediscovery, not eliminate verification.
+Do not load the entire wiki, every PRD or the full append-only log at startup.
+The completed `docs/cola/` prompts are historical instructions; execution of
+that mandate requires a current owner request. Broad search omits generated
+payloads and history according to `.rgignore`; use explicit paths when needed.
 
 ## 9. Update discipline
 

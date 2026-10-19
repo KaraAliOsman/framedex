@@ -14,7 +14,7 @@ import { MfaPage } from "./auth/MfaPage";
 import { SelectOrganizationPage } from "./auth/SelectOrganizationPage";
 import { consumeReturnTo } from "./auth/returnTo";
 import { homeFor } from "./app/navigation";
-import { DimLoader } from "./ui/Signature";
+import { Loading } from "./ui/Signature";
 import { publicProposalRoutes } from "./features/portal/PublicProposalApp";
 
 // Public proposals should not fetch the estimator's shell, assistant and
@@ -42,14 +42,14 @@ const LazyAboutPage = lazy(async () => ({
 
 function LandingPage(): JSX.Element {
   return (
-    <Suspense fallback={<DimLoader label="Cargando el inicio" />}>
+    <Suspense fallback={<Loading label="Cargando el inicio" />}>
       <LazyLandingPage />
     </Suspense>
   );
 }
 function AboutPage(): JSX.Element {
   return (
-    <Suspense fallback={<DimLoader label="Cargando datos de la aplicación" />}>
+    <Suspense fallback={<Loading label="Cargando datos de la aplicación" />}>
       <LazyAboutPage />
     </Suspense>
   );
@@ -57,7 +57,7 @@ function AboutPage(): JSX.Element {
 
 function AppShell({ children }: PropsWithChildren): JSX.Element {
   return (
-    <Suspense fallback={<DimLoader label="Cargando su espacio de trabajo" />}>
+    <Suspense fallback={<Loading label="Cargando su espacio de trabajo" />}>
       <LazyAppShell>{children}</LazyAppShell>
     </Suspense>
   );
@@ -107,25 +107,29 @@ const ClientsPage = lazy(async () => ({
 const CatalogPage = lazy(async () => ({
   default: (await import("./features/catalogs/CatalogPage")).CatalogPage,
 }));
+const FinishSamplesPage = lazy(async () => ({
+  default: (await import("./features/catalogs/FinishSamplesPage")).FinishSamplesPage,
+}));
 const SheetFormatsPage = lazy(async () => ({
   default: (await import("./features/catalogs/SheetFormatsPage")).SheetFormatsPage,
 }));
 const AssistantWorkspacePage = lazy(async () => ({
   default: (await import("./features/assistant/AssistantWorkspacePage")).AssistantWorkspacePage,
 }));
-const ProjectPositionEditor = lazy(async () => ({
-  default: (await import("./features/projects/ProjectPositionEditor")).ProjectPositionEditor,
-}));
 const OnboardingPage = lazy(async () => ({
   default: (await import("./features/onboarding/OnboardingPage")).OnboardingPage,
 }));
 
-function ProjectSurface({ editor = false }: { editor?: boolean }): JSX.Element {
+/** One shell and one work instance for every route of the same work: the
+ * collection (Mesa), Estudio and the wide editor are presentations of the
+ * same ProjectPages tree, so opening/closing the editor never remounts the
+ * shell, the visited forms or the editing session. */
+function ProjectSurface(): JSX.Element {
   return (
     <ReadyGuard>
       <AppShell>
         <Suspense fallback={<p role="status">{t("projects.loading")}</p>}>
-          {editor ? <ProjectPositionEditor /> : <ProjectPages />}
+          <ProjectPages />
         </Suspense>
       </AppShell>
     </ReadyGuard>
@@ -221,8 +225,10 @@ export function AppRoutes(): JSX.Element {
             </ReadyGuard>
           }
         />
-        <Route path="/projects/:id" element={<ProjectSurface />} />
-        <Route path="/projects/:id/positions/new" element={<ProjectSurface editor />} />
+        <Route path="/projects/:id" element={<ProjectSurface />}>
+          <Route path="positions/new" element={null} />
+          <Route path="positions/:posId/edit" element={null} />
+        </Route>
         <Route
           path="/projects/:id/pricing"
           element={
@@ -323,7 +329,7 @@ export function AppRoutes(): JSX.Element {
           element={
             <ReadyGuard>
               <AppShell>
-                <Suspense fallback={<DimLoader label="Cargando Analítica" />}>
+                <Suspense fallback={<Loading label="Cargando Analítica" />}>
                   <AnalyticsPage />
                 </Suspense>
               </AppShell>
@@ -416,7 +422,7 @@ export function AppRoutes(): JSX.Element {
         <Route
           path="/field"
           element={
-            <Suspense fallback={<DimLoader label="Cargando Terreno" />}>
+            <Suspense fallback={<Loading label="Cargando Terreno" />}>
               <FieldPage />
             </Suspense>
           }
@@ -426,20 +432,8 @@ export function AppRoutes(): JSX.Element {
           element={
             <ReadyGuard>
               <AppShell>
-                <Suspense fallback={<DimLoader label="Cargando despacho y postventa" />}>
+                <Suspense fallback={<Loading label="Cargando despacho y postventa" />}>
                   <FieldPage office />
-                </Suspense>
-              </AppShell>
-            </ReadyGuard>
-          }
-        />
-        <Route
-          path="/projects/:id/positions/:posId/edit"
-          element={
-            <ReadyGuard>
-              <AppShell>
-                <Suspense fallback={<p role="status">{t("projects.loading")}</p>}>
-                  <ProjectPositionEditor />
                 </Suspense>
               </AppShell>
             </ReadyGuard>
@@ -447,6 +441,18 @@ export function AppRoutes(): JSX.Element {
         />
         <Route path="/projects" element={<ProjectSurface />} />
         <Route path="/catalogs" element={<Navigate to="/catalogs/systems" replace />} />
+        <Route
+          path="/catalogs/finish-samples"
+          element={
+            <ReadyGuard>
+              <AppShell>
+                <Suspense fallback={<Loading label="Cargando muestras" />}>
+                  <FinishSamplesPage />
+                </Suspense>
+              </AppShell>
+            </ReadyGuard>
+          }
+        />
         <Route
           path="/catalogs/sheet-formats"
           element={

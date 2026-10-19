@@ -25,7 +25,33 @@ import type {
 import { t, type TranslationKey } from "../../i18n/es-CL";
 import { useCanvasStore } from "../canvas/canvasStore";
 import type { ProductJson } from "../canvas/productEditing";
-import { ProjectPositionEditor } from "./ProjectPositionEditor";
+import { PositionEditorHost } from "./ProjectPositionEditor";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+
+/** Route adapter for these editor tests: the product renders the host inside
+ * the work layout (ProjectPages); here it is mounted alone on its route. */
+function ProjectPositionEditor(): JSX.Element {
+  const { id = "", posId = "" } = useParams();
+  const [query] = useSearchParams();
+  const navigate = useNavigate();
+  return (
+    <PositionEditorHost
+      projectId={id}
+      positionId={posId || null}
+      copyId={posId ? "" : (query.get("copy") ?? "")}
+      creationId="test"
+      preferredSystem={posId ? null : query.get("system")}
+      presentation="expanded"
+      onBack={() => navigate(`/projects/${id}`)}
+      onOpenPosition={(target) => navigate(`/projects/${id}/positions/${target}/edit`)}
+      onCreated={(created) =>
+        navigate(`/projects/${id}/positions/${created}/edit`, { replace: true })
+      }
+      onOpenSection={(section) => navigate(`/projects/${id}?section=${section}`)}
+      allowNavigation={() => false}
+    />
+  );
+}
 import { ApiError } from "../../api/apiMutator";
 import { productFingerprint } from "../canvas/designOps";
 
@@ -979,9 +1005,9 @@ it.each([
         await view.router.navigate("/projects/project-b/positions/position-b/edit");
       });
       // The pending save leaves the workspace dirty — the leave dialog gates
-      // the route change and must be confirmed before the new position loads.
+      // the route change; discarding lets the new position load.
       if (operation === "save") {
-        fireEvent.click(await screen.findByRole("button", { name: t("ui.confirm") }));
+        fireEvent.click(await screen.findByRole("button", { name: "Descartar cambios" }));
       }
     }
     await ready(next.location_tag!, "CUT-B");

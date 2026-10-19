@@ -18,6 +18,11 @@ export interface MemberSurface {
    *    into its interior/exterior halves;
    *  - "none": flat fill (fallback materials, non-profile surfaces). */
   detail: "chamber" | "thermal" | "none";
+  /** Wood-effect finish: the drawing overlays a grain that runs along each
+   * member (presentation only, never a manufacturer pattern claim). */
+  grain?: boolean;
+  /** A photo texture (company sample or catalog map) at physical scale. */
+  texture?: { href: string; tileMm: number; grain: "ALONG" | "ACROSS" | "NONE" };
 }
 
 const SURFACES: Record<string, MemberSurface> = {
@@ -56,5 +61,24 @@ export function memberSurface(
   finish?: FinishColor,
 ): MemberSurface {
   const surface = SURFACES[material ?? ""] ?? DEFAULT_SURFACE;
-  return finish ? { ...surface, fill: finishColorCss(finish), detail: "none" } : surface;
+  if (!finish) return surface;
+  const presentation = (
+    finish as FinishColor & {
+      presentation?: { tileMm: number; grain: "ALONG" | "ACROSS" | "NONE" };
+    }
+  ).presentation;
+  const texture = finish.texture_path
+    ? {
+        href: finish.texture_path,
+        tileMm: presentation?.tileMm ?? 300,
+        grain: presentation?.grain ?? "ALONG",
+      }
+    : undefined;
+  return {
+    ...surface,
+    fill: finishColorCss(finish),
+    detail: "none",
+    grain: !texture && (finish.kind === "FOIL" || finish.kind === "WOOD_EFFECT"),
+    ...(texture ? { texture } : {}),
+  };
 }

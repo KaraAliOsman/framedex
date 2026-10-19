@@ -237,6 +237,17 @@ const actionLabel: Record<StepAction, Parameters<typeof t>[0]> = {
   QC_FAIL: "production.actionQcFail",
 };
 
+/** Station tools inside «Trabajo» (codes shared with deep links). */
+const WORK_TABS: [string, string][] = [
+  ["piezas", "Piezas"],
+  ["corte", "Corte"],
+  ["mecanizado", "Mecanizado"],
+  ["vidrios", "Vidrios"],
+  ["herrajes", "Herrajes"],
+  ["calidad", "Calidad"],
+  ["embalaje", "Embalaje"],
+];
+
 export function ProductionPage(): JSX.Element {
   const auth = useAuthSession();
   const org = auth.me?.active_organization?.id ?? "";
@@ -1661,9 +1672,15 @@ function ProductionOfficePage(): JSX.Element {
                 !optimizationReady &&
                 !TERMINAL_ORDER_STATUSES.has(detail.status) ? (
                   <BlockedState
-                    reason="Falta un plan de corte vigente. El jefe debe optimizar la OT antes de iniciar una estación que consume material."
+                    reason={
+                      canWrite
+                        ? "Falta un plan de corte vigente. Optimiza la OT antes de iniciar una estación que consume material."
+                        : "Falta un plan de corte vigente. Lo prepara el dueño o el jefe de taller antes de iniciar una estación que consume material."
+                    }
                     action={
-                      <button onClick={() => selectTab("corte")}>Preparar plan de corte</button>
+                      canWrite ? (
+                        <button onClick={() => selectTab("corte")}>Preparar plan de corte</button>
+                      ) : undefined
                     }
                   />
                 ) : null}
@@ -1677,22 +1694,46 @@ function ProductionOfficePage(): JSX.Element {
                     selectTab(step.code === "QC" ? "calidad" : "resumen");
                   }}
                 />
+                {/* Three readings of the order; «Trabajo» holds the station
+                    tools. Section codes stay the same so printed and old
+                    links (?section=corte…) keep opening the exact tool. */}
                 <Tabs
                   label="Detalle de la OT"
-                  value={activeTab}
-                  onChange={selectTab}
+                  value={WORK_TABS.some(([id]) => id === activeTab) ? "trabajo" : activeTab}
+                  onChange={(value) =>
+                    selectTab(
+                      value === "trabajo"
+                        ? WORK_TABS.some(([id]) => id === activeTab)
+                          ? activeTab
+                          : "piezas"
+                        : value,
+                    )
+                  }
                   items={[
                     { id: "resumen", label: "Resumen" },
-                    { id: "piezas", label: "Piezas" },
-                    { id: "corte", label: "Corte" },
-                    { id: "mecanizado", label: "Mecanizado" },
-                    { id: "vidrios", label: "Vidrios" },
-                    { id: "herrajes", label: "Herrajes" },
-                    { id: "calidad", label: "Calidad" },
-                    { id: "embalaje", label: "Embalaje" },
+                    { id: "trabajo", label: "Trabajo" },
                     { id: "trazabilidad", label: "Trazabilidad" },
                   ]}
                 />
+                {WORK_TABS.some(([id]) => id === activeTab) ? (
+                  <div
+                    className="production-work-switch ui-segmented"
+                    role="radiogroup"
+                    aria-label="Herramienta de trabajo"
+                  >
+                    {WORK_TABS.map(([id, label]) => (
+                      <button
+                        key={id}
+                        type="button"
+                        role="radio"
+                        aria-checked={activeTab === id}
+                        onClick={() => selectTab(id)}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
                 {activeTab === "piezas" ? <WorkOrderPieces pieces={orderPieces(detail)} /> : null}
                 {activeTab === "vidrios" ? <GlassOrderPanel orderIds={[detail.id]} /> : null}
                 {activeTab === "mecanizado" ? (
@@ -2182,11 +2223,21 @@ function ProductionOfficePage(): JSX.Element {
                       })()}
 
                       {!optimization ? (
-                        <EmptyState
-                          kind="cut-plan"
-                          title="Esta orden aún no tiene plan de corte"
-                          body={t("production.optimizeEmpty")}
-                        />
+                        canWrite ? (
+                          <EmptyState
+                            kind="cut-plan"
+                            title="Esta orden aún no tiene plan de corte"
+                            body={t("production.optimizeEmpty")}
+                          />
+                        ) : (
+                          <div className="production-requirement" role="status">
+                            <strong>Falta un plan de corte vigente</strong>
+                            <p>
+                              Lo prepara el dueño o el jefe de taller desde esta orden. Cuando esté
+                              listo verás aquí las barras, la secuencia y los retazos previstos.
+                            </p>
+                          </div>
+                        )
                       ) : (
                         <>
                           {optimization.invalidated ? (

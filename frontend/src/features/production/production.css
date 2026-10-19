@@ -42,10 +42,6 @@
   padding: 1rem;
   background: var(--theme-surface-panel);
 }
-.production-order-code {
-  font-family: var(--theme-font-mono);
-  font-weight: 600;
-}
 .production-order-progress {
   font-size: var(--type-body);
   color: var(--theme-text-secondary);
@@ -59,27 +55,6 @@
 .production-detail-head .production-chip {
   white-space: normal;
   overflow-wrap: anywhere;
-}
-.production-materials {
-  display: flex;
-  gap: 1.5rem;
-  margin: 0.75rem 0;
-  padding: 0.75rem;
-  border: 1px solid var(--theme-border-subtle);
-  border-radius: var(--r-2);
-}
-.production-materials div {
-  display: grid;
-  gap: 0.15rem;
-}
-.production-materials dt {
-  font-size: var(--type-body);
-  color: var(--theme-text-secondary);
-}
-.production-materials dd {
-  margin: 0;
-  font-family: var(--theme-font-mono);
-  font-size: var(--type-title-l);
 }
 .production-step-actions {
   flex-wrap: wrap;
@@ -166,9 +141,6 @@
   padding: 0.6rem;
   border-radius: var(--r-2);
 }
-.production-pick {
-  color: var(--theme-text-secondary);
-}
 @media (max-width: 60rem) {
   .production-layout {
     grid-template-columns: 1fr;
@@ -249,13 +221,6 @@
 }
 .production-blockers li + li {
   margin-top: var(--space-1);
-}
-.production-event-note {
-  display: block;
-  color: var(--theme-text-secondary);
-  font-style: normal;
-  font-size: var(--type-body);
-  margin-top: 0.125rem;
 }
 .production-remake-provenance {
   margin: 0 0 var(--space-3);
@@ -702,8 +667,6 @@
 .cutplan-detail dt {
   color: var(--theme-text-secondary);
   font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
 }
 .cutplan-detail dd {
   margin: 0;
@@ -727,10 +690,6 @@
 .operator-section,
 div:has(> table.production-plan) {
   overflow-x: auto;
-}
-.production-glass-total td {
-  font-weight: 600;
-  border-top: 2px solid var(--theme-border-subtle);
 }
 .production-remnant-tag {
   color: var(--theme-accent-ink);
@@ -776,11 +735,6 @@ div:has(> table.production-plan) {
   border-top: 1px solid var(--border-default);
   padding-top: 1rem;
 }
-.production-trace-chain {
-  margin: 0 0 0.75rem;
-  font-variant-numeric: tabular-nums;
-  color: var(--text-dim);
-}
 .production-trace-plan table,
 .production-trace-stock table {
   width: 100%;
@@ -808,8 +762,7 @@ div:has(> table.production-plan) {
   font-size: var(--type-body);
   color: var(--text-dim);
 }
-@media (max-width: 480px) {
-}
+
 .production-trace-empty {
   font-size: var(--type-body);
   color: var(--text-dim);
@@ -877,8 +830,6 @@ div:has(> table.production-plan) {
 .operator-section h4 {
   margin: 0 0 0.375rem;
   font-size: var(--type-body);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
   color: var(--text-dim);
 }
 .operator-blockers {
@@ -922,8 +873,6 @@ div:has(> table.production-plan) {
   margin: 0 0 0.4rem;
   font-size: var(--type-body);
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
   color: var(--theme-text-secondary);
 }
 .production-prep ul {
@@ -1856,4 +1805,53 @@ div:has(> table.production-plan) {
   .production-detail {
     padding: var(--space-2);
   }
+}
+
+/* v1 08 — one line per blocking cause; cards lead with the work. */
+.production-causes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8px) var(--space-24px);
+  margin: 0 0 var(--space-12px);
+  padding: var(--space-8px) var(--space-12px);
+  border-radius: var(--r-2);
+  background: var(--state-warning-soft);
+  color: var(--state-warning-ink);
+  list-style: none;
+}
+
+.production-causes li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-6px);
+}
+
+.production-board-work {
+  font-size: var(--type-body);
+  line-height: var(--line-body);
+}
+
+.production-board-meta {
+  color: var(--text-secondary);
+  font-size: var(--type-dense);
+}
+
+.production-board-next {
+  font-weight: 600;
+}
+
+.production-requirement {
+  padding: var(--space-12px) var(--space-16px);
+  border-left: 3px solid var(--state-warning);
+  border-radius: var(--r-1);
+  background: var(--surface-card);
+}
+
+.production-requirement p {
+  margin: var(--space-4px) 0 0;
+  color: var(--text-secondary);
+}
+
+.production-work-switch {
+  margin: var(--space-8px) 0 var(--space-12px);
 }

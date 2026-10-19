@@ -12,7 +12,6 @@ import type { PlanGeometry } from "../../api/generated/models";
 import type { ProductJson } from "./productEditing";
 import type { MemberGeometry } from "./members";
 import type { OpeningLeafFact } from "./physicalOpenings";
-import { useTheme } from "../../theme/ThemeProvider";
 import { buildScene3D, type LeafMotion, type ModuleScene } from "./Product3DScene";
 import { Model3DStage } from "./Model3DStage";
 import type { MaterialMode } from "./materials3d";
@@ -62,7 +61,6 @@ export default function Model3DView({
   onSelectCoupling?(couplingId: string): void;
   audience?: "office" | "portal";
 }): JSX.Element {
-  const { theme } = useTheme();
   const [mode, setMode] = useState<MaterialMode>("commercial");
   const [preset, setPreset] = useState<CameraPreset>(
     members.viewFace === "exterior" ? "exterior" : "interior",
@@ -322,7 +320,7 @@ export default function Model3DView({
                   : item.code === "handle_out_of_range"
                     ? "Manilla fuera de rango: revise la altura"
                     : item.code === "handle_datum_unsupported"
-                      ? "Referencia de manilla sin autoridad"
+                      ? "Manilla de referencia, sin modelo del proveedor"
                       : "Herrajes aproximados"}
             </span>
           ))}
@@ -340,7 +338,7 @@ export default function Model3DView({
             scene={scene}
             states={states}
             selection={selection}
-            theme={theme}
+            theme="light"
             mode={mode}
             preset={preset}
             clip={clip}

@@ -36,7 +36,7 @@ from projects.views import (
     ProjectInvoiceDteEnvioView,
 )
 from projects.options import DesignOptionsView
-from projects.company_views import CompanyView,CompanyUsersView,CompanyUserView,CompanyInvitationsView,CompanyInvitationView,InvitationInspectView,InvitationAcceptView,CompanyNumberingView,CompanyPreviewView
+from projects.company_views import CompanyView,CompanyUsersView,CompanyUserView,CompanyInvitationsView,CompanyInvitationView,InvitationInspectView,InvitationAcceptView,CompanyNumberingView,CompanyPreviewView,CompanyDesignDefaultsView,FinishReferencesView,FinishReferenceView,FinishReferenceImageView,ProjectMaterialsView,ProjectCutDraftView
 from projects.client_views import ClientDirectoryView, ClientDossierView, ClientNotesView, ClientMergePreviewView, ClientMergeView
 from projects.ops_registry import OperationsRegistryView, SimulateOpsView
 from projects.project_ops import ProjectOpsPreviewView, ProjectOpsApplyView, ProjectOpsUndoView, ProjectOpsStateView
@@ -57,6 +57,12 @@ urlpatterns = [
     path("auth/invitation/",InvitationInspectView.as_view()),
     path("auth/invitation/accept/",InvitationAcceptView.as_view()),
     path("organization/numbering/",CompanyNumberingView.as_view()),
+    path("projects/<uuid:project_id>/materials/", ProjectMaterialsView.as_view(), name="project-materials"),
+    path("projects/<uuid:project_id>/cut-draft/", ProjectCutDraftView.as_view(), name="project-cut-draft"),
+    path("organization/design-defaults/",CompanyDesignDefaultsView.as_view()),
+    path("organization/finish-references/",FinishReferencesView.as_view()),
+    path("organization/finish-references/<uuid:reference_id>/",FinishReferenceView.as_view()),
+    path("organization/finish-references/<uuid:reference_id>/image/",FinishReferenceImageView.as_view()),
     path("organization/document-preview/",CompanyPreviewView.as_view()),
     path("clients/directory/", ClientDirectoryView.as_view()),
     path("clients/<uuid:client_id>/dossier/", ClientDossierView.as_view()),

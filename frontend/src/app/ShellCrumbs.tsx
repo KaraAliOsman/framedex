@@ -19,7 +19,8 @@ export function useProjectName(id: string | null): string | null {
   );
   const project = useProject(id);
   const name = override ?? project.data?.name;
-  return name ? `${project.data?.code ? project.data.code + " · " : ""}${name}` : null;
+  // The work is recognised by its name; the code stays in the project detail.
+  return name ?? null;
 }
 
 /** Rail → entity → leaf. The first crumb is the rail destination the user

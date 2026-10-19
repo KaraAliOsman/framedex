@@ -26,6 +26,8 @@ from engine_api.repository import SystemParamsRepository, SystemNotFound, Unsupp
 from pricing.repository import audit_reason, commercial_backend, json_text, one, rows
 from pricing.service import decoded
 from projects.clients import linkable_client
+from projects import design_defaults
+from psycopg.types.json import Jsonb
 from projects.serializers import PositionWriteSerializer
 from projects.typology import derive_typology
 
@@ -53,6 +55,7 @@ PROJECT_COLUMNS = (
     "total_price_gross",
     "client_id",
     "client_address_id",
+    "design_defaults",
     "updated_at",
 )
 POSITION_COLUMNS = (
@@ -256,6 +259,7 @@ def project_public(org_id, row, *, detail=False, authority=_UNSET,
         "currency": (authority or {}).get("currency") or "CLP",
     }
     value.pop("pricing_reset_at", None)  # internal gate timestamp, not API state
+    value["design_defaults"] = design_defaults.clean_stored(value.get("design_defaults"))
     for key in METADATA:
         value[key] = value[key] or ""
     for key in ("total_price_net", "total_price_tax", "total_price_gross"):
@@ -267,6 +271,7 @@ def project_public(org_id, row, *, detail=False, authority=_UNSET,
         )[0]["count"]
     value["position_count"] = position_count
     if detail:
+        value["effective_design_defaults"] = design_defaults.effective(org_id, value)
         value["positions"] = positions(org_id, row["id"])
         value["versions"] = project_versions(org_id, row["id"])
         with documentary_backend():
@@ -401,6 +406,9 @@ def update_project(org_id, project_id, data):
             values["client_address_id"] = None
     if "client_address_id" in data:
         values["client_address_id"] = data["client_address_id"]
+    if "design_defaults" in data:
+        # Usual values seed future windows; existing positions keep their design.
+        values["design_defaults"] = Jsonb(design_defaults.clean(org_id, data["design_defaults"]))
     # A saved master address is a snapshot, not a live override. Editing the
     # text detaches that selection unless another address is being selected.
     if ("delivery_address" in data

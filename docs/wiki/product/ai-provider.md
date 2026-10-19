@@ -1,7 +1,7 @@
 ---
 type: concept
 status: active
-updated: 2026-10-07
+updated: 2026-10-18
 volatility: medium
 verified_ref: 75bd60c70b7ad6c1943b5fd855d4672ae3a29f31
 sources:
@@ -14,6 +14,20 @@ sources:
 ---
 
 # Proveedor de IA y su autoridad
+
+## Selección reciente del dueño · 18-10-2026
+
+Según la [aclaración explícita](../sources/owner-credits-and-grokbot-2026-10-18.md),
+todos los planes con IA usarán MiMo hasta que el dueño lo cambie. Los planes
+se distinguen por créditos/capacidad, sin un modelo inferior por tier o fallback
+silencioso ante error/saldo agotado. DeepSeek Flash 4.1 es solo un candidato
+futuro mencionado, sin validar nombre/disponibilidad ni configurarlo ahora.
+Esta es intención para el nuevo encargo; los hechos verificados siguientes
+conservan su ref de octubre 7 y requieren nueva aceptación en la campaña 07.
+
+La [revisión de créditos](subscription-credits.md) distingue el débito fijo
+actual por ruta de la medición física y la fórmula por costo real del PRD.
+Las reservas de presupuesto no acreditan una retención de wallet concurrente.
 
 ## Hechos verificados del repositorio
 

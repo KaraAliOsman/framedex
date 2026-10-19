@@ -44,34 +44,85 @@
   color: var(--text-secondary);
   font: 500 var(--type-label) / var(--line-label) var(--font-mono);
 }
-.ui-dim-loader {
+.ui-loading {
   display: inline-flex;
-  width: var(--space-64px);
-  color: var(--interactive);
+  align-items: center;
+  gap: var(--space-8px);
+  color: var(--text-secondary);
+  font-size: var(--type-body);
+  line-height: var(--line-body);
 }
-.ui-button .ui-dim-loader {
-  width: var(--space-24px);
-  color: inherit;
-}
-.ui-dim-loader svg {
-  width: 100%;
+.ui-loading__mark {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
   fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  animation: ui-loading-turn var(--t-cycle) linear infinite;
+}
+.ui-loading__mark circle {
+  stroke: var(--border-default);
+}
+.ui-loading__mark path {
+  stroke: var(--interactive);
+}
+.ui-loading__text {
+  display: inline-flex;
+  flex-wrap: wrap;
+  column-gap: var(--space-8px);
+}
+.ui-loading__detail {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.ui-loading--progress {
+  display: grid;
+  gap: var(--space-6px);
+  min-width: 12rem;
+}
+.ui-loading__bar {
+  display: block;
+  height: 4px;
+  overflow: hidden;
+  border-radius: var(--r-pill);
+  background: var(--surface-card);
+}
+.ui-loading__bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--interactive-fill);
+  transition: inline-size var(--t-spatial) var(--ease-in);
+}
+.ui-button .ui-loading__mark path,
+.ui-button--primary .ui-loading__mark path {
   stroke: currentColor;
-  stroke-width: 1.5;
-  stroke-linecap: square;
 }
-.ui-dim-loader__measure {
-  transition: stroke-dashoffset var(--t-state) linear;
+.ui-button--primary .ui-loading__mark circle {
+  stroke: color-mix(in srgb, currentColor 35%, transparent);
 }
-.ui-glyph,
+@keyframes ui-loading-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ui-loading__mark {
+    animation: none;
+  }
+}
+.ui-icon {
+  flex: 0 0 auto;
+}
 .ui-opening-glyph {
   flex: 0 0 auto;
   width: var(--space-24px);
   height: var(--space-24px);
 }
-.ui-badge .ui-glyph {
-  width: var(--space-12px);
-  height: var(--space-12px);
+.ui-badge .ui-icon {
+  width: 14px;
+  height: 14px;
 }
 .ui-trace dl,
 .ui-trace dl > div {

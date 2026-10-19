@@ -722,7 +722,7 @@ export function CutPlanView({
                     </td>
                     <td>
                       {tOptional(`production.unnestedReason.${pane.reason}`) ??
-                        "Sin dato · revisa la autoridad del vidrio en Catálogo."}
+                        "Sin dato · revisa el vidrio en Catálogos (plancha y composición)."}
                       <p>
                         {pane.reason === "shaped_glass_outline" ? (
                           "Prepara la plantilla del contorno sellado para el vidriero."

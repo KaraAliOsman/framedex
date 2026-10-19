@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { CatalogImportResponseCandidatesItem } from "./catalogImportResponseCandidatesItem";
+import type { CatalogImportResponseProgress } from "./catalogImportResponseProgress";
 import type { CatalogImportResponseResultItem } from "./catalogImportResponseResultItem";
 
 export interface CatalogImportResponse {
@@ -20,6 +21,7 @@ export interface CatalogImportResponse {
   result: CatalogImportResponseResultItem[];
   /** @nullable */
   error_code: string | null;
+  progress?: CatalogImportResponseProgress;
   created_at: string;
   updated_at: string;
 }

@@ -17,4 +17,9 @@ export interface AiAgentStep {
   ops?: DesignOperation[];
   items?: AiAgentStepItemsItem[];
   simulation?: unknown;
+  apply_requested?: boolean;
+  applied?: unknown;
+  apply_error?: string;
+  layout?: unknown;
+  project_id?: string;
 }

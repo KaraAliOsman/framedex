@@ -33,14 +33,14 @@ Las decisiones no se liberan desde el teléfono ni por una incidencia automátic
 
 ## Evidencia visual
 
-[Antes](captures/terreno-postventa/antes/) conserva 24 vistas del ref base.
-[Despacho](captures/terreno-postventa/ux/despacho-matriz/) y
-[Terreno](captures/terreno-postventa/ux/terreno-matriz/) cubren 1440×900,
+[Antes](https://github.com/KaraAliOsman/framedex/tree/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/terreno-postventa/antes) conserva 24 vistas del ref base.
+[Despacho](https://github.com/KaraAliOsman/framedex/tree/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/terreno-postventa/ux/despacho-matriz) y
+[Terreno](https://github.com/KaraAliOsman/framedex/tree/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/terreno-postventa/ux/terreno-matriz) cubren 1440×900,
 1280×800, 1024×768 y 390×844, claro/oscuro: 40 vistas, cero hallazgos o
-desbordes. [Estados](captures/terreno-postventa/estados/) registra vacío,
+desbordes. [Estados](https://github.com/KaraAliOsman/framedex/tree/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/terreno-postventa/estados) registra vacío,
 carga, error de transporte, sin permiso y bloqueo con causa.
-[Recorrido](captures/terreno-postventa/recorrido/) y
-[sin conexión](captures/terreno-postventa/offline/) conservan capturas y
+[Recorrido](https://github.com/KaraAliOsman/framedex/tree/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/terreno-postventa/recorrido) y
+[sin conexión](https://github.com/KaraAliOsman/framedex/tree/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/terreno-postventa/offline) conservan capturas y
 verificación del replay. Los PNG se comprimen sin modificar sus píxeles.
 
 `servicio-prueba.pdf` es el acta final de servicio, una página Carta, con

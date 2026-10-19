@@ -214,10 +214,10 @@ export function StarterGallery({
               <p>
                 {availability.compatible_systems.length
                   ? `Series que la permiten: ${availability.compatible_systems.join("; ")}.`
-                  : "No hay una serie visible con esta autoridad declarada."}
+                  : "No hay una serie disponible con estos datos completos."}
               </p>
               {!availability.available && (
-                <Link to="/catalogs/systems">Completar autoridad en Catálogo</Link>
+                <Link to="/catalogs/systems">Completar la serie en Catálogos</Link>
               )}
             </div>
           )}

@@ -1,10 +1,9 @@
 import { BrandMark, Wordmark } from "../brand/Brand";
 import { EmptyIllustration } from "../ui/EmptyIllustration";
-import { Orb, type OrbState } from "../features/assistant/Orb";
-import { BotFigure } from "../features/assistant/BotFigure";
+import { Companion, type CompanionState } from "../features/assistant/Companion";
 import "./brand-page.css";
 
-const STATES: [OrbState, string][] = [
+const STATES: [CompanionState, string][] = [
   ["idle", "En reposo"],
   ["input", "Recibiendo"],
   ["queued", "En cola"],
@@ -45,8 +44,8 @@ export function BrandPage(): JSX.Element {
         <div className="brand-specimen-orbs">
           {STATES.map(([state, label]) => (
             <figure key={state}>
-              <Orb state={state} size={32} title="Asistente DEKOPEN" />
-              <BotFigure state={state} size={96} />
+              <Companion state={state} size={32} title="Asistente DEKOPEN" />
+              <Companion state={state} size={96} />
               <figcaption>{label}</figcaption>
             </figure>
           ))}

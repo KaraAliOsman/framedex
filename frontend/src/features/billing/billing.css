@@ -42,3 +42,87 @@
   padding: 12px;
   border-bottom: 1px solid var(--theme-border-subtle);
 }
+
+/* Empresa › Planes (dirección final 06): manual complete; same AI, more usage. */
+.plans-overview__grid {
+  display: grid;
+  gap: var(--space-16px);
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.plans-overview__card {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8px);
+  padding: var(--space-16px);
+}
+
+.plans-overview__card h3,
+.plans-overview__usage h3 {
+  font-size: var(--type-body);
+  margin: 0;
+}
+
+.plans-overview__card p,
+.plans-overview__note {
+  color: var(--text-secondary);
+  font-size: var(--type-dense);
+  margin: 0;
+}
+
+.plans-overview__core {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4px) var(--space-12px);
+  margin: 0;
+  padding-left: var(--space-16px);
+}
+
+.plans-overview__table {
+  border-collapse: collapse;
+  font-size: var(--type-dense);
+  width: 100%;
+}
+
+.plans-overview__table th,
+.plans-overview__table td {
+  border-top: 1px solid var(--border-subtle);
+  padding: var(--space-6px) var(--space-4px);
+  text-align: left;
+}
+
+.plans-overview__table tr[aria-current="true"] {
+  background: var(--surface-selected);
+}
+
+.plans-overview__usage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8px);
+  margin-top: var(--space-16px);
+}
+
+.plans-overview__usage dl {
+  display: grid;
+  gap: var(--space-8px) var(--space-24px);
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  margin: 0;
+}
+
+.plans-overview__usage dt {
+  color: var(--text-secondary);
+  font-size: var(--type-micro);
+}
+
+.plans-overview__usage dd {
+  font-size: var(--type-dense);
+  margin: 0;
+}
+
+.plans-overview__lots {
+  font-size: var(--type-dense);
+  margin: 0;
+  padding-left: var(--space-16px);
+}

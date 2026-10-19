@@ -1,8 +1,10 @@
 # Operaciones compartidas de diseño y proyecto
 
 IA2 usa `design-ops-v1`, definido en `engine/src/dekopen_engine/design_operations.py`.
-Sus 50 operaciones declaran nombre, parámetros, precondiciones, manejador,
-descripción y ejemplos. La API publica el mismo registro y OpenAPI genera los
+El registro actual contiene 55 operaciones: 38 de diseño, 2 de posición,
+11 de proyecto y 4 de preparación. Declaran nombre, parámetros, precondiciones,
+manejador, descripción y ejemplos. `MAX_OPERATIONS = 50` limita un lote;
+no es el tamaño del registro. La API publica el mismo registro y OpenAPI genera los
 tipos del cliente. Los comandos, atajos e inspector expresan intención; el motor
 devuelve el modelo resultante. La IA no mantiene un vocabulario de edición propio.
 

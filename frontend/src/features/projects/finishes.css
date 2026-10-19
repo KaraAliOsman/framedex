@@ -1,95 +1,145 @@
 .finish-selector {
-  background: var(--theme-surface);
-  border: 1px solid var(--theme-border);
-  border-radius: var(--radius-md);
-  padding: var(--space-2) var(--space-3);
+  display: grid;
+  gap: var(--space-4);
+  max-width: 34rem;
 }
-
-.projects-page .finish-selector button {
+.finish-grid {
+  display: grid;
+  gap: var(--space-8px);
+  grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+}
+.finish-tile {
+  align-items: start;
+  background: var(--surface-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-2);
+  display: grid;
+  gap: var(--space-2px);
+  justify-items: start;
+  min-height: 0;
+  padding: var(--space-8px);
+  text-align: left;
+}
+.finish-tile:hover:not(:disabled) {
+  background: var(--surface-panel);
+  border-color: var(--border-control);
+}
+.finish-tile[aria-checked="true"] {
+  border-color: var(--interactive);
+  outline: 2px solid var(--interactive);
+  outline-offset: -1px;
+}
+.finish-tile__name {
+  font-weight: 600;
+  margin-top: var(--space-6px);
+}
+.finish-tile__kind {
+  color: var(--text-secondary);
+  font-size: var(--type-micro);
+  font-weight: 400;
+}
+/* A square frame of the material around a pale glass pane. */
+.finish-sample {
+  background-position: center;
+  background-size: 64px 64px;
+  border: 1px solid var(--border-default);
   border-radius: var(--r-1);
+  display: inline-grid;
+  flex-shrink: 0;
+  height: 56px;
+  padding: 9px;
+  place-items: stretch;
+  width: 100%;
 }
-
-.finish-selector__row {
+.finish-sample--s {
+  height: 32px;
+  padding: 6px;
+  width: 32px;
+}
+.finish-sample__glass {
+  background: var(--mat-glass-pane);
+  border: 1px solid var(--border-default);
+  border-radius: 2px;
+}
+.finish-price {
+  align-items: baseline;
+  border-top: 1px solid var(--border-subtle);
   display: flex;
   flex-wrap: wrap;
-  align-items: end;
-  gap: var(--space-3);
+  gap: var(--space-8px);
+  justify-content: space-between;
+  padding-top: var(--space-12px);
 }
-
+.finish-price > span:first-child {
+  color: var(--text-secondary);
+  font-size: var(--type-dense);
+}
+.finish-price strong {
+  font-variant-numeric: tabular-nums;
+}
+.finish-price__none {
+  color: var(--text-muted);
+  font-size: var(--type-dense);
+}
+.finish-special summary,
+.finish-source summary {
+  color: var(--interactive);
+  cursor: pointer;
+  font-weight: 500;
+  min-height: 32px;
+}
+.finish-special__faces {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: var(--space-8px);
+}
 .finish-face {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
+  display: grid;
+  gap: var(--space-4px);
   min-width: 0;
 }
-
-.finish-face > span:first-child,
-.finish-price > span:first-child {
-  color: var(--theme-text-muted);
-  font-size: var(--text-xs);
+.finish-face > span:first-child {
+  color: var(--text-secondary);
+  font-size: var(--type-dense);
 }
-
 .finish-face__control {
-  display: flex;
   align-items: center;
-  gap: var(--space-2);
-}
-
-.finish-swatch {
-  display: inline-block;
-  width: var(--space-6);
-  height: var(--space-6);
-  flex-shrink: 0;
-  border: 1px solid var(--theme-border-strong);
-  background-size: cover;
-}
-
-.finish-equal {
   display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-height: var(--control-height);
+  gap: var(--space-8px);
 }
-
-.finish-price {
-  margin-left: auto;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.finish-selector__notice,
 .finish-source {
-  font-size: var(--text-xs);
-  margin: var(--space-2) 0 0;
+  font-size: var(--type-dense);
 }
-
-.finish-source summary {
-  cursor: pointer;
-  min-height: var(--control-height);
-}
-
 .finish-source dl {
   display: grid;
-  gap: var(--space-2);
-  margin: var(--space-2) 0;
+  gap: var(--space-6px);
+  margin: var(--space-8px) 0 0;
 }
-
 .finish-source dl > div {
   display: grid;
-  grid-template-columns: minmax(0, 12rem) minmax(0, 1fr);
   gap: var(--space-3);
+  grid-template-columns: minmax(0, 10rem) minmax(0, 1fr);
 }
-
+.finish-source dt {
+  color: var(--text-secondary);
+}
 .finish-source dd {
   margin: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
   overflow-wrap: anywhere;
 }
-
 .finish-number {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
+}
+/* Compact swatch used by the catalog's finish chart editor. */
+.finish-swatch {
+  background-size: cover;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-1);
+  display: inline-block;
+  flex-shrink: 0;
+  height: 20px;
+  vertical-align: middle;
+  width: 20px;
 }

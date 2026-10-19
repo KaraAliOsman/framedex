@@ -15,7 +15,6 @@ import type {
   ProductionOrderTrace,
   StepTransitionRequestRequest,
 } from "../../api/generated/models";
-import { useTheme } from "../../theme/ThemeProvider";
 import { ApiError } from "../../api/apiMutator";
 import { useAssistantSurface } from "../assistant/assistantContext";
 import {
@@ -70,7 +69,6 @@ function refusal(error: unknown): string {
 }
 
 export function OperatorStationPage() {
-  const { theme } = useTheme();
   const [params, setParams] = useSearchParams();
   const [preference, setPreference] = useState<OperatorStation | null>(null);
   const [queue, setQueue] = useState<StationEntry[]>([]);
@@ -279,11 +277,7 @@ export function OperatorStationPage() {
     }
   }
   return (
-    <section
-      className="production-page production-operator"
-      data-density="workshop"
-      data-theme={window.localStorage.getItem("dekopen.theme") ? theme : "dark"}
-    >
+    <section className="production-page production-operator" data-density="workshop">
       <PageHeader title="Mi estación" context="Escanea una pieza y sigue su ruta de fabricación." />
       {loading ? (
         <LoadingState label="Cargando tu estación" />
@@ -545,7 +539,7 @@ export function OperatorStationPage() {
                               "Pieza dañada",
                               "Medida fuera de tolerancia",
                               "Equipo detenido",
-                              "Falta autoridad técnica",
+                              "Falta un dato técnico",
                               "Otro",
                             ].map((r) => (
                               <option key={r}>{r}</option>

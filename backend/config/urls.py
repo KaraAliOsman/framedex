@@ -3,10 +3,12 @@
 from django.urls import URLPattern, URLResolver, include, path
 from drf_spectacular.views import SpectacularAPIView
 from config.health import live, ready
+from billing.capabilities_views import CapabilitiesView
 
 urlpatterns: list[URLPattern | URLResolver] = [
     path("api/v1/", include("notifications.urls")),
     path("api/v1/billing/", include("billing.urls")),
+    path("api/v1/capabilities/", CapabilitiesView.as_view()),
     path("api/v1/ai/", include("ai_gateway.urls")),
     path("api/v1/", include("ingest.urls")),
     path("api/v1/", include("search.urls")),

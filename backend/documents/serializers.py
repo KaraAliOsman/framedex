@@ -274,6 +274,12 @@ class ArtifactRequestSerializer(StrictSerializer):
     format = serializers.ChoiceField(choices=["PDF", "XLSX"])
     project_version_id = serializers.UUIDField()
     order_id = serializers.UUIDField(required=False, allow_null=True)
+    # Composition of the same sealed data: DOC-01 Esencial/Proyecto/Alternativas,
+    # DOC-05 Secuencia (estándar)/Lista compacta/Pedido por obra.
+    layout = serializers.ChoiceField(
+        choices=["STANDARD", "ESENCIAL", "PROYECTO", "ALTERNATIVAS", "PLANO", "COMPACTA", "VENTANA", "OBRA"],
+        required=False, default="STANDARD",
+    )
 
 
 class ArtifactResponseSerializer(serializers.Serializer):
@@ -282,6 +288,7 @@ class ArtifactResponseSerializer(serializers.Serializer):
     artifact_scope_id = serializers.UUIDField()
     document_type = serializers.CharField()
     format = serializers.CharField()
+    layout = serializers.CharField(required=False)
     bom_hash = serializers.RegexField(r"^[0-9a-f]{64}$")
     file_sha256 = serializers.RegexField(r"^[0-9a-f]{64}$")
     byte_size = serializers.IntegerField()
@@ -299,6 +306,7 @@ class ArtifactListItemSerializer(serializers.Serializer):
     revision_code = serializers.CharField()
     byte_size = serializers.IntegerField()
     created_at = serializers.DateTimeField()
+    layout = serializers.CharField(required=False)
 
 
 class ArtifactListResponseSerializer(serializers.Serializer):

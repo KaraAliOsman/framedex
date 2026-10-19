@@ -2,7 +2,7 @@ import { CatalogProvenance, SectionReviewFacts, SourceHighlight } from "./Catalo
 import { WorkspaceGlasses, WorkspaceCosts } from "./WorkspaceMaterials";
 import { ThermalCatalogPanel } from "./ThermalCatalogPanel";
 import { StatusBadge } from "../../ui/StatusBadge";
-import { DemoBadge, DimLoader } from "../../ui";
+import { DemoBadge, Loading } from "../../ui";
 import { ValidatedForm } from "../../ui/FormValidation";
 import { useEffect, useState } from "react";
 import { WorkCenterRequestKindEnum } from "../../api/generated/models";
@@ -78,18 +78,16 @@ function ArticleCard({
   onEdit: () => void;
 }) {
   const depth = article.section?.depth_mm;
+  const profileRole = article.role;
   return (
     <article className="ws-article-card" id={`article-${article.id}`}>
       <div className="ws-article-section">
-        {article.section ? (
-          <SectionPreviewSvg
-            section={article.section}
-            faceWidthMm={Number(article.face_width_mm)}
-            material={article.material}
-          />
-        ) : (
-          <p className="ws-empty">Sección: Sin dato. Declara la geometría del proveedor.</p>
-        )}
+        <SectionPreviewSvg
+          section={article.section}
+          faceWidthMm={Number(article.face_width_mm)}
+          material={article.material}
+          role={profileRole}
+        />
         <SectionReviewFacts facts={article.section_facts} />
         <small>
           {article.section
@@ -424,7 +422,7 @@ export function SystemWorkspaceView({
         </button>
       </div>
     );
-  if (!workspace) return <DimLoader label={ct("loading")} />;
+  if (!workspace) return <Loading label={ct("loading")} />;
 
   const { system, articles, beads, kits, reinforcements, purchase_mappings, process_profile } =
     workspace;

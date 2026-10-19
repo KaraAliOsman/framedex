@@ -3,7 +3,7 @@
 from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager, suppress
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 import logging
 from threading import Event, local
@@ -209,7 +209,7 @@ def _seed_project(
             project_id=project_id,
             data={
                 "payment_terms": "50% anticipo, 50% contra entrega",
-                "quotation_valid_until": date(2026, 10, 14),
+                "quotation_valid_until": date.today() + timedelta(days=30),
                 "positions": [{
                     "position_id": position_id,
                     "calculation_hash": calculation_response({"system_id": str(system_id),
@@ -980,7 +980,8 @@ def test_cleanup_failure_is_logged_without_masking_original_error(
     ]
     assert len(records) == 1
     record = records[0]
-    assert record.artifact_slot == f"{version_id}:DOC-01:PDF"
+    # Each composition of a document is its own immutable artifact slot.
+    assert record.artifact_slot == f"{version_id}:DOC-01:PDF:STANDARD"
     assert record.storage_object_key in FakeStorage.uploads
     assert record.cleanup_error == "document_storage_delete_failed"
     assert FakeStorage.deleted == []

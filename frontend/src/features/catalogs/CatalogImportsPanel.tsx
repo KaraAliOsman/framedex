@@ -1,3 +1,4 @@
+import { useCopilot } from "../assistant/copilotBridge";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiError, apiFetchBlob } from "../../api/apiMutator";
 import {
@@ -16,6 +17,14 @@ import type {
   CatalogTemplateSheet,
   CatalogImportTimeline,
 } from "../../api/generated/models";
+import {
+  CutTemplatePanel,
+  ExceptionGroups,
+  ImportProgress,
+  SourcePage,
+  sourcePageOf,
+} from "./CatalogImportExtras";
+import { Icon } from "../../ui/Icon";
 import { UnsavedChangesGuard } from "../../app/UnsavedChangesGuard";
 import { formatDate, formatDateTime, formatDecimal, fmtMm, formatMoney } from "../../format";
 import { domainLabel } from "../../i18n/domainLabels";
@@ -46,6 +55,7 @@ type ReviewRow = {
   values: Record<string, unknown>;
   fields: Record<string, Evidence>;
   errors: Array<{ field: string; message: string }>;
+  warnings: string[];
 };
 const STATUS: Record<string, string> = {
   UPLOADED: "En cola",
@@ -143,6 +153,7 @@ function typedRow(raw: Record<string, unknown>): ReviewRow | null {
     values: { ...(raw.values as Record<string, unknown>) },
     fields: (raw.fields ?? {}) as ReviewRow["fields"],
     errors: (raw.errors ?? []) as ReviewRow["errors"],
+    warnings: (raw.warnings ?? []) as string[],
     include:
       raw.confidence === "HIGH_CANDIDATE" &&
       !Object.values((raw.fields ?? {}) as Record<string, Evidence>).some(
@@ -430,6 +441,47 @@ export function CatalogImportsPanel({
   const sheet = sheets.find((item) => item.name === sheetName);
   const canReview = canWrite && entry?.status === "REVIEW_READY";
 
+  const copilot = useCopilot();
+  // PDF/image reading is an AI capability; without it the deterministic
+  // template is the main path (never a button that fails for lack of a model).
+  const aiReading = copilot.available;
+  const templateBlock = (
+    <div>
+      <h4>Plantilla XLSX o CSV</h4>
+      <p>
+        Hojas para sistemas, perfiles, corte, refuerzos, límites, colores, vidrios, herrajes y
+        costos. Una celda vacía queda como Sin dato.
+      </p>
+      <div className="catalog-toolbar">
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => void download("/api/v1/catalog-imports/template/?format=xlsx")}
+        >
+          Descargar plantilla XLSX
+        </button>
+        <label>
+          Hoja CSV
+          <select value={sheetName} onChange={(event) => setSheetName(event.target.value)}>
+            {sheets.map((item) => (
+              <option key={item.name}>{item.name}</option>
+            ))}
+          </select>
+        </label>
+        <button
+          type="button"
+          disabled={busy || !sheets.length}
+          onClick={() =>
+            void download(
+              `/api/v1/catalog-imports/template/?format=csv&sheet=${encodeURIComponent(sheetName)}`,
+            )
+          }
+        >
+          Descargar CSV
+        </button>
+      </div>
+    </div>
+  );
   if (!expanded)
     return (
       <section className="catalog-ingest">
@@ -454,9 +506,10 @@ export function CatalogImportsPanel({
           Cerrar importador
         </button>
       </header>
-      <p>
-        Sube los datos del proveedor. La plantilla y la IA llegan a la misma revisión: compara la
-        fuente, corrige lo dudoso y publica con tu visto bueno.
+      <p className="catalog-ingest-lead">
+        {aiReading
+          ? "Sube el PDF del proveedor tal como lo recibiste. El asistente lo lee por partes, también las páginas escaneadas, y deja candidatos para que los revises antes de publicar."
+          : "Carga los datos con la plantilla XLSX o CSV: cada fila queda para revisar antes de publicar. Una celda vacía queda como Sin dato."}
       </p>
       {!canWrite && (
         <p role="status">
@@ -464,101 +517,116 @@ export function CatalogImportsPanel({
           o encargado de taller.
         </p>
       )}
-      {canWrite && (
-        <div className="catalog-ingest-methods">
-          <div>
-            <h4>Con plantilla</h4>
-            <p>
-              Hojas para sistemas, perfiles, corte, refuerzos, límites, colores, vidrios, herrajes y
-              costos. Una celda vacía queda como Sin dato.
-            </p>
-            <div className="catalog-toolbar">
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => void download("/api/v1/catalog-imports/template/?format=xlsx")}
-              >
-                Descargar plantilla XLSX
-              </button>
-              <label>
-                Hoja CSV
-                <select value={sheetName} onChange={(event) => setSheetName(event.target.value)}>
-                  {sheets.map((item) => (
-                    <option key={item.name}>{item.name}</option>
-                  ))}
-                </select>
-              </label>
-              <button
-                type="button"
-                disabled={busy || !sheets.length}
-                onClick={() =>
-                  void download(
-                    `/api/v1/catalog-imports/template/?format=csv&sheet=${encodeURIComponent(sheetName)}`,
-                  )
-                }
-              >
-                Descargar CSV
-              </button>
-            </div>
-          </div>
-          <div>
-            <h4>Con tus archivos e IA</h4>
-            <p>
-              PDF, planilla, correo, texto o foto. La IA propone lecturas con su fuente. Una foto o
-              un escaneo sin texto verificable requiere tu revisión y queda desmarcado.
-            </p>
-            <div
-              className={`catalog-dropzone${dragging ? " is-dragging" : ""}`}
-              onDragOver={(event) => {
-                event.preventDefault();
-                setDragging(true);
+      {canWrite && !aiReading && (
+        <div className="catalog-ingest-methods catalog-ingest-methods--manual">
+          {templateBlock}
+          <div
+            className={`catalog-dropzone catalog-dropzone--primary${dragging ? " is-dragging" : ""}`}
+            onDragOver={(event) => {
+              event.preventDefault();
+              setDragging(true);
+            }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={(event) => {
+              event.preventDefault();
+              setDragging(false);
+              const file = event.dataTransfer.files[0];
+              if (file && !busy) void upload(file);
+            }}
+          >
+            <Icon name="upload" size={24} />
+            <strong>Sube la plantilla completa</strong>
+            <span>XLSX o CSV · hasta 40 MB</span>
+            <input
+              ref={fileInput}
+              type="file"
+              className="imports-file-input"
+              accept=".xlsx,.xlsm,.csv"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                event.target.value = "";
+                if (file) void upload(file);
               }}
-              onDragLeave={() => setDragging(false)}
-              onDrop={(event) => {
-                event.preventDefault();
-                setDragging(false);
-                const file = event.dataTransfer.files[0];
-                if (file && !busy) void upload(file);
-              }}
+            />
+            <button
+              type="button"
+              className="ui-button ui-button--primary"
+              disabled={busy}
+              onClick={() => fileInput.current?.click()}
             >
-              <input
-                ref={fileInput}
-                type="file"
-                className="imports-file-input"
-                accept=".pdf,.xlsx,.xlsm,.csv,.txt,.eml,.png,.jpg,.jpeg,.webp"
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  event.target.value = "";
-                  if (file) void upload(file);
-                }}
-              />
-              <button type="button" disabled={busy} onClick={() => fileInput.current?.click()}>
-                {busy ? "Procesando archivo…" : "Elegir o arrastrar archivo"}
-              </button>
-              <span>Hasta 15 MB</span>
-            </div>
-            <details>
-              <summary>Pegar texto del proveedor</summary>
-              <label>
-                Texto de origen
-                <textarea
-                  value={paste}
-                  onChange={(event) => setPaste(event.target.value)}
-                  rows={4}
-                />
-              </label>
-              <button
-                type="button"
-                disabled={busy || !paste.trim()}
-                onClick={() =>
-                  void upload(new File([paste], "texto-proveedor.txt", { type: "text/plain" }))
-                }
-              >
-                Analizar texto
-              </button>
-            </details>
+              {busy ? "Subiendo…" : "Elegir planilla"}
+            </button>
           </div>
         </div>
+      )}
+      {canWrite && aiReading && (
+        <>
+          <div
+            className={`catalog-dropzone catalog-dropzone--primary${dragging ? " is-dragging" : ""}`}
+            onDragOver={(event) => {
+              event.preventDefault();
+              setDragging(true);
+            }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={(event) => {
+              event.preventDefault();
+              setDragging(false);
+              const file = event.dataTransfer.files[0];
+              if (file && !busy) void upload(file);
+            }}
+          >
+            <Icon name="upload" size={24} />
+            <strong>Arrastra aquí el catálogo en PDF</strong>
+            <span>
+              Lectura con el asistente · también planillas, correos, texto o fotos · hasta 40 MB
+            </span>
+            <input
+              ref={fileInput}
+              type="file"
+              className="imports-file-input"
+              accept=".pdf,.xlsx,.xlsm,.csv,.txt,.eml,.png,.jpg,.jpeg,.webp"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                event.target.value = "";
+                if (file) void upload(file);
+              }}
+            />
+            <button
+              type="button"
+              className="ui-button ui-button--primary"
+              disabled={busy}
+              onClick={() => fileInput.current?.click()}
+            >
+              {busy ? "Subiendo…" : "Elegir archivo"}
+            </button>
+          </div>
+          <details className="catalog-ingest-other">
+            <summary>Otras formas de cargar datos</summary>
+            <div className="catalog-ingest-methods">
+              {templateBlock}
+              <div>
+                <h4>Pegar texto del proveedor</h4>
+                <label>
+                  Texto de origen
+                  <textarea
+                    value={paste}
+                    onChange={(event) => setPaste(event.target.value)}
+                    rows={4}
+                  />
+                </label>
+                <button
+                  type="button"
+                  disabled={busy || !paste.trim()}
+                  onClick={() =>
+                    void upload(new File([paste], "texto-proveedor.txt", { type: "text/plain" }))
+                  }
+                >
+                  Analizar texto
+                </button>
+              </div>
+            </div>
+          </details>
+        </>
       )}
       {message && (
         <p className="catalog-ingest-message" role="status">
@@ -581,6 +649,20 @@ export function CatalogImportsPanel({
                 {STATUS[item.status] ?? "Estado pendiente"} · {item.candidates.length} filas
               </span>
               <time>{formatDateTime(item.created_at)}</time>
+              <ImportProgress
+                importId={item.id}
+                status={String(item.status)}
+                progress={(item as { progress?: Record<string, unknown> }).progress as never}
+                orgId={orgId}
+                canWrite={canWrite}
+                onRetried={() => void load()}
+              />
+              <CutTemplatePanel
+                template={
+                  ((item as { progress?: { cut_template?: unknown } }).progress?.cut_template ??
+                    null) as never
+                }
+              />
             </div>
             <div className="catalog-toolbar">
               {["REVIEW_READY", "CONFIRMED", "UNDONE"].includes(item.status) && (
@@ -623,6 +705,16 @@ export function CatalogImportsPanel({
               {WARNINGS[warning] ?? warning}
             </p>
           ))}
+          <ExceptionGroups
+            rows={rows}
+            label={(row) =>
+              inputText(row.values.sku || row.values.system_code || row.values.code) || "Sin código"
+            }
+            onPick={(row) => {
+              setSheetName(row.sheet);
+              setRowKey(row.key);
+            }}
+          />
           <div className="catalog-sheet-tabs" role="group" aria-label="Hojas de la importación">
             {sheets
               .filter((item) => rows.some((row) => row.sheet === item.name))
@@ -828,6 +920,9 @@ export function CatalogImportsPanel({
                   );
                 })}
               </fieldset>
+            )}
+            {selected && (
+              <SourcePage importId={entry.id} page={sourcePageOf(selected)} orgId={orgId} />
             )}
           </div>
           <div className="catalog-toolbar">

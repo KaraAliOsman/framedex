@@ -12,6 +12,20 @@ MAX_IMAGE_BYTES = 12 * 1024 * 1024
 MAX_TEXT_CHARS = 100_000
 
 
+def _has_large_image(page) -> bool:
+    import pypdfium2.raw as raw
+
+    from ingest.catalog_pages import MIXED_IMAGE_COVERAGE
+
+    width, height = page.get_size()
+    area = max(width * height, 1.0)
+    covered = 0.0
+    for item in page.get_objects(filter=[raw.FPDF_PAGEOBJ_IMAGE], max_depth=3):
+        left, bottom, right, top = item.get_bounds()
+        covered += max(right - left, 0) * max(top - bottom, 0)
+    return covered / area >= MIXED_IMAGE_COVERAGE
+
+
 def pdf_page_parts(content):
     import pypdfium2 as pdfium
     parts, total, text_chars = [], 0, 0
@@ -28,7 +42,10 @@ def pdf_page_parts(content):
                         literal = text.get_text_range().strip()
                         if literal:
                             parts.append({"ref": f"página {index + 1}", "text": literal})
-                            continue
+                            # A page with text can still carry the drawing or
+                            # scanned table that matters: read it visually too.
+                            if not _has_large_image(page):
+                                continue
                     width, height = page.get_size()
                     if width <= 0 or height <= 0 or width * height * 4 > MAX_PIXELS:
                         raise ProviderError("ai_source_page_limit")

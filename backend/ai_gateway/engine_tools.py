@@ -114,7 +114,12 @@ class EngineTools:
                                     for sku in sorted(catalog["glass_skus"])],
                 "finish_authority": params.finish_authority.model_dump(mode="json") if params.finish_authority else None}
 
-    def call(self, name, arguments):
+    def call(self, name, arguments, *, validation: bool = False):
+        """`validation`: the server simulating a step the model already emitted
+        (preview/simulate before the step reaches the person). It is part of
+        validating the proposal, not an exploratory query, so it never spends
+        the model's query budget — otherwise exploring the catalog would leave
+        a valid encargo unsimulated."""
         if name not in BY_NAME or not isinstance(arguments, dict):
             raise OperationError("tool_unknown", "La herramienta no existe.")
         allowed = set(BY_NAME[name]["parameters"]["properties"])
@@ -137,7 +142,7 @@ class EngineTools:
         key = json.dumps({"name": name, "arguments": arguments}, sort_keys=True, default=str)
         if key in self.cache:
             return deepcopy(self.cache[key]), False
-        if len(self.calls) >= self.max_calls:
+        if not validation and len(self.calls) >= self.max_calls:
             raise OperationError("tool_budget_exceeded", "El trabajo agotó sus consultas. Divide la petición y vuelve a intentar.")
         try:
             output = self._execute(name, arguments)
@@ -151,7 +156,8 @@ class EngineTools:
         if "error" not in output:
             self.numeric_evidence |= _grounding_values(output, "")
         self.cache[key] = deepcopy(output)
-        self.calls.append({"name": name, "arguments": arguments, "status": "error" if "error" in output else "ok"})
+        if not validation:
+            self.calls.append({"name": name, "arguments": arguments, "status": "error" if "error" in output else "ok"})
         return output, True
 
     def _execute(self, name, arguments):

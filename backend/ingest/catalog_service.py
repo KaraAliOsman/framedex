@@ -26,7 +26,8 @@ from ingest.extract import extract_tagged, kind_for, safe_file_name, sniffed_kin
 from jobs import service as jobs_service
 from pricing.repository import rows, write
 
-MAX_UPLOAD_BYTES = 15_000_000
+# Long catalogs are processed in internal page batches (ingest.catalog_pages).
+MAX_UPLOAD_BYTES = 40_000_000
 MAX_CANDIDATES = MAX_ROWS
 JOB_TYPE = "ingest.catalog.extract"
 
@@ -76,8 +77,31 @@ def _public(row: dict) -> dict:
         "warnings": _as_list(row["warnings"]),
         "result": _as_list(row["result"]),
         "error_code": row["error_code"],
+        "progress": _progress_summary(row.get("progress")),
         "created_at": _stamp(row["created_at"]),
         "updated_at": _stamp(row["updated_at"]),
+    }
+
+
+def _progress_summary(value) -> dict:
+    """Real page progress for the person: pages read, how each page is read
+    (text, scanned, mixed) and each batch state — never the raw candidates."""
+    if isinstance(value, str):
+        value = json.loads(value or "{}")
+    if not isinstance(value, dict) or not value.get("chunks"):
+        return {}
+    return {
+        "pages_total": int(value.get("pages_total") or 0),
+        "pages_done": int(value.get("pages_done") or 0),
+        "pages": value.get("pages") or {},
+        "chunks": [
+            {key: chunk.get(key) for key in ("index", "first", "last", "state", "error")}
+            | {"candidates": len(chunk.get("candidates") or [])}
+            for chunk in value["chunks"]
+        ],
+        # Manufacturer cut sheets found in the PDF: evidence to verify cut
+        # rules, never published authority.
+        "cut_template": value.get("cut_template") or None,
     }
 
 
@@ -108,7 +132,7 @@ def create_catalog_import(
         )
     if not content or len(content) > MAX_UPLOAD_BYTES:
         raise contract_error(
-            422, "catalog_import_file_invalid", "El archivo está vacío o supera 15 MB."
+            422, "catalog_import_file_invalid", "El archivo está vacío o supera 40 MB."
         )
     if len(file_name) > 200 or len(file_name) == 0:
         raise contract_error(
@@ -235,7 +259,151 @@ def _series_gaps(candidates: list[dict]) -> str | None:
     return ",".join(missing) if missing and candidates else None
 
 
-def extract_catalog_import(*, org_id: UUID, import_id: UUID, actor_id: UUID) -> dict:
+def _save_progress(import_id: UUID, progress: dict) -> None:
+    with transaction.atomic():
+        with documentary_backend():
+            write(
+                "UPDATE public.catalog_imports SET progress=%s::jsonb, updated_at=now() WHERE id=%s",
+                [json.dumps(progress, default=str), str(import_id)],
+            )
+
+
+def _merge_batches(chunks: list[dict]) -> tuple[list[dict], list[str]]:
+    """Candidates from every finished batch with stable keys; the same code
+    read differently in two places of the document becomes a conflict with
+    both sources kept, never a silent overwrite."""
+    merged: list[dict] = []
+    seen: dict[tuple[str, str], dict] = {}
+    warnings: list[str] = []
+    for chunk in chunks:
+        for position, candidate in enumerate(chunk.get("candidates") or []):
+            item = {**candidate, "key": f"p{chunk['first']}-{position}", "pages": [chunk["first"], chunk["last"]]}
+            identity = (str(item.get("sheet") or ""), str(item.get("sku") or item.get("code") or ""))
+            if identity[1] and identity in seen:
+                first = seen[identity]
+                comparable = {key: value for key, value in item.items() if key not in {"key", "pages", "row", "evidence", "refs"}}
+                previous = {key: value for key, value in first.items() if key not in {"key", "pages", "row", "evidence", "refs"}}
+                if comparable == previous:
+                    continue
+                for entry in (first, item):
+                    entry.setdefault("warnings", [])
+                    if "catalog_conflict_in_document" not in entry["warnings"]:
+                        entry["warnings"].append("catalog_conflict_in_document")
+                warnings.append(
+                    f"El código {identity[1]} aparece con datos distintos en las páginas "
+                    f"{first['pages'][0]}–{first['pages'][1]} y {chunk['first']}–{chunk['last']}."
+                )
+            elif identity[1]:
+                seen[identity] = item
+            merged.append(item)
+    return merged, warnings
+
+
+def _compile_pdf_batches(*, org_id, actor_id, import_id, row, content, tagged, progress_report=None):
+    """Bounded page batches with persisted state: finished batches are not
+    processed again on resume, a failed batch is retried alone."""
+    from ingest.catalog_ai import compile_catalog_pages
+    from ingest.catalog_pages import inventory, partition
+
+    progress = row.get("progress") if isinstance(row.get("progress"), dict) else {}
+    if isinstance(progress, str):
+        progress = json.loads(progress or "{}")
+    if not progress.get("chunks"):
+        pages = inventory(content)
+        progress = {
+            **progress,
+            "pages_total": len(pages),
+            "pages": {mode: sum(1 for page in pages if page["mode"] == mode) for mode in ("text", "scan", "mixed")},
+            "chunks": partition(pages),
+        }
+        _save_progress(import_id, progress)
+    audit_id = None
+    chunks = progress["chunks"]
+    for chunk in chunks:
+        if chunk.get("state") == "DONE":
+            continue
+        try:
+            candidates, audit = compile_catalog_pages(
+                org_id=org_id, actor_id=actor_id, import_id=import_id,
+                file_name=row["file_name"], tagged=tagged or [], chunk=chunk,
+            )
+            chunk.update({"state": "DONE", "candidates": candidates, "error": None})
+            audit_id = audit_id or audit
+        except Exception as error:  # noqa: BLE001 — one batch never sinks the import
+            chunk.update({
+                "state": "FAILED",
+                "error": str(getattr(error, "contract_code", None) or getattr(error, "code", None) or "catalog_batch_failed")[:80],
+            })
+        progress["pages_done"] = sum(item["last"] - item["first"] + 1 for item in chunks if item.get("state") == "DONE")
+        _save_progress(import_id, progress)
+        if callable(progress_report):
+            progress_report(min(90, 15 + int(75 * progress["pages_done"] / max(progress["pages_total"], 1))))
+    candidates, warnings = _merge_batches(chunks)
+    for item in chunks:
+        if item.get("state") == "FAILED":
+            warnings.append(
+                f"Páginas {item['first']}–{item['last']}: no se pudieron analizar ({item['error']}). "
+                "Puedes reintentar solo esas páginas."
+            )
+    return candidates, audit_id, warnings
+
+
+def _detect_cut_template(import_id: UUID, row: dict, tagged, warnings: list[str]) -> None:
+    """Worked cut sheets of a manufacturer (size, profile, length, angles,
+    position) are kept as verification examples with page evidence."""
+    from ingest.cut_examples import parse_template, summary
+
+    examples = parse_template(tagged)
+    if len(examples) < 2:
+        return
+    progress = row.get("progress") if isinstance(row.get("progress"), dict) else json.loads(row.get("progress") or "{}")
+    found = summary(examples)
+    progress["cut_template"] = {**found, "examples": examples}
+    _save_progress(import_id, progress)
+    warnings.append(
+        f"Plantilla de corte detectada: {found['sheets']} hojas de {', '.join(found['lines']) or 'una línea'}. "
+        "Sirven para comprobar las reglas de corte; no se publican como reglas."
+    )
+
+
+def retry_catalog_batches(*, org_id: UUID, actor_id: UUID, import_id: UUID) -> dict:
+    """Re-run only the failed page batches of a PDF import."""
+    with transaction.atomic():
+        with documentary_backend():
+            found = rows(
+                "SELECT * FROM public.catalog_imports WHERE id=%s AND org_id=%s FOR UPDATE",
+                [str(import_id), str(org_id)],
+            )
+            if not found:
+                raise CatalogImportError("catalog_import_not_found")
+            row = found[0]
+            progress = row.get("progress") or {}
+            if isinstance(progress, str):
+                progress = json.loads(progress or "{}")
+            failed = [chunk for chunk in progress.get("chunks", []) if chunk.get("state") == "FAILED"]
+            if row["status"] != "REVIEW_READY" or not failed:
+                raise contract_error(409, "catalog_retry_unavailable", "No hay páginas pendientes de reintentar.")
+            for chunk in failed:
+                chunk["state"] = "PENDING"
+            attempt = int(progress.get("retries", 0)) + 1
+            progress["retries"] = attempt
+            updated = rows(
+                "UPDATE public.catalog_imports SET status='UPLOADED', progress=%s::jsonb, updated_at=now() "
+                "WHERE id=%s RETURNING *",
+                [json.dumps(progress, default=str), str(import_id)],
+            )[0]
+        with jobs_service.job_backend():
+            job, _ = jobs_service.enqueue(
+                org_id=org_id,
+                job_type=JOB_TYPE,
+                payload={"import_id": str(import_id)},
+                idempotency_key=f"catalog-extract:{import_id}:retry{attempt}",
+                created_by=actor_id,
+            )
+    return {"import": _public(updated), "job": job}
+
+
+def extract_catalog_import(*, org_id: UUID, import_id: UUID, actor_id: UUID, progress_report=None) -> dict:
     """The worker body: bytes → article candidates. Deterministic first; a
     text-less source goes through the catalog_compile capability — debited
     under the org wallet, audited, idempotent on the import id."""
@@ -281,6 +449,22 @@ def extract_catalog_import(*, org_id: UUID, import_id: UUID, actor_id: UUID) -> 
         candidates = []
         warnings.append(str(error) if isinstance(error, ValueError) else
                         "No se pudo leer la estructura del archivo. Descarga la plantilla oficial e intenta de nuevo.")
+    if candidates is None and row["kind"] == "PDF" and tagged:
+        _detect_cut_template(import_id, row, tagged, warnings)
+        row = rows("SELECT * FROM public.catalog_imports WHERE id=%s", [str(import_id)])[0]
+    if candidates is None and row["kind"] == "PDF":
+        try:
+            candidates, audit_id, batch_warnings = _compile_pdf_batches(
+                org_id=org_id, actor_id=actor_id, import_id=import_id, row=row,
+                content=content, tagged=tagged, progress_report=progress_report)
+            warnings.extend(batch_warnings)
+        except ValueError as error:
+            candidates = []
+            warnings.append(
+                "El PDF supera 600 páginas. Sube la parte del catálogo que necesitas."
+                if str(error) == "catalog_pages_over_limit"
+                else "No se pudo leer la estructura del PDF."
+            )
     if candidates is None:
         try:
             candidates, audit_id = compile_catalog(org_id=org_id, actor_id=actor_id,

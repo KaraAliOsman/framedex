@@ -25,6 +25,9 @@ export interface MemberSpec {
   /** Declared catalog cross-section; absent means the renderer must stay
    * approximate — never a fabricated declaration. */
   section?: ProfileSection | null;
+  /** Declared cut angle of the profile (45 mitred/welded, 90 butt); absent
+   * when the catalog did not declare it — then no joint is drawn. */
+  cornerCutDeg?: number | null;
 }
 
 export interface MemberGeometry {
@@ -82,6 +85,7 @@ function member(
     material: profile?.material ?? "PVC",
     faceWidthMm: profile && Number.isFinite(faceWidth) && faceWidth > 0 ? faceWidth : fallbackWidth,
     section: profile?.section ?? null,
+    cornerCutDeg: profile?.corner_cut_deg ?? null,
   };
 }
 

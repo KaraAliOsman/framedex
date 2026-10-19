@@ -4,6 +4,10 @@
 >
 > **Origen:** consolida el punto de vista que DEKOPEN ya había definido y nunca adoptó: `dekopen-visual-identity-study.md`, `dekopen_interaction_study.md` y los tableros board-01 a board-06. Agrega la voz, las superficies, los momentos de firma, la lista anti-slop y el pase editorial.
 
+> **Enmienda 2026-10 (encargo v1).** El dueño rechazó los dos temas, la tipografía de consola, los controles poco distinguibles, el cargador de cota y la mascota anteriores, y pidió una experiencia profesional, sencilla, viva y agradable ([encargo](../research/2026-10-17-claude/00-encargo-y-criterios.md), [dirección propuesta](../research/2026-10-17-claude/04-direccion-visual-e-interaccion.md)). Esta enmienda sustituye en el texto las reglas en conflicto: un tema claro único, lectura más cómoda, controles inequívocos, radios por función, iconos genéricos reconocibles, carga contextual con progreso real y un compañero IA circular 2D. **Se mantienen sin cambio** el dibujo como interfaz, la fuente única de cifras, lo desconocido visible, el revelado progresivo, la inmutabilidad, la accesibilidad y la eliminación de caminos sustituidos. Los valores concretos son la dirección de trabajo de la implementación; **no constan como aceptados por el dueño** hasta que revise el producto real.
+
+> **Enmienda 2026-10-18 (dirección final del dueño).** DEKOPEN es primero un **cotizador manual profesional y completo**; el plan base no necesita IA ([dirección final](../research/2026-10-18-direccion-final/README.md)). Hay **dos vistas del mismo trabajo**: *Mesa de obra* (inicial recomendada) y *Estudio* (elegible por cada usuario), sobre la misma obra, revisión, selección, borrador y operaciones. El asistente pasa a ser un **popup global opcional, no modal**, cerrado al iniciar sesión, que nunca reserva columna, no reemplaza el inspector ni encoge el lienzo. Tiene modos **Chat/Trabajo** y tres autonomías (**Solo proponer · Con aprobación · Omitir todo**). El compañero se reconstruye con alta fidelidad al personaje animado de Grok Bot (cuerpo limpio y ojos negativos, sin placa facial). El catálogo normal es **real** (fabricante → serie → configuración/artículo) y el DEMO se consulta en un laboratorio explícito. Esta enmienda sustituye §5.1 (botón Asistente), §5.3, §5.4 (riel compartido), §5.11, la regla de vista previa universal de §6 y el catálogo por defecto de §11. **Se mantienen** motor como única fuente de cifras, Decimal, lo desconocido visible, inmutabilidad, número único, accesibilidad, clic humano para efectos externos y eliminación de caminos sustituidos.
+
 ---
 
 ## 0. Por qué existe este documento
@@ -26,9 +30,9 @@ DEKOPEN no puede ser eso, por cinco razones:
 
 > **DEKOPEN se dibuja como se dibuja una ventana.**
 
-Líneas finas, ingletes a escuadra, uniones visibles, números tabulares en milímetros y un único acento deliberado. La interfaz tiene la estética propia del oficio, ejecutada con disciplina de estudio de diseño. **No es un SaaS moderno ni un ERP del 2005.**
+La ventana y el documento son los protagonistas y deben parecer trabajo profesional bien resuelto; la interfaz hace fácil manipularlos. Entorno **claro, luminoso y preciso**, turquesa contenido, dibujos ricos en material y controles que se reconocen sin pasar el mouse. La personalidad sale de las proporciones, la respuesta inmediata y la claridad, no de metáforas técnicas por todas partes. **No es un SaaS genérico ni un ERP del 2005.**
 
-**La prueba del manual Schüco:** si una captura podría ser la promo de un plugin de Figma (sombras suaves, tarjetas redondeadas, degradado de acento, copy simpático), falla. Si podría ser una página de un manual técnico de perfiles o el plano de una pieza mecanizada (líneas finas, números monoespaciados, un teal controlado), pasa.
+**La prueba del taller y del cliente:** una persona del oficio debe saber qué hacer en la pantalla sin explicación previa, y un cliente final debe reconocer una propuesta seria en el documento. Falla si parece la promo de un plugin (degradados, sombras de color, copy simpático) y también si parece una consola técnica (mayúsculas pequeñas, todo en monoespaciada, controles que parecen texto).
 
 ### 1.2 Para quién diseñamos y qué debe sentir
 
@@ -55,7 +59,7 @@ Líneas finas, ingletes a escuadra, uniones visibles, números tabulares en mil�
 - No es un formulario gigante con un dibujo de adorno.
 - No es un chatbot pegado al costado.
 - No es una demo: ningún botón existe sin efecto real.
-- No es simpático: es preciso, tranquilo y confiable. La personalidad está en el rigor, no en los chistes.
+- No es frío ni chistoso: es preciso, tranquilo y agradable de usar. La calidez está en la respuesta, los buenos valores por defecto y el cuidado del detalle, no en los chistes.
 
 ---
 
@@ -73,7 +77,7 @@ Líneas finas, ingletes a escuadra, uniones visibles, números tabulares en mil�
 | P8 | **El sistema trabaja.** | Prellenar, derivar, sugerir con causa, aplicar en lote con diff | Preguntar lo que ya se sabe; pedir confirmar lo obvio |
 | P9 | **La inmutabilidad se ve.** | Revisión emitida con sello, huella y "Crear revisión B" | Editar un documento emitido "porque se puede" |
 | P10 | **El estado es explícito.** | Etiqueta + tono + ícono + causa ("Bloqueada · falta perfil MARCO-70") | Puntos de color sin texto; "Error" a secas |
-| P11 | **Proteger lo extraño.** | Ingletes, huella en el cajetín, cargador de cota, Orb con estados reales | Quitar lo singular "para que se vea más limpio" |
+| P11 | **Proteger lo que sirve.** | Cota editable en el lugar, planta con carriles, "¿De dónde sale?", compañero IA con estados reales | Mantener un detalle singular que no ayuda al trabajo, o quitar uno que sí ayuda "para limpiar" |
 | P12 | **Borrar antes que apilar.** | Cada rediseño elimina el componente viejo y su CSS muerto | Dejar la versión vieja escondida "por si acaso" |
 
 ---
@@ -82,14 +86,14 @@ Líneas finas, ingletes a escuadra, uniones visibles, números tabulares en mil�
 
 ### 3.1 Color
 
-Proporción en pantalla: **~75 % grafito, ~20 % teal, ≤ 3 % naranja, ~2 % semánticos.** El teal es el metal (anodizado, de ingeniería). El naranja es la marca y significa **"esto necesita a una persona"**. Nunca va en un CTA, en una insignia decorativa ni como adorno.
+**Un solo tema, claro.** No hay selector de tema ni tema oscuro de taller: el esfuerzo se concentra en una composición coherente con buen contraste. El taller y el terreno usan el mismo tema con controles más grandes (§3.7). No se fijan proporciones de color como objetivo: la mesa y el papel descansan, el turquesa marca acción y selección, el naranja es la marca y significa **"esto necesita a una persona"** (nunca un CTA ni un adorno).
 
-**Rampas (tema claro)**
+**Rampas**
 
 | Grafito | Hex | Rol |
 |---|---|---|
 | g-950 | `#161C1F` | Tinta, texto principal, trazo de perfil |
-| g-900 | `#252D31` | Cromo oscuro (barra de comandos) |
+| g-900 | `#252D31` | Texto fuerte sobre tinte, cuerpo del compañero |
 | g-700 | `#465158` | Texto secundario, texto de cotas, íconos |
 | g-500 | `#727D82` | Texto atenuado (solo grande o metadato ≥ 12 px), guías |
 | g-400 | `#9AA6A9` | Placeholder y deshabilitado |
@@ -107,7 +111,7 @@ Proporción en pantalla: **~75 % grafito, ~20 % teal, ≤ 3 % naranja, ~2 % sem�
 | teal-800 | `#075F5A` | **Relleno primario** (botones), texto blanco 7.5:1 |
 | teal-700 | `#0B7770` | **Texto interactivo** y enlaces sobre blanco (5.3:1) |
 | teal-600 | `#0F8F85` | Bordes, anillo de foco, trazos del lienzo (3.9:1, nunca texto chico) |
-| teal-500 | `#20A79A` | Interactivo en tema oscuro |
+| teal-500 | `#20A79A` | Acento del compañero IA y gráficos |
 | teal-400 | `#48BCAF` | Gráficos |
 | teal-200/100/50 | `#B0E4DC` / `#D4EFEA` / `#E6F4F2` | Rellenos suaves, selección, tinte del vidrio |
 
@@ -127,11 +131,9 @@ Proporción en pantalla: **~75 % grafito, ~20 % teal, ≤ 3 % naranja, ~2 % sem�
 | Información | teal-700 | teal-50 | teal-900 |
 | Requiere persona (fabricación) | orange-500 | orange-100 | orange-700 |
 
-**Roles funcionales (claro):** `bg-app` g-50 · `surface-panel` g-25 · `surface-card` g-100 · `surface-sheet` paper · `surface-hover` `#E2E8E7` · `surface-active` `#D4DEDD` · `surface-selected` teal-50 + barra izquierda de 2 px teal-700 · `border-subtle` g-200 · `border-default` g-300 · `border-strong` `#A9B4B6` · `border-focus` teal-600 · `text-primary` g-950 · `text-secondary` g-700 · `text-muted` g-500 · `interactive` teal-700 · `interactive-fill` teal-800 (hover teal-700, presionado teal-900) · `mark` orange-500.
+**Roles funcionales:** `bg-app` `#F4F6F7` (mesa fría muy clara) · `surface-panel` paper (paneles, rieles, barra superior) · `surface-card` g-100 (relleno inset, filas agrupadas) · `surface-sheet` paper · `surface-hover` `#EBF0F0` · `surface-active` `#DDE5E4` · `surface-selected` teal-50 · `border-subtle` g-200 (separadores) · `border-default` g-300 · `border-control` `#B4BFC1` (borde de campos y botones secundarios: los controles se distinguen de la estructura) · `border-focus` teal-600 · `text-primary` g-950 · `text-secondary` g-700 · `text-muted` g-500 · `interactive` teal-700 · `interactive-fill` teal-800 (hover teal-700, presionado teal-900) · `mark` orange-500. Pasa el test de contraste AA.
 
-**Tema oscuro (roles):** `bg-app` `#0F1416` · `surface-panel` `#151B1E` · `surface-card` `#1B2326` · `surface-sheet` `#182024` (el lienzo; los documentos impresos son siempre claros) · `border-subtle` `#243033` · `border-default` `#2F3C3F` · `text-primary` `#E7EDEC` · `text-secondary` `#AEB9BB` · `text-muted` `#86928F` · `interactive` teal-400 · `interactive-fill` teal-500 con texto g-950 · `mark` orange-400 `#ED8653`. **La densidad `workshop` usa el tema oscuro por defecto.** Ambos temas pasan el test de contraste AA.
-
-**Lienzo:** hoja `paper` sobre `bg-app` · grilla `#DCE4E2` · perfil g-950 de 1,5 px · cotas g-700 en Plex Mono 11 · vidrio `rgba(15,143,133,.07)` con trazo teal-600 · símbolo de apertura g-700 de 1,25 px (continuo = hacia el observador, discontinuo = alejándose) · selección teal-600 1,5 px + 8 % de relleno · manija orange-500 con borde paper · ajuste (snap) verde discontinuo `6 4` · vista previa orange-500 discontinua `8 5` · inválido = color de bloqueo + achurado a 45° (legible sin color).
+**Lienzo:** hoja `paper` sobre `bg-app` · grilla `#DCE4E2` · perfil g-950 de 1,5 px · cotas g-700 en Plex Mono 12 · vidrio `rgba(15,143,133,.07)` con trazo teal-600 · símbolo de apertura g-700 de 1,25 px (continuo = hacia el observador, discontinuo = alejándose) · selección localizada: contorno teal-600 1,5 px + 8 % de relleno solo sobre el miembro elegido, sin cubrir textura ni vidrio del resto · manija orange-500 con borde paper · ajuste (snap) verde discontinuo `6 4` · vista previa orange-500 discontinua `8 5` · inválido = color de bloqueo + achurado a 45° (legible sin color). Las cotas que se muestran son las relevantes para la selección; no se reiteran todas.
 
 ### 3.2 Tipografía: una superfamilia, dos voces
 
@@ -139,17 +141,19 @@ Proporción en pantalla: **~75 % grafito, ~20 % teal, ≤ 3 % naranja, ~2 % sem�
 
 | Rol | Especificación | Uso |
 |---|---|---|
-| Display | Sans SemiBold 32/36, −1 % | Títulos de documento, héroe de estado vacío |
-| Título L | Sans SemiBold 20/26 | Título de página y de diálogo |
-| Título M | Sans SemiBold 14/18 | Encabezado de panel y de grupo |
-| Etiqueta técnica | Sans Medium 11/14, MAYÚSCULAS, +6 % | Etiquetas de campo, encabezados de tabla: la voz de lámina técnica |
-| Cuerpo | Sans Regular 13/18 (`office`) · 14/20 (`document`) · 16/22 (`workshop`) | Texto de interfaz |
-| Celda densa | Sans Regular 12/16 | Filas de tabla densa, texto secundario de lista |
-| **Medida** | **Mono Regular 13/16** | Toda magnitud: `2 400 × 1 800 mm`, `$1.435.471`, cantidades, códigos |
-| Micro-medida | Mono Regular 11/14, g-500 | Tolerancias, coordenadas, huellas |
+| Display | Sans SemiBold 32/38, −1 % | Títulos de documento y portada |
+| Título L | Sans SemiBold 24/30, −0,5 % | Título de página |
+| Subtítulo | Sans SemiBold 18/24 | Título de diálogo y de sección principal |
+| Título M | Sans SemiBold 15/20 | Encabezado de panel y de grupo |
+| Etiqueta | Sans Medium 13/18, **en frase** (sin mayúsculas forzadas) | Etiquetas de campo y encabezados de tabla |
+| Cuerpo | Sans Regular 14/20 (`office`) · 15/22 (`document`) · 16/24 (`workshop`) | Texto de interfaz |
+| Celda | Sans Regular 13/18 | Filas de tabla y texto secundario de lista |
+| **Medida** | **Mono Regular 13/18 o tabulares de Sans** | Medidas técnicas (`2 400 × 1 800 mm`) y códigos en Mono; montos comerciales en Sans con `tabular-nums` |
+| Micro | Sans Regular 12/16, g-700 | Metadatos, tolerancias, ayudas breves |
 
 Reglas:
-- **Mínimo absoluto: 11 px.** Nada visible bajo 11 px.
+- **Mínimo absoluto: 12 px** en la interfaz (11 px solo en cotas del lienzo y papel impreso).
+- La monoespaciada se reserva para medidas técnicas y códigos donde ayuda; un precio o una cantidad comercial no se escriben como texto de terminal.
 - Pesos 400, 500 y 600 en la app. **El 700 vive solo en el papel** (total del documento). El producto nunca grita.
 - `font-variant-numeric: tabular-nums` es obligatorio donde haya números que se alinean o cambian.
 - Glifos reales: `×` (no `x`), `−` (no `-`) para negativos, `²`, `°`, `·`. Comillas «» o “” en el copy, nunca `"`.
@@ -176,15 +180,16 @@ Reglas:
 
 | Contexto | Valor |
 |---|---|
-| Alto de control | 28 denso · 32 por defecto · **44 en `workshop`** (y en el portal móvil) |
-| Fila de inspector | 28 |
-| Relleno de panel | 12–16 (nunca 24 dentro de un riel) |
-| Rieles | Inspector 300–320 · árbol de proyecto 240–280 · franja de herramientas 48 |
-| Densidad objetivo | El inspector muestra **≥ 8 campos sin scroll** a 768 px de alto |
+| Alto de control | 32 compacto (tablas, inspector) · **38 habitual** · **48 en `workshop`** y portal móvil |
+| Fila de inspector | 34 |
+| Relleno de panel | 16–24 |
+| Rieles | Navegación 216 · riel contextual (inspector o asistente) 320–384 · franja de herramientas 48 |
+| Barra superior | 56 |
+| Densidad objetivo | El inspector muestra **≥ 7 campos sin scroll** a 768 px de alto |
 
-**Radios (mecanizados, no blandos):** `r-0` 0 (lienzo, hoja, celdas, geometría) · `r-1` 2 px (inputs, botones, chips) · `r-2` 4 px (paneles, diálogos, popovers: **máximo dentro del producto**) · `r-pill` solo para puntos de estado. **Prohibido ≥ 8 px dentro del producto.** Prohibidos los botones píldora.
+**Radios por función:** `r-0` 0 (lienzo, papel, celdas, geometría) · `r-1` 6 px (campos, botones, chips) · `r-2` 8 px (paneles puntuales, menús, popovers, tarjetas de colección) · `r-3` 12 px (diálogos y paneles flotantes) · `r-pill` solo para puntos de estado y el compañero IA. No se redondea todo por decoración; no hay botones píldora como estilo universal.
 
-**Firma: la esquina en inglete.** Una única esquina recortada a 45° (catetos de 8 px, arriba a la derecha, `clip-path`) aparece **solo** en superficies tipo hoja: el lienzo, los documentos emitidos, la tarjeta de vista previa principal y la marca. Nunca en controles, nunca más de una por superficie. Una lee como unión; varias leen como decoración.
+**La esquina en inglete** (catetos de 8 px, arriba a la derecha) es opcional en la hoja del lienzo y en la marca; no se usa en controles ni se repite.
 
 **Elevación por delineado, no por sombra:**
 
@@ -208,25 +213,30 @@ Una sola capa flotante a la vez. Prohibidos: sombras de color, desenfoque, `back
 | `t-state` | 160 ms | Presionar, alternar, seleccionar |
 | `t-spatial` | 220 ms | Paneles, diálogos, pestañas |
 | `t-max` | **280 ms** | Techo absoluto |
+| `t-cycle` · `t-cycle-slow` | 900 ms · 2 400 ms | Solo ciclos de actividad continua (indicador de carga); nunca transiciones |
 
-Entradas `cubic-bezier(.2,0,.38,1)`; salidas `cubic-bezier(.4,.14,1,1)` en ≤ 120 ms. **Movimiento en un solo eje**: las superficies *calzan* en su lugar, como un perfil en su unión. Zoom y paneo del lienzo son directos (1:1). Desfase escalonado ≤ 30 ms × ≤ 3 elementos. `prefers-reduced-motion` desactiva todo lo no esencial. Prohibidos: rebote, elástico, transiciones con blur, degradados animados, *shimmer* en los esqueletos y spinners decorativos. **El cargador es una cota que se dibuja de 0 a 100 %.**
+**Excepción del compañero (2026-10-18).** El techo de 280 ms gobierna transiciones de controles, paneles y popup. Los **ciclos expresivos del personaje** (reposo, pensamiento, trabajo, reconocimiento) pueden durar varios segundos con amplitud moderada, se interrumpen sin saltos, se pausan fuera de vista y respetan `prefers-reduced-motion` con una pose estática equivalente. La excepción no autoriza animar tablas, cifras ni el lienzo técnico.
+
+Entradas `cubic-bezier(.2,0,.38,1)`; salidas `cubic-bezier(.4,.14,1,1)` en ≤ 120 ms. La respuesta a pulsar es inmediata; los paneles aparecen desde su origen y se pueden interrumpir. Zoom, paneo y arrastre del lienzo van unidos al gesto (1:1). Una cifra no se anima mientras se escribe; un precio actualizado se sustituye y se señala una vez. Un lote aplicado resalta una vez los objetos afectados. `prefers-reduced-motion` desactiva todo lo no esencial. Prohibidos: rebote, transiciones con blur, degradados animados y *shimmer*.
+
+**Carga:** la composición se mantiene estable. Una espera breve deshabilita solo la acción en curso con un estado local («Calculando precio»). Una lista reserva filas estáticas. Una tarea larga (IA, importación, PDF) muestra pasos y páginas reales cuando se conocen; sin avance medible, actividad indeterminada **sin porcentaje inventado**. El cargador de cota deja de ser marca obligatoria.
 
 ### 3.6 Iconografía: gramática de fenestración
 
-- Monolínea de 1,5 px en grilla de 24 px, margen de 2 px, **puntas cuadradas y uniones en inglete**. El estado activo cambia trazo por relleno, nunca agrega un fondo de color.
+- **Una sola familia genérica** (`ui/Icon`): monolínea de 1,75 px en grilla de 24 px, puntas y uniones redondeadas, tamaños 16/20/24. Metáforas comunes reconocibles (biblioteca para catálogo, carpeta para proyectos, tijera para corte); no se inventa una metáfora nueva para una acción común. Las acciones decisivas («Orden de corte», «Emitir cotización») llevan texto. El estado activo se distingue de hover y foco por fondo y color, no por un cambio mínimo de trazo.
 - La familia de aperturas usa la convención de dibujo real: la línea parte de las esquinas del lado de las bisagras y el vértice apunta a la manilla; continuo = hacia el observador, discontinuo = alejándose; abatimiento desde abajo; oscilobatiente = ambos símbolos; corredera = flecha paralela al carril; fijo = silencio (sin símbolo). **Es la misma gramática en ícono, lienzo, documento y 3D.** El usuario la aprende una vez.
 - Vocabulario propio: montante, travesaño, acople, junquillo, sección de perfil, cota, lista de corte, tronzadora, manilla, bisagra, soldadura. Los herrajes se dibujan seccionados, no como siluetas.
-- Una sola librería base para lo genérico (la que ya use el repo), restilizada al trazo y las uniones de arriba. Prohibidos: íconos rellenos tipo blob, emoji, perspectiva y degradados.
+- Prohibidos: íconos rellenos tipo blob, emoji, perspectiva y degradados.
 
 ### 3.7 Densidades
 
-`data-density` en el contenedor raíz de cada superficie:
+`data-density` en el contenedor raíz de cada superficie. Un único tema claro en todas:
 
-| Densidad | Superficies | Base | Control | Tema |
-|---|---|---|---|---|
-| `office` | Hoy, proyectos, editor, precios, compras, catálogo, ajustes, analítica | 13 px | 28–32 | Claro (oscuro opcional) |
-| `workshop` | Estación de operario, kiosko de taller, app de instalador | 16 px | **≥ 44** | **Oscuro** |
-| `document` | Portal del cliente, vistas imprimibles, PDF | 14 px | 40 (portal) | Claro siempre |
+| Densidad | Superficies | Base | Control |
+|---|---|---|---|
+| `office` | Proyectos, editor, catálogos, taller de oficina, ajustes, analítica | 14 px | 32–38 |
+| `workshop` | Estación de operario, kiosko de taller, app de instalador | 16 px | **≥ 48** |
+| `document` | Portal del cliente, vistas imprimibles, PDF | 15 px | 44 (portal) |
 
 ### 3.8 Retícula y puntos de quiebre
 
@@ -247,7 +257,7 @@ Diseño a **1440 × 900**. Debe funcionar sin scroll horizontal a 1280 × 800 y 
 
 | Usar | No usar |
 |---|---|
-| Posición | Ítem, línea, producto (en contexto de obra) |
+| Ventana · Puerta · Conjunto (posición en listas profesionales) | Ítem, línea, producto, elemento |
 | Hoja · Marco · Junquillo · Montante · Travesaño · Inversor · Umbral | SASH, FRAME, GLAZING_BEAD, poste, mainel |
 | Termopanel (DVH) · Laminado · Templado | Doble vidrio, IGU |
 | Abatible · Oscilobatiente · Proyectante · Corredera · Fijo | Batiente (salvo que el catálogo lo use), tilt-turn |
@@ -261,28 +271,28 @@ Diseño a **1440 × 900**. Debe funcionar sin scroll horizontal a 1280 × 800 y 
 ## 5. Superficies: anatomía obligatoria
 
 ### 5.1 Shell
-Barra superior de 48 px: marca, búsqueda/paleta de comandos (`Ctrl+K`), Orb, usuario. Navegación por **flujo** (Hoy · Proyectos · Producción · Compras · Catálogo · Clientes · Analítica · Ajustes), no por tablas de la base de datos. Las migas muestran la entidad con su código (`P-000123 · Edificio Los Robles`). Un solo nivel de navegación lateral.
+Navegación lateral de 216 px con **cuatro áreas habituales**: Proyectos · Clientes · Catálogos · Taller, y **Empresa** como acceso inferior. Cada rol ve las áreas que puede leer (la API sigue autorizando). Barra superior de 56 px: migas con el **nombre** de la obra (el código va en detalle), búsqueda/paleta (`Ctrl+K`), avisos y, **solo cuando la organización tiene derecho a IA**, el botón «Asistente» con el compañero, que abre el popup global. El plan manual no monta botón, presencia ni sondeo de IA. El logo vuelve a Proyectos. Analítica se abre desde Empresa; el historial del asistente vive en su popup (y en lectura desde la cuenta tras pasar a manual), no en otra aplicación. Las direcciones antiguas redirigen al contexto equivalente.
 
-### 5.2 Hoy (inicio por rol)
-No es un dashboard: es **la lista de lo que esta persona debe hacer ahora**, ordenada por consecuencia. Estimador: cotizaciones por vencer, aprobaciones pendientes, posiciones bloqueadas. Dueño: margen de la semana vs. objetivo, cobranza vencida, cuellos de botella. Taller: OT de hoy por estación, faltantes. Cada fila tiene un verbo. Sin contadores en 0 decorativos.
+### 5.2 Proyectos (inicio)
+La entrada habitual del dueño y del estimador: «Nueva cotización», trabajos para retomar y, si no hay ningún sistema utilizable, «Importar catálogo». Debajo, pocas decisiones agrupadas por obra (cotizaciones por vencer, aprobaciones, bloqueos), cada una con un verbo. No es un mural de indicadores ni una consola de incidencias. El taller empieza en sus órdenes, el operario en su estación y el instalador en su agenda.
 
 ### 5.3 Proyecto
-Encabezado con la entidad, el estado del ciclo de vida (Stepper) y **una** acción principal según el estado. Debajo, la lista de posiciones con miniatura del dibujo real, medidas, tipología, vidrio, cantidad, precio y estado "Qué falta". Selección múltiple con cambios en lote y diff de precio antes de aplicar.
+Cabecera compacta: nombre, cliente, estado comercial y **una** acción principal, con el selector textual **Mesa de obra · Estudio** (preferencia por usuario y organización; Mesa por defecto; `?view=mesa|estudio&position=<id>`). Cuatro destinos: **Ventanas · Cotización · Materiales y corte · Actividad**. En **Mesa**, la colección de ventanas es el contenido principal, con dibujo real, ambiente/nombre, medidas, cantidad, acabado y precio, en galería o tabla (formatos locales de la colección, no las vistas). Selección múltiple con alcance visible, cambios en lote y diff antes de aplicar. En **Estudio**, franja de posiciones plegable, dibujo predominante e inspector manual de la misma sesión de edición. Cambiar de vista no guarda, no recalcula y conserva selección, borrador y deshacer.
 
 ### 5.4 Editor (canvas-first)
-Lienzo de borde a borde con **islas flotantes**: herramientas arriba al centro, zoom abajo a la izquierda, acciones abajo al centro, estado de selección en una línea. Inspector acoplado a la derecha (300–320 px) que **cambia según la selección**, con lo más usado primero y "Avanzado" plegado. Cotas encadenadas editables en el lugar. Vista en planta con carriles para correderas. "Qué falta" como lista accionable, no como banners. Atajos de teclado según el estudio de interacción (`V`, `H`, `F`, `Shift+1`, `Ctrl+K`, etc.).
+El dibujo ocupa dos tercios o más del área de trabajo, con **islas flotantes**: herramientas frecuentes agrupadas (seleccionar, dividir, apertura, medidas, deshacer/rehacer, 2D/3D), zoom abajo a la izquierda, precio y estado de cálculo en una línea. Un único inspector contextual a la derecha (288–320 px; drawer a 1024 px), dedicado a la selección, que **cambia según el objeto elegido**, con lo más usado primero y "Avanzado" plegado. El asistente **no** comparte ni desplaza este riel: abrir el popup no cambia columnas ni ancho del lienzo. Cotas encadenadas editables en el lugar. Vista en planta con carriles para correderas. "Qué falta" como lista accionable, no como banners. Atajos de teclado según el estudio de interacción (`V`, `H`, `F`, `Shift+1`, `Ctrl+K`, etc.).
 
 ### 5.5 Tablas
-Reglas finas, **sin cebra**, encabezado fijo con etiqueta técnica, números alineados a la derecha en Mono, orden y filtro, selección con barra de acciones en lote, virtualización sobre 200 filas, estados vacío/carga/error.
+Reglas finas, **sin cebra**, encabezado fijo con etiqueta en frase, números alineados a la derecha con cifras tabulares (Mono solo en medidas y códigos), orden y filtro, selección con barra de acciones en lote, virtualización sobre 200 filas, estados vacío/carga/error.
 
 ### 5.6 Formularios
 Etiqueta arriba, ayuda breve debajo, error en español debajo del campo, unidad como sufijo. `noValidate` siempre. Un formulario largo se divide por secciones con títulos, nunca en un muro. Lo que se puede derivar no se pide.
 
 ### 5.7 Los cinco estados (obligatorios en toda superficie)
-**Vacío** (por qué + una acción) · **Cargando** (esqueleto con la forma real, sin shimmer; cargador de cota si dura > 1 s) · **Error** (fórmula del §4 + "Detalles técnicos" plegable + reintentar) · **Sin permiso** (qué rol lo puede hacer y a quién pedírselo) · **Bloqueado** (qué falta, quién lo resuelve, botón al lugar exacto).
+**Vacío** (por qué + una acción) · **Cargando** (reserva con la forma real, sin shimmer; progreso real o actividad indeterminada sin porcentaje en tareas largas) · **Error** (fórmula del §4 + "Detalles técnicos" plegable + reintentar) · **Sin permiso** (qué rol lo puede hacer y a quién pedírselo) · **Bloqueado** (qué falta, quién lo resuelve, botón al lugar exacto).
 
 ### 5.8 Documentos (DOC-01 y siguientes)
-Hoja de lámina técnica: cabecera con la marca de la empresa del cliente (white-label), filete teal-800 de 1,5 pt, la esquina en inglete y el **cajetín** (estilo ISO 7200) al pie con proyecto · documento · número · revisión · fecha · página · **huella de la BOM**. Cada posición es una ficha: elevación a la izquierda (vista declarada, simbología del §3.6) y tabla de especificación a la derecha. Totales con un único momento fuerte por página. Sin cebra. Carta por defecto.
+Cada familia documental tiene composiciones realmente distintas: **tres cotizaciones comerciales, dos pedidos de compra y tres órdenes de corte**. La cotización es una propuesta editorial con la marca de la empresa (white-label), dibujo, alcance y total claros; numeración humana configurable (Cotización N.º 1 por defecto, prefijo e inicio por empresa) con la revisión separada. La aceptación/firma es opcional y depende de la política del negocio o de una acción explícita. La huella técnica no ocupa el cuerpo comercial: permanece en el registro auditable y en los documentos de taller (OT, corte, etiquetas), donde el **cajetín** conserva proyecto · documento · número · revisión · fecha · página · huella. Cada ventana es una ficha con elevación (vista declarada, §3.6) y especificación. El original estructurado se edita en borrador; tras emitir se revisa. Sin cebra. Carta por defecto.
 
 ### 5.9 Portal del cliente
 Una página que vende con autoridad: portada con la obra, resumen de lo que compra en lenguaje simple, posiciones con dibujo y opción de ver en 3D, alternativas comparables, condiciones claras, **una** acción (Aprobar) y el estado honesto del enlace (vigente, reemplazado, vencido, revocado). Funciona perfecto en 390 px.
@@ -290,8 +300,10 @@ Una página que vende con autoridad: portada con la obra, resumen de lo que comp
 ### 5.10 Taller y obra (`workshop`)
 **Una pieza, una pantalla.** Código grande (≥ 32 px Mono), qué hacer, medida, destino, siguiente. Botones de ≥ 44 px (idealmente 56). Escaneo de etiqueta como entrada principal. Funciona con guantes y a 2 m. Confirmaciones táctiles inequívocas, sin gestos ocultos.
 
-### 5.11 Asistente y Orb
-El Orb es un indicador de estado real (inactivo, escuchando, pensando, trabajando, esperando confirmación, listo, error) conectado a trabajos reales. El panel del asistente muestra **artefactos** (propuesta de cambios con antes/después, plan de compra, comparación), no solo texto. Estados visibles y distintos: **propuesto · en vista previa · esperando confirmación · aplicado · falló · bloqueado.** Nunca dice "listo" si no aplicó.
+### 5.11 Asistente y compañero
+**Popup global opcional** (solo planes con IA): una instancia por sesión y organización, cerrada al iniciar sesión, no modal (sin scrim ni trampa de foco), movible, redimensionable, minimizable y ampliable; 420 × 600 px inicial, mínimo 340 × 420, siempre dentro del viewport. Cerrar o minimizar **no** cancela el trabajo; «Detener» es otra acción. Cabecera: Asistente, **Chat/Trabajo**, historial, minimizar, ampliar, cerrar. Chat responde y prepara sin mutar; Trabajo ejecuta con herramientas de dominio. Autonomías **Solo proponer · Con aprobación · Omitir todo**, selladas por tarea; Omitir todo ejecuta lo reversible autorizado sin aprobaciones intermedias y entrega un recibo final. El hilo sigue a la persona; cada encargo sella su destino al enviarse y navegar no lo redirige. Adjuntos (documentos, imágenes, planillas, texto) con vista previa, estado y citas al origen. Un encargo solo es «Completado» cuando el servidor comprueba sus postcondiciones; si no, «Parcial»/«Esperando datos». Emitir, enviar, publicar, comprar/pagar o liberar conserva el clic humano.
+
+El **compañero** reproduce con alta fidelidad la gramática del personaje animado de Grok Bot: cuerpo redondo limpio de un color, dos ojos negativos que se cierran, estiran e inclinan, sin placa facial, brillo ni órbita. Sus gestos derivan del estado real del trabajo (reposo, cola, pensamiento, trabajo, espera, revisión, éxito, fallo/cancelado, no disponible); no acreditan progreso, no repiten el éxito al recargar ni llaman al modelo para animarse. El nombre sigue siendo «Asistente» de DEKOPEN.
 
 ---
 
@@ -299,27 +311,27 @@ El Orb es un indicador de estado real (inactivo, escuchando, pensando, trabajand
 
 - **Paleta de comandos** (`Ctrl+K`): navegar, crear, ejecutar operaciones del registro tipado (las mismas que usa la IA) y buscar entidades por código.
 - **Deshacer siempre:** toda edición en el editor y en lote es deshacible (`Ctrl+Z`) hasta guardar; las acciones consecuentes piden confirmación explícita.
-- **Vista previa antes de aplicar:** cambios en lote, propuestas de la IA, importaciones y emisiones muestran el diff (qué cambia, cuánto cambia el precio) antes del clic.
+- **Vista previa antes de aplicar:** cambios manuales en lote, importaciones y emisiones muestran el diff (qué cambia, cuánto cambia el precio) antes del clic. En el copiloto, *Solo proponer* y *Con aprobación* muestran el diff antes de aplicar; *Omitir todo* aplica lo reversible ya delegado y muestra el diff en el recibo final, con deshacer seguro. Los efectos externos piden siempre clic humano.
 - **"¿De dónde sale?"**: cualquier número calculado abre una traza breve (fórmula, entradas, autoridad del catálogo, versión del motor).
 - **Foco visible** de 2 px teal-600 con 1 px de separación en todo elemento interactivo; orden de tabulación lógico; todo es operable por teclado.
-- **Accesibilidad:** AA en ambos temas, objetivos ≥ 24 px en `office` y ≥ 44 px en `workshop`, `aria-label` en todo botón de ícono, sin información transmitida solo por color.
+- **Accesibilidad:** AA, objetivos ≥ 24 px en `office` y ≥ 44 px en `workshop`, `aria-label` en todo botón de ícono, sin información transmitida solo por color.
 
 ---
 
-## 7. Momentos de firma (proteger lo extraño)
+## 7. Momentos propios (con propósito)
 
-Son lo que hace que DEKOPEN no se parezca a nada más. **No se quitan por "limpieza"**. Si un encargo toca una superficie que tiene uno, debe preservarlo o mejorarlo.
+Son lo que hace que DEKOPEN no se parezca a nada más **porque ayudan al trabajo**. No se exige una decoración por pantalla: se exige que cada momento tenga propósito y esté bien resuelto. Si un encargo toca una superficie que tiene uno, debe preservarlo o mejorarlo; si deja de servir, se registra por qué se retira.
 
 | # | Momento | Dónde | Por qué importa |
 |---|---|---|---|
-| F1 | **La esquina en inglete** | Lienzo, documentos, tarjeta de vista previa, marca | La hoja está cortada como el marco que cotiza |
-| F2 | **La huella en el cajetín** | Todo documento emitido, etiquetas, OT | La autoridad congelada se vuelve visible, como un número de plano |
-| F3 | **El cargador de cota** | Toda espera > 1 s | Esperar se ve como medir |
+| F1 | **La esquina en inglete** (opcional) | Hoja del lienzo, marca | La hoja está cortada como el marco que cotiza |
+| F2 | **La huella en el cajetín** | Documentos de taller emitidos, etiquetas, OT y registro auditable | La autoridad congelada se verifica sin ensuciar la propuesta comercial |
+| F3 | **Progreso honesto** | Importación, IA, PDF y cálculos largos | Se ven pasos y páginas reales; nunca un porcentaje inventado |
 | F4 | **La cota editable en el lugar** | Editor, vista de proyecto | Se cambia la medida donde se lee |
 | F5 | **La franja de planta con carriles** | Editor y documento de correderas | Las correderas se entienden por fin |
 | F6 | **"¿De dónde sale?"** | Todo número calculado | "Confío en los números" deja de ser una promesa |
 | F7 | **Naranja = requiere persona** | Lienzo, OT, documentos | Un color con un único significado |
-| F8 | **El Orb conectado a trabajos reales** | Shell, asistente, artefactos | La IA tiene presencia y honestidad |
+| F8 | **El compañero conectado a trabajos reales** | Barra superior, panel del asistente, resultados | La IA tiene presencia y honestidad |
 | F9 | **Una pieza, una pantalla** | Estación de taller | El operario no lee: mira y actúa |
 | F10 | **La sección de perfil en la marca** | Marca, favicon, etiquetas | `DEK⧈PEN`: la O es el producto (dirección B del estudio de identidad) |
 | F11 | **El sello de revisión** | Cotizaciones emitidas, portal | Lo emitido no se toca; se revisa |
@@ -358,7 +370,7 @@ Cada superficie debe tener **al menos una** capacidad que vaya más allá de lo 
 
 1. **Recorre el flujo completo** de la superficie con datos realistas, como la persona del §1.2 (no solo la pantalla tocada: de dónde viene el usuario y adónde va después).
 2. **Para cada elemento visible pregunta:** ¿justifica su existencia? ¿Si lo quito, algo empeora? Si la respuesta es no, **se quita**.
-3. **Pasa la rúbrica** (§9.3) en 1440 claro y oscuro, en 1024 y, si aplica, en 390. Todo ítem que falle se corrige antes de entregar.
+3. **Pasa la rúbrica** (§9.3) en 1440, 1280 y 1024 y, si aplica, en 390. Todo ítem que falle se corrige antes de entregar.
 4. **Tres veces mejor:** identifica las 3 cosas más débiles que quedan y mejóralas. Repite una vez más.
 5. **Documenta** en el PR la tabla de la rúbrica con PASA/FALLA, capturas de antes y después, lo que se quitó y por qué, y el momento de firma y la idea del §8 que la superficie implementa.
 
@@ -367,24 +379,24 @@ Cada superficie debe tener **al menos una** capacidad que vaya más allá de lo 
 | # | Revisión | Falla si… |
 |---|---|---|
 | R1 | Números en Mono tabular, con unidad y formato del §3.3 | Dígitos proporcionales, `x` por `×`, sin unidad, `.00` sobrantes |
-| R2 | Radios ≤ 4 px; inglete solo en hojas | Tarjetas de 8–16 px, botones píldora |
+| R2 | Radios por función (6 controles · 8 contenedores · 12 diálogos · 0 papel) desde tokens | Radios literales, píldoras como botón universal, todo redondeado |
 | R3 | Jerarquía por borde, peso y espacio; ≤ 1 superficie flotante | Sombras grandes o de color, tarjetas sobre tarjetas, brillo |
-| R4 | Naranja solo como marca o "requiere persona", ≤ 3 % de píxeles | Naranja en CTA, insignias decorativas |
+| R4 | Naranja solo como marca o "requiere persona" | Naranja en CTA, insignias decorativas |
 | R5 | Teal como único croma del cromo | Colores aleatorios por módulo |
 | R6 | Vocabulario del taller y voz del §4 | Enums, inglés, "ítem", exclamaciones, emoji |
-| R7 | Densidad: inspector ≥ 8 campos sin scroll a 768 px | Páginas de relleno, controles de 48 px en escritorio |
+| R7 | Densidad elegida por tarea: lectura cómoda (cuerpo 14) y tablas compactas donde sirven | Páginas de relleno, o todo leído como tabla técnica en 11–12 px |
 | R8 | Estados explícitos con texto y causa; los 5 estados existen | Puntos de color sin texto, estados faltantes |
 | R9 | El lienzo/documento es papel sobre mesa | Lienzo y cromo del mismo gris |
 | R10 | Selección = contorno + tinte + manijas | Brillo al pasar el mouse, tarjetas que se elevan |
-| R11 | Íconos monolínea 1,5 px, simbología de apertura correcta | Íconos mixtos, rellenos, símbolo de apertura erróneo |
+| R11 | Íconos de la familia única `ui/Icon`, simbología de apertura correcta, texto en acciones decisivas | Íconos mixtos, metáforas inventadas, símbolo de apertura erróneo |
 | R12 | Foco visible en todo; operable por teclado | Sin foco o anillo azul del navegador |
-| R13 | Movimiento ≤ 280 ms en un eje; reduce-motion respetado | Rebote, fade-up escalonado, shimmer |
+| R13 | Movimiento ≤ 280 ms, interrumpible y con origen coherente; reduce-motion respetado | Rebote, fade-up escalonado, shimmer, cifras que bailan |
 | R14 | Una acción principal por región | Varios primarios compitiendo |
 | R15 | Cada número calculado tiene fuente; lo desconocido dice "Sin dato" | Ceros falsos, valores inventados |
 | R16 | **Cero degradados, cero blur, cero brillo, cero morado IA** | Cualquiera = falla automática |
 | R17 | Sin scroll horizontal y nada cortado en los anchos exigidos | Desbordes, textos truncados sin tooltip |
 | R18 | Nada muerto: sin botones sin efecto, sin código viejo paralelo | Botones decorativos, componentes duplicados |
-| R19 | La superficie conserva o implementa su momento de firma (§7) | Lo singular se quitó "por limpieza" |
+| R19 | Los momentos propios (§7) que aplican están resueltos con propósito | Lo útil se quitó "por limpieza" o se añadió decoración sin propósito |
 | R20 | La idea del §8 funciona de verdad, con el motor | Una maqueta que no hace nada |
 
 ### 9.4 Señales de "AI slop" (eliminar en el acto)
@@ -407,13 +419,13 @@ Cada superficie debe tener **al menos una** capacidad que vaya más allá de lo 
 | Estándar | Mecanismo (P01, salvo que se indique otro) |
 |---|---|
 | Colores, tipos, espacios, radios, sombras, capas, movimiento | Tokens en `tokens.css`; test que falla con `var()` sin definir |
-| Contraste AA | Test que calcula cada par texto/fondo en ambos temas |
+| Contraste AA | Test que calcula cada par texto/fondo del tema |
 | Hex inline, `border-radius` > 4 px, `box-shadow` fuera de tokens, `linear-gradient`/`radial-gradient`, `backdrop-filter`, `font-weight: 700` en la app, `transition` > 280 ms, `z-index` literal, `font-size` < 11 px, `.toFixed(` para mostrar, `pattern=` | Guardas con trinquete en `scripts/check_guards.py` (`make lint`) |
 | Enums visibles | Test de exhaustividad de `domainLabels` contra el cliente generado |
 | Formatos de número | Formateadores únicos con tests (`<Dims>`, `<Money>`, …) |
 | UUID, hex, enums, inglés, exclamaciones, emoji, "MOCK", desbordes, fuente < 11 px, objetivos < 44 px en `workshop`, varios primarios por región, sombras/radios/degradados computados fuera de norma | Detectores de `ux:capture` (P00 + P01) sobre la app en vivo |
 | Rúbrica del §9.3 | Plantilla de PR (`.github/pull_request_template.md`) con la tabla obligatoria |
-| Muestrario | `/dev/ui` con todas las primitivas en ambos temas y las tres densidades |
+| Muestrario | `/dev/ui` con todas las primitivas en las tres densidades |
 
 ---
 
@@ -431,10 +443,15 @@ Los encargos **no se detienen** por estas decisiones: usan el valor por defecto,
 | Banda de margen | Objetivo 35 %, mínimo 25 %; bajo el mínimo requiere aprobación del dueño | Ajustes › Precios |
 | IVA | 19 %, precios netos en la app y total con IVA en el documento | Ajustes › Impuestos |
 | Pie "Generado con DEKOPEN" | **Oculto** en documentos del cliente (white-label); visible solo en el portal, discreto | Ajustes › Documentos |
-| Nombre del asistente | "Asistente DEKOPEN" con el Orb. **No se usa "STARWIN"** (era una imagen de referencia) | Ajustes › Marca |
+| Nombre del asistente | "Asistente" (DEKOPEN) con el compañero de ojos negativos. **No se usa "STARWIN"** ni se afirma entrenamiento propio | Ajustes › Marca |
+| Vista de obra | **Mesa de obra**; Estudio elegible por usuario y organización | Selector en la cabecera de la obra |
+| Autonomía del copiloto | Con aprobación (preferencia del hilo; se sella por tarea) | Popup del asistente |
+| Numeración de cotizaciones | Cotización N.º 1, correlativa por empresa; prefijo e inicio editables | Empresa › Documentos |
+| Aceptación/firma en la cotización | Desactivada; se activa por política del negocio o con «Solicitar aceptación» | Empresa › Documentos |
+| Tema | Claro único (sin selector) | — |
 | Marca de la app | Dirección B del estudio de identidad (`DEK⧈PEN`) | P25 |
 | Moneda | CLP; USD y UF opcionales | Ajustes › Moneda |
-| Catálogo | Demo con precios aleatorios de semilla fija, marcado DEMO en todas partes | Catálogo › Importar |
+| Catálogo | Fabricantes y series reales con fuente; el DEMO (precios de semilla fija) vive en «Laboratorio» y conserva su marca en obras antiguas | Catálogos |
 
 ---
 
