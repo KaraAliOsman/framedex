@@ -320,7 +320,7 @@ function ClientsWorkspace({ orgId, canWrite }: { orgId: string; canWrite: boolea
                     body="Cambia los filtros o registra un cliente para crear su primera obra."
                   />
                 )}
-                {offset > 0 || directory.data.next_offset !== null ? (
+                {hasPages(offset, directory.data.next_offset) ? (
                   <div className="customer-actions">
                     <Button
                       disabled={offset === 0}
@@ -647,4 +647,9 @@ function initials(name: string): string {
     .split(/\s+/)
     .filter(Boolean);
   return ((words[0]?.[0] ?? "") + (words[1]?.[0] ?? "")).toLocaleUpperCase("es-CL") || "·";
+}
+
+/** The pager shows only when there is another page to reach. */
+function hasPages(offset: number, next: number | null | undefined): boolean {
+  return offset > 0 || next != null;
 }

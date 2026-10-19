@@ -181,17 +181,17 @@ export function ProductionBoard({
                         Siguiente: {order.next_step?.label ?? stationCodeLabel(station.code)}
                       </span>
                       <span className="production-board-progress">
-                        <span
-                          className="production-board-bar"
-                          aria-hidden="true"
-                          style={{
-                            ["--done" as string]: `${
-                              order.steps_total
-                                ? Math.round((order.steps_done / order.steps_total) * 100)
-                                : 0
-                            }%`,
-                          }}
-                        />
+                        <span className="production-board-bar" aria-hidden="true">
+                          <span
+                            style={{
+                              width: `${
+                                order.steps_total
+                                  ? Math.round((order.steps_done / order.steps_total) * 100)
+                                  : 0
+                              }%`,
+                            }}
+                          />
+                        </span>
                         <span>
                           {order.steps_done} de {order.steps_total} pasos ·{" "}
                           {Number(order.quantity) === 1

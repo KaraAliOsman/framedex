@@ -151,3 +151,27 @@
   overflow: hidden;
   white-space: nowrap;
 }
+/* Source mark: a small information icon that opens the trace. */
+.ui-source-summary {
+  align-items: center;
+  border-radius: var(--r-pill);
+  color: var(--text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  height: 24px;
+  justify-content: center;
+  list-style: none;
+  width: 24px;
+}
+.ui-source-summary::-webkit-details-marker {
+  display: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .ui-source-summary:hover {
+    background: var(--surface-hover);
+    color: var(--interactive);
+  }
+}
+details[open] > .ui-source-summary {
+  color: var(--interactive);
+}

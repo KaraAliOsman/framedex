@@ -1874,9 +1874,7 @@ div:has(> table.production-plan) {
 @media (hover: hover) and (pointer: fine) {
   .production-board-order:hover {
     border-color: var(--border-default);
-    box-shadow:
-      0 1px 2px rgb(22 28 31 / 4%),
-      0 8px 20px rgb(22 28 31 / 6%);
+    box-shadow: var(--e2);
   }
 }
 .production-board-order:active {
@@ -1922,15 +1920,16 @@ div:has(> table.production-plan) {
   gap: var(--space-4px);
 }
 .production-board-bar {
-  --done: 0%;
-  background: linear-gradient(
-    to right,
-    var(--interactive-fill) var(--done, 0%),
-    var(--surface-card) var(--done, 0%)
-  );
+  background: var(--surface-card);
   border-radius: var(--r-pill);
   display: block;
   height: 4px;
+  overflow: hidden;
+}
+.production-board-bar > span {
+  background: var(--interactive-fill);
+  display: block;
+  height: 100%;
 }
 .production-board-date {
   color: var(--text-secondary);

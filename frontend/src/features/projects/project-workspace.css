@@ -500,22 +500,20 @@
 @media (hover: hover) and (pointer: fine) {
   .project-position-row-group[data-view="grid"] .position-row:hover {
     border-color: var(--border-default);
-    box-shadow:
-      0 1px 2px rgb(22 28 31 / 4%),
-      0 8px 24px rgb(22 28 31 / 6%);
+    box-shadow: var(--e2);
   }
 }
 .project-position-row-group[data-view="grid"] .position-row[data-selected] {
   background: var(--surface-panel);
   border-color: var(--interactive);
-  box-shadow: 0 0 0 1px var(--interactive);
+  outline: 1px solid var(--interactive);
 }
 .project-position-row-group[data-view="grid"] .project-position-check,
 .project-position-row-group[data-view="grid"] .position-row__state,
 .project-position-row-group[data-view="grid"] .position-row__actions {
   position: absolute;
   top: var(--space-16px);
-  z-index: 1;
+  z-index: var(--z-sticky);
 }
 .project-position-row-group[data-view="grid"] .project-position-check {
   left: var(--space-16px);

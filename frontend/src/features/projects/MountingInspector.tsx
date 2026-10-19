@@ -13,6 +13,7 @@ import type { ProductJson, ProductModuleJson } from "../canvas/productEditing";
 import { AxisBreakdown, MountingChip } from "./MeasurementPanel";
 import { walls, type MountingEvidence, type OpeningSurvey, type RuleRecord } from "./mountingModel";
 import "./mounting.css";
+import { SourceSummary } from "../../ui/SourceSummary";
 
 export function SurveyFields({
   value,
@@ -414,7 +415,7 @@ export function MountingInspector({
             <>
               <MountingChip evidence={evidence} />
               <details>
-                <summary>¿De dónde sale?</summary>
+                <SourceSummary />
                 <AxisBreakdown axis={evidence.result.width} label="Ancho" />
                 <AxisBreakdown axis={evidence.result.height} label="Alto" />
                 <p>

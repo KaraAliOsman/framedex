@@ -98,6 +98,7 @@ import { glassContext, useGlassChecks } from "../glass/useGlassPreview";
 import { ExtrasInspector } from "../projects/ExtrasInspector";
 import { MountingInspector } from "../projects/MountingInspector";
 import { MountingDimensions } from "../projects/MountingDimensions";
+import { SourceSummary } from "../../ui/SourceSummary";
 
 /** §16 3D view: three.js + the scene builder stay out of the editing path —
  * the bundle only loads when the user opens the panel (lazy chunk), and
@@ -1029,7 +1030,7 @@ function LeafFacts({
             <dt>Fuente</dt>
             <dd>
               <details className="editor-leaf-facts__source">
-                <summary>¿De dónde sale?</summary>
+                <SourceSummary />
                 <p>
                   {leaf?.source ??
                     resolved?.source ??
@@ -3339,7 +3340,7 @@ export function AssemblyEditor({
                     )}
               </p>
               <details>
-                <summary>¿De dónde sale?</summary>
+                <SourceSummary />
                 <p>
                   {(proposal.simulation.price as EditorPrice).reason ??
                     (proposal.simulation.price as EditorPrice).source}

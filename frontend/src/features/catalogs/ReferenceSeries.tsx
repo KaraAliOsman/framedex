@@ -25,7 +25,14 @@ function familyForSourceRole(role: string): ProfileFamily {
 
 /** Recognisable family silhouette (never a verified section): helps tell a
  * frame from a sash or a bead at a glance in the series table. */
-function ArticleGlyph({ role, material }: { role: string; material: string }): JSX.Element {
+function ArticleGlyph({
+  article,
+  material,
+}: {
+  article: { role: string };
+  material: string;
+}): JSX.Element {
+  const role = functionLabel(article);
   const family = familyForSourceRole(role);
   const width = family === "bead" ? 22 : 60;
   const depth = familyDepth(family);
@@ -144,7 +151,7 @@ export function ReferenceSeriesPanel({
               {series.articles.map((article) => (
                 <tr key={article.code}>
                   <td className="reference-series__glyph-cell">
-                    <ArticleGlyph role={article.role} material={series.material} />
+                    <ArticleGlyph article={article} material={series.material} />
                   </td>
                   <td className="reference-series__code">{article.code}</td>
                   <td>{article.name}</td>

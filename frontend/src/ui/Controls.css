@@ -301,9 +301,7 @@ textarea.ui-field__input {
 .ui-segmented [aria-checked="true"],
 .ui-segmented [aria-pressed="true"] {
   background: var(--surface-panel);
-  box-shadow:
-    0 1px 2px rgb(22 28 31 / 10%),
-    0 0 0 0.5px rgb(22 28 31 / 6%);
+  box-shadow: var(--sheet);
   color: var(--text-primary);
   font-weight: 600;
 }
