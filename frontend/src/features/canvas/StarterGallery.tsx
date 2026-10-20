@@ -169,6 +169,7 @@ export function StarterGallery({
                         type="button"
                         className="starter-card"
                         aria-label={`${starterTitle(definition)} · ${starterHint(definition)}`}
+                        title={starterHint(definition)}
                         disabled={disabled}
                         onClick={() => onPick(definition)}
                       >

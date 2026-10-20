@@ -12,7 +12,6 @@ import {
 import type { DesignDefaults, ProjectResponse } from "../../api/generated/models";
 import { domainLabel } from "../../i18n/domainLabels";
 import { Button } from "../../ui";
-import { Icon } from "../../ui/Icon";
 import "./design-defaults.css";
 
 type Key = "system_id" | "color" | "glass_article_sku";
@@ -327,21 +326,18 @@ export function ProjectDesignDefaults({
   return (
     <div className="project-defaults">
       <p className="project-defaults__line">
-        <span className="project-defaults__label">Habitual de esta obra</span>
-        <span>
-          {parts.length ? parts.join(" · ") : "Sin valores habituales; se eligen en cada ventana"}
-        </span>
-        <span className="project-defaults__source">
-          {overridden ? "Ajustado para esta obra" : parts.length ? "De la empresa" : ""}
-        </span>
+        {parts.length ? (
+          <>
+            <span className="project-defaults__label">Ventanas nuevas:</span>
+            <span>{parts.join(" · ")}</span>
+            <span className="project-defaults__source">
+              {overridden ? "· ajustado para esta obra" : "· de la empresa"}
+            </span>
+          </>
+        ) : null}
         {editable && !open ? (
-          <button
-            type="button"
-            className="ui-button ui-button--ghost ui-button--compact"
-            onClick={() => setOpen(true)}
-          >
-            <Icon name="edit" size={16} />
-            Cambiar
+          <button type="button" className="project-defaults__edit" onClick={() => setOpen(true)}>
+            {parts.length ? "Cambiar" : "Definir sistema, color y vidrio habituales"}
           </button>
         ) : null}
         {editable && overridden && !open ? (

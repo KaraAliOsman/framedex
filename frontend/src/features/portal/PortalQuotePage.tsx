@@ -183,8 +183,8 @@ function Conditions({ option }: { option: PortalOption }): JSX.Element {
             </p>
           )}
         </div>
-        <dl>
-          {(
+        {(() => {
+          const conditions = (
             [
               ["delivery_text", "Plazo de entrega"],
               ["installation_text", "Instalación"],
@@ -192,17 +192,31 @@ function Conditions({ option }: { option: PortalOption }): JSX.Element {
               ["warranty", "Garantía"],
               ["jurisdiction", "Jurisdicción"],
             ] as const
-          ).map(([key, label]) => (
-            <div key={key}>
-              <dt>{label}</dt>
-              <dd>
-                {terms[key] || (
-                  <UnknownValue cause="El fabricante no declaró esta condición; contáctelo antes de aceptar" />
-                )}
-              </dd>
-            </div>
-          ))}
-        </dl>
+          ).map(([key, label]) => ({ key, label, value: terms[key] }));
+          const declared = conditions.filter((condition) => condition.value);
+          const missing = conditions.filter((condition) => !condition.value);
+          // Undeclared terms read as one sentence instead of five «Sin dato» rows.
+          return (
+            <dl>
+              {declared.map(({ key, label, value }) => (
+                <div key={key}>
+                  <dt>{label}</dt>
+                  <dd>{value}</dd>
+                </div>
+              ))}
+              {missing.length ? (
+                <div className="portal-conditions-missing">
+                  <dt>Sin declarar</dt>
+                  <dd>
+                    <UnknownValue
+                      cause={`${missing.map((condition) => condition.label).join(", ")} · contacte al fabricante antes de aceptar`}
+                    />
+                  </dd>
+                </div>
+              ) : null}
+            </dl>
+          );
+        })()}
       </div>
       {option.notes_commercial && <p className="portal-note">{option.notes_commercial}</p>}
       {option.quote_pdf_url ? (

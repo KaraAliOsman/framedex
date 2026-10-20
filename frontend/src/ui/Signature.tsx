@@ -1,6 +1,7 @@
 import { type HTMLAttributes, type ReactNode, useId } from "react";
 import { Popover } from "./Overlays";
 import { Button } from "./Controls";
+import { Icon } from "./Icon";
 
 /** Local, stable waiting state (constitution §3.5). The composition does not
  * move: a small activity mark beside the real task name. A bar appears only
@@ -114,8 +115,12 @@ export function TraceButton({
     <Popover
       label="¿De dónde sale?"
       trigger={
-        <Button aria-label="¿De dónde sale?" className={compact ? "price-trace" : undefined}>
-          {compact ? <span aria-hidden>?</span> : "¿De dónde sale?"}
+        <Button
+          aria-label="¿De dónde sale?"
+          title="¿De dónde sale?"
+          className={compact ? "price-trace ui-trace-trigger" : "ui-trace-link"}
+        >
+          {compact ? <Icon name="info" size={16} /> : "¿De dónde sale?"}
         </Button>
       }
     >

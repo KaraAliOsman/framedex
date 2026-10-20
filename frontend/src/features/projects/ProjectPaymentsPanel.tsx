@@ -1,4 +1,5 @@
 import { StatusBadge } from "../../ui/StatusBadge";
+import { EmptyState } from "../../ui";
 import { ValidatedForm } from "../../ui/FormValidation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
@@ -575,6 +576,18 @@ export function ProjectPaymentsPanel({
     (invoice) => invoice.revision_code === summary?.sealed_revision,
   );
 
+  // Before the quotation is issued there is nothing to collect: one calm
+  // explanation instead of an empty ledger full of «Sin dato».
+  if (summary && !summary.sealed_revision && !paymentsQuery.isError) {
+    return (
+      <section className="payments-empty" aria-label={t("projects.paymentsTitle")}>
+        <EmptyState
+          title="Los cobros empiezan al emitir la cotización"
+          body="Cuando emitas la cotización verás aquí el calendario de pagos, lo cobrado y el saldo de la obra."
+        />
+      </section>
+    );
+  }
   return (
     <section className="projects-payments">
       <div className="projects-actions">

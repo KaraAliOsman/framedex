@@ -3,10 +3,56 @@ import type {
   ReferenceSeries as ReferenceSeriesRecord,
 } from "../../api/generated/models";
 import { StatusBadge } from "../../ui";
+import { FamilyIllustration, familyDepth, type ProfileFamily } from "../canvas/profileFamilies";
 
 /** The source's own function wording (already Spanish, not an enum). */
 function functionLabel(article: { role: string }): string {
   return article.role;
+}
+
+/** The family a source role names, for the illustrative silhouette. */
+function familyForSourceRole(role: string): ProfileFamily {
+  const value = role.toLocaleLowerCase("es-CL");
+  if (value.includes("junquillo")) return "bead";
+  if (value.includes("marco")) return "frame";
+  if (value.includes("hoja") || value.includes("batiente")) return "sash";
+  if (value.includes("travesa") || value.includes("montante") || value.includes("inversor"))
+    return "mullion";
+  if (value.includes("umbral") || value.includes("zócalo")) return "threshold";
+  if (value.includes("acople") || value.includes("unión")) return "coupler";
+  return "generic";
+}
+
+/** Recognisable family silhouette (never a verified section): helps tell a
+ * frame from a sash or a bead at a glance in the series table. */
+function ArticleGlyph({
+  article,
+  material,
+}: {
+  article: { role: string };
+  material: string;
+}): JSX.Element {
+  const role = functionLabel(article);
+  const family = familyForSourceRole(role);
+  const width = family === "bead" ? 22 : 60;
+  const depth = familyDepth(family);
+  return (
+    <svg
+      className="reference-series__glyph"
+      viewBox={`-4 -4 ${width + 8} ${depth + 8}`}
+      role="img"
+      aria-label={`Silueta ilustrativa de ${role.toLocaleLowerCase("es-CL")}`}
+    >
+      <FamilyIllustration
+        family={family}
+        widthMm={width}
+        depthMm={depth}
+        material={material}
+        fill="var(--mat-pvc-fill)"
+        edge="var(--text-secondary)"
+      />
+    </svg>
+  );
 }
 
 /** Capability chips: reference, quotable, manufacturable and CNC are
@@ -92,6 +138,9 @@ export function ReferenceSeriesPanel({
           <table className="reference-series__articles">
             <thead>
               <tr>
+                <th>
+                  <span className="sr-only">Silueta</span>
+                </th>
                 <th>Código</th>
                 <th>Nombre en la fuente</th>
                 <th>Función</th>
@@ -101,6 +150,9 @@ export function ReferenceSeriesPanel({
             <tbody>
               {series.articles.map((article) => (
                 <tr key={article.code}>
+                  <td className="reference-series__glyph-cell">
+                    <ArticleGlyph article={article} material={series.material} />
+                  </td>
                   <td className="reference-series__code">{article.code}</td>
                   <td>{article.name}</td>
                   <td>{functionLabel(article)}</td>
@@ -113,7 +165,8 @@ export function ReferenceSeriesPanel({
             </tbody>
           </table>
           <p className="reference-series__hint">
-            Sin largos de barra, pesos, secciones verificadas ni costos: la fuente no los acredita.
+            Las siluetas son ilustrativas de cada familia, no secciones verificadas. Sin largos de
+            barra, pesos ni costos: la fuente no los acredita.
           </p>
         </section>
       ) : null}

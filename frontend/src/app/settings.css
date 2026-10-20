@@ -114,31 +114,42 @@
 
 .settings-sections {
   display: grid;
-  grid-template-columns: 180px minmax(0, 1fr);
-  gap: var(--space-5);
-  border-top: 1px solid var(--theme-border);
-  padding-top: var(--space-4);
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: var(--space-32px);
 }
+/* Section list like System Settings: rounded highlight, no side rule. */
 .settings-sections > nav {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: 2px;
   align-self: start;
   position: sticky;
-  top: var(--space-4);
+  top: calc(var(--topbar-height) + var(--space-16px));
 }
 .settings-sections > nav button,
 .settings-sections > nav a {
-  text-align: left;
-  padding: var(--space-3);
-  border: 0;
   background: transparent;
-  color: var(--theme-text);
+  border: 0;
+  border-radius: var(--r-2);
+  color: var(--text-primary);
+  font-weight: 500;
+  min-height: 38px;
+  padding: 0 var(--space-12px);
+  display: flex;
+  align-items: center;
+  text-align: left;
   text-decoration: none;
+  transition: background var(--t-micro) var(--ease-in);
+}
+@media (hover: hover) and (pointer: fine) {
+  .settings-sections > nav button:hover:not(:disabled),
+  .settings-sections > nav a:hover {
+    background: var(--surface-hover);
+  }
 }
 .settings-sections > nav [aria-current="page"] {
-  background: var(--theme-surface-raised);
-  border-left: 3px solid var(--theme-accent);
+  background: var(--surface-selected);
+  color: var(--state-info-ink);
   font-weight: 600;
 }
 .settings-content {
@@ -271,4 +282,62 @@
     flex-direction: row;
     flex-wrap: wrap;
   }
+}
+
+/* Settings, System-Settings grammar: grouped cards, one title size, quiet
+   descriptions, and one field style for every input. */
+.settings-card,
+.settings-preview {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-3);
+  background: var(--surface-panel);
+  padding: var(--space-24px);
+}
+.settings-card h2,
+.settings-card h3,
+.settings-preview h2 {
+  font-size: var(--type-title-m);
+  font-weight: 600;
+  margin: 0 0 var(--space-8px);
+}
+.settings-card > p,
+.settings-preview > p {
+  color: var(--text-secondary);
+  font-size: var(--type-dense);
+  line-height: 1.5;
+  margin: 0 0 var(--space-16px);
+}
+.settings-content :where(label) {
+  font-size: var(--type-label);
+}
+.settings-content
+  :where(
+    input:not([type="checkbox"], [type="radio"], [type="file"], [type="color"]),
+    select,
+    textarea
+  ) {
+  box-sizing: border-box;
+  min-height: 36px;
+  padding: 0 var(--space-12px);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-2);
+  background-color: var(--surface-panel);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--type-body);
+}
+.settings-content :where(textarea) {
+  padding-block: var(--space-8px);
+}
+.settings-content :where(input, select, textarea):focus-visible {
+  border-color: var(--interactive);
+  outline: none;
+}
+.settings-content :where(input, select, textarea):disabled {
+  background-color: var(--surface-card);
+  color: var(--text-secondary);
+}
+.settings-preview iframe {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-2);
 }

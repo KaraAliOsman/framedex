@@ -35,9 +35,9 @@
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: var(--space-2px);
+  gap: var(--space-4px);
   overflow-y: auto;
-  padding: var(--space-3);
+  padding: var(--space-8px) var(--space-16px);
 }
 .rail-item {
   align-items: center;
@@ -47,7 +47,7 @@
   font-size: var(--type-body);
   font-weight: 500;
   gap: var(--space-12px);
-  min-height: 40px;
+  min-height: 44px;
   padding: 0 var(--space-12px);
   text-decoration: none;
   transition:
@@ -78,10 +78,9 @@
   outline-offset: -2px;
 }
 .app-rail__foot {
-  border-top: 1px solid var(--border-subtle);
   display: grid;
   gap: var(--space-4px);
-  padding: var(--space-3);
+  padding: var(--space-8px) var(--space-16px) var(--space-16px);
 }
 .rail-account {
   align-items: center;
@@ -170,13 +169,13 @@
 }
 .app-topbar {
   align-items: center;
-  background: var(--surface-panel);
-  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-app);
+  border-bottom: 1px solid transparent;
   display: flex;
   gap: var(--space-4);
   justify-content: space-between;
   min-height: var(--topbar-height);
-  padding: 0 var(--space-5);
+  padding: 0 var(--space-32px);
   position: sticky;
   top: 0;
   z-index: var(--z-rail);
@@ -193,13 +192,14 @@
 }
 .topbar-search {
   align-items: center;
-  background: var(--bg-app);
+  background: var(--surface-panel);
   border: 1px solid var(--border-subtle);
+  border-radius: var(--r-pill);
   color: var(--text-secondary);
   display: inline-flex;
   font-weight: 400;
   gap: var(--space-8px);
-  min-height: 36px;
+  min-height: 40px;
   min-width: 18rem;
   padding: 0 var(--space-12px);
 }
@@ -257,12 +257,12 @@
   border-color: var(--interactive);
 }
 .area-tabs {
-  background: var(--surface-panel);
+  background: var(--bg-app);
   border-bottom: 1px solid var(--border-subtle);
   display: flex;
-  gap: var(--space-5);
+  gap: var(--space-24px);
   overflow-x: auto;
-  padding: 0 var(--space-6);
+  padding: 0 var(--space-32px);
 }
 .area-tabs__item {
   border-bottom: 2px solid transparent;
@@ -450,7 +450,7 @@
 .workspace {
   background: var(--bg-app);
   flex: 1;
-  padding: var(--space-5) var(--space-6);
+  padding: var(--space-32px) var(--space-32px) var(--space-48px);
 }
 .workspace:focus-visible {
   outline: none;

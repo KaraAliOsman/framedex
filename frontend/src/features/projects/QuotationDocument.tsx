@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { ApiError, apiFetchBlob } from "../../api/apiMutator";
 import {
+  getDocumentsQuickDraftUrl,
   getQuotationDraftPreviewUrl,
   organizationBrandingGet,
   organizationBrandingSave,
@@ -151,6 +152,10 @@ export function QuotationDocument({
   const [texts, setTexts] = useState<Texts>({ intro: "", closing: "", notes: "" });
   const [preview, setPreview] = useState<string | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
+  /** The work has no applied price or saved conditions yet: the sheet shows
+   * the quick draft (price computed now with the company rules, nothing
+   * stored) instead of an empty panel. */
+  const [quickPreview, setQuickPreview] = useState(false);
   const [rendering, setRendering] = useState(false);
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
@@ -226,8 +231,35 @@ export function QuotationDocument({
           return URL.createObjectURL(blob);
         });
         setPreviewError(null);
+        setQuickPreview(false);
       } catch (error) {
         if (ticket !== request.current) return;
+        const code =
+          error instanceof ApiError
+            ? (error.payload as { error?: { code?: string } } | null)?.error?.code
+            : undefined;
+        if (
+          code === "applied_pricing_authority_required" ||
+          code === "project_documentary_inputs_required"
+        ) {
+          try {
+            const quick = await apiFetchBlob(getDocumentsQuickDraftUrl(projectId), {
+              method: "POST",
+              headers: { ...headers, "Content-Type": "application/json" },
+              body: JSON.stringify({ document: "QUOTE" }),
+            });
+            if (ticket !== request.current) return;
+            setPreview((previous) => {
+              if (previous) URL.revokeObjectURL(previous);
+              return URL.createObjectURL(quick.blob);
+            });
+            setPreviewError(null);
+            setQuickPreview(true);
+            return;
+          } catch {
+            if (ticket !== request.current) return;
+          }
+        }
         setPreviewError(
           error instanceof ApiError
             ? actionErrorDetail(
@@ -414,6 +446,12 @@ export function QuotationDocument({
           ) : (
             <Loading label="Preparando la vista previa" />
           )}
+          {preview && quickPreview && !previewError ? (
+            <p className="quotation-document__quick" role="status">
+              Borrador con el precio calculado ahora con tus reglas. No se guarda: aplica el precio
+              y completa las condiciones para emitir.
+            </p>
+          ) : null}
           {preview && previewError ? (
             <p className="quotation-document__stale" role="alert">
               {previewError}

@@ -7,6 +7,7 @@ import { PriceDecision } from "../features/pricing/PriceDecision";
 import { CollectionReminder } from "../features/projects/CollectionReminder";
 import { useToday } from "./useToday";
 import { consequenceLabels, phaseLabels } from "./todayLabels";
+import { SourceSummary } from "../ui/SourceSummary";
 
 export function DashboardPage(): JSX.Element {
   const auth = useAuthSession();
@@ -86,7 +87,7 @@ function TodayWorkspace(): JSX.Element {
             </div>
           ) : (
             <>
-              <nav className="today-filters" aria-label="Filtrar por consecuencia">
+              <nav className="today-filters ui-segmented" aria-label="Filtrar por consecuencia">
                 <button
                   type="button"
                   aria-pressed={!tier}
@@ -146,7 +147,7 @@ function TodayWorkspace(): JSX.Element {
                         )}
                         {item.source && (
                           <details className="today-source">
-                            <summary>¿De dónde sale?</summary>
+                            <SourceSummary />
                             <p>{item.source}</p>
                             {item.balance_total !== null && item.currency && (
                               <dl>
@@ -234,7 +235,7 @@ function TodayWorkspace(): JSX.Element {
                       </p>
                     )}
                     <details className="today-source">
-                      <summary>¿De dónde sale?</summary>
+                      <SourceSummary />
                       <p>{item.source}</p>
                     </details>
                   </li>

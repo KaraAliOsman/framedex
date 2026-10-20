@@ -10,6 +10,7 @@ import { isProductModel, type ProductJson } from "../canvas/productEditing";
 import type { OpeningLeafFact } from "../canvas/physicalOpenings";
 import { formatMoney } from "../money";
 import "./operations.css";
+import { SourceSummary } from "../../ui/SourceSummary";
 
 const noop = (): void => {};
 type Price = {
@@ -198,7 +199,7 @@ export function SimulationPreview({
         <p role="alert">El motor bloquea la propuesta. Corrige el diseño antes de aplicar.</p>
       ) : null}
       <details>
-        <summary>¿De dónde sale?</summary>
+        <SourceSummary />
         <p>
           Medidas y diseño: operaciones verificadas por el motor sobre los datos declarados del
           marco.

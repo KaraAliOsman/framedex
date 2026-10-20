@@ -552,11 +552,7 @@ function PurchasingWorkspace({
 
   return (
     <section className="purchasing-page">
-      <PageHeader
-        crumbs={[{ label: t("nav.projects"), to: "/projects" }, { label: t("purchasing.title") }]}
-        context={t("purchasing.subtitle")}
-        title={t("purchasing.title")}
-      />
+      <PageHeader context={t("purchasing.subtitle")} title={t("purchasing.title")} />
       {message && <p role="alert">{message}</p>}
       {busy && <p role="status">{t("purchasing.loading")}</p>}
       {!busy && versions.length === 0 && <p>{t("purchasing.empty")}</p>}
@@ -1466,13 +1462,14 @@ function OrdersIndex({
       <h2>{t("purchasing.indexTitle")}</h2>
       {loadFailed ? <p role="alert">{t("purchasing.sectionLoadError")}</p> : null}
       <div
-        className="purchasing-index-filters"
+        className="purchasing-index-filters ui-segmented"
         role="group"
         aria-label={t("purchasing.indexFilter")}
       >
         <button
           type="button"
           className={status === "" ? "is-active" : ""}
+          aria-pressed={status === ""}
           onClick={() => onStatus("")}
         >
           {t("purchasing.indexFilterAll")}
@@ -1482,6 +1479,7 @@ function OrdersIndex({
             key={value}
             type="button"
             className={status === value ? "is-active" : ""}
+            aria-pressed={status === value}
             onClick={() => onStatus(value)}
           >
             {t(orderStatusLabels[value])}

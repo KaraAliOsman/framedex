@@ -118,7 +118,7 @@
   margin-right: 0.35rem;
   transition: transform 0.12s ease;
 }
-.inspector-section:not([open]) > summary::before {
+:where(.inspector-section:not([open])) > summary::before {
   transform: rotate(-90deg);
 }
 .inspector-section > summary::-webkit-details-marker {
@@ -162,11 +162,18 @@
   gap: 0.4rem;
 }
 .ghost-button {
+  min-height: 32px;
   background: transparent;
-  border: 1px solid var(--theme-border-subtle);
-  color: var(--theme-text-primary);
-  font-size: var(--type-title-m);
-  padding: 0.3rem 0.55rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-1);
+  color: var(--text-primary);
+  font-size: var(--type-dense);
+  font-weight: 500;
+  padding: 0 var(--space-3);
+  transition: transform var(--t-micro) var(--ease-in);
+}
+.ghost-button:active:not(:disabled) {
+  transform: scale(0.97);
 }
 .ghost-button:hover:not(:disabled) {
   border-color: var(--theme-accent);

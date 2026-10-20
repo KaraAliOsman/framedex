@@ -15,7 +15,7 @@ const expected: Record<MembershipRoleEnum, Record<string, string[]>> = {
     clients: ["/clients"],
     catalogs: ["/catalogs/systems", "/catalogs/finish-samples", "/catalogs/sheet-formats"],
     workshop: ["/production", "/purchasing", "/inventory", "/dispatch", "/field"],
-    company: ["/settings/general", "/pricing/cost-lists", "/settings/billing"],
+    company: ["/settings/general", "/pricing/commercial", "/settings/billing"],
   },
   WORKSHOP_MANAGER: {
     projects: ["/projects"],

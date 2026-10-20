@@ -9,7 +9,7 @@ import type {
 } from "../../api/generated/models";
 import { fmtMm } from "../../format";
 import { parseDecimalInput } from "../../decimal";
-import { Button, DeniedState, Loading, PageHeader } from "../../ui";
+import { Button, DeniedState, EmptyState, Loading, PageHeader } from "../../ui";
 import { ValidatedForm } from "../../ui/FormValidation";
 import "./catalogs.css";
 
@@ -67,7 +67,7 @@ function SheetFormats({ canWrite }: { canWrite: boolean }): JSX.Element {
     <section className="catalog sheet-formats" aria-busy={busy || loading}>
       <PageHeader
         title="Formatos de lámina"
-        context="Catálogo › Vidrios y paneles"
+        context="Medidas y despunte de las planchas de vidrio y panel que te entrega cada proveedor."
         actions={
           canWrite && data && !draft ? (
             <Button
@@ -80,13 +80,6 @@ function SheetFormats({ canWrite }: { canWrite: boolean }): JSX.Element {
           ) : undefined
         }
       />
-      <p>
-        Declara las medidas y el despunte indicados por el proveedor. Cada formato conserva su
-        fuente; el plan de corte cambia cuando vuelves a optimizar la OT.
-      </p>
-      <a className="ui-button ui-button--ghost" href="/production">
-        Volver a Producción
-      </a>
       {loading ? <Loading label="Cargando formatos de lámina…" /> : null}
       {error ? (
         <div>
@@ -96,9 +89,8 @@ function SheetFormats({ canWrite }: { canWrite: boolean }): JSX.Element {
       ) : null}
       {notice ? <p role="status">{notice}</p> : null}
       {!canWrite ? (
-        <p>
-          El jefe de taller o el dueño puede declarar un suministro. Puedes consultar los formatos
-          existentes.
+        <p className="sheet-formats-note">
+          Solo lectura · el jefe de taller o el dueño declara los formatos.
         </p>
       ) : null}
       {data && !data.options.length ? (
@@ -107,11 +99,11 @@ function SheetFormats({ canWrite }: { canWrite: boolean }): JSX.Element {
           en <a href="/catalogs/systems">Catálogo técnico</a>.
         </p>
       ) : null}
-      {data && !data.items.length ? (
-        <p>
-          Sin formatos de lámina declarados. Las piezas conservarán su medida y aparecerán como no
-          ubicadas.
-        </p>
+      {data && !data.items.length && !draft ? (
+        <EmptyState
+          title="Aún no hay formatos de lámina"
+          body="Sin formatos, el plan de corte conserva la medida de cada pieza y la marca como no ubicada. Cada formato guarda su fuente; el plan cambia cuando vuelves a optimizar la OT."
+        />
       ) : null}
       {draft && data ? (
         <ValidatedForm

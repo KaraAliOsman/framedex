@@ -9,6 +9,7 @@ import {
   DateOnly,
   DeniedState,
   ErrorState,
+  Icon,
   LoadingState,
   Money,
   PageHeader,
@@ -157,77 +158,81 @@ function QuotationIndex({ orgId }: { orgId: string }): JSX.Element {
         </div>
       ) : (
         <>
-          <table className="quote-index">
-            <thead>
-              <tr>
-                <th>Proyecto y revisión</th>
-                <th>Seguimiento</th>
-                <th>Vigencia</th>
-                <th>Cliente</th>
-                <th>Total con IVA</th>
-              </tr>
-            </thead>
-            <tbody>
-              {query.data.items.map((item) => (
-                <tr key={item.project_id}>
-                  <td>
-                    <Link to={item.href} className="quote-project">
-                      <span className="ui-value">
-                        {item.project_code} · {formatRevision(item.revision_code)}
-                      </span>
-                      <strong>{item.project_name}</strong>
-                    </Link>
-                  </td>
-                  <td>
-                    <span className="quote-state">
-                      {quoteStates[item.state] ?? "Sin dato · estado sin reconocer"}
-                    </span>
-                    <p>{phaseLabels[item.phase] ?? "Sin dato · falta fase"}</p>
-                    <p>
-                      {item.view_count > 0 ? (
-                        <>
-                          <span className="ui-value">{item.view_count}</span>{" "}
-                          {item.view_count === 1 ? "vista" : "vistas"} ·{" "}
-                          <Timestamp value={item.last_viewed_at} />
-                        </>
-                      ) : (
-                        "Sin vistas registradas"
-                      )}
-                    </p>
-                    {item.response_note && (
-                      <details>
-                        <summary>Respuesta del cliente</summary>
-                        <p>{item.response_note}</p>
-                      </details>
-                    )}
-                  </td>
-                  <td>
-                    {item.valid_until ? (
-                      <DateOnly value={item.valid_until} />
-                    ) : (
-                      "Sin dato · falta vigencia sellada"
-                    )}
-                  </td>
-                  <td>{item.client_name || "Sin cliente registrado"}</td>
-                  <td>
-                    {item.currency ? (
-                      <Money
-                        value={item.total}
-                        currency={item.currency}
-                        cause="Falta el total sellado de esta revisión"
-                      />
-                    ) : (
-                      "Sin dato · falta moneda sellada"
-                    )}
-                    <details className="quote-source">
-                      <summary>¿De dónde sale?</summary>
-                      <p>{item.source}</p>
-                    </details>
-                  </td>
+          <div className="quote-card">
+            <table className="quote-index">
+              <thead>
+                <tr>
+                  <th>Proyecto y revisión</th>
+                  <th>Seguimiento</th>
+                  <th>Vigencia</th>
+                  <th>Cliente</th>
+                  <th>Total con IVA</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {query.data.items.map((item) => (
+                  <tr key={item.project_id}>
+                    <td>
+                      <Link to={item.href} className="quote-project">
+                        <span className="ui-value">
+                          {item.project_code} · {formatRevision(item.revision_code)}
+                        </span>
+                        <strong>{item.project_name}</strong>
+                      </Link>
+                    </td>
+                    <td>
+                      <span className="quote-state">
+                        {quoteStates[item.state] ?? "Sin dato · estado sin reconocer"}
+                      </span>
+                      <p>{phaseLabels[item.phase] ?? "Sin dato · falta fase"}</p>
+                      <p>
+                        {item.view_count > 0 ? (
+                          <>
+                            <span className="ui-value">{item.view_count}</span>{" "}
+                            {item.view_count === 1 ? "vista" : "vistas"} ·{" "}
+                            <Timestamp value={item.last_viewed_at} />
+                          </>
+                        ) : (
+                          "Sin vistas registradas"
+                        )}
+                      </p>
+                      {item.response_note && (
+                        <details>
+                          <summary>Respuesta del cliente</summary>
+                          <p>{item.response_note}</p>
+                        </details>
+                      )}
+                    </td>
+                    <td>
+                      {item.valid_until ? (
+                        <DateOnly value={item.valid_until} />
+                      ) : (
+                        "Sin dato · falta vigencia sellada"
+                      )}
+                    </td>
+                    <td>{item.client_name || "Sin cliente registrado"}</td>
+                    <td>
+                      {item.currency ? (
+                        <Money
+                          value={item.total}
+                          currency={item.currency}
+                          cause="Falta el total sellado de esta revisión"
+                        />
+                      ) : (
+                        "Sin dato · falta moneda sellada"
+                      )}
+                      <details className="quote-source">
+                        <summary aria-label="¿De dónde sale?" title="¿De dónde sale?">
+                          <Icon name="info" size={16} />
+                        </summary>
+                        <p>{item.source}</p>
+                      </details>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
           <nav className="quote-pagination" aria-label="Páginas de cotizaciones">
             <button
               type="button"

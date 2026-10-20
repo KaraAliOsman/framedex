@@ -234,3 +234,17 @@
     height: 70vh;
   }
 }
+
+.quotation-document__quick {
+  background: var(--surface-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-2);
+  color: var(--text-secondary);
+  font-size: var(--type-dense);
+  left: var(--space-16px);
+  margin: 0;
+  padding: var(--space-8px) var(--space-12px);
+  position: absolute;
+  right: var(--space-16px);
+  bottom: var(--space-16px);
+}

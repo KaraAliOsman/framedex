@@ -50,6 +50,7 @@ import {
 } from "./catalogModel";
 import "./catalogs.css";
 import { CatalogLimitsEditor } from "./CatalogLimitsEditor";
+import { Icon } from "../../ui/Icon";
 
 type Label = Parameters<typeof t>[0];
 // All suffixes below are supplied in the translation block.
@@ -386,9 +387,6 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
       <p className="catalog-status" role="status" aria-live="polite">
         {loading ? ct("loading") : notice}
       </p>
-      <p>
-        <a href="/catalogs/sheet-formats">Vidrios y paneles › Formatos de lámina</a>
-      </p>
       {error && (
         <div>
           <p role="alert">{error}</p>
@@ -431,10 +429,12 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
               Laboratorio · {data.systems.filter((system) => system.is_demo).length}
             </button>
           </div>
-          <label>
-            Buscar marca, serie o código
+          <label className="ui-search-pill catalog-search">
+            <Icon name="search" size={16} />
             <input
               type="search"
+              aria-label="Buscar marca, serie o código"
+              placeholder="Buscar marca, serie o código"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />

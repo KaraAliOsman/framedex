@@ -266,3 +266,95 @@
   font-size: var(--type-dense);
   margin-top: 0.2rem;
 }
+
+/* 3D inset, macOS-panel grammar: a quiet title bar with icon actions, one
+   row of camera/reading choices, one row of layer toggles. */
+.model3d-inset {
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-3);
+  box-shadow: var(--e3);
+}
+.model3d-inset__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-2) 0 var(--space-3);
+}
+.model3d-inset__header h3 {
+  flex: 1;
+  margin: 0;
+  font-size: var(--type-label);
+  font-weight: 600;
+}
+.model3d-icon-button {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-1);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition:
+    background-color var(--t-state) ease,
+    transform var(--t-micro) var(--ease-in);
+}
+.model3d-icon-button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+.model3d-icon-button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+@media (hover: hover) and (pointer: fine) {
+  .model3d-icon-button:hover:not(:disabled) {
+    background: var(--surface-hover);
+    color: var(--text-primary);
+  }
+}
+.model3d-view .model3d-toolbar {
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 0;
+}
+.model3d-view .model3d-toolbar--toggles {
+  padding-top: 0;
+}
+.model3d-segmented > button {
+  min-height: 28px;
+  padding: 0 var(--space-3);
+  font-size: var(--type-dense);
+}
+.model3d-download {
+  margin-left: auto;
+}
+.model3d-toolbar .model3d-toggle-chip,
+.model3d-leaves > summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-pill);
+  background: var(--surface-panel);
+  color: var(--text-secondary);
+  font-size: var(--type-dense);
+  font-weight: 500;
+  list-style: none;
+  cursor: pointer;
+}
+.model3d-leaves > summary::-webkit-details-marker {
+  display: none;
+}
+.model3d-toolbar .model3d-toggle-chip[aria-pressed="true"] {
+  border-color: transparent;
+  background: var(--surface-selected);
+  color: var(--interactive);
+}
+.model3d-view .model3d-illustrative {
+  padding: 0 var(--space-3) var(--space-2);
+  border-bottom: 0;
+}

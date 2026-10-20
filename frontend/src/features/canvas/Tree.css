@@ -274,9 +274,12 @@
   stroke: var(--theme-danger);
   stroke-width: 6;
 }
-.front-module.has-warning .member-frame {
+/* A warning (e.g. glass still to choose) is the normal state of a window
+   being drawn: a quiet dashed hint, never louder than the selection. */
+.front-module.has-warning:not(.is-selected) .member-frame {
   stroke: var(--theme-warning);
-  stroke-width: 6;
+  stroke-dasharray: 6 4;
+  stroke-width: 3;
 }
 .module-opening {
   fill: none;

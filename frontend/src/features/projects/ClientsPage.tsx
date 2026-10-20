@@ -22,6 +22,7 @@ import {
   DeniedState,
   EmptyState,
   ErrorState,
+  Icon,
   LoadingState,
   PageHeader,
   StatusBadge,
@@ -240,34 +241,42 @@ function ClientsWorkspace({ orgId, canWrite }: { orgId: string; canWrite: boolea
       ) : (
         <div className="customer-desk">
           <aside className="customer-directory" aria-label="Buscar clientes">
-            <label>
-              Nombre o RUT
-              <input value={search} onChange={(event) => setSearch(event.target.value)} />
-            </label>
-            <label>
+            <label className="customer-search">
+              <Icon name="search" size={16} />
+              <span className="sr-only">Nombre o RUT</span>
               <input
-                type="checkbox"
-                checked={active}
-                onChange={(event) => {
-                  setActive(event.target.checked);
+                type="search"
+                placeholder="Buscar por nombre o RUT"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+              />
+            </label>
+            <div className="customer-filters" role="group" aria-label="Filtrar clientes">
+              <button
+                type="button"
+                className="customer-filter"
+                aria-pressed={active}
+                onClick={() => {
+                  setActive(!active);
                   setOffset(0);
                 }}
-              />
-              Con proyectos activos
-            </label>
-            {canWrite && (
-              <label>
-                <input
-                  type="checkbox"
-                  checked={balance}
-                  onChange={(event) => {
-                    setBalance(event.target.checked);
+              >
+                Con obras activas
+              </button>
+              {canWrite && (
+                <button
+                  type="button"
+                  className="customer-filter"
+                  aria-pressed={balance}
+                  onClick={() => {
+                    setBalance(!balance);
                     setOffset(0);
                   }}
-                />
-                Con saldo
-              </label>
-            )}
+                >
+                  Con saldo
+                </button>
+              )}
+            </div>
             {directory.isPending ? (
               <LoadingState label="Buscando clientes" />
             ) : directory.isError ? (
@@ -278,8 +287,7 @@ function ClientsWorkspace({ orgId, canWrite }: { orgId: string; canWrite: boolea
             ) : (
               <>
                 <p className="customer-hint">
-                  <span className="customer-number">{directory.data.total}</span> clientes
-                  encontrados
+                  {directory.data.total === 1 ? "1 cliente" : `${directory.data.total} clientes`}
                 </p>
                 <ul className="customer-list">
                   {directory.data.items.map((item) => (
@@ -288,14 +296,19 @@ function ClientsWorkspace({ orgId, canWrite }: { orgId: string; canWrite: boolea
                         to={`/clients/${item.id}`}
                         aria-current={id === item.id ? "page" : undefined}
                       >
-                        <strong>{item.name}</strong>
-                        <span className="customer-number">{item.rut || "RUT sin registrar"}</span>
-                        <span>
-                          {item.has_active_projects
-                            ? "Obras activas"
-                            : item.is_active
-                              ? "Disponible"
-                              : "Inactivo"}
+                        <span className="customer-avatar" aria-hidden="true">
+                          {initials(item.name)}
+                        </span>
+                        <span className="customer-row">
+                          <strong>{item.name}</strong>
+                          <span>
+                            {item.rut || "RUT sin registrar"}
+                            {item.has_active_projects
+                              ? " · Obras activas"
+                              : item.is_active
+                                ? ""
+                                : " · Inactivo"}
+                          </span>
                         </span>
                       </Link>
                     </li>
@@ -307,20 +320,22 @@ function ClientsWorkspace({ orgId, canWrite }: { orgId: string; canWrite: boolea
                     body="Cambia los filtros o registra un cliente para crear su primera obra."
                   />
                 )}
-                <div className="customer-actions">
-                  <Button
-                    disabled={offset === 0}
-                    onClick={() => setOffset(Math.max(0, offset - 50))}
-                  >
-                    Anterior
-                  </Button>
-                  <Button
-                    disabled={directory.data.next_offset === null}
-                    onClick={() => setOffset(directory.data!.next_offset!)}
-                  >
-                    Siguiente
-                  </Button>
-                </div>
+                {hasPages(offset, directory.data.next_offset) ? (
+                  <div className="customer-actions">
+                    <Button
+                      disabled={offset === 0}
+                      onClick={() => setOffset(Math.max(0, offset - 50))}
+                    >
+                      Anterior
+                    </Button>
+                    <Button
+                      disabled={directory.data.next_offset === null}
+                      onClick={() => setOffset(directory.data!.next_offset!)}
+                    >
+                      Siguiente
+                    </Button>
+                  </div>
+                ) : null}
               </>
             )}
           </aside>
@@ -623,4 +638,18 @@ function ClientsWorkspace({ orgId, canWrite }: { orgId: string; canWrite: boolea
       )}
     </section>
   );
+}
+
+/** Two initials for the directory avatar («Colegio Valle Andino» → «CV»). */
+function initials(name: string): string {
+  const words = name
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+  return ((words[0]?.[0] ?? "") + (words[1]?.[0] ?? "")).toLocaleUpperCase("es-CL") || "·";
+}
+
+/** The pager shows only when there is another page to reach. */
+function hasPages(offset: number, next: number | null | undefined): boolean {
+  return offset > 0 || next != null;
 }

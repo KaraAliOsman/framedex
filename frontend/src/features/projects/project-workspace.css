@@ -477,3 +477,125 @@
     opacity: 1;
   }
 }
+
+/* Gallery card (owner direction 2026-10-19): the drawing leads, then the
+   name, the type line, the size and one calm summary. Selection, state and
+   actions float over the drawing; the technical sheet stays in the table. */
+.project-position-row-group[data-view="grid"] {
+  gap: var(--space-16px);
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+}
+.project-position-row-group[data-view="grid"] .position-row {
+  border-radius: var(--r-3);
+  gap: var(--space-12px);
+  grid-template-areas:
+    "thumb"
+    "identity";
+  grid-template-columns: minmax(0, 1fr);
+  padding: var(--space-12px) var(--space-12px) var(--space-16px);
+  transition:
+    border-color var(--t-micro) var(--ease-in),
+    box-shadow var(--t-state) var(--ease-in);
+}
+@media (hover: hover) and (pointer: fine) {
+  .project-position-row-group[data-view="grid"] .position-row:hover {
+    border-color: var(--border-default);
+    box-shadow: var(--e2);
+  }
+}
+.project-position-row-group[data-view="grid"] .position-row[data-selected] {
+  background: var(--surface-panel);
+  border-color: var(--interactive);
+  outline: 1px solid var(--interactive);
+}
+.project-position-row-group[data-view="grid"] .project-position-check,
+.project-position-row-group[data-view="grid"] .position-row__state,
+.project-position-row-group[data-view="grid"] .position-row__actions {
+  position: absolute;
+  top: var(--space-16px);
+  z-index: var(--z-sticky);
+}
+.project-position-row-group[data-view="grid"] .project-position-check {
+  left: var(--space-16px);
+}
+.project-position-row-group[data-view="grid"] .position-row__state {
+  left: var(--space-16px);
+  pointer-events: none;
+}
+.project-position-row-group[data-view="grid"]
+  .position-row:is(:hover, :focus-within, [data-selected])
+  .position-row__state {
+  display: none;
+}
+.project-position-row-group[data-view="grid"] .position-row__actions {
+  right: var(--space-16px);
+}
+.project-position-row-group[data-view="grid"] .position-row__actions .ui-icon-button {
+  background: var(--surface-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-1);
+}
+.project-position-row-group[data-view="grid"] .position-row__index,
+.project-position-row-group[data-view="grid"] .position-row__specs {
+  display: none;
+}
+.project-position-row-group[data-view="grid"] .position-row__thumb {
+  background: var(--bg-app);
+  border-radius: var(--r-2);
+  padding: var(--space-24px) var(--space-16px);
+}
+.project-position-row-group[data-view="grid"] .position-row__thumb .position-thumb {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  height: 10.5rem;
+  width: 100%;
+}
+.project-position-row-group[data-view="grid"] .position-row__identity {
+  gap: var(--space-4px);
+  padding: 0 var(--space-4px);
+}
+.project-position-row-group[data-view="grid"] .position-row__name {
+  font-size: var(--type-title-m);
+  font-weight: 600;
+}
+.project-position-row-group[data-view="grid"] .position-row__type {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+}
+.project-position-row-group[data-view="grid"] .project-dimension {
+  border-bottom-color: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--type-body);
+  font-variant-numeric: tabular-nums;
+}
+.project-position-row-group[data-view="grid"] .project-dimension:hover:not(:disabled) {
+  border-bottom-color: var(--interactive);
+}
+.position-row__summary {
+  display: none;
+}
+.project-position-row-group[data-view="grid"] .position-row__summary {
+  align-items: baseline;
+  color: var(--text-secondary);
+  display: flex;
+  font-size: var(--type-dense);
+  gap: var(--space-8px);
+  justify-content: space-between;
+  width: 100%;
+}
+.project-position-row-group[data-view="grid"] .position-row__summary > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.project-position-row-group[data-view="grid"] .position-row__summary strong {
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  white-space: nowrap;
+}

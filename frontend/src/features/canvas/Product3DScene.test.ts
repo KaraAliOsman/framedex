@@ -5,7 +5,7 @@ import type { ProductJson } from "./productEditing";
 import { makeBowProduct, wrapTreeAsProduct } from "./productEditing";
 import type { IntentNode } from "./intentEditing";
 import { resolveMembers } from "./members";
-import { buildScene3D, type BoxSolid, type ShapeSolid } from "./Product3DScene";
+import { buildScene3D, type BoxSolid, type ShapeSolid, type Solid3D } from "./Product3DScene";
 
 const members = resolveMembers(undefined);
 
@@ -150,8 +150,8 @@ describe("buildScene3D", () => {
     expect(second!.rotationY).toBeCloseTo((15 * Math.PI) / 180, 3);
     // module depth comes from the plan back edge, not a constant
     const depth = Math.hypot(684.48 - 700, 57.96 - 0);
-    const box = second!.solids.find((solid) => solid.kind === "box") as BoxSolid;
-    expect(box.size[2]).toBeCloseTo(depth, 0);
+    const frame = second!.solids.find((solid) => solid.surface === "frame")!;
+    expect(solidDepth(frame)).toBeCloseTo(depth, 0);
   });
 
   it("extrudes the real contour outline for shaped modules", () => {
@@ -400,14 +400,14 @@ describe("buildScene3D", () => {
     } as ProductJson;
     const scene = buildScene3D(product, members);
     const solids = scene.modules[0]!.solids;
-    const sash = solids.filter((solid) => solid.surface === "sash") as BoxSolid[];
+    const sash = solids.filter((solid) => solid.surface === "sash");
     // two leaves × four bars, like the front view
     expect(sash).toHaveLength(8);
     // aperture 60..1140 → pitch 540, leaf 540+72: leaf0 spans 60..672 and
     // leaf1 spans 528..1140, so the meeting stiles overlap in (528, 672)
     const verticals = sash
-      .filter((solid) => solid.size[1] > solid.size[0])
-      .map((solid) => solid.center[0])
+      .filter(isVerticalBar)
+      .map(barCenterX)
       .sort((a, b) => a - b);
     expect(verticals).toHaveLength(4);
     expect(verticals[0]).toBeCloseTo(96, 5);
@@ -757,3 +757,26 @@ describe("buildScene3D", () => {
     });
   });
 });
+
+/** Members are boxes (aluminium, undeclared) or extruded profiles (declared
+ * sections, PVC silhouettes); these read both the same way. */
+function solidDepth(solid: Solid3D): number {
+  if (solid.kind === "box") return solid.size[2];
+  if (solid.kind === "profile") {
+    const vs = solid.outline.map(([, v]) => v);
+    return Math.max(...vs) - Math.min(...vs);
+  }
+  throw new Error(`Unexpected solid ${solid.kind}`);
+}
+function isVerticalBar(solid: Solid3D): boolean {
+  if (solid.kind === "box") return solid.size[1] > solid.size[0];
+  return solid.kind === "profile" && solid.axis === "y";
+}
+function barCenterX(solid: Solid3D): number {
+  if (solid.kind === "box") return solid.center[0];
+  if (solid.kind === "profile") {
+    const us = solid.outline.map(([u]) => u);
+    return solid.u0 + (Math.max(...us) - Math.min(...us)) / 2;
+  }
+  throw new Error(`Unexpected solid ${solid.kind}`);
+}

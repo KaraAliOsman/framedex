@@ -234,44 +234,48 @@ export function FieldPage({ office = false }: { office?: boolean }): JSX.Element
           <p>
             {selected
               ? `${selected.code} · ${selected.context.project_name}`
-              : "Tu ruta, tus posiciones y sus comprobantes"}
+              : office
+                ? "Agenda entregas e instalaciones y sigue la postventa de cada obra."
+                : "Tu ruta, tus posiciones y sus comprobantes"}
           </p>
         </div>
         <div className="field-tools">
-          <Link to="/dashboard">Hoy</Link>
+          {!office ? <Link to="/dashboard">Hoy</Link> : null}
+          <button
+            type="button"
+            className="ui-button"
+            disabled={busy || !online}
+            onClick={() => void sync()}
+          >
+            Sincronizar
+          </button>
         </div>
       </header>
       <nav className="field-nav" aria-label="Trabajo en obra">
-        <button type="button" className="secondary-action" onClick={() => setParams({})}>
-          Agenda
-        </button>
-        {office && (
+        <div className="ui-segmented">
+          <button type="button" aria-pressed={!params.get("view")} onClick={() => setParams({})}>
+            Agenda
+          </button>
+          {office && (
+            <button
+              type="button"
+              aria-pressed={params.get("view") === "plan"}
+              onClick={() => setParams({ view: "plan" })}
+            >
+              Planificar
+            </button>
+          )}
           <button
             type="button"
-            className="secondary-action"
-            onClick={() => setParams({ view: "plan" })}
+            aria-pressed={params.get("view") === "cases"}
+            onClick={() => setParams({ view: "cases" })}
           >
-            Planificar
+            Postventa
           </button>
-        )}
-        <button
-          type="button"
-          className="secondary-action"
-          onClick={() => setParams({ view: "cases" })}
-        >
-          Postventa
-        </button>
+        </div>
         {!office && online && data?.role !== "INSTALLER" && (
           <Link to="/dispatch">Planificar salidas</Link>
         )}
-        <button
-          type="button"
-          className="secondary-action"
-          disabled={busy || !online}
-          onClick={() => void sync()}
-        >
-          Sincronizar
-        </button>
       </nav>
       {(copy || !online) && (
         <p className="field-copy" role="status">

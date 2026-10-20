@@ -96,7 +96,7 @@ export const messages = {
   "glass.pricePending": "Sin dato · completa la tarifa del catálogo",
   "glass.published":
     "Vidrio publicado y asignado. Puedes deshacer la asignación con Ctrl+Z; la versión del catálogo conserva su historial.",
-  "glass.loading": "Elige una serie para consultar sus vidrios.",
+  "glass.loading": "Los vidrios aparecen al elegir la serie.",
   "glass.checking": "Comprobando productos con el motor…",
   "glass.retry": "Reintentar",
   "glass.empty":
@@ -1534,7 +1534,7 @@ export const messages = {
   "quotation.orderPanel": "OC paneles",
   "purchasing.title": "Compras a proveedores",
   "purchasing.subtitle":
-    "Requisitos congelados de la revisión, elegibilidad explícita de proveedores y órdenes inmutables por tipo.",
+    "Pide a cada proveedor lo que falta para las obras liberadas, con tus precios de compra.",
   "purchasing.denied": "Tu rol no permite operar compras a proveedores.",
   "purchasing.loading": "Cargando compras del taller…",
   "purchasing.reload": "Recargar",
@@ -1636,11 +1636,11 @@ export const messages = {
   "purchasing.noOrders": "Todavía no hay órdenes confirmadas.",
   "purchasing.noRequirements": "Sin requisitos para este tipo.",
   "purchasing.status": "Estado",
-  "purchasing.draft": "BORRADOR",
-  "purchasing.sent": "ENVIADA",
-  "purchasing.partiallyReceived": "PARCIALMENTE RECIBIDA",
-  "purchasing.fulfilled": "COMPLETADA",
-  "purchasing.cancelled": "ANULADA",
+  "purchasing.draft": "Borrador",
+  "purchasing.sent": "Enviada",
+  "purchasing.partiallyReceived": "Recibida en parte",
+  "purchasing.fulfilled": "Completada",
+  "purchasing.cancelled": "Anulada",
   "purchasing.cancelledAt": "Anulada el",
   "purchasing.receiving": "Recepción de material",
   "purchasing.receivingLoading": "Cargando líneas de la orden…",
@@ -1796,7 +1796,7 @@ export const messages = {
   "production.shortageChip": "Falta material ({count})",
   "production.materialShortageToast":
     "Paso bloqueado por falta de material — revisa los faltantes de la orden.",
-  "production.versionShortageChip": "Versión: {count} faltantes más",
+  "production.versionShortageChip": "{count} faltan en la versión",
   "production.versionShortageTitle":
     "Otras órdenes de la misma versión tienen faltantes de material adicionales",
   "production.dispatchReadyChip": "Guía pendiente",
@@ -3069,7 +3069,7 @@ export const messages = {
   "assistant.title": "Asistente de diseño",
   "assistant.fixWith": "Corregir con DEKOPEN",
   "assistant.fixPrompt": "Corrige este problema:",
-  "assistant.modifyWith": "Modificar con DEKOPEN",
+  "assistant.modifyWith": "Pedir un cambio al asistente",
   "assistant.modifyPrompt": "Modifica {target}:",
   "assistant.prompt": "Describe el cambio: «3 módulos correderas de 2400 mm de ancho»",
   "assistant.generate": "Generar",

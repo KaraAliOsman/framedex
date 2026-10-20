@@ -209,3 +209,58 @@
     flex: 0 0 auto;
   }
 }
+
+/* Pendientes (owner direction 2026-10-19): one card, rows with the work and
+   the decision, urgency as a coloured label, one verb per row. */
+.today-page {
+  gap: var(--space-24px);
+  margin: 0 auto;
+  max-width: 72rem;
+}
+.today-filters.ui-segmented {
+  gap: 2px;
+}
+.today-filters.ui-segmented button[aria-pressed="true"] {
+  background: var(--surface-panel);
+  color: var(--text-primary);
+}
+.today-queue {
+  background: var(--surface-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-3);
+  overflow: hidden;
+}
+.today-action {
+  border-top: 1px solid var(--border-subtle);
+  gap: var(--space-24px);
+  grid-template-columns: 8rem minmax(0, 1fr) auto;
+  padding: var(--space-16px) var(--space-24px);
+}
+.today-action:first-child {
+  border-top: 0;
+}
+.today-action:last-child {
+  border-bottom: 0;
+}
+.today-tier {
+  background: var(--surface-card);
+  border-radius: var(--r-pill);
+  font-size: var(--type-micro);
+  justify-self: start;
+  padding: 2px var(--space-8px);
+}
+.today-action[data-consequence="overdue"] .today-tier {
+  background: var(--state-danger-soft);
+}
+.today-action[data-consequence="blocking"] .today-tier {
+  background: var(--state-warning-soft);
+}
+.today-code {
+  color: var(--text-muted);
+}
+.today-action__body h2 {
+  font-size: var(--type-body);
+}
+.today-source {
+  display: inline-block;
+}

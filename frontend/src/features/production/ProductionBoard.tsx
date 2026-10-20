@@ -4,6 +4,7 @@ import { EmptyState, ErrorState, LoadingState } from "../../ui";
 import { formatDate, formatDecimal } from "../../format";
 import { domainLabels } from "../../i18n/domainLabels";
 import { stationCodeLabel } from "./labels";
+import { Icon } from "../../ui/Icon";
 
 export type StationQueueGroup = {
   code?: string;
@@ -99,24 +100,24 @@ export function ProductionBoard({
         <ul className="production-causes" aria-label="Decisiones pendientes">
           {causes.map((cause) => (
             <li key={cause.key}>
-              <strong className="ui-value">{formatDecimal(cause.count)}</strong>{" "}
-              {cause.count === 1 ? "orden" : "órdenes"} {cause.label}
               <button
                 type="button"
-                className="link-button"
+                className="production-cause"
                 aria-pressed={block === cause.key}
+                title={block === cause.key ? "Ver todas" : cause.action}
                 onClick={() => setBlock(block === cause.key ? "" : cause.key)}
               >
-                {block === cause.key ? "Ver todas" : cause.action}
+                <strong className="ui-value">{formatDecimal(cause.count)}</strong>
+                {cause.count === 1 ? "orden" : "órdenes"} {cause.label}
               </button>
             </li>
           ))}
         </ul>
       ) : null}
       <div className="production-board-filters">
-        <label>
-          Obra
-          <select value={project} onChange={(e) => setProject(e.target.value)}>
+        <label className="production-filter">
+          <span className="sr-only">Obra</span>
+          <select aria-label="Obra" value={project} onChange={(e) => setProject(e.target.value)}>
             <option value="">Todas las obras</option>
             {projects.map(([code, name]) => (
               <option key={code} value={code!}>
@@ -125,13 +126,17 @@ export function ProductionBoard({
             ))}
           </select>
         </label>
-        <label>
-          Compromiso hasta
+        <label className="production-filter production-filter--date">
+          <span>Compromiso hasta</span>
           <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         </label>
-        <label>
-          Requiere persona
-          <select value={block} onChange={(e) => setBlock(e.target.value)}>
+        <label className="production-filter">
+          <span className="sr-only">Requiere persona</span>
+          <select
+            aria-label="Requiere persona"
+            value={block}
+            onChange={(e) => setBlock(e.target.value)}
+          >
             <option value="">Todas las OT</option>
             <option value="hold">Bloqueadas</option>
             <option value="shortage">Falta material</option>
@@ -139,8 +144,14 @@ export function ProductionBoard({
             <option value="plan">Sin plan de corte</option>
           </select>
         </label>
-        <button type="button" onClick={retry}>
-          Actualizar tablero
+        <button
+          type="button"
+          className="production-refresh"
+          aria-label="Actualizar tablero"
+          title="Actualizar tablero"
+          onClick={retry}
+        >
+          <Icon name="refresh" size={16} />
         </button>
       </div>
       <div className="production-board-columns">
@@ -165,26 +176,45 @@ export function ProductionBoard({
                       key={order.id}
                       onClick={() => onOpen(order.id)}
                     >
-                      <strong className="production-board-work">
-                        {order.project_name ?? order.project_code ?? "Obra no vinculada"}
-                      </strong>
+                      <span className="production-board-head">
+                        <strong className="production-board-work">
+                          {order.project_name ?? order.project_code ?? "Obra no vinculada"}
+                        </strong>
+                        <span className="production-board-status">
+                          {domainLabels[order.status] ?? "Sin estado"}
+                        </span>
+                      </span>
                       <span className="production-board-meta">
                         {order.client_name ? `${order.client_name} · ` : ""}
-                        <span className="ui-value">{order.order_code}</span>
+                        <span className="production-board-code">{order.order_code}</span>
                       </span>
                       <span className="production-board-next">
                         Siguiente: {order.next_step?.label ?? stationCodeLabel(station.code)}
                       </span>
-                      <span className="production-board-line ui-value">
-                        {formatDecimal(order.quantity)} unidades · {order.steps_done}/
-                        {order.steps_total} pasos
+                      <span className="production-board-progress">
+                        <span className="production-board-bar" aria-hidden="true">
+                          <span
+                            style={{
+                              width: `${
+                                order.steps_total
+                                  ? Math.round((order.steps_done / order.steps_total) * 100)
+                                  : 0
+                              }%`,
+                            }}
+                          />
+                        </span>
+                        <span>
+                          {order.steps_done} de {order.steps_total} pasos ·{" "}
+                          {Number(order.quantity) === 1
+                            ? "1 unidad"
+                            : `${formatDecimal(order.quantity)} unidades`}
+                        </span>
                       </span>
-                      <span className="ui-value">
+                      <span className="production-board-date">
                         {order.scheduled_date
                           ? `Compromiso ${formatDate(order.scheduled_date)}`
-                          : "Sin dato · agenda de entrega pendiente"}
+                          : "Sin fecha de entrega"}
                       </span>
-                      <span>{domainLabels[order.status] ?? "Sin dato · estado sin etiqueta"}</span>
                       {order.status === "HOLD" ? (
                         <span className="production-requires-person">
                           {entry?.note ?? "Bloqueada · revisar motivo"}

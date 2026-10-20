@@ -24,7 +24,7 @@ it("shows the current project-operation draft using its grounded position design
   expect(screen.getByText("Posición 3")).toBeTruthy();
   expect(screen.getByText("Dormitorio")).toBeTruthy();
   const dimensions = screen.getByText(/2\u2009400 × 1\u2009800/, { normalizer: (value) => value });
-  expect(dimensions.className).toBe("ui-value");
+  expect(dimensions.className).toBe("ui-value ui-value--measure");
   expect(dimensions.textContent).toBe("2\u2009400 × 1\u2009800 mm");
   expect(screen.getByText("4", { selector: ".ui-value" }).textContent).toBe("4 un.");
   expect(document.body.textContent).not.toContain("7dc75b24");

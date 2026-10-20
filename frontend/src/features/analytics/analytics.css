@@ -219,3 +219,9 @@
     grid-template-columns: minmax(0, 1fr) minmax(4rem, 1fr) auto;
   }
 }
+.analytics-number small.analytics-reason {
+  color: var(--text-secondary);
+  font-size: var(--type-micro);
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+}

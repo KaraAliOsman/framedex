@@ -96,16 +96,16 @@ body[data-portal-document="true"] .ui-dialog button:focus-visible {
   padding: var(--space-8px) var(--space-12px);
   width: 100%;
 }
-.portal-page button {
+:where(.portal-page) button {
   border: 1px solid var(--border-default);
   background: var(--paper);
   padding: var(--space-8px) var(--space-12px);
   cursor: pointer;
 }
-.portal-page button:hover {
+:where(.portal-page) button:hover {
   background: var(--surface-hover);
 }
-.portal-page button:disabled {
+:where(.portal-page) button:disabled {
   cursor: default;
   opacity: 0.6;
 }
@@ -271,9 +271,21 @@ body[data-portal-document="true"] .ui-dialog button:focus-visible {
   gap: var(--space-4px);
   margin: var(--space-8px) 0;
 }
-.portal-drawing-controls button[aria-pressed="true"] {
-  border-color: var(--teal-700);
-  background: var(--teal-50);
+.portal-drawing-views > button {
+  min-height: 30px;
+  padding: 0 var(--space-12px);
+  font-size: var(--type-dense);
+}
+.portal-drawing-controls .portal-drawing-face {
+  min-height: 30px;
+  margin-left: auto;
+  padding: 0 var(--space-12px);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-pill);
+  background: var(--surface-panel);
+  color: var(--text-primary);
+  font-size: var(--type-dense);
+  cursor: pointer;
 }
 .portal-drawing-tools .ui-value {
   margin-left: auto;

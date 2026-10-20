@@ -75,22 +75,17 @@
   align-items: center;
   justify-content: flex-end;
   white-space: nowrap;
-  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
 .pricing-page button.price-trace {
-  padding: 0;
-  width: 1.5rem;
-  height: 1.5rem;
+  border: 0;
+  height: 24px;
   min-height: 0;
-  border: 1px solid var(--border-default);
-  font-family: var(--font-mono);
-  font-size: var(--type-micro);
-  color: var(--text-secondary);
+  padding: 0;
+  width: 24px;
 }
 .price-unknown {
   color: var(--text-secondary);
-  font-family: var(--font-mono);
 }
 .price-band {
   border-top: 1px solid var(--border-default);
@@ -296,9 +291,13 @@
   top: 0;
   background: var(--surface-panel);
 }
+/* Money and percentages in Sans with tabular figures (constitution §3.2);
+   operation codes keep Mono. */
 .price-comparison td,
 .price-positions td:nth-child(n + 3),
-.price-positions th:first-child,
+.price-positions th:first-child {
+  font-variant-numeric: tabular-nums;
+}
 .price-history__row strong:first-child {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
@@ -404,7 +403,6 @@
   overflow-wrap: break-word;
 }
 .pricing-page .pricing-number {
-  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
 .pricing-page table {
@@ -448,7 +446,6 @@
 }
 .pricing-page .price-comparison td,
 .pricing-page .price-drivers td {
-  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
 .pricing-page .ui-page-header h1 {

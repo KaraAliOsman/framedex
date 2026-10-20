@@ -105,8 +105,13 @@ export interface ProfileSolid {
    * right posts / top rails face the aperture the same way the left/bottom
    * runs do instead of extruding the mirror image of the real profile. */
   mirrorU?: boolean;
-  /** Never set on profile solids — a declared section is never approximate;
-   * the field exists so the union keeps one schema. */
+  /** Welded 45° corner: each mitred end is cut back by the distance from
+   * the member's outer face, so four runs of a ring meet on the diagonal
+   * the way a welded PVC frame does. `outer` names the u side on the ring's
+   * outside (after mirroring). */
+  miter?: { start: boolean; end: boolean; outer: "low" | "high" };
+  /** Set only on illustrative silhouettes (no declared section): the shape
+   * is a recognisable family contour, never the manufacturer polygon. */
   approximate?: boolean;
   leafId?: string;
 }
@@ -419,6 +424,94 @@ export function normalizedSection(
   };
 }
 
+/** Rounded polygon helper: corners listed in order, each with its radius;
+ * arcs are approximated with short chords (8 per corner) so the studio
+ * light reads a rounded PVC edge without schematic facet lines. */
+function roundedPolygon(corners: { p: Pt2; r: number }[]): Pt2[] {
+  const out: Pt2[] = [];
+  const n = corners.length;
+  for (let i = 0; i < n; i++) {
+    const prev = corners[(i + n - 1) % n]!.p;
+    const { p, r } = corners[i]!;
+    const next = corners[(i + 1) % n]!.p;
+    const toPrev: Pt2 = [prev[0] - p[0], prev[1] - p[1]];
+    const toNext: Pt2 = [next[0] - p[0], next[1] - p[1]];
+    const lp = Math.hypot(toPrev[0], toPrev[1]);
+    const ln = Math.hypot(toNext[0], toNext[1]);
+    const radius = Math.min(r, lp / 2, ln / 2);
+    if (radius <= 0.01) {
+      out.push(p);
+      continue;
+    }
+    const a: Pt2 = [p[0] + (toPrev[0] / lp) * radius, p[1] + (toPrev[1] / lp) * radius];
+    const b: Pt2 = [p[0] + (toNext[0] / ln) * radius, p[1] + (toNext[1] / ln) * radius];
+    // Quadratic blend from a through the corner to b: at render size it is
+    // indistinguishable from a circular fillet on these axis-aligned corners.
+    for (let step = 0; step <= 8; step++) {
+      const t = step / 8;
+      out.push([
+        (1 - t) ** 2 * a[0] + 2 * (1 - t) * t * p[0] + t ** 2 * b[0],
+        (1 - t) ** 2 * a[1] + 2 * (1 - t) * t * p[1] + t ** 2 * b[1],
+      ]);
+    }
+  }
+  return out;
+}
+
+function isPvc(spec: MemberSpec): boolean {
+  return String(spec.material ?? "")
+    .toUpperCase()
+    .includes("PVC");
+}
+
+/** Recognisable PVC contour for a member without a declared section (encargo
+ * O17 families): stepped frame with the sash stop, rounded sash nose with the
+ * glazing rebate, curved bead. Scaled to the declared face width and depth;
+ * u runs across the face (aperture side at u = w), v through the depth with
+ * the exterior face at v = 0. Always flagged approximate. */
+function illustrativePvcSection(surface: SolidKind, w: number, d: number): Pt2[] | null {
+  if (w <= 2 || d <= 2) return null;
+  const r = (mm: number, share: number) => Math.min(mm, w * share, d * share);
+  if (surface === "frame") {
+    const stop = d * 0.34;
+    const leg = w * 0.62;
+    return roundedPolygon([
+      { p: [0, 0], r: r(3, 0.1) },
+      { p: [w, 0], r: r(2, 0.08) },
+      { p: [w, stop], r: r(1.5, 0.06) },
+      { p: [leg, stop], r: 0 },
+      { p: [leg, d], r: r(2.5, 0.08) },
+      { p: [0, d], r: r(2, 0.08) },
+    ]);
+  }
+  if (surface === "sash") {
+    const rebateU = w * 0.72;
+    const rebateV = d * 0.52;
+    return roundedPolygon([
+      { p: [0, 0], r: r(6, 0.14) },
+      { p: [w, 0], r: r(2, 0.06) },
+      { p: [w, rebateV], r: r(1, 0.04) },
+      { p: [rebateU, rebateV], r: 0 },
+      { p: [rebateU, d], r: r(2, 0.06) },
+      { p: [0, d], r: r(8, 0.18) },
+    ]);
+  }
+  if (surface === "bead") {
+    return roundedPolygon([
+      { p: [0, 0], r: 0 },
+      { p: [w, 0], r: r(1, 0.1) },
+      { p: [w, d], r: Math.min(w * 0.85, d * 0.7) },
+      { p: [0, d], r: r(1, 0.1) },
+    ]);
+  }
+  return roundedPolygon([
+    { p: [0, 0], r: r(2.5, 0.08) },
+    { p: [w, 0], r: r(2.5, 0.08) },
+    { p: [w, d], r: r(2.5, 0.08) },
+    { p: [0, d], r: r(2.5, 0.08) },
+  ]);
+}
+
 /** One member run: a declared catalog section extrudes the real profile —
  * straight-cut ends meet at corners (the miter is a fabrication detail,
  * not a visual one). Without a section the member stays an explicitly
@@ -439,6 +532,7 @@ function memberBar(
   z0: number,
   depth: number,
   mirrorU = false,
+  miter?: ProfileSolid["miter"],
 ): void {
   if (a1 - a0 <= 0) return;
   const section = normalizedSection(spec);
@@ -455,6 +549,28 @@ function memberBar(
       u0: uCenter - section.width / 2,
       v0: z0,
       ...(mirrorU ? { mirrorU: true } : {}),
+      ...(miter ? { miter } : {}),
+    });
+    return;
+  }
+  // PVC without a declared section: a recognisable family contour instead of
+  // a bare box. Still flagged approximate, never a manufacturer polygon.
+  const silhouette = isPvc(spec) ? illustrativePvcSection(surface, uSize, depth) : null;
+  if (silhouette !== null) {
+    solids.push({
+      kind: "profile",
+      owner,
+      surface,
+      material: spec.material,
+      outline: silhouette,
+      axis,
+      a0,
+      a1,
+      u0: uCenter - uSize / 2,
+      v0: z0,
+      ...(mirrorU ? { mirrorU: true } : {}),
+      ...(miter ? { miter } : {}),
+      approximate: true,
     });
     return;
   }
@@ -474,7 +590,10 @@ function memberBar(
   });
 }
 
-/** Four-member ring inside a region (long sides full span, caps between). */
+/** Four-member ring inside a region. Butt-jointed rings keep long sides
+ * full span with caps between; welded rings (declared 45° cut, or PVC when
+ * the catalog is silent: PVC frames and sashes are welded) run all four
+ * members full span and mitre every end on the diagonal. */
 function memberBarRing(
   solids: Solid3D[],
   owner: string,
@@ -487,6 +606,74 @@ function memberBarRing(
 ): void {
   const w = Math.min(barW, region.w / 2);
   const h = Math.min(barW, region.h / 2);
+  const welded =
+    spec.cornerCutDeg === 45 || (spec.cornerCutDeg == null && isPvc(spec) && surface !== "bead");
+  if (welded) {
+    const both = (outer: "low" | "high") => ({ start: true, end: true, outer });
+    const top = region.y + region.h;
+    const right = region.x + region.w;
+    memberBar(
+      solids,
+      owner,
+      surface,
+      spec,
+      "y",
+      region.y,
+      top,
+      region.x + w / 2,
+      w,
+      z0,
+      depth,
+      false,
+      both("low"),
+    );
+    memberBar(
+      solids,
+      owner,
+      surface,
+      spec,
+      "y",
+      region.y,
+      top,
+      right - w / 2,
+      w,
+      z0,
+      depth,
+      true,
+      both("high"),
+    );
+    memberBar(
+      solids,
+      owner,
+      surface,
+      spec,
+      "x",
+      region.x,
+      right,
+      region.y + h / 2,
+      h,
+      z0,
+      depth,
+      false,
+      both("low"),
+    );
+    memberBar(
+      solids,
+      owner,
+      surface,
+      spec,
+      "x",
+      region.x,
+      right,
+      top - h / 2,
+      h,
+      z0,
+      depth,
+      true,
+      both("high"),
+    );
+    return;
+  }
   memberBar(
     solids,
     owner,

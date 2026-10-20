@@ -1495,7 +1495,6 @@ div:has(> table.production-plan) {
   color: var(--state-warning-ink);
 }
 
-.production-board-filters,
 .production-station-choice {
   display: flex;
   flex-wrap: wrap;
@@ -1503,23 +1502,17 @@ div:has(> table.production-plan) {
   align-items: end;
   margin-bottom: var(--space-4);
 }
-.production-board-filters label,
 .production-station-choice label,
-.production-piece-scanner label,
 .production-station-form label {
   display: grid;
   gap: var(--space-1);
   min-width: 0;
 }
-.production-board-filters :is(input, select),
-.production-station-choice select,
-.production-piece-scanner input {
+.production-station-choice select {
   max-width: 100%;
 }
-.production-board-filters :is(input, select, button),
 .production-prep-release,
-.production-closed button,
-.production-piece-scanner :is(input, button) {
+.production-closed button {
   min-height: 44px;
   min-width: 44px;
   border: 1px solid var(--border-default);
@@ -1586,7 +1579,56 @@ div:has(> table.production-plan) {
   color: var(--text-secondary);
 }
 .production-back {
-  margin-bottom: var(--space-3);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4px);
+  min-height: 32px;
+  margin: 0 0 var(--space-8px) calc(-1 * var(--space-8px));
+  padding: 0 var(--space-8px);
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--interactive);
+  font: inherit;
+  font-size: var(--type-dense);
+  font-weight: 500;
+  cursor: pointer;
+}
+@media (hover: hover) and (pointer: fine) {
+  .production-back:hover {
+    background: var(--surface-hover);
+  }
+}
+.production-detail-head h2 {
+  margin: 0;
+  font-size: var(--type-subtitle);
+  font-variant-numeric: tabular-nums;
+}
+.production-detail-head .production-cancel {
+  margin-left: auto;
+  min-height: 32px;
+  padding: 0 var(--space-12px);
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--state-danger);
+  font-size: var(--type-dense);
+}
+@media (hover: hover) and (pointer: fine) {
+  .production-detail-head .production-cancel:hover:not(:disabled) {
+    background: var(--state-danger-soft);
+  }
+}
+.production-detail-head button.production-chip {
+  min-height: 28px;
+  padding: 0 var(--space-12px);
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--state-warning-soft);
+  color: var(--state-warning-ink);
+  font-size: var(--type-dense);
+  font-weight: 600;
+  cursor: pointer;
 }
 .production-stepper {
   display: flex;
@@ -1657,9 +1699,7 @@ div:has(> table.production-plan) {
   gap: var(--space-2);
   align-items: end;
 }
-.production-piece-scanner label {
-  flex: 1 1 15rem;
-}
+
 .production-piece-scanner video {
   max-width: 100%;
   max-height: 22rem;
@@ -1668,7 +1708,7 @@ div:has(> table.production-plan) {
   font-size: var(--type-workshop);
   background: var(--bg-app);
   color: var(--text-primary);
-  padding: var(--space-4);
+  padding: 0;
 }
 .production-operator :is(button, a, input, select, textarea, summary) {
   min-height: 44px;
@@ -1811,19 +1851,33 @@ div:has(> table.production-plan) {
 .production-causes {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-8px) var(--space-24px);
+  gap: var(--space-8px);
   margin: 0 0 var(--space-12px);
-  padding: var(--space-8px) var(--space-12px);
-  border-radius: var(--r-2);
-  background: var(--state-warning-soft);
-  color: var(--state-warning-ink);
+  padding: 0;
   list-style: none;
 }
-
-.production-causes li {
-  display: flex;
+/* Each pending decision is a filter chip: the count leads, a click shows
+   only those orders. */
+.production-cause {
+  display: inline-flex;
   align-items: baseline;
   gap: var(--space-6px);
+  min-height: 32px;
+  padding: var(--space-6px) var(--space-12px);
+  border: 1px solid transparent;
+  border-radius: var(--r-pill);
+  background: var(--state-warning-soft);
+  color: var(--state-warning-ink);
+  font-size: var(--type-dense);
+  cursor: pointer;
+  transition: transform var(--t-micro) var(--ease-in);
+}
+.production-cause:active {
+  transform: scale(0.97);
+}
+.production-cause[aria-pressed="true"] {
+  border-color: var(--state-warning);
+  background: var(--surface-panel);
 }
 
 .production-board-work {
@@ -1854,4 +1908,222 @@ div:has(> table.production-plan) {
 
 .production-work-switch {
   margin: var(--space-8px) 0 var(--space-12px);
+}
+
+/* Work order card (owner direction 2026-10-19): the work, who and which OT,
+   the next step, a progress bar and the commitment. Alerts are short chips. */
+.production-board-order {
+  border-color: var(--border-subtle);
+  border-radius: var(--r-3);
+  gap: var(--space-6px);
+  padding: var(--space-12px) var(--space-16px) var(--space-16px);
+  transition:
+    border-color var(--t-micro) var(--ease-in),
+    box-shadow var(--t-state) var(--ease-in),
+    transform 160ms var(--ease-in);
+}
+.production-board-order:hover {
+  background: var(--surface-panel);
+}
+@media (hover: hover) and (pointer: fine) {
+  .production-board-order:hover {
+    border-color: var(--border-default);
+    box-shadow: var(--e2);
+  }
+}
+.production-board-order:active {
+  transform: scale(0.98);
+}
+.production-board-head {
+  align-items: flex-start;
+  display: flex;
+  gap: var(--space-8px);
+  justify-content: space-between;
+}
+.production-board-work {
+  font-size: var(--type-body);
+  font-weight: 600;
+  line-height: var(--line-body);
+}
+.production-board-status {
+  background: var(--surface-card);
+  border-radius: var(--r-pill);
+  color: var(--text-secondary);
+  flex: none;
+  font-size: var(--type-micro);
+  padding: 2px var(--space-8px);
+}
+.production-board-meta {
+  color: var(--text-secondary);
+  font-size: var(--type-dense);
+}
+.production-board-code {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.production-board-next {
+  color: var(--state-info-ink);
+  font-size: var(--type-dense);
+  font-weight: 600;
+  margin-top: var(--space-4px);
+}
+.production-board-progress {
+  color: var(--text-secondary);
+  display: grid;
+  font-size: var(--type-dense);
+  gap: var(--space-4px);
+}
+.production-board-bar {
+  background: var(--surface-card);
+  border-radius: var(--r-pill);
+  display: block;
+  height: 4px;
+  overflow: hidden;
+}
+.production-board-bar > span {
+  background: var(--interactive-fill);
+  display: block;
+  height: 100%;
+}
+.production-board-date {
+  color: var(--text-secondary);
+  font-size: var(--type-dense);
+}
+.production-board-order .production-requires-person {
+  background: var(--state-person-soft);
+  border: 0;
+  border-radius: var(--r-pill);
+  color: var(--state-person-ink);
+  font-size: var(--type-micro);
+  font-weight: 500;
+  justify-self: start;
+  padding: 2px var(--space-8px);
+}
+
+/* Office board toolbar: scanner as a search field, filters as quiet pills. */
+.production-piece-scanner form {
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.production-scan-field {
+  display: flex;
+  flex: 1 1 22rem;
+  align-items: center;
+  gap: var(--space-8px);
+  min-height: 40px;
+  padding: 0 var(--space-6px) 0 var(--space-12px);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-pill);
+  background: var(--surface-panel);
+  color: var(--text-secondary);
+}
+.production-scan-field:focus-within {
+  border-color: var(--interactive);
+}
+.production-scan-field input {
+  flex: 1;
+  min-width: 0;
+  min-height: 36px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  outline: none;
+}
+.production-scan-open,
+.production-scan-camera,
+.production-refresh {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6px);
+  min-height: 32px;
+  padding: 0 var(--space-12px);
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--interactive-fill);
+  color: var(--text-on-fill);
+  font: inherit;
+  font-size: var(--type-dense);
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform var(--t-micro) var(--ease-in);
+}
+.production-scan-camera,
+.production-refresh {
+  min-height: 40px;
+  border: 1px solid var(--border-default);
+  background: var(--surface-panel);
+  color: var(--text-primary);
+  font-weight: 500;
+}
+.production-refresh {
+  width: 40px;
+  padding: 0;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+:is(.production-scan-open, .production-scan-camera, .production-refresh):active:not(:disabled) {
+  transform: scale(0.97);
+}
+@media (hover: hover) and (pointer: fine) {
+  :is(.production-scan-camera, .production-refresh):hover:not(:disabled) {
+    background: var(--surface-hover);
+  }
+}
+.production-board-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8px);
+  margin-bottom: var(--space-16px);
+}
+.production-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8px);
+  color: var(--text-secondary);
+  font-size: var(--type-dense);
+}
+.production-filter :is(select, input) {
+  min-height: 36px;
+  width: auto;
+  max-width: 18rem;
+  padding: 0 var(--space-12px);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-pill);
+  background-color: var(--surface-panel);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--type-dense);
+}
+.production-filter--date {
+  padding-left: var(--space-4px);
+}
+.production-board-filters .production-refresh {
+  min-height: 36px;
+  width: 36px;
+  margin-left: auto;
+}
+.production-scan-field input:focus-visible {
+  outline: none;
+}
+
+/* Operator: station picker and refresh share one row; the refresh is an
+   icon so the empty state keeps the only labelled «Actualizar». */
+.production-operator .production-station-choice {
+  align-items: center;
+}
+.production-operator .production-station-choice label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-12px);
+  color: var(--text-secondary);
+}
+.production-operator .production-refresh {
+  width: 48px;
+  min-height: 48px;
 }

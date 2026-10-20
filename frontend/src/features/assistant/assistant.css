@@ -1145,3 +1145,37 @@
   font-size: var(--type-dense);
   margin-inline-end: auto;
 }
+
+/* Context starting points under the companion. */
+.ask-dock__suggestions {
+  display: grid;
+  gap: var(--space-6px);
+  list-style: none;
+  margin: var(--space-12px) 0 0;
+  padding: 0;
+  width: min(100%, 22rem);
+}
+.ask-dock__suggestion {
+  background: var(--surface-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-2);
+  color: var(--text-primary);
+  font-weight: 400;
+  min-height: 38px;
+  padding: var(--space-8px) var(--space-12px);
+  text-align: left;
+  transition:
+    background var(--t-micro) var(--ease-in),
+    border-color var(--t-micro) var(--ease-in),
+    transform 160ms var(--ease-in);
+  width: 100%;
+}
+@media (hover: hover) and (pointer: fine) {
+  .ask-dock__suggestion:hover:not(:disabled) {
+    background: var(--surface-selected);
+    border-color: var(--interactive);
+  }
+}
+.ask-dock__suggestion:active:not(:disabled) {
+  transform: scale(0.98);
+}

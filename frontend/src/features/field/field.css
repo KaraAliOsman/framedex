@@ -205,3 +205,25 @@
     grid-column: 1 / -1;
   }
 }
+/* Office: the workspace already pads the page; filters read as one quiet
+   row of pills with inline labels, like the production board. */
+.field-page.field-office {
+  padding: 0;
+}
+.field-office .field-tools label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8px);
+  color: var(--text-secondary);
+  font-size: var(--type-dense);
+}
+.field-office .field-tools :is(input, select) {
+  min-height: 36px;
+  padding: 0 var(--space-12px);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-pill);
+  background-color: var(--surface-panel);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--type-dense);
+}

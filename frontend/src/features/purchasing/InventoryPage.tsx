@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { apiMutator } from "../../api/apiMutator";
 import type { InventoryStockItem } from "../../api/generated/models";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
-import { DeniedState, ErrorState, LoadingState, PageHeader, Qty } from "../../ui";
+import { DeniedState, ErrorState, Icon, LoadingState, PageHeader, Qty } from "../../ui";
 import { InventorySection } from "./InventorySection";
 import "./purchasing.css";
 
@@ -94,8 +94,8 @@ function InventoryWorkspace({
   return (
     <section className="purchasing-page inventory-page" data-density={density}>
       <PageHeader
-        title="Inventario"
-        context="Stock disponible, reservas y retazos de la organización"
+        title="Existencias"
+        context="Lo que tienes en bodega, lo reservado para obras y los retazos reutilizables."
       />
       {stock.isPending ? (
         <LoadingState label="Cargando stock" />
@@ -107,21 +107,23 @@ function InventoryWorkspace({
         />
       ) : (
         <section className="purchasing-stock" aria-label="Stock">
-          <h2>Stock</h2>
-          <label>
-            Buscar por código, nombre o ubicación
-            <input
-              type="search"
-              value={needle}
-              onChange={(e) => {
-                setNeedle(e.target.value);
-                setOffset(0);
-              }}
-            />
-          </label>
-          <div className="purchasing-index-filters">
-            <label>
-              Ordenar
+          <div className="inventory-toolbar">
+            <h2>Stock</h2>
+            <label className="inventory-search">
+              <Icon name="search" size={16} />
+              <span className="sr-only">Buscar por código, nombre o ubicación</span>
+              <input
+                type="search"
+                placeholder="Buscar por código, nombre o ubicación"
+                value={needle}
+                onChange={(e) => {
+                  setNeedle(e.target.value);
+                  setOffset(0);
+                }}
+              />
+            </label>
+            <label className="inventory-sort">
+              <span className="sr-only">Ordenar</span>
               <select
                 value={sort}
                 onChange={(e) => {
@@ -133,17 +135,17 @@ function InventoryWorkspace({
                 <option value="available">Mayor disponible</option>
               </select>
             </label>
-            <label>
-              <input
-                type="checkbox"
-                checked={showEmpty}
-                onChange={(e) => {
-                  setShowEmpty(e.target.checked);
-                  setOffset(0);
-                }}
-              />
-              Incluir materiales sin existencia
-            </label>
+            <button
+              type="button"
+              className="inventory-toggle"
+              aria-pressed={showEmpty}
+              onClick={() => {
+                setShowEmpty(!showEmpty);
+                setOffset(0);
+              }}
+            >
+              Incluir sin existencia
+            </button>
           </div>
           {stock.data.length === 0 ? (
             <p>No hay stock registrado. El taller puede registrar una recepción o un ajuste.</p>
@@ -226,7 +228,7 @@ function InventoryWorkspace({
                             ))}
                         </td>
                       ))}
-                      <td data-label="Ubicación">{item.racks || "Sin ubicación registrada"}</td>
+                      <td data-label="Ubicación">{item.racks || "Sin ubicación"}</td>
                     </tr>
                   ))}
                 </tbody>
