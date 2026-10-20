@@ -1396,13 +1396,18 @@ function ProjectWorkspace({
       const session = work.sessionId;
       const edit = /\/positions\/([^/]+)\/edit$/.exec(next.pathname);
       if (edit) return !session || edit[1] === session;
-      if (next.pathname.endsWith("/positions/new")) return !session || session === "new";
+      // From Mesa/Estudio, «/positions/new» widens the same unsaved window;
+      // from the new-window editor itself it starts another one, so it asks.
+      if (next.pathname.endsWith("/positions/new"))
+        return (
+          !session || (session === "new" && !routeLocation.pathname.endsWith("/positions/new"))
+        );
       const nextParams = new URLSearchParams(next.search);
       const studio = nextParams.get("view") === "estudio" && !nextParams.get("section");
       const position = nextParams.get("position");
       return !studio || !session || !position || position === session;
     },
-    [id, work.sessionId],
+    [id, work.sessionId, routeLocation.pathname],
   );
 
   // Workspace-first pattern (same as /clients and /production): land on the

@@ -1588,3 +1588,7 @@
   border: 0;
   background: transparent;
 }
+.catalog label.catalog-search {
+  display: flex;
+  align-items: center;
+}

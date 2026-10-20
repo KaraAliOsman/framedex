@@ -363,28 +363,30 @@
   }
 }
 
-.pricing-page label {
+:where(.pricing-page) label {
   display: grid;
   gap: 0.3rem;
 }
-.pricing-page input,
-.pricing-page select {
-  background: var(--theme-surface-panel);
-  color: var(--theme-text-primary);
-  border: 1px solid var(--theme-border-subtle);
-  padding: 0.6rem;
-  border-radius: 0.25rem;
+:where(.pricing-page) input,
+:where(.pricing-page) select {
+  background: var(--surface-panel);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  min-height: 36px;
+  padding: 0 var(--space-12px);
+  border-radius: var(--r-2);
+  font: inherit;
   min-width: 0;
 }
 .pricing-page input[type="checkbox"] {
   width: 1.25rem;
   height: 1.25rem;
 }
-.pricing-page button {
+:where(.pricing-page) button {
   padding: 0.55rem 0.8rem;
   cursor: pointer;
 }
-.pricing-page button:disabled {
+:where(.pricing-page) button:disabled {
   cursor: wait;
   opacity: 0.6;
 }
@@ -668,4 +670,20 @@
     display: block;
     width: auto;
   }
+}
+.pricing-records .pricing-reload {
+  display: inline-grid;
+  place-items: center;
+  justify-self: end;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-pill);
+  background: var(--surface-panel);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.project-prices > label {
+  max-width: 32rem;
 }

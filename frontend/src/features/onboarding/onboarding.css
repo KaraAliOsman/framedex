@@ -28,10 +28,6 @@
 .onboarding-card {
   display: grid;
   gap: var(--space-16px);
-  padding: var(--space-24px);
-  border: 1px solid var(--border-default);
-  background: var(--surface-sheet);
-  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
 }
 .onboarding-card h2 {
   margin: 0;
@@ -41,7 +37,7 @@
   display: grid;
   gap: var(--space-8px);
 }
-.onboarding-card input:not([type="checkbox"]) {
+.onboarding-card :is(input:not([type="checkbox"]), select) {
   min-width: 0;
   width: 100%;
   min-height: var(--control-height);

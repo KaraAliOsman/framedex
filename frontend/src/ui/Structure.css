@@ -55,28 +55,65 @@
   overflow-wrap: anywhere;
 }
 .ui-stepper {
+  counter-reset: ui-step;
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   list-style: none;
-  gap: var(--space-8px);
+  gap: var(--space-8px) var(--space-24px);
+  margin: 0;
   padding: 0;
 }
+/* Numbered steps, macOS Setup Assistant style: the number sits in a small
+   circle, filled for the current step and checked once completed. */
 .ui-stepper li {
+  counter-increment: ui-step;
   display: flex;
   align-items: center;
   gap: var(--space-8px);
   color: var(--text-secondary);
+  font-size: var(--type-label);
 }
-.ui-stepper li + li::before {
-  content: "›";
+.ui-stepper li::before {
+  content: counter(ui-step);
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-pill);
+  color: var(--text-secondary);
+  font-size: var(--type-micro);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 .ui-stepper [aria-current="step"] {
   color: var(--text-primary);
   font-weight: 600;
-  border-block-end: 2px solid var(--interactive);
 }
-.ui-stepper [data-complete]::after {
+.ui-stepper [aria-current="step"]::before {
+  border-color: var(--interactive-fill);
+  background: var(--interactive-fill);
+  color: var(--text-on-fill);
+}
+.ui-stepper [data-complete]::before {
   content: "✓";
+  border-color: transparent;
+  background: var(--surface-selected);
+  color: var(--interactive);
+}
+.ui-stepper li > .ui-button {
+  min-height: 32px;
+  padding: 0 var(--space-4px);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+.ui-stepper li > .ui-button:disabled {
+  border: 0;
+  opacity: 1;
 }
 .ui-stat {
   display: grid;

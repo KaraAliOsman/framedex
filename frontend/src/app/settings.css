@@ -341,3 +341,23 @@
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-2);
 }
+/* Sub-sections inside a card breathe: a hairline above, room around. */
+.settings-card h3 {
+  margin: var(--space-24px) 0 var(--space-8px);
+  padding-top: var(--space-16px);
+  border-top: 1px solid var(--border-subtle);
+}
+.settings-card > h2 + p + h3,
+.settings-card > h2 + h3 {
+  margin-top: var(--space-8px);
+  padding-top: 0;
+  border-top: 0;
+}
+/* Inside Ajustes the editors get the room: the PDF preview stays a
+   narrower companion and audited editors stack in one column. */
+.settings-with-preview {
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 22rem);
+}
+.settings-content .pricing-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
