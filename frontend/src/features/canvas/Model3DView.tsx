@@ -18,6 +18,7 @@ import type { MaterialMode } from "./materials3d";
 import type { LeafPoseMode, LeafPoseState } from "./poses3d";
 import { STUDIO_TONE_MAPPING, type CameraPreset } from "./studioRig3d";
 import { webglAvailable } from "./webglAvailable";
+import { Icon } from "../../ui/Icon";
 import { finishTextureAvailable, prepareFinishTextures } from "./finishMaterials3d";
 
 const NOOP = () => {};
@@ -192,50 +193,72 @@ export default function Model3DView({
   return (
     <div className="model3d-view" data-view={preset}>
       <div className="model3d-toolbar" role="toolbar" aria-label="Cámara y presentación 3D">
-        {(
-          [
-            ["interior", "Interior"],
-            ["exterior", "Exterior"],
-            ["detail", "Detalle"],
-          ] as const
-        ).map(([value, label]) => (
+        <div className="ui-segmented model3d-segmented" role="group" aria-label="Cámara">
+          {(
+            [
+              ["interior", "Interior"],
+              ["exterior", "Exterior"],
+              ["detail", "Detalle"],
+            ] as const
+          ).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={preset === value}
+              className={preset === value ? "is-active" : ""}
+              onClick={() => setPreset(value)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <div className="ui-segmented model3d-segmented" role="group" aria-label="Lectura">
           <button
-            key={value}
             type="button"
-            aria-pressed={preset === value}
-            className={preset === value ? "is-active" : ""}
-            onClick={() => setPreset(value)}
+            aria-pressed={mode === "commercial"}
+            onClick={() => setMode("commercial")}
           >
-            {label}
+            Comercial
           </button>
-        ))}
-        <button type="button" aria-pressed={wall} onClick={() => setWall((value) => !value)}>
-          Muro
-        </button>
-        <button type="button" disabled={!exportReady} onClick={download}>
-          Descargar imagen
+          <button
+            type="button"
+            aria-pressed={mode === "technical"}
+            onClick={() => setMode("technical")}
+          >
+            Técnica
+          </button>
+        </div>
+        <button
+          type="button"
+          className="model3d-icon-button model3d-download"
+          aria-label="Descargar imagen"
+          title="Descargar imagen"
+          disabled={!exportReady}
+          onClick={download}
+        >
+          <Icon name="download" size={16} />
         </button>
       </div>
-      <div className="model3d-toolbar" role="toolbar" aria-label="Lectura de la ventana">
+      <div className="model3d-toolbar model3d-toolbar--toggles" role="toolbar" aria-label="Capas">
         <button
           type="button"
-          aria-pressed={mode === "commercial"}
-          onClick={() => setMode("commercial")}
+          className="model3d-toggle-chip"
+          aria-pressed={wall}
+          onClick={() => setWall((value) => !value)}
         >
-          Comercial
+          Muro
         </button>
         <button
           type="button"
-          aria-pressed={mode === "technical"}
-          onClick={() => setMode("technical")}
+          className="model3d-toggle-chip"
+          aria-pressed={clip}
+          onClick={() => setClip((value) => !value)}
         >
-          Técnica
-        </button>
-        <button type="button" aria-pressed={clip} onClick={() => setClip((value) => !value)}>
           Corte
         </button>
         <button
           type="button"
+          className="model3d-toggle-chip"
           aria-pressed={explode}
           onClick={() => {
             setStates({});
@@ -291,7 +314,7 @@ export default function Model3DView({
             </div>
           </details>
         )}
-        <span className="model3d-face" aria-live="polite">
+        <span className="model3d-face sr-only" aria-live="polite">
           Vista{" "}
           {preset === "exterior" ? "exterior" : preset === "detail" ? "de detalle" : "interior"}
         </span>

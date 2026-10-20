@@ -4,6 +4,7 @@ import { ApiError } from "../../api/apiMutator";
 import { ErrorState, LoadingState, Qty, useConfirm } from "../../ui";
 import { ValidatedForm } from "../../ui/FormValidation";
 import { formatDecimal } from "../../format";
+import { Icon } from "../../ui/Icon";
 
 type Request = <T>(path: string, method?: string, body?: unknown) => Promise<T>;
 type Need = {
@@ -177,10 +178,12 @@ export function PurchaseNeeds({
       ))}
       <ValidatedForm onSubmit={(event) => void submit(event)}>
         {proposal && proposal.lines.length > 0 && (
-          <label>
-            Buscar material, proveedor, proyecto u OT
+          <label className="ui-search-pill purchase-needs-search">
+            <Icon name="search" size={16} />
             <input
               type="search"
+              aria-label="Buscar material, proveedor, proyecto u OT"
+              placeholder="Buscar material, proveedor, proyecto u OT"
               value={filter}
               onChange={(e) => {
                 setFilter(e.target.value);

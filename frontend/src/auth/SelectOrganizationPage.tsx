@@ -4,7 +4,7 @@ import { Navigate } from "react-router-dom";
 import { t } from "../i18n/es-CL";
 import { Wordmark } from "../brand/Brand";
 import { roleLabel } from "../app/shellUtils";
-import { StatusBadge } from "../ui";
+import { Icon } from "../ui/Icon";
 
 import { useAuthSession } from "./AuthSessionProvider";
 import { consumeReturnTo } from "./returnTo";
@@ -50,10 +50,8 @@ export function SelectOrganizationPage(): JSX.Element {
                     {pending ? t("org.pending") : t("org.enter")}
                   </span>
                 </span>
-                <StatusBadge
-                  tone={membership.role === "OWNER" ? "info" : "neutral"}
-                  label={t(roleLabel[membership.role])}
-                />
+                <span className="org-option__role">{t(roleLabel[membership.role])}</span>
+                <Icon name="chevronRight" size={16} />
               </button>
             );
           })}

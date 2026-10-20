@@ -1574,3 +1574,17 @@
   height: 40px;
   width: 40px;
 }
+.catalog-search.ui-search-pill {
+  width: 100%;
+  margin: var(--space-12px) 0 var(--space-8px);
+}
+.sheet-formats-note {
+  color: var(--text-secondary);
+  font-size: var(--type-dense);
+  margin: 0;
+}
+.catalog .catalog-search input {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}

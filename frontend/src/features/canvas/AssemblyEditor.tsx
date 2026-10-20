@@ -99,6 +99,7 @@ import { ExtrasInspector } from "../projects/ExtrasInspector";
 import { MountingInspector } from "../projects/MountingInspector";
 import { MountingDimensions } from "../projects/MountingDimensions";
 import { SourceSummary } from "../../ui/SourceSummary";
+import { Icon } from "../../ui/Icon";
 
 /** §16 3D view: three.js + the scene builder stay out of the editing path —
  * the bundle only loads when the user opens the panel (lazy chunk), and
@@ -2099,6 +2100,7 @@ export function AssemblyEditor({
   libraryOpen = false,
   onLibraryToggle,
   library,
+  libraryTitle = "Biblioteca de tipologías",
   issuesOpen = false,
   onCloseIssues,
   onOpenIssues,
@@ -2122,6 +2124,8 @@ export function AssemblyEditor({
   libraryOpen?: boolean;
   onLibraryToggle?(): void;
   library?: JSX.Element;
+  /** Flyout title: the first decision (series) before the typologies. */
+  libraryTitle?: string;
   issuesOpen?: boolean;
   onCloseIssues?(): void;
   onOpenIssues?(): void;
@@ -2983,7 +2987,7 @@ export function AssemblyEditor({
       </div>
       {libraryOpen && library && (
         <EditorFlyout
-          title="Biblioteca de tipologías"
+          title={libraryTitle}
           onClose={() => onLibraryToggle?.()}
           className="editor-library"
         >
@@ -3122,22 +3126,24 @@ export function AssemblyEditor({
       >
         <div className="assembly-elevation">
           <div className="assembly-view-choices" role="group" aria-label="Cara visible del dibujo">
-            <button
-              type="button"
-              aria-pressed={viewFace === "interior"}
-              className="assembly-face"
-              onClick={() => setViewFace("interior")}
-            >
-              Vista interior
-            </button>
-            <button
-              type="button"
-              aria-pressed={viewFace === "exterior"}
-              className="assembly-face"
-              onClick={() => setViewFace("exterior")}
-            >
-              Vista exterior
-            </button>
+            <div className="ui-segmented assembly-face-group">
+              <button
+                type="button"
+                aria-pressed={viewFace === "interior"}
+                aria-label="Vista interior"
+                onClick={() => setViewFace("interior")}
+              >
+                Interior
+              </button>
+              <button
+                type="button"
+                aria-pressed={viewFace === "exterior"}
+                aria-label="Vista exterior"
+                onClick={() => setViewFace("exterior")}
+              >
+                Exterior
+              </button>
+            </div>
             {couplings.length > 0 && (
               <select
                 aria-label="Elevación del conjunto"
@@ -3153,7 +3159,10 @@ export function AssemblyEditor({
               </select>
             )}
             <details className="assembly-symbol-legend">
-              <summary>Simbología</summary>
+              <summary title="Simbología">
+                <Icon name="info" size={16} />
+                <span>Simbología</span>
+              </summary>
               <p>
                 Vértice hacia la manilla. Continuo: abre hacia usted. Discontinuo: se aleja. Flecha:
                 recorrido de la corredera.
@@ -3379,21 +3388,26 @@ export function AssemblyEditor({
               role="complementary"
               aria-label={t("assembly.view3d")}
             >
-              <div className="plan-inset__header">
-                <span>{t("assembly.view3d")}</span>
+              <div className="model3d-inset__header">
+                <h3>{t("assembly.view3d")}</h3>
                 <button
                   type="button"
+                  className="model3d-icon-button"
                   aria-pressed={view3dExpanded}
+                  aria-label={view3dExpanded ? "Reducir 3D" : "Ampliar 3D"}
+                  title={view3dExpanded ? "Reducir 3D" : "Ampliar 3D"}
                   onClick={() => setView3dExpanded((value) => !value)}
                 >
-                  {view3dExpanded ? "Reducir 3D" : "Ampliar 3D"}
+                  <Icon name={view3dExpanded ? "minimize" : "maximize"} size={16} />
                 </button>
                 <button
                   type="button"
+                  className="model3d-icon-button"
                   aria-label={t("assembly.hide3d")}
+                  title={t("assembly.hide3d")}
                   onClick={() => setView3dOpen(false)}
                 >
-                  ×
+                  <Icon name="close" size={16} />
                 </button>
               </div>
               <Suspense

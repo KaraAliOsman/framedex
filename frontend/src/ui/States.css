@@ -23,9 +23,46 @@
 .ui-empty__action {
   margin-block-start: var(--space-8px);
 }
-.ui-empty--error,
-.ui-empty--blocked {
+.ui-empty--error {
   border-color: var(--state-danger);
+}
+/* A missing requirement is a callout, not an empty page: the cause reads
+   left to right and the action that resolves it sits at the end. */
+.ui-empty.ui-empty--blocked {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "title action"
+    "body action";
+  justify-items: start;
+  align-items: center;
+  gap: var(--space-4px) var(--space-16px);
+  padding: var(--space-16px);
+  border: 0;
+  border-left: 3px solid var(--state-warning);
+  border-radius: var(--r-2);
+  background: var(--state-warning-soft);
+  text-align: left;
+}
+.ui-empty--blocked .ui-empty__title {
+  grid-area: title;
+  font-size: var(--type-body);
+  line-height: var(--line-body);
+}
+.ui-empty--blocked .ui-empty__body {
+  grid-area: body;
+  max-width: 72ch;
+  color: var(--text-primary);
+  font-size: var(--type-dense);
+}
+.ui-empty--blocked .ui-empty__action {
+  grid-area: action;
+  margin: 0;
+}
+@media (max-width: 640px) {
+  .ui-empty.ui-empty--blocked {
+    grid-template-columns: 1fr;
+    grid-template-areas: "title" "body" "action";
+  }
 }
 .ui-empty--denied {
   border-style: solid;

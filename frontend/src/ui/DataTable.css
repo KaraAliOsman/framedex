@@ -126,3 +126,6 @@
     grid-column: 1 / -1;
   }
 }
+.ui-table-filter {
+  margin-bottom: var(--space-12px);
+}

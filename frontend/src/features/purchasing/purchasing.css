@@ -16,13 +16,13 @@
 .purchasing-version {
   color: var(--text-secondary);
 }
-.purchasing-page label {
+:where(.purchasing-page) label {
   display: grid;
   gap: var(--space-1);
   margin: var(--space-2) 0;
 }
-.purchasing-page input,
-.purchasing-page select {
+:where(.purchasing-page) input,
+:where(.purchasing-page) select {
   background: var(--theme-surface-panel);
   color: var(--text-primary);
   border: 1px solid var(--border-subtle);
@@ -34,7 +34,7 @@
   width: 1.25rem;
   height: 1.25rem;
 }
-.purchasing-page button {
+:where(.purchasing-page) button {
   padding: var(--space-6px) var(--space-12px);
   cursor: pointer;
 }
@@ -692,4 +692,31 @@ button.inventory-toggle[aria-pressed="true"] {
   background: var(--surface-selected);
   border-color: var(--interactive);
   color: var(--state-info-ink);
+}
+
+/* Quantities line up on the right, under right-aligned headers. */
+.purchase-need-group th:nth-child(n + 2):nth-child(-n + 7),
+.purchase-need-group td:nth-child(n + 2):nth-child(-n + 7) {
+  text-align: right;
+}
+.purchase-need-group td:nth-child(7) a {
+  display: block;
+  margin-top: var(--space-4px);
+  font-size: var(--type-dense);
+}
+.purchase-need-group th:last-child,
+.purchase-need-group td:last-child {
+  max-width: 11rem;
+  color: var(--text-secondary);
+  font-size: var(--type-dense);
+}
+@media (min-width: 900px) {
+  .inventory-page .ui-stacked-table th:nth-child(n + 3):nth-child(-n + 6),
+  .inventory-page .ui-stacked-table td:nth-child(n + 3):nth-child(-n + 6) {
+    text-align: right;
+    white-space: nowrap;
+  }
+}
+.inventory-page .ui-stacked-table td:last-child {
+  color: var(--text-secondary);
 }

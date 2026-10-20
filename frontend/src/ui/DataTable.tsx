@@ -1,6 +1,7 @@
 import { type ReactNode, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { compareDecimal, formatDecimal } from "../decimal";
-import { Button, TextInput } from "./Controls";
+import { Button } from "./Controls";
+import { Icon } from "./Icon";
 import { BlockedState, DeniedState, EmptyState, ErrorState, LoadingState } from "./States";
 
 export type TableColumn<Row> = {
@@ -149,15 +150,19 @@ export function DataTable<Row>({
   return (
     <section className="ui-table-region" data-region={`tabla-${label}`} aria-label={label}>
       {filterable ? (
-        <TextInput
-          aria-label={`Filtrar ${label}`}
-          placeholder="Filtrar…"
-          value={filter}
-          onChange={(event) => {
-            setFilter(event.target.value);
-            resetScroll();
-          }}
-        />
+        <label className="ui-search-pill ui-table-filter">
+          <Icon name="search" size={16} />
+          <input
+            type="search"
+            aria-label={`Filtrar ${label}`}
+            placeholder={`Filtrar ${label}`}
+            value={filter}
+            onChange={(event) => {
+              setFilter(event.target.value);
+              resetScroll();
+            }}
+          />
+        </label>
       ) : null}
       {selectedIds.length ? (
         <div className="ui-table-selection" role="status">

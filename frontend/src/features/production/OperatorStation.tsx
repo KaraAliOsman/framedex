@@ -42,6 +42,7 @@ import {
 import { orderPieces, pieceMeasure, WorkOrderShortages } from "./WorkOrderParts";
 import { PieceScanner } from "./PieceScanner";
 import type { StationQueueGroup } from "./ProductionBoard";
+import { Icon } from "../../ui/Icon";
 
 type StationOp = {
   operation_id: string;
@@ -311,8 +312,15 @@ export function OperatorStationPage() {
                 ))}
               </select>
             </label>
-            <button type="button" disabled={busy} onClick={() => void reload()}>
-              Actualizar estación
+            <button
+              type="button"
+              className="production-refresh"
+              aria-label="Actualizar estación"
+              title="Actualizar estación"
+              disabled={busy}
+              onClick={() => void reload()}
+            >
+              <Icon name="refresh" size={20} />
             </button>
           </div>
           <PieceScanner

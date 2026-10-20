@@ -523,7 +523,11 @@ function AnalyticsWorkspace(): JSX.Element {
                             onClick={() => openWorkMetric(w, "real_margin")}
                           >
                             <AnalyticValue value={w.real_margin} unit="fraction" />
-                            {w.reason && <small>{w.reason}</small>}
+                            {w.reason && (
+                              <small className="analytics-reason" title={w.reason}>
+                                Ver qué falta
+                              </small>
+                            )}
                           </button>
                         ),
                       },

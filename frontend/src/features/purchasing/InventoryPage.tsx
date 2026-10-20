@@ -228,7 +228,7 @@ function InventoryWorkspace({
                             ))}
                         </td>
                       ))}
-                      <td data-label="Ubicación">{item.racks || "Sin ubicación registrada"}</td>
+                      <td data-label="Ubicación">{item.racks || "Sin ubicación"}</td>
                     </tr>
                   ))}
                 </tbody>

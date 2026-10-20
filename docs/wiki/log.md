@@ -2079,3 +2079,16 @@ globales heredadas que repintaban componentes, rehace Inicio, Obra, editor,
 tarjetas de Taller, la vista previa de cotización sin precio aplicado y el 3D
 de PVC (silueta por familia, ingletes soldados). Sin commit todavía.
 
+
+## 2026-10-19 · Rediseño completo, segunda pasada («rediseñar todo»)
+
+Se recorren todas las superficies con capturas a 1440×900 por rol (estimador,
+jefe de taller, operario, cliente del portal con datos simulados). Ventana
+nueva: la biblioteca pregunta primero la serie y la elige en un clic; editor
+con controles segmentados, panel 3D ordenado y cotas que no tachan su cifra.
+Taller: escáner como campo de búsqueda, causas como filtros, detalle de OT con
+requisito en línea. Acceso, Ajustes, Analítica, Compras, Existencias, Catálogo,
+Formatos de lámina y portal reciben la misma gramática. Las reglas heredadas de
+`.projects-page`, `.purchasing-page` y `.portal-page` pasan a especificidad cero
+(`:where`) para que los componentes del sistema manden. El estimador ya no ve
+la pestaña de listas de costo que le negaba el acceso: llega a reglas comerciales.

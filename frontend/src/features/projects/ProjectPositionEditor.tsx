@@ -972,6 +972,12 @@ function PositionWorkspace({
       </dl>
     </section>
   );
+  function chooseSystem(next: string | null): void {
+    if (inputs.systemId === next) return;
+    useCanvasStore.getState().commitInputs({ ...inputs, systemId: next });
+    setMessage("");
+    onAssemblyChanged();
+  }
   return (
     <section
       className={`projects-page position-editor position-editor--${presentation}`}
@@ -1030,14 +1036,7 @@ function PositionWorkspace({
               aria-label={t("projects.system")}
               disabled={busy || readOnly}
               value={systemId}
-              onChange={(e) => {
-                const next = e.target.value || null;
-                if (inputs.systemId !== next) {
-                  useCanvasStore.getState().commitInputs({ ...inputs, systemId: next });
-                  setMessage("");
-                  onAssemblyChanged();
-                }
-              }}
+              onChange={(e) => chooseSystem(e.target.value || null)}
             >
               <option value="">{t("projects.chooseSystem")}</option>
               {systemId &&
@@ -1167,37 +1166,43 @@ function PositionWorkspace({
         >
           <Icon name="redo" />
         </button>
-        <EditorPriceChip
-          organizationId={orgId}
-          inputs={inputs}
-          quantity={quantity}
-          pending={calculationState.pending}
-          ready={Boolean(
-            result && options.data && !assemblyUnsaveable && !quantityInvalid && !colorUndeclared,
-          )}
-        />
-        <button
-          type="button"
-          className="editor-chip editor-verdict"
-          aria-expanded={issuesOpen}
-          aria-controls="editor-missing"
-          title="Revisar qué falta"
-          onClick={() => setIssuesOpen((open) => !open)}
-        >
-          {!systemId
-            ? "Elegir serie"
-            : systems.isError || options.isError || calculationState.error
-              ? "Error de cálculo"
-              : saveBlockReason
-                ? "Bloqueado"
-                : !assemblyEval || calculationState.pending
-                  ? "Calculando…"
-                  : assemblyUnsaveable
-                    ? "Bloqueado"
-                    : assemblyEval.issues.length
-                      ? `${assemblyEval.issues.length} avisos`
-                      : "Válido"}
-        </button>
+        {systemId ? (
+          <>
+            <EditorPriceChip
+              organizationId={orgId}
+              inputs={inputs}
+              quantity={quantity}
+              pending={calculationState.pending}
+              ready={Boolean(
+                result &&
+                options.data &&
+                !assemblyUnsaveable &&
+                !quantityInvalid &&
+                !colorUndeclared,
+              )}
+            />
+            <button
+              type="button"
+              className="editor-chip editor-verdict"
+              aria-expanded={issuesOpen}
+              aria-controls="editor-missing"
+              title="Revisar qué falta"
+              onClick={() => setIssuesOpen((open) => !open)}
+            >
+              {systems.isError || options.isError || calculationState.error
+                ? "Error de cálculo"
+                : saveBlockReason
+                  ? "Bloqueado"
+                  : !assemblyEval || calculationState.pending
+                    ? "Calculando…"
+                    : assemblyUnsaveable
+                      ? "Bloqueado"
+                      : assemblyEval.issues.length
+                        ? `${assemblyEval.issues.length} avisos`
+                        : "Válido"}
+            </button>
+          </>
+        ) : null}
         <button
           type="button"
           className="ui-button ui-button--primary editor-save"
@@ -1305,6 +1310,7 @@ function PositionWorkspace({
             quantity={quantityInvalid ? 1 : Number(quantity)}
             libraryOpen={libraryOpen}
             onLibraryToggle={() => setLibraryOpen((open) => !open)}
+            libraryTitle={systemId ? "Biblioteca de tipologías" : "¿Con qué serie la fabricas?"}
             library={
               options.isError ? (
                 <ErrorState
@@ -1312,7 +1318,13 @@ function PositionWorkspace({
                   onRetry={() => void options.refetch()}
                 />
               ) : systemId.length === 0 ? (
-                <p>Elige una serie para ver sus tipologías compatibles.</p>
+                <SeriesChooser
+                  systems={systems.data}
+                  failed={systems.isError}
+                  disabled={busy || readOnly}
+                  onRetry={() => void systems.refetch()}
+                  onPick={chooseSystem}
+                />
               ) : options.data === undefined ? (
                 <LoadingState label="Cargando las tipologías compatibles" />
               ) : (
@@ -1541,5 +1553,75 @@ function CutBar({ lengthMm, maxMm }: { lengthMm: number; maxMm: number }): JSX.E
     <span className="cut-bar" aria-hidden="true">
       <span style={{ width: `${pct}%` }} />
     </span>
+  );
+}
+
+type SeriesSummary = { id: string; code: string; name: string; system_family: string | null };
+
+/** First decision of a new window: the series, picked in one click from the
+ * same quote-ready list the strip offers (company first, DEMO apart). */
+function SeriesChooser({
+  systems,
+  failed,
+  disabled,
+  onRetry,
+  onPick,
+}: {
+  systems?: (SeriesSummary & { quote_ready: boolean; is_demo: boolean })[];
+  failed: boolean;
+  disabled: boolean;
+  onRetry(): void;
+  onPick(systemId: string): void;
+}): JSX.Element {
+  if (failed) return <ErrorState title="No se pudieron cargar las series" onRetry={onRetry} />;
+  if (systems === undefined) return <LoadingState label="Cargando las series" />;
+  const company = systems.filter(isCompanySeries);
+  const lab = systems.filter((system) => system.quote_ready && system.is_demo);
+  if (company.length + lab.length === 0)
+    return (
+      <p className="series-chooser__empty">
+        No hay series listas para cotizar. Complétalas en{" "}
+        <Link to="/catalogs/systems">Catálogo</Link>.
+      </p>
+    );
+  const group = (title: string, items: SeriesSummary[], demo: boolean): JSX.Element | null =>
+    items.length ? (
+      <section className="series-chooser__group" aria-label={title}>
+        <h3>{title}</h3>
+        <ul>
+          {items.map((system) => (
+            <li key={system.id}>
+              <button
+                type="button"
+                className="series-chooser__option"
+                disabled={disabled}
+                onClick={() => onPick(system.id)}
+              >
+                <span className="series-chooser__name">
+                  {system.name.replace(/\s*·\s*DEMO\s*$/u, "")}
+                </span>
+                <span className="series-chooser__meta">
+                  {[
+                    system.system_family ? domainLabel(system.system_family) : null,
+                    demo ? "DEMO" : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </span>
+                <Icon name="chevronRight" size={16} />
+              </button>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ) : null;
+  return (
+    <div className="series-chooser">
+      <p className="series-chooser__lead">
+        La serie define perfiles, aperturas y vidrios posibles. Puedes cambiarla después.
+      </p>
+      {group("Series de la empresa", company, false)}
+      {group("Laboratorio · DEMO sin certificación", lab, true)}
+    </div>
   );
 }

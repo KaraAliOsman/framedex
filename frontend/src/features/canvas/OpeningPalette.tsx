@@ -9,6 +9,8 @@ import { t } from "../../i18n/es-CL";
 import { dismissFloatingLayers } from "../../ui/floatingLayer";
 import type { Opening } from "./intentEditing";
 import { OpeningGlyph } from "./ProductFrontSvg";
+import { useCanvasStore } from "./canvasStore";
+import { Icon } from "../../ui/Icon";
 
 /** Why no opening choice can be offered right now — never a universal
  * palette as a fallback (dirección final 03, aperturas):
@@ -20,6 +22,9 @@ export function OpeningOptionsState({
 }: {
   state: "loading" | "error" | "missing";
 }): JSX.Element {
+  const systemChosen = useCanvasStore((store) => store.inputs.systemId !== null);
+  if (state === "loading" && !systemChosen)
+    return <p className="assembly-hint">Las aperturas aparecen al elegir la serie.</p>;
   if (state === "loading")
     return (
       <p className="assembly-hint" role="status">
@@ -202,7 +207,10 @@ export function OpeningPalette({
           disabled={disabled}
         >
           <span>Apertura</span>
-          <span>{currentLabel}</span>
+          <span>
+            {currentLabel}
+            <Icon name="chevronDown" size={16} />
+          </span>
         </button>
       }
     >

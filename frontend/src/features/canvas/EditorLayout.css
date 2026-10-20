@@ -314,6 +314,11 @@
 }
 .position-editor .assembly-inspector .assembly-field input {
   box-sizing: border-box;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-1);
+  background: var(--surface-panel);
+  color: var(--text-primary);
+  text-align: right;
   font-family: var(--font-mono);
   min-height: 28px;
   height: 28px;
@@ -353,16 +358,46 @@
   width: 100%;
 }
 .position-editor .assembly-inspector .editor-opening-trigger {
+  /* Same row grammar as «Vidrio»: label left, a select-like value right. */
   display: flex;
   flex-direction: row;
-  align-items: baseline;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
   width: 100%;
   min-height: 28px;
-  padding: var(--space-1);
+  margin-block: var(--space-1);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
 }
 .editor-opening-trigger > span:last-child {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  box-sizing: border-box;
+  width: 196px;
+  max-width: 100%;
   min-width: 0;
+  min-height: 28px;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-1);
+  background: var(--surface-panel);
+  color: var(--text-primary);
+  font-weight: 500;
   overflow-wrap: anywhere;
+}
+.editor-opening-trigger > span:last-child > svg {
+  flex: none;
+  color: var(--text-secondary);
+}
+@media (hover: hover) and (pointer: fine) {
+  .editor-opening-trigger:hover:not(:disabled) > span:last-child {
+    border-color: var(--text-secondary);
+  }
 }
 .assembly-inspector .glass-selector--compact .glass-help {
   margin: var(--space-1) 0;
@@ -489,20 +524,65 @@
   padding: 0;
 }
 .starter-family h4 {
-  margin: var(--space-3) 0 var(--space-2);
-  font-size: var(--type-label);
+  margin: var(--space-4) 0 var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--type-micro);
+  font-weight: 600;
 }
 .starter-family > div {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-2);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-3) var(--space-2);
 }
+/* Library cards read like a Finder icon view: the drawing is the card,
+   the name sits under it, the description lives in the tooltip. */
 .editor-library .starter-card {
   min-width: 0;
   width: 100%;
+  gap: var(--space-2);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  border-radius: var(--r-2);
+  text-align: center;
+  transition: transform var(--t-micro) var(--ease-in);
+}
+.editor-library .starter-card:active:not(:disabled) {
+  transform: scale(0.97);
 }
 .editor-library .starter-thumb {
   height: 96px;
+  padding: var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--r-2);
+  background: var(--surface-card);
+  transition:
+    border-color var(--t-state) ease,
+    background-color var(--t-state) ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .editor-library .starter-card:hover:not(:disabled) .starter-thumb {
+    border-color: var(--border-default);
+    background: var(--surface-panel);
+  }
+}
+.editor-library .starter-card:focus-visible {
+  outline: none;
+}
+.editor-library .starter-card:focus-visible .starter-thumb {
+  outline: 2px solid var(--interactive);
+  outline-offset: 1px;
+}
+.editor-library .starter-card-title {
+  font-size: var(--type-dense);
+  font-weight: 500;
+}
+.editor-library .starter-card-hint {
+  display: none;
+}
+.editor-library .starter-search {
+  max-width: none;
+  margin-bottom: var(--space-3);
 }
 .editor-library .starter-thumb [role="button"],
 .editor-library .starter-thumb foreignObject {
@@ -511,6 +591,11 @@
 .editor-library .starter-search input {
   width: 100%;
   box-sizing: border-box;
+  min-height: var(--density-compact);
+  padding-inline: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-pill);
+  background: var(--surface-card);
 }
 .editor-operation-message {
   position: absolute;
@@ -784,4 +869,193 @@
   font-size: var(--type-dense);
   font-weight: 500;
   min-height: 32px;
+}
+.series-chooser {
+  display: grid;
+  gap: var(--space-4);
+}
+.series-chooser__lead,
+.series-chooser__empty {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--type-dense);
+}
+.series-chooser__group h3 {
+  margin: 0 0 var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--type-micro);
+  font-weight: 600;
+}
+.series-chooser__group ul {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-2);
+  list-style: none;
+}
+.series-chooser__group li + li {
+  border-top: 1px solid var(--border-subtle);
+}
+.series-chooser__option {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "name chevron"
+    "meta chevron";
+  align-items: center;
+  column-gap: var(--space-3);
+  width: 100%;
+  min-height: var(--density-loose);
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--t-state) ease;
+}
+.series-chooser__option > svg {
+  grid-area: chevron;
+  color: var(--text-small-muted);
+}
+.series-chooser__name {
+  grid-area: name;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.series-chooser__meta {
+  grid-area: meta;
+  color: var(--text-secondary);
+  font-size: var(--type-dense);
+}
+.series-chooser__meta:empty {
+  display: none;
+}
+.series-chooser__option:active {
+  background: var(--surface-active);
+}
+@media (hover: hover) and (pointer: fine) {
+  .series-chooser__option:hover {
+    background: var(--surface-hover);
+  }
+}
+.series-chooser__option:focus-visible {
+  outline: 2px solid var(--interactive);
+  outline-offset: -2px;
+}
+
+/* Inspector chrome: the tabs are the title — no second «Inspector» label on
+   desktop; one segmented control that never overflows the panel. */
+@media (min-width: 1100px) {
+  .assembly-side .editor-inspector-header {
+    display: none;
+  }
+}
+.assembly-side .detail-levels {
+  box-sizing: border-box;
+  margin: var(--space-3) var(--space-3) 0;
+  padding: 3px;
+  gap: 2px;
+  border: 0;
+  border-radius: var(--r-2);
+  background: var(--surface-active);
+}
+.position-editor .assembly-side .detail-levels__btn {
+  min-height: 28px;
+  border-radius: calc(var(--r-2) - 3px);
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+.position-editor .assembly-side .detail-levels__btn.is-active {
+  background: var(--surface-panel);
+  box-shadow: var(--sheet);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.assembly-inspector .inspector-actions {
+  margin-top: var(--space-2);
+}
+.assembly-inspector .inspector-actions .ghost-button {
+  width: 100%;
+}
+
+/* Drawing face and legend float as one quiet island over the sheet. */
+.assembly-editor .assembly-elevation > .assembly-view-choices {
+  gap: var(--space-2);
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.assembly-face-group > button {
+  min-height: 28px;
+  padding: 0 var(--space-3);
+  font-size: var(--type-dense);
+}
+.assembly-face-group {
+  box-shadow: var(--sheet);
+}
+.assembly-editor .assembly-view-choices select {
+  min-height: 30px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-pill);
+  background-color: var(--surface-panel);
+  font-size: var(--type-dense);
+}
+.assembly-editor .assembly-view-choices .assembly-symbol-legend {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.assembly-editor .assembly-symbol-legend > summary {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-pill);
+  background: var(--surface-panel);
+  box-shadow: var(--sheet);
+  color: var(--text-secondary);
+  list-style: none;
+  cursor: pointer;
+}
+.assembly-editor .assembly-symbol-legend > summary::-webkit-details-marker {
+  display: none;
+}
+.assembly-editor .assembly-symbol-legend > summary > span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.assembly-editor .assembly-symbol-legend[open] > summary {
+  color: var(--interactive);
+}
+.assembly-editor .assembly-symbol-legend[open] > p {
+  width: 300px;
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-panel);
+  color: var(--text-primary);
+  font-size: var(--type-dense);
+  line-height: 1.4;
+}
+.assembly-editor .assembly-symbol-legend[open] {
+  position: relative;
+}
+.assembly-editor .assembly-symbol-legend[open] > p:first-of-type {
+  margin-top: var(--space-2);
+  padding-top: var(--space-3);
+  border-radius: var(--r-2) var(--r-2) 0 0;
+  box-shadow: var(--e2);
+}
+.assembly-editor .assembly-symbol-legend[open] > p:last-of-type {
+  padding-bottom: var(--space-3);
+  border-radius: 0 0 var(--r-2) var(--r-2);
 }

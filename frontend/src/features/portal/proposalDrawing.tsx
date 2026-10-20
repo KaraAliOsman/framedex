@@ -62,42 +62,48 @@ function Drawing({
   return (
     <>
       <div className="portal-drawing-controls" aria-label="Vista del dibujo">
-        <button
-          type="button"
-          aria-pressed={view === "elevation"}
-          onClick={() => {
-            setView("elevation");
-            reset();
-          }}
-        >
-          Técnica
-        </button>
-        <button
-          type="button"
-          aria-pressed={view === "studio"}
-          onClick={() => {
-            setView("studio");
-            reset();
-          }}
-        >
-          Comercial
-        </button>
-        <button
-          type="button"
-          aria-pressed={view === "three"}
-          onClick={() => {
-            setView("three");
-            reset();
-          }}
-        >
-          Ver en 3D
-        </button>
+        <div className="ui-segmented portal-drawing-views" role="group" aria-label="Lectura">
+          <button
+            type="button"
+            aria-pressed={view === "elevation"}
+            onClick={() => {
+              setView("elevation");
+              reset();
+            }}
+          >
+            Técnica
+          </button>
+          <button
+            type="button"
+            aria-pressed={view === "studio"}
+            onClick={() => {
+              setView("studio");
+              reset();
+            }}
+          >
+            Comercial
+          </button>
+          <button
+            type="button"
+            aria-pressed={view === "three"}
+            onClick={() => {
+              setView("three");
+              reset();
+            }}
+          >
+            3D
+          </button>
+        </div>
         {view !== "three" && (
           <button
             type="button"
+            className="portal-drawing-face"
+            title={
+              face === "interior" ? "Mostrando el lado interior" : "Mostrando el lado exterior"
+            }
             onClick={() => setFace(face === "interior" ? "exterior" : "interior")}
           >
-            Vista {face === "interior" ? "interior" : "exterior"}
+            {face === "interior" ? "Ver desde afuera" : "Ver desde adentro"}
           </button>
         )}
       </div>

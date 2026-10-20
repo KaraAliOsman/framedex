@@ -829,7 +829,7 @@ export function GlassSelector({
           })}
         </div>
       )}
-      {!node.glass_article_sku && <p className="glass-help">{t("glass.choose")}</p>}
+      {options && !node.glass_article_sku && <p className="glass-help">{t("glass.choose")}</p>}
       <Findings preview={selectedPreview} />
       {selectedPreview?.findings.some((finding) => finding.code !== "tempered_exact") &&
         selectedPreview.alternative_skus

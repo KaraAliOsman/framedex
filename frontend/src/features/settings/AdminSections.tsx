@@ -141,7 +141,7 @@ export function CompanyCard({
           }}
         >
           <fieldset disabled={busy || !canEdit}>
-            <legend>Empresa</legend>
+            <legend className="sr-only">Empresa</legend>
             <label>
               Razón social
               <input

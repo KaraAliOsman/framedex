@@ -1232,8 +1232,10 @@ function ProjectActivity({
       ) : (
         events.slice(0, 14).map((event) => (
           <li key={event.key}>
-            <span className="project-activity__label">{t(event.labelKey)}</span>
-            {event.detail && <span className="project-activity__detail">{event.detail}</span>}
+            <span>
+              <span className="project-activity__label">{t(event.labelKey)}</span>
+              {event.detail && <span className="project-activity__detail">{event.detail}</span>}
+            </span>
             <time dateTime={event.at}>{formatDateTime(event.at)}</time>
           </li>
         ))
@@ -1877,16 +1879,6 @@ function ProjectWorkspace({
                 <ProjectActivity project={project} orgId={orgId} />
               </section>
             )}
-            {/* Services (installation, sealing, freight) change the price: they
-             * live with the price, not over the windows. */}
-            {openSection === "pricing" && (
-              <ProjectServicesPanel
-                key={`${orgId}:${project.id}:${project.current_revision}`}
-                projectId={project.id}
-                orgId={orgId}
-                canWrite={canWrite}
-              />
-            )}
             {["pricing", "production", "documents"].includes(openSection ?? "") && (
               <Suspense fallback={<p role="status">Cargando el flujo de la obra…</p>}>
                 <ProjectFlowPanels
@@ -1898,6 +1890,16 @@ function ProjectWorkspace({
                   onCompare={() => setOpenSection("compare")}
                 />
               </Suspense>
+            )}
+            {/* Services (installation, sealing, freight) change the price: they
+             * live with the price, not over the windows. */}
+            {openSection === "pricing" && (
+              <ProjectServicesPanel
+                key={`${orgId}:${project.id}:${project.current_revision}`}
+                projectId={project.id}
+                orgId={orgId}
+                canWrite={canWrite}
+              />
             )}
             {showPosition &&
               (() => {

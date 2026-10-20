@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ValidatedForm } from "../../ui";
+import { Icon } from "../../ui/Icon";
 import jsQR from "jsqr";
 
 type Detector = { detect: (source: HTMLVideoElement) => Promise<{ rawValue: string }[]> };
@@ -93,29 +94,34 @@ export function PieceScanner({
           onScan(value);
         }}
       >
-        <label>
-          Escanea la etiqueta o ingresa su código
+        <label className="production-scan-field">
+          <Icon name="hash" size={16} />
           <input
             autoFocus
             aria-label="Código de etiqueta"
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            placeholder="P01-U02-M03"
+            placeholder="Escanea la etiqueta o escribe su código · P01-U02-M03"
           />
+          {value.trim() ? (
+            <button type="submit" className="production-scan-open" disabled={busy}>
+              {busy ? "Buscando…" : "Abrir pieza"}
+            </button>
+          ) : null}
         </label>
-        <button type="submit" disabled={busy || !value.trim()}>
-          {busy ? "Buscando pieza…" : "Abrir pieza"}
-        </button>
         {available ? (
           <button
             type="button"
+            className="production-scan-camera"
+            aria-pressed={camera}
             disabled={busy}
             onClick={() => {
               setError("");
               setCamera(!camera);
             }}
           >
-            {camera ? "Cerrar cámara" : "Escanear con cámara"}
+            <Icon name={camera ? "close" : "image"} size={16} />
+            {camera ? "Cerrar cámara" : "Cámara"}
           </button>
         ) : null}
       </ValidatedForm>

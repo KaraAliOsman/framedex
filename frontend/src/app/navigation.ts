@@ -73,7 +73,10 @@ const AREAS: NavArea[] = [
     owns: ["/settings", "/analytics", "/pricing/cost-lists", "/jobs", "/assistant"],
     sections: [
       { to: "/settings/general", label: "nav.preferences", roles: office },
-      { to: "/pricing/cost-lists", label: "nav.costs", roles: commercial },
+      // Cost lists are owner-only; the estimator lands on the commercial
+      // rules it can actually use instead of a denied page.
+      { to: "/pricing/cost-lists", label: "nav.costs", roles: ["OWNER"] },
+      { to: "/pricing/commercial", label: "nav.costs", roles: ["ESTIMATOR"] },
       { to: "/analytics", label: "nav.analytics", roles: ["OWNER", "WORKSHOP_MANAGER"] },
       { to: "/settings/billing", label: "nav.plan", roles: office },
     ],

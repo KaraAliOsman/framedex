@@ -95,6 +95,7 @@ import { OperatorStepCard, type QcCheckInput } from "./OperatorCard";
 import { TracePieceMatches } from "./TraceView";
 import type { PieceMatch } from "./TraceView";
 import "./production.css";
+import { Icon } from "../../ui/Icon";
 
 function stockUnitLabel(unit?: string): string {
   if (!unit) return "Sin dato";
@@ -1448,7 +1449,8 @@ function ProductionOfficePage(): JSX.Element {
                 setParams(url);
               }}
             >
-              Volver al tablero
+              <Icon name="chevronLeft" size={16} />
+              Tablero
             </button>
 
             {detail ? (

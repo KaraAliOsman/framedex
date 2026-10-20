@@ -283,3 +283,61 @@
     flex-wrap: wrap;
   }
 }
+
+/* Settings, System-Settings grammar: grouped cards, one title size, quiet
+   descriptions, and one field style for every input. */
+.settings-card,
+.settings-preview {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-3);
+  background: var(--surface-panel);
+  padding: var(--space-24px);
+}
+.settings-card h2,
+.settings-card h3,
+.settings-preview h2 {
+  font-size: var(--type-title-m);
+  font-weight: 600;
+  margin: 0 0 var(--space-8px);
+}
+.settings-card > p,
+.settings-preview > p {
+  color: var(--text-secondary);
+  font-size: var(--type-dense);
+  line-height: 1.5;
+  margin: 0 0 var(--space-16px);
+}
+.settings-content :where(label) {
+  font-size: var(--type-label);
+}
+.settings-content
+  :where(
+    input:not([type="checkbox"], [type="radio"], [type="file"], [type="color"]),
+    select,
+    textarea
+  ) {
+  box-sizing: border-box;
+  min-height: 36px;
+  padding: 0 var(--space-12px);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-2);
+  background-color: var(--surface-panel);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--type-body);
+}
+.settings-content :where(textarea) {
+  padding-block: var(--space-8px);
+}
+.settings-content :where(input, select, textarea):focus-visible {
+  border-color: var(--interactive);
+  outline: none;
+}
+.settings-content :where(input, select, textarea):disabled {
+  background-color: var(--surface-card);
+  color: var(--text-secondary);
+}
+.settings-preview iframe {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-2);
+}

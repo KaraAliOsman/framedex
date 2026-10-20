@@ -4,6 +4,7 @@ import { EmptyState, ErrorState, LoadingState } from "../../ui";
 import { formatDate, formatDecimal } from "../../format";
 import { domainLabels } from "../../i18n/domainLabels";
 import { stationCodeLabel } from "./labels";
+import { Icon } from "../../ui/Icon";
 
 export type StationQueueGroup = {
   code?: string;
@@ -99,24 +100,24 @@ export function ProductionBoard({
         <ul className="production-causes" aria-label="Decisiones pendientes">
           {causes.map((cause) => (
             <li key={cause.key}>
-              <strong className="ui-value">{formatDecimal(cause.count)}</strong>{" "}
-              {cause.count === 1 ? "orden" : "órdenes"} {cause.label}
               <button
                 type="button"
-                className="link-button"
+                className="production-cause"
                 aria-pressed={block === cause.key}
+                title={block === cause.key ? "Ver todas" : cause.action}
                 onClick={() => setBlock(block === cause.key ? "" : cause.key)}
               >
-                {block === cause.key ? "Ver todas" : cause.action}
+                <strong className="ui-value">{formatDecimal(cause.count)}</strong>
+                {cause.count === 1 ? "orden" : "órdenes"} {cause.label}
               </button>
             </li>
           ))}
         </ul>
       ) : null}
       <div className="production-board-filters">
-        <label>
-          Obra
-          <select value={project} onChange={(e) => setProject(e.target.value)}>
+        <label className="production-filter">
+          <span className="sr-only">Obra</span>
+          <select aria-label="Obra" value={project} onChange={(e) => setProject(e.target.value)}>
             <option value="">Todas las obras</option>
             {projects.map(([code, name]) => (
               <option key={code} value={code!}>
@@ -125,13 +126,17 @@ export function ProductionBoard({
             ))}
           </select>
         </label>
-        <label>
-          Compromiso hasta
+        <label className="production-filter production-filter--date">
+          <span>Compromiso hasta</span>
           <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         </label>
-        <label>
-          Requiere persona
-          <select value={block} onChange={(e) => setBlock(e.target.value)}>
+        <label className="production-filter">
+          <span className="sr-only">Requiere persona</span>
+          <select
+            aria-label="Requiere persona"
+            value={block}
+            onChange={(e) => setBlock(e.target.value)}
+          >
             <option value="">Todas las OT</option>
             <option value="hold">Bloqueadas</option>
             <option value="shortage">Falta material</option>
@@ -139,8 +144,14 @@ export function ProductionBoard({
             <option value="plan">Sin plan de corte</option>
           </select>
         </label>
-        <button type="button" onClick={retry}>
-          Actualizar tablero
+        <button
+          type="button"
+          className="production-refresh"
+          aria-label="Actualizar tablero"
+          title="Actualizar tablero"
+          onClick={retry}
+        >
+          <Icon name="refresh" size={16} />
         </button>
       </div>
       <div className="production-board-columns">

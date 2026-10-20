@@ -96,7 +96,7 @@ export const messages = {
   "glass.pricePending": "Sin dato · completa la tarifa del catálogo",
   "glass.published":
     "Vidrio publicado y asignado. Puedes deshacer la asignación con Ctrl+Z; la versión del catálogo conserva su historial.",
-  "glass.loading": "Elige una serie para consultar sus vidrios.",
+  "glass.loading": "Los vidrios aparecen al elegir la serie.",
   "glass.checking": "Comprobando productos con el motor…",
   "glass.retry": "Reintentar",
   "glass.empty":
@@ -1796,7 +1796,7 @@ export const messages = {
   "production.shortageChip": "Falta material ({count})",
   "production.materialShortageToast":
     "Paso bloqueado por falta de material — revisa los faltantes de la orden.",
-  "production.versionShortageChip": "Versión: {count} faltantes más",
+  "production.versionShortageChip": "{count} faltan en la versión",
   "production.versionShortageTitle":
     "Otras órdenes de la misma versión tienen faltantes de material adicionales",
   "production.dispatchReadyChip": "Guía pendiente",
