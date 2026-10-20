@@ -150,7 +150,6 @@ function CatalogLoading(): JSX.Element {
   return (
     <p className="catalog-loading">
       <Loading label={ct("loading")} />
-      {ct("loading")}
     </p>
   );
 }

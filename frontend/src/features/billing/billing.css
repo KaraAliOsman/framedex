@@ -1,23 +1,26 @@
+/* Same page grammar as the rest of Empresa: left-aligned header with its
+   action on the right; the workspace already pads the page. */
 .billing-page {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 24px;
-  color: var(--theme-text-primary);
+  display: grid;
+  gap: var(--space-16px);
+  max-width: 72rem;
+  color: var(--text-primary);
 }
-.billing-page header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+.wallet-summary dd,
+.wallet-summary p {
+  margin: 0;
 }
 .wallet-summary {
   display: flex;
   flex-wrap: wrap;
-  gap: 24px;
-  padding: 24px;
-  background: var(--theme-surface-panel);
-  border: 1px solid var(--theme-border-subtle);
-  border-radius: var(--radius-lg);
+  gap: var(--space-24px);
+  padding: var(--space-24px);
+  background: var(--surface-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-3);
+}
+.wallet-summary > div {
+  text-align: left;
 }
 .wallet-summary > div {
   flex: 1;
@@ -125,4 +128,19 @@
   font-size: var(--type-dense);
   margin: 0;
   padding-left: var(--space-16px);
+}
+.wallet-summary dt {
+  color: var(--text-secondary);
+  font-size: var(--type-dense);
+}
+.wallet-summary dd {
+  margin-top: var(--space-4px);
+  font-size: var(--type-subtitle);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.billing-page .settings-group > p {
+  color: var(--text-secondary);
+  font-size: var(--type-dense);
+  margin: 0 0 var(--space-12px);
 }

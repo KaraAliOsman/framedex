@@ -2092,3 +2092,14 @@ Formatos de lámina y portal reciben la misma gramática. Las reglas heredadas d
 `.projects-page`, `.purchasing-page` y `.portal-page` pasan a especificidad cero
 (`:where`) para que los componentes del sistema manden. El estimador ya no ve
 la pestaña de listas de costo que le negaba el acceso: llega a reglas comerciales.
+
+## 2026-10-19 · Cierre del rediseño: pantallas del dueño y borrador
+
+Las pantallas que exigen verificación en dos pasos se revisan con un dueño de
+prueba creado en el entorno e2e aislado (no con la cuenta del dueño de REVIEW).
+Se corrigen encabezados centrados de Plan y Billetera, jerarquía de botones en
+Costos, hitos de pago, ajustes con vista previa más estrecha, pasos numerados
+del onboarding y carga duplicada. «Agregar ventana» desde una ventana nueva sin
+guardar ahora pregunta antes de salir. El congelamiento visto tras ~22
+navegaciones en una misma pestaña ocurre solo con el servidor de desarrollo del
+entorno aislado; la compilación de REVIEW soporta 30 navegaciones seguidas.

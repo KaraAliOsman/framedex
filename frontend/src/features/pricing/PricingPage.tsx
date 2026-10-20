@@ -18,6 +18,7 @@ import { DemoBadge, DeniedState, Loading, PageHeader, Tabs } from "../../ui";
 import { t } from "../../i18n/es-CL";
 import { ProjectPrices } from "./ProjectPrices";
 import "./pricing.css";
+import { Icon } from "../../ui/Icon";
 
 const modes = [
   "COST_PLUS_MARGIN",
@@ -532,13 +533,19 @@ function PricingWorkspace({
       {busy && (
         <p className="price-loading" role="status">
           <Loading label={t("pricing.loading")} />
-          {t("pricing.loading")}
         </p>
       )}
       <div className="pricing-grid">
         <div className="pricing-records">
-          <button type="button" disabled={busy} onClick={() => setRevision((value) => value + 1)}>
-            {t("pricing.reload")}
+          <button
+            type="button"
+            className="pricing-reload"
+            aria-label={t("pricing.reload")}
+            title={t("pricing.reload")}
+            disabled={busy}
+            onClick={() => setRevision((value) => value + 1)}
+          >
+            <Icon name="refresh" size={16} />
           </button>
           {!busy && items.length === 0 && <p>{t("pricing.empty")}</p>}
           {resource === "audits" ? (
@@ -696,7 +703,7 @@ function PricingWorkspace({
               {t("pricing.reason")}
               <input name="reason" required maxLength={1000} disabled={busy} />
             </label>
-            <button type="submit" disabled={busy}>
+            <button type="submit" className="ui-button ui-button--primary" disabled={busy}>
               {t("pricing.save")}
             </button>
             {editing && (
@@ -1124,7 +1131,7 @@ function ImportCosts({
             <input name="reason" required />
           </label>
         </div>
-        <button type="submit" disabled={busy}>
+        <button type="submit" className="ui-button ui-button--primary" disabled={busy}>
           {t("pricing.previewImport")}
         </button>
       </ValidatedForm>
