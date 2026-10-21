@@ -14,7 +14,7 @@ from dekopen_engine.models import BayOpeningType
 
 
 def test_manual_fixed_golden_uses_visible_not_cut_area() -> None:
-    assert thermal_cases() == json.loads(Path(__file__).with_name("golden_thermal.json").read_text())
+    assert thermal_cases() == json.loads(Path(__file__).with_name("golden_thermal.json").read_text(encoding="utf-8"))
     geo, computation = geometry()
     assert computation.infills[0].width_mm == D("910")
     assert geo.panes[0].visible_width_mm == D("880")

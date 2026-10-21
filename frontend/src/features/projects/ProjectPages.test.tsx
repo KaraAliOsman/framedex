@@ -306,6 +306,9 @@ async function issueReviewedPdf(): Promise<void> {
 }
 
 beforeEach(() => {
+  // The reviewed quotation is dated 09-10-2026 and expires on 19-10-2026.
+  // Keep its full emission gate reproducible after that date; real timers stay active.
+  vi.setSystemTime(new Date("2026-10-09T12:00:00Z"));
   // jsdom has no layout observer; browser coverage measures the actual row size.
   vi.stubGlobal(
     "ResizeObserver",
@@ -378,6 +381,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.useRealTimers();
   cleanup();
   for (const { router, client } of mounted.splice(0)) {
     router.dispose();

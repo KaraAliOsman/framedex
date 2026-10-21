@@ -2103,3 +2103,29 @@ del onboarding y carga duplicada. «Agregar ventana» desde una ventana nueva si
 guardar ahora pregunta antes de salir. El congelamiento visto tras ~22
 navegaciones en una misma pestaña ocurre solo con el servidor de desarrollo del
 entorno aislado; la compilación de REVIEW soporta 30 navegaciones seguidas.
+
+## 2026-10-21 · DEKOPEN 2: investigación completa y prompts para GPT
+
+El dueño califica el producto como demo y pide rehacer todo, con Claude como
+director (investigación, diseño, prompts) y GPT como implementador. Se audita
+DEKOPEN con cifras (200 mil líneas, 364 operaciones de API, 323 «Sin dato» en
+pantalla; cálculo del motor correcto en el caso verificado) y se identifica la
+causa raíz: la serie real del dueño no cotiza por la escalera de autoridades.
+Siete líneas de investigación y capturas REA cubren más de 30 productos. Se
+entrega [el paquete](../research/2026-10-21-competencia/00-README.md): estrategia,
+catálogo con valores sugeridos y ventana de prueba, agente con 12
+automatizaciones, nueve mockups y once fases con bucle continuo. Vista única de
+obra, panel lateral del agente y precios quedan como decisiones del dueño.
+
+## 2026-10-21 · Inicio autorizado de DEKOPEN 2 y base reproducible
+
+El dueño autoriza las once fases, PR por fase o subfase y fusión con los cuatro
+checks aprobados, sin activación productiva ni comercial. Se inicia P01 desde
+`ec3762fe` como permite el encargo: la dirección aún no está en `origin/main`.
+Se conserva el `main` local divergente. El [estado de trabajo](../dekopen2/ESTADO.md)
+distingue fases pendientes de resultados verificados. La base de #163 falla en
+cinco pruebas de emisión por vencimiento de la fixture el 19-10; fijar su fecha
+de prueba recupera las 35 pruebas del archivo sin relajar el control de vigencia.
+Los dos goldens citados en la auditoría pasan al leer UTF-8 explícitamente en
+Windows; LF reproducible evita diferencias de checkout en el guardián de bytes.
+No se regeneran goldens ni se modifican fórmulas.
