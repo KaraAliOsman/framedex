@@ -282,7 +282,12 @@ for (const theme of ["light"] as const) {
     page,
   }) => {
     await authenticate(page, await setupEstimator());
+    const calculated = page.waitForResponse(
+      (response) =>
+        new URL(response.url()).pathname === "/api/v1/engine/calculate/" && response.status() === 200,
+    );
     await page.goto("/projects/demo/positions/g1/edit");
+    await calculated;
     await expect(page.getByTestId("technical-frame")).toHaveText("1\u2009006 mm");
     const optimization = page.waitForResponse(
       (response) =>
