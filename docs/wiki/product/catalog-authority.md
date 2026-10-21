@@ -82,6 +82,11 @@ El antiguo `readiness` queda obsoleto; su `quote_ready` se redefine como alias
 de QUOTABLE. Sus razones históricas conservan el diagnóstico antiguo y no
 deben usarse para decidir si se puede cotizar.
 
+El selector del editor consume DRAWABLE: la ausencia de precios no impide
+dibujar. La regresión E2E de lienzo comprueba expresamente una empresa nueva
+con QUOTABLE falso y un cálculo geométrico correcto. Los controles de precio
+y emisión permanecen en sus operaciones respectivas.
+
 Dibujar requiere perfiles con rol y ancho visible. Cotizar acepta SUGGESTED
 y comprueba reglas y precios vigentes, unidades y ambigüedades. Para un precio
 concreto el motor y el repositorio resuelven exactamente los materiales usados;

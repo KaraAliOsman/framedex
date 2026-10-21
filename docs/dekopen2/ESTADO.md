@@ -163,3 +163,8 @@ a P03; P01 deja preparado su contrato y su bloqueo.
 - La prueba DXF ejecuta también su lector secundario en UTF-8 explícito.
   Así conserva «Ñ» en Windows aunque Python padre use otra configuración;
   las dos regresiones de DXF y artefactos pasan sin cambiar el documento.
+- P01d quedó fusionada con los cuatro controles aprobados. En P01e, CI aprobó
+  1.514 aserciones pgTAP y 618 integraciones. El E2E detectó que el selector del
+  editor aún exigía QUOTABLE: ahora consulta DRAWABLE, sin convertir una serie
+  sin precios en cotizable. Las pruebas mantienen la negativa de precios y
+  comprueban que los perfiles incompletos siguen fuera del selector.

@@ -2183,3 +2183,11 @@ físico; revisar un informe térmico no verifica las reglas de la serie. Las
 sub-PR #165 y #166 se fusionaron con los cuatro controles aprobados. Continúa
 el cierre de #167 y #168 y la integración completa. Referencias:
 [catálogo](product/catalog-authority.md), [estado](../dekopen2/ESTADO.md).
+
+## 2026-10-21 · P01e: selección de series por capacidad de dibujo
+
+P01d #167 quedó fusionada con los cuatro controles aprobados. Database Gate
+de #168 aprobó 1.514 aserciones pgTAP y 618 integraciones; sus E2E detectaron
+la dependencia antigua entre selector y precios. El editor consulta DRAWABLE,
+con regresiones para series sin precios y perfiles incompletos. La cotización
+conserva su control independiente. Véase [catálogo](product/catalog-authority.md).

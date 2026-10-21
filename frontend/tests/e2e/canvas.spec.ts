@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import type { EngineCalculateResponse } from "../../src/api/generated/models";
+import type { EngineCalculateResponse, ProfileSystemSummary } from "../../src/api/generated/models";
 
 import { environment } from "./support/environment";
 import { requireMailpitHealthy, waitForMagicLink } from "./support/mailpit";
@@ -136,11 +136,15 @@ test("G1 canvas uses runtime discovery, transactional dimensions, snapping and <
   await page.goto("/projects/demo/positions/g1/edit");
   const systemsResponse = await systemsResponsePromise;
   const systemsPayload = (await systemsResponse.json()) as {
-    systems: Array<{ id: string; code: string; is_demo: boolean; quote_ready: boolean }>;
+    systems: ProfileSystemSummary[];
   };
   expect(
     systemsPayload.systems
-      .filter((system) => system.is_demo && system.quote_ready)
+      .filter(
+        (system) =>
+          system.is_demo &&
+          system.usage?.levels.some((level) => level.level === "DRAWABLE" && level.ok),
+      )
       .map((system) => system.code)
       .sort(),
   ).toEqual([
@@ -162,6 +166,8 @@ test("G1 canvas uses runtime discovery, transactional dimensions, snapping and <
     (system) => system.code === "DEMO_60" && system.is_demo,
   );
   expect(discovered).toHaveLength(1);
+  // A fresh tenant has no prices; drawing still uses the exact engine rules.
+  expect(discovered[0]?.quote_ready).toBe(false);
   const initialCalculation = await initialCalculationPromise;
   const initialBom = (await initialCalculation.json()) as EngineCalculateResponse;
   // Discovery now offers v5's sourced chart: 5 mm white glass clearance.
