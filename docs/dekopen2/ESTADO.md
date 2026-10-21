@@ -91,3 +91,24 @@ a P03; P01 deja preparado su contrato y su bloqueo.
   diez pruebas unitarias de plantilla aprobadas. REVIEW conserva su estado.
 - Pendientes de las siguientes sub-PR: conectar creación desde plantilla,
   fichas y lotes, cargar orígenes al motor y aplicar niveles/bloqueos v2.
+
+### P01d · Ficha por pestañas y lotes
+
+- Alta transaccional desde las cuatro plantillas: perfiles, reglas, junquillos
+  y kits conservan qué escribió el taller y qué completó la plantilla.
+- API de seis pestañas, con coordenadas/origen de las celdas e historial.
+  Los costos de compra solo se devuelven al dueño; los demás roles técnicos
+  conservan su acceso a las referencias de catálogo.
+- Edición y confirmación en lote con revisión optimista, rollback completo y
+  rechazo de celdas repetidas, superpuestas o de otra serie. Las escrituras
+  antiguas usan el mismo orden de bloqueo para convivir con los lotes.
+- Las revisiones antiguas registran confirmaciones; revisar evidencia exacta
+  añade MANUAL. Agregar o quitar perfiles también invalida la verificación.
+- El repositorio carga al motor únicamente versiones que coinciden con el
+  valor actual. Una ventana PRO6004 de prueba de 1200 × 1100 abatible produce
+  despiece y sugeridos consumidos; confirmarlos elimina las suposiciones sin
+  cambiar ninguna medida del despiece.
+- OpenAPI y orval regenerados. El lint SQL y las 1.507 aserciones pgTAP pasan;
+  continúa la validación de integración y unitarias antes del cierre de la PR.
+- Pendientes para completar P01: niveles de uso, precios/cotización QUOTABLE,
+  fabricación MANUFACTURABLE y sus decisiones congeladas.

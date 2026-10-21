@@ -125,3 +125,33 @@ def record_origin(*, org_id, system_id, table, row, field_name, origin, source_r
             [org_id, system_id, table, row["id"], field_name, numeric,
                 None if numeric is not None else json_text(value), origin, source_ref, evidence_id, actor_id])
     return result[0]
+
+
+def engine_origins(org_id, system_id):
+    """Project matching current versions; never resurrect a removed/stale value."""
+    from dekopen_engine.models import CatalogValueOrigin
+    versions = latest_versions(org_id, system_id)
+    found = {}
+    for table in TABLES:
+        ids = list({str(item["row_id"]) for item in versions if item["authority_table"] == table})
+        if not ids:
+            continue
+        for item in rows(f"SELECT to_jsonb(t)::text AS data FROM public.{table} t WHERE id=ANY(%s::uuid[]) AND org_id=%s", [ids, org_id]):
+            row = json.loads(item["data"], parse_float=Decimal)
+            found[(table, str(row["id"]))] = row
+    result = []
+    for version in versions:
+        table = version["authority_table"]
+        row = found.get((table, str(version["row_id"])))
+        if row is None:
+            continue
+        current = dict(cells(row)).get(version["field_name"])
+        if current is None or not _equivalent(current, _stored_value(version)):
+            continue
+        key = (str(Decimal(str(row["glass_thickness_mm"])).normalize()) if table == "glazing_bead_matrix"
+            else row.get("sku", ""))
+        field = "bead_profile_id" if version["field_name"] == "bead_article_id" else version["field_name"]
+        value = str(current) if isinstance(current, (str, Decimal, int)) and not isinstance(current, bool) else json_text(current)
+        result.append(CatalogValueOrigin(scope=TABLES[table], key=key,
+            rule=field, value=value, origin=version["origin"]))
+    return tuple(result)

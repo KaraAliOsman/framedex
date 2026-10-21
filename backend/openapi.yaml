@@ -5638,6 +5638,64 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/catalogs/family-templates/:
+    get:
+      operationId: catalog_family_templates
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - catalogs
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FamilyTemplateList'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/catalogs/glass/preview/:
     post:
       operationId: catalog_glass_preview
@@ -6805,6 +6863,353 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SectionImportResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/catalogs/series/:
+    post:
+      operationId: catalog_series_create
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - catalogs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SeriesCreateRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeriesSheet'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/catalogs/series/{system_id}/:
+    get:
+      operationId: catalog_series_sheet
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: system_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - catalogs
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeriesSheet'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/catalogs/series/{system_id}/cells/:
+    patch:
+      operationId: catalog_series_edit_cells
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: system_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - catalogs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSeriesBatchEditRequest'
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeriesSheet'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/catalogs/series/{system_id}/confirm/:
+    post:
+      operationId: catalog_series_confirm_cells
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: system_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - catalogs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SeriesBatchConfirmRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeriesSheet'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/catalogs/series/{system_id}/history/:
+    get:
+      operationId: catalog_series_cell_history
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: query
+        name: field
+        schema:
+          type: string
+        required: true
+      - in: query
+        name: resource
+        schema:
+          type: string
+        required: true
+      - in: query
+        name: row_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: system_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - catalogs
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CellHistory'
           description: ''
         '400':
           content:
@@ -29369,16 +29774,23 @@ components:
         value:
           type: string
         origin:
-          $ref: '#/components/schemas/CatalogAssumptionOriginEnum'
+          $ref: '#/components/schemas/CatalogSuggestionEnum'
       required:
       - origin
       - rule
       - value
-    CatalogAssumptionOriginEnum:
+    CatalogCellResourceEnum:
       enum:
-      - SUGGESTED
+      - systems
+      - articles
+      - glazing
+      - hardware-kits
       type: string
-      description: '* `SUGGESTED` - SUGGESTED'
+      description: |-
+        * `systems` - systems
+        * `articles` - articles
+        * `glazing` - glazing
+        * `hardware-kits` - hardware-kits
     CatalogChange:
       type: object
       properties:
@@ -29654,6 +30066,16 @@ components:
       - key
       - role
       - sku
+    CatalogOriginEnum:
+      enum:
+      - MANUAL
+      - WORKSHOP
+      - SUGGESTED
+      type: string
+      description: |-
+        * `MANUAL` - MANUAL
+        * `WORKSHOP` - WORKSHOP
+        * `SUGGESTED` - SUGGESTED
     CatalogProfileRoleEnum:
       enum:
       - FRAME
@@ -29789,6 +30211,11 @@ components:
       - changes
       - errors
       - review_token
+    CatalogSuggestionEnum:
+      enum:
+      - SUGGESTED
+      type: string
+      description: '* `SUGGESTED` - SUGGESTED'
     CatalogTemplateColumn:
       type: object
       properties:
@@ -29873,6 +30300,88 @@ components:
         * `SUPPORT` - SUPPORT
         * `CHANNEL` - CHANNEL
         * `OTHER` - OTHER
+    CellAddressRequest:
+      type: object
+      properties:
+        resource:
+          $ref: '#/components/schemas/CatalogCellResourceEnum'
+        row_id:
+          type: string
+          format: uuid
+        field:
+          type: string
+          minLength: 1
+          maxLength: 250
+      required:
+      - field
+      - resource
+      - row_id
+    CellChangeRequest:
+      type: object
+      properties:
+        resource:
+          $ref: '#/components/schemas/CatalogCellResourceEnum'
+        row_id:
+          type: string
+          format: uuid
+        field:
+          type: string
+          minLength: 1
+          maxLength: 250
+        value:
+          nullable: true
+      required:
+      - field
+      - resource
+      - row_id
+      - value
+    CellHistory:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CellHistoryRow'
+      required:
+      - items
+    CellHistoryRow:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        version:
+          type: integer
+        previous_id:
+          type: string
+          format: uuid
+          nullable: true
+        value:
+          type: string
+          nullable: true
+        previous_value:
+          type: string
+          nullable: true
+        origin:
+          $ref: '#/components/schemas/CatalogOriginEnum'
+        source_ref:
+          type: string
+        set_by:
+          type: string
+          format: uuid
+        set_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - origin
+      - previous_id
+      - previous_value
+      - set_at
+      - set_by
+      - source_ref
+      - value
+      - version
     ChangeEnum:
       enum:
       - ADDED
@@ -34411,6 +34920,54 @@ components:
       - suggestions
       - target_module_id
       - total_price
+    FamilyTemplate:
+      type: object
+      properties:
+        id:
+          type: string
+        version:
+          type: integer
+        name:
+          type: string
+        origin:
+          $ref: '#/components/schemas/CatalogSuggestionEnum'
+        source_ref:
+          type: string
+        notes:
+          type: array
+          items:
+            type: string
+        system: {}
+        profile_defaults: {}
+        reinforcement_defaults:
+          nullable: true
+        hardware_defaults: {}
+        glazing_defaults: {}
+        prices:
+          type: array
+          items: {}
+      required:
+      - glazing_defaults
+      - hardware_defaults
+      - id
+      - name
+      - notes
+      - origin
+      - prices
+      - profile_defaults
+      - reinforcement_defaults
+      - source_ref
+      - system
+      - version
+    FamilyTemplateList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/FamilyTemplate'
+      required:
+      - items
     FieldAssetAccess:
       type: object
       properties:
@@ -42797,6 +43354,16 @@ components:
           type: string
           minLength: 1
           maxLength: 2000
+    PatchedSeriesBatchEditRequest:
+      type: object
+      properties:
+        revision:
+          type: string
+          minLength: 1
+        changes:
+          type: array
+          items:
+            $ref: '#/components/schemas/CellChangeRequest'
     PatchedSystemWriteRequest:
       type: object
       properties:
@@ -48214,6 +48781,264 @@ components:
           maxLength: 200
       required:
       - confirmed
+    SeriesBatchConfirmRequest:
+      type: object
+      properties:
+        revision:
+          type: string
+          minLength: 1
+        cells:
+          type: array
+          items:
+            $ref: '#/components/schemas/CellAddressRequest'
+      required:
+      - cells
+      - revision
+    SeriesCell:
+      type: object
+      properties:
+        resource:
+          $ref: '#/components/schemas/CatalogCellResourceEnum'
+        row_id:
+          type: string
+          format: uuid
+        field:
+          type: string
+          maxLength: 250
+        value:
+          type: string
+          nullable: true
+        origin:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/CatalogOriginEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        source_ref:
+          type: string
+          nullable: true
+        set_by:
+          type: string
+          format: uuid
+          nullable: true
+        set_at:
+          type: string
+          format: date-time
+          nullable: true
+        version_id:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+      - field
+      - origin
+      - resource
+      - row_id
+      - set_at
+      - set_by
+      - source_ref
+      - value
+      - version_id
+    SeriesCreateRequest:
+      type: object
+      properties:
+        template_id:
+          type: string
+          minLength: 1
+          maxLength: 100
+        template_version:
+          type: integer
+          minimum: 1
+        name:
+          type: string
+          minLength: 1
+          maxLength: 150
+        code:
+          type: string
+          minLength: 1
+          maxLength: 50
+        manufacturer:
+          type: string
+          minLength: 1
+          maxLength: 255
+        rules:
+          $ref: '#/components/schemas/TemplateSystemInputRequest'
+        profiles:
+          type: array
+          items:
+            $ref: '#/components/schemas/TemplateProfileInputRequest'
+        glazing:
+          type: array
+          items:
+            $ref: '#/components/schemas/TemplateGlazingInputRequest'
+        hardware:
+          type: array
+          items:
+            $ref: '#/components/schemas/TemplateHardwareInputRequest'
+      required:
+      - code
+      - name
+      - template_id
+      - template_version
+    SeriesGlazingTab:
+      type: object
+      properties:
+        beads:
+          type: array
+          items:
+            $ref: '#/components/schemas/BeadResponse'
+        glasses:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkspaceGlass'
+        finishes:
+          type: array
+          items:
+            type: string
+        finish_rules:
+          nullable: true
+      required:
+      - beads
+      - finish_rules
+      - finishes
+      - glasses
+    SeriesPrice:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        cost_list_id:
+          type: string
+          format: uuid
+        sku:
+          type: string
+        description:
+          type: string
+          nullable: true
+        unit:
+          type: string
+        unit_cost:
+          type: string
+        currency:
+          type: string
+        valid_from:
+          type: string
+          format: date
+        valid_to:
+          type: string
+          format: date
+          nullable: true
+      required:
+      - cost_list_id
+      - currency
+      - description
+      - id
+      - sku
+      - unit
+      - unit_cost
+      - valid_from
+      - valid_to
+    SeriesPricesTab:
+      type: object
+      properties:
+        can_view:
+          type: boolean
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeriesPrice'
+        purchase_mappings:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseMappingRow'
+        reinforcements:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReinforcementRow'
+      required:
+      - can_view
+      - items
+      - purchase_mappings
+      - reinforcements
+    SeriesSetup:
+      type: object
+      properties:
+        template_id:
+          type: string
+          nullable: true
+        template_version:
+          type: integer
+          nullable: true
+        verified_at:
+          type: string
+          format: date-time
+          nullable: true
+        verified_by:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+      - template_id
+      - template_version
+      - verified_at
+      - verified_by
+    SeriesSheet:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        revision:
+          type: string
+        setup:
+          $ref: '#/components/schemas/SeriesSetup'
+        tabs:
+          $ref: '#/components/schemas/SeriesTabs'
+        cells:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeriesCell'
+      required:
+      - cells
+      - id
+      - revision
+      - setup
+      - tabs
+    SeriesTabs:
+      type: object
+      properties:
+        profiles:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArticleResponse'
+        rules:
+          $ref: '#/components/schemas/SystemResponse'
+        hardware:
+          type: array
+          items:
+            $ref: '#/components/schemas/KitResponse'
+        glazing_colors:
+          $ref: '#/components/schemas/SeriesGlazingTab'
+        typologies:
+          $ref: '#/components/schemas/SeriesTypologiesTab'
+        prices:
+          $ref: '#/components/schemas/SeriesPricesTab'
+      required:
+      - glazing_colors
+      - hardware
+      - prices
+      - profiles
+      - rules
+      - typologies
+    SeriesTypologiesTab:
+      type: object
+      properties:
+        dimensional_limits: {}
+        opening_capabilities:
+          nullable: true
+      required:
+      - dimensional_limits
+      - opening_capabilities
     ServiceWindow:
       type: object
       properties:
@@ -49656,6 +50481,315 @@ components:
       - sash_overlap_mm
       - system_family
       - version
+    TemplateGlazingInputRequest:
+      type: object
+      properties:
+        glass_thickness_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+        bead_width_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+        gasket_interior_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+        gasket_exterior_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+        cut_add_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+        is_active:
+          type: boolean
+        bead_sku:
+          type: string
+          minLength: 1
+          maxLength: 100
+      required:
+      - bead_sku
+      - bead_width_mm
+      - glass_thickness_mm
+    TemplateHardwareInputRequest:
+      type: object
+      properties:
+        sku:
+          type: string
+          minLength: 1
+          maxLength: 100
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        opening_type:
+          $ref: '#/components/schemas/KitOpeningTypeEnum'
+        min_leaf_width_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        max_leaf_width_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        min_leaf_height_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        max_leaf_height_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        max_leaf_weight_kg:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+        rail_type:
+          $ref: '#/components/schemas/RailTypeEnum'
+        carriages_qty:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        stay_arms_qty:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        contents:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatalogHardwareComponentRequest'
+        weight_kg:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
+          nullable: true
+        carriage_capacity_kg:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
+          nullable: true
+        is_active:
+          type: boolean
+        class_authority:
+          nullable: true
+      required:
+      - contents
+      - name
+      - opening_type
+      - sku
+    TemplateProfileInputRequest:
+      type: object
+      properties:
+        coupling_rule:
+          allOf:
+          - $ref: '#/components/schemas/CouplerRuleRequest'
+          nullable: true
+        cut_rule:
+          allOf:
+          - $ref: '#/components/schemas/ProfileCutRuleRequest'
+          nullable: true
+        reinforcement_rule:
+          allOf:
+          - $ref: '#/components/schemas/ProfileReinforcementRuleRequest'
+          nullable: true
+        sku:
+          type: string
+          minLength: 1
+          maxLength: 100
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        section:
+          allOf:
+          - $ref: '#/components/schemas/ProfileSectionRequest'
+          nullable: true
+        role:
+          $ref: '#/components/schemas/CatalogProfileRoleEnum'
+        material:
+          $ref: '#/components/schemas/MaterialEnum'
+        face_width_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        commercial_length_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        welding_loss_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        reinforcement_sku:
+          type: string
+          nullable: true
+          maxLength: 100
+        reinforcement_gap_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        weight_kg_m:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,4})?$
+          nullable: true
+        steel_weight_kg_m:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,4})?$
+          nullable: true
+        screw_sku:
+          type: string
+          minLength: 1
+          maxLength: 100
+      required:
+      - face_width_mm
+      - name
+      - role
+      - sku
+    TemplateSystemInputRequest:
+      type: object
+      properties:
+        extra_authority:
+          nullable: true
+        system_family:
+          $ref: '#/components/schemas/SystemFamilyEnum'
+        sliding_parameters:
+          allOf:
+          - $ref: '#/components/schemas/SlidingSystemParametersRequest'
+          nullable: true
+        dimensional_limits:
+          type: array
+          items:
+            $ref: '#/components/schemas/SystemDimensionalLimitRequest'
+        opening_capabilities:
+          nullable: true
+        paired_leaf_rule:
+          nullable: true
+        finish_authority:
+          nullable: true
+        depth_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        material:
+          $ref: '#/components/schemas/MaterialEnum'
+        chamber_count:
+          type: integer
+          maximum: 2147483647
+          minimum: 1
+        sash_overlap_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,2})?$
+        glass_clearance_white_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,2})?$
+        glass_clearance_foil_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,2})?$
+        pulley_height_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,2})?$
+          nullable: true
+        central_overlap_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,2})?$
+          nullable: true
+        sliding_lateral_clearance_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,2})?$
+          nullable: true
+        sliding_end_add_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,2})?$
+          nullable: true
+        corner_bracket_loss_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,2})?$
+        hook_depth_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,2})?$
+        door_threshold_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,2})?$
+        door_bottom_clearance_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,2})?$
+        rail_type:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/RailTypeEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        sliding_glazing_deduction_width_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        sliding_glazing_deduction_height_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        door_leaf_side_clearance_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        rebate_depth_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        end_milling_overlap_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        chamber_clearance_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        manufacturer:
+          type: string
+          nullable: true
+          maxLength: 255
+        family:
+          type: string
+          nullable: true
+          maxLength: 150
+        applications:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 60
+        finishes:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 50
+        process_profile_id:
+          type: string
+          format: uuid
+          nullable: true
     ThermalAlternative:
       type: object
       properties:

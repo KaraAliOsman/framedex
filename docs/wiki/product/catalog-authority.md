@@ -52,7 +52,22 @@ proveedor. `catalog_series_setup` prepara la verificación del taller y la
 invalida al editar reglas. Las pruebas en una base local sintética independiente
 comprueban tenant/RLS, historia inmutable, evidencia y verificación; no prueban
 todavía el flujo completo de alta ni habilitan fabricación. La conexión a
-endpoints, al motor y a los niveles de uso continúa en las siguientes sub-PR.
+endpoints y al motor se incorpora en P01d; los niveles de uso siguen en curso.
+
+### Ficha y lotes de P01d
+
+`gpt/dk2-p01d-ficha-y-lotes` expone `/catalogs/series/` para crear desde plantilla,
+leer seis pestañas y editar/confirmar lotes por revisión. El origen de un valor
+aportado por el taller no se atribuye a la plantilla. Los lotes rechazan filas
+de otra serie y revierten todo si una celda falla; el historial sigue accesible
+tras quitar un perfil. Los costos del tab Precios solo se proyectan al dueño.
+
+El repositorio incorpora versiones actuales al contrato puro del motor. La
+integración `test_real_series_calculation_reports_only_consumed_suggestions`
+calcula 1200 × 1100 abatible y comprueba idéntico despiece tras confirmar los
+sugeridos. Las revisiones técnicas y de evidencia existentes también añaden
+orígenes; insertar/borrar perfiles invalida la ventana de prueba. Esto aún no
+implementa los niveles ni cambia los bloqueos de cotización/producción.
 
 ## Biblioteca real y fuentes reunidas · 18-10-2026
 

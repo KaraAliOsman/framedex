@@ -142,6 +142,9 @@ REST_FRAMEWORK = {
 
 SPECTACULAR_SETTINGS = {
     "ENUM_NAME_OVERRIDES": {
+        "CatalogOriginEnum": ["MANUAL", "WORKSHOP", "SUGGESTED"],
+        "CatalogSuggestionEnum": ["SUGGESTED"],
+        "CatalogCellResourceEnum": ["systems", "articles", "glazing", "hardware-kits"],
         "CurrencyEnum": ["CLP", "USD"],
         "QuotationTemplateEnum": ["ESENCIAL", "PROYECTO", "ALTERNATIVAS"],
         "QuotationBlockEnum": ["intro", "client", "hero", "summary", "positions", "alternatives", "commercial", "terms", "services", "acceptance", "closing"],
