@@ -107,6 +107,15 @@ precios del taller, PDF y optimización; comprueba políticas de otra serie,
 huella obsoleta y rechazo físico después de emitir y luego confirmar.
 Estas pruebas no validan medidas ni precios reales de Proline.
 
+La emisión v2 usa las confirmaciones por celda y la verificación vigente para
+la revisión técnica. Un `review_pending` del modelo anterior sigue visible
+como diagnóstico, pero no puede contradecir una revisión actual completa.
+Los controles físicos de fabricación y proceso siguen siendo obligatorios.
+`test_current_cell_confirmation_supersedes_stale_row_review_but_keeps_physical_checks`
+comprueba la transición con Postgres real y dos rechazos físicos. Una revisión
+de informes térmicos no verifica las reglas de fabricación: el PDF comercial
+puede congelar esos informes y conservar el permiso físico bloqueado.
+
 ## Biblioteca real y fuentes reunidas · 18-10-2026
 
 El [paquete final](../../research/2026-10-18-direccion-final/README.md) conserva

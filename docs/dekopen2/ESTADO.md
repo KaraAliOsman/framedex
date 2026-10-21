@@ -156,3 +156,7 @@ a P03; P01 deja preparado su contrato y su bloqueo.
   no autoriza cotizar. El caso térmico conserva sus comprobaciones de cálculo
   y PDF inmutable como revisión comercial y comprueba expresamente que no
   habilita fabricación sin verificar la serie. Reejecución completa en curso.
+- Doce integraciones de permisos y emisión aprobadas: una confirmación por
+  celda seguida de la verificación vigente sustituye una revisión antigua
+  marcada pendiente. La emisión conserva el diagnóstico anterior, pero decide
+  con MANUFACTURABLE y mantiene los controles físicos de fabricación y proceso.

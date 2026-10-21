@@ -1168,18 +1168,16 @@ def compose_revision(
                 engine_result=current_bom,
                 system_facts=system_facts_by_id.get(str(system_id)),
             )
-            from catalogs.authority import catalog_authority_gate
-            catalog_gate = catalog_authority_gate(system_id=system_id, org_id=org_id,
-                params=params, process_facts=process_facts,
-                profile_skus={str(item.get("sku")) for item in current_bom.get("profile_cuts", [])},
-                hardware_skus={item.kit_sku for item in result.hardware_items},
-                panel_skus={str(item.get("sku")) for item in current_bom.get("panels", [])})
             from catalogs.use_levels import require_use
             catalog_use = require_use(org_id, system_id, "QUOTABLE", params=params,
                 result=result, priced=True)
+            from catalogs.authority import catalog_authority_gate
+            catalog_gate = catalog_authority_gate(system_id=system_id, org_id=org_id,
+                params=params, process_facts=process_facts, usage=catalog_use,
+                profile_skus={str(item.get("sku")) for item in current_bom.get("profile_cuts", [])},
+                hardware_skus={item.kit_sku for item in result.hardware_items},
+                panel_skus={str(item.get("sku")) for item in current_bom.get("panels", [])})
             manufacture_use = next(item for item in catalog_use["levels"] if item["level"] == "MANUFACTURABLE")
-            catalog_gate["usage"] = catalog_use
-            catalog_gate["ok"] = catalog_gate["ok"] and manufacture_use["ok"]
             if not manufacture_use["ok"] and not allow_incomplete_workshop:
                 raise DocumentaryError("catalog_use_incomplete", detail="Completa la serie antes de fabricar.",
                     extra={"required_level": "MANUFACTURABLE", "pending": manufacture_use["pending"]})

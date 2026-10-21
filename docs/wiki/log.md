@@ -2171,3 +2171,15 @@ leen esa decisión congelada. La integración PRO6004 sintética calcula precio,
 emite PDF y comprueba el bloqueo y la posterior optimización; faltan aún las
 comprobaciones completas y CI para cerrar la sub-PR. Véase
 [catálogo](product/catalog-authority.md) y [estado](../dekopen2/ESTADO.md).
+
+## 2026-10-21 · P01e: compatibilidad de revisión y cotización térmica
+
+En `gpt/dk2-p01e-niveles-y-bloqueos`, doce integraciones reales verifican que
+la confirmación por celda y la verificación vigente sustituyen la revisión
+antigua pendiente sin omitir fabricación ni proceso. Las 33 integraciones RLS
+comprueban el contrato aditivo y la falta de tarifas sin inventarlas. El PDF
+térmico conserva su prueba de inmutabilidad y confirma expresamente el bloqueo
+físico; revisar un informe térmico no verifica las reglas de la serie. Las
+sub-PR #165 y #166 se fusionaron con los cuatro controles aprobados. Continúa
+el cierre de #167 y #168 y la integración completa. Referencias:
+[catálogo](product/catalog-authority.md), [estado](../dekopen2/ESTADO.md).

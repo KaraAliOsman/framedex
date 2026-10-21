@@ -11,6 +11,7 @@ import pytest
 from authentication.errors import ContractAPIException
 from authentication.rls import catalog_backend
 from catalogs import series
+from catalogs.authority import catalog_authority_gate
 from catalogs.readiness import catalog_readiness
 from catalogs.use_levels import require_use, series_use, technical_fingerprint
 from engine_api.adapter import calculate_from_api
@@ -204,3 +205,33 @@ def test_examples_remain_explicitly_synthetic(documentary_tenant):
         assert usage["is_example"] and not usage["verified"]
         assert next(item for item in usage["levels"] if item["level"] == "QUOTABLE")["ok"], [(item["rule"], item["action"]) for item in usage["pending"]]
         assert next(item for item in usage["levels"] if item["level"] == "MANUFACTURABLE")["ok"]
+
+
+def test_current_cell_confirmation_supersedes_stale_row_review_but_keeps_physical_checks(documentary_tenant):
+    org, _, users, _ = documentary_tenant
+    actor = users["OWNER"]
+    with as_user(actor):
+        sheet = priced_series(org, actor)
+        system = sheet["tabs"]["rules"]
+        series.service.review(series.service.SYSTEMS, org, sheet["id"], actor,
+            expected_revision='"' + system["revision"] + '"')
+        sheet = series.series_sheet(org, sheet["id"])
+        sheet = series.edit_cells(org, sheet["id"], actor, {"revision": sheet["revision"], "changes": [{
+            "resource": "systems", "row_id": sheet["id"], "field": "glass_clearance_white_mm", "value": "4.25"}]})
+        assert sheet["tabs"]["rules"]["review_pending"]
+        suggested = [{key: item[key] for key in ("resource", "row_id", "field")}
+            for item in sheet["cells"] if item["origin"] == "SUGGESTED"]
+        series.confirm_cells(org, sheet["id"], actor, {"revision": sheet["revision"], "cells": suggested})
+        verify(org, sheet["id"], actor)
+        usage = require_use(org, sheet["id"], "MANUFACTURABLE")
+        params = SystemParamsRepository().load_visible(sheet["id"], org)
+        process = {"resolved_via": "system", "profile": {"code": "SYNTHETIC"}}
+        arguments = {"system_id": sheet["id"], "org_id": org, "params": params, "process_facts": process}
+        legacy = catalog_authority_gate(**arguments)
+        assert not legacy["review"]["ok"] and not legacy["ok"]
+        current = catalog_authority_gate(**arguments, usage=usage)
+        assert current["ok"] and current["usage"]["verified"]
+        assert current["review"] == legacy["review"]
+        assert not catalog_authority_gate(**{**arguments, "process_facts": {}}, usage=usage)["ok"]
+        assert not catalog_authority_gate(**{**arguments,
+            "params": params.model_copy(update={"rebate_depth_mm": None})}, usage=usage)["ok"]
