@@ -2103,3 +2103,16 @@ del onboarding y carga duplicada. «Agregar ventana» desde una ventana nueva si
 guardar ahora pregunta antes de salir. El congelamiento visto tras ~22
 navegaciones en una misma pestaña ocurre solo con el servidor de desarrollo del
 entorno aislado; la compilación de REVIEW soporta 30 navegaciones seguidas.
+
+## 2026-10-21 · DEKOPEN 2: investigación completa y prompts para GPT
+
+El dueño califica el producto como demo y pide rehacer todo, con Claude como
+director (investigación, diseño, prompts) y GPT como implementador. Se audita
+DEKOPEN con cifras (200 mil líneas, 364 operaciones de API, 323 «Sin dato» en
+pantalla; cálculo del motor correcto en el caso verificado) y se identifica la
+causa raíz: la serie real del dueño no cotiza por la escalera de autoridades.
+Siete líneas de investigación y capturas REA cubren más de 30 productos. Se
+entrega [el paquete](../research/2026-10-21-competencia/00-README.md): estrategia,
+catálogo con valores sugeridos y ventana de prueba, agente con 12
+automatizaciones, nueve mockups y once fases con bucle continuo. Vista única de
+obra, panel lateral del agente y precios quedan como decisiones del dueño.

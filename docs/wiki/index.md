@@ -123,6 +123,7 @@ acceptance claims keep separate refs; newer code always requires verification.
 
 ## Research
 
+- [DEKOPEN 2 · dirección y prompts · 21-10-2026](../research/2026-10-21-competencia/00-README.md) — auditoría medida, competencia (30+ productos, REA), estrategia, catálogo con valores sugeridos, agente, 9 mockups y 11 fases para GPT; propuestas pendientes del dueño marcadas.
 - [Innovación y oportunidades · 18-10-2026](research/innovation-2026-10-18.md) — veinte fuentes, capacidades actuales contrastadas, veinticuatro mejoras y seis apuestas; recomendaciones exploratorias, no ampliación aprobada del lanzamiento.
 - [Dirección final y prompts · 18-10-2026](research/final-direction-2026-10-18.md) — corrección posterior del dueño e integración de tres revisiones especializadas; [paquete final](../research/2026-10-18-direccion-final/README.md).
 - [Revisión profunda y tres direcciones · 18-10-2026](research/revision-profunda-2026-10-18.md) — quince familias, rúbrica común, evidencia visual/REA y auditoría local; la elección posterior sustituye la propuesta acoplada; [dossier](../research/2026-10-18-revision-profunda/README.md).
