@@ -178,7 +178,9 @@ class SystemParamsRepository:
                        rail_count, rebate_depth_mm, end_milling_overlap_mm,
                        finishes::text, system_family, sliding_parameters::text,
                        dimensional_limits::text, legacy_authority,
-                       opening_capabilities::text,paired_leaf_rule::text,finish_authority::text,extra_authority::text
+                       opening_capabilities::text,paired_leaf_rule::text,finish_authority::text,extra_authority::text,
+                       EXISTS(SELECT 1 FROM public.catalog_value_history h
+                           WHERE h.system_id=profile_systems.id AND h.org_id=profile_systems.org_id)
                 FROM public.profile_systems
                 WHERE id = %s AND is_active = TRUE
                   AND (is_global = TRUE OR org_id = %s)
@@ -198,6 +200,11 @@ class SystemParamsRepository:
         if frame is None:
             raise UnsupportedCatalogContract("FRAME effective article is required")
         extra_authority = self._load_extras(system[29], active_org_id) if len(system) > 29 else None
+        origin_fields = {}
+        if len(system) > 30 and system[30]:
+            from catalogs.value_origins import engine_origins
+            with catalog_backend():
+                origin_fields["value_origins"] = engine_origins(active_org_id, system_id)
 
         return SystemParams(
             system_code=str(system[0]),
@@ -241,6 +248,7 @@ class SystemParamsRepository:
             **({"extra_authority": extra_authority} if extra_authority is not None else {}),
             available_panel_rules=self._load_panel_rules(system_id, active_org_id),
             available_hardware_kits=kits,
+            **origin_fields,
         )
 
     def _load_extras(self, value: object, org_id: UUID) -> ExtraAuthority | None:

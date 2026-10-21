@@ -4,8 +4,18 @@ from projects.thermal_views import ThermalCatalogView, ThermalReviewView
 from catalogs import views
 from catalogs.glass_views import GlassPreviewView, GlassRulesView, GlassVariantView
 from catalogs.reference_views import ReferenceSeriesView
+from catalogs.series_views import (
+    FamilyTemplatesView, SeriesCellsView, SeriesConfirmView, SeriesCreateView,
+    SeriesHistoryView, SeriesSheetView,
+)
 
 urlpatterns = [
+    path("family-templates/", FamilyTemplatesView.as_view(), name="catalog-family-templates"),
+    path("series/", SeriesCreateView.as_view(), name="catalog-series-create"),
+    path("series/<uuid:system_id>/", SeriesSheetView.as_view(), name="catalog-series-sheet"),
+    path("series/<uuid:system_id>/cells/", SeriesCellsView.as_view(), name="catalog-series-cells"),
+    path("series/<uuid:system_id>/confirm/", SeriesConfirmView.as_view(), name="catalog-series-confirm"),
+    path("series/<uuid:system_id>/history/", SeriesHistoryView.as_view(), name="catalog-series-history"),
     path("systems/<uuid:system_id>/thermal/", ThermalCatalogView.as_view()),
     path("systems/<uuid:system_id>/thermal/<uuid:report_id>/review/", ThermalReviewView.as_view()),
     path("glass/preview/", GlassPreviewView.as_view(), name="catalog-glass-preview"),

@@ -7,11 +7,14 @@
  */
 
 /**
+ * * `MANUAL` - MANUAL
+ * * `WORKSHOP` - WORKSHOP
  * * `SUGGESTED` - SUGGESTED
  */
-export type CatalogAssumptionOriginEnum =
-  (typeof CatalogAssumptionOriginEnum)[keyof typeof CatalogAssumptionOriginEnum];
+export type CatalogOriginEnum = (typeof CatalogOriginEnum)[keyof typeof CatalogOriginEnum];
 
-export const CatalogAssumptionOriginEnum = {
+export const CatalogOriginEnum = {
+  MANUAL: "MANUAL",
+  WORKSHOP: "WORKSHOP",
   SUGGESTED: "SUGGESTED",
 } as const;

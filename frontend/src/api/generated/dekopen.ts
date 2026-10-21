@@ -85,11 +85,13 @@ import type {
   CatalogReviewRequestRequest,
   CatalogReviewResponse,
   CatalogSectionImportCreateBody,
+  CatalogSeriesCellHistoryParams,
   CatalogTemplateDownloadParams,
   CatalogTemplateSchema,
   CatalogThermalDeclare201,
   CatalogThermalReview200,
   CatalogUndoRequestRequest,
+  CellHistory,
   ChangeInputRequest,
   ChangeResult,
   CheckoutInputRequest,
@@ -181,6 +183,7 @@ import type {
   EvidenceRow,
   ExtrasPreviewRequestRequest,
   ExtrasPreviewResponse,
+  FamilyTemplateList,
   FieldAssetAccess,
   FieldCommandRequest,
   FieldReceipt,
@@ -280,6 +283,7 @@ import type {
   PatchedKitWriteRequest,
   PatchedProjectUpdateRequest,
   PatchedQuotationCustomerRequestRequest,
+  PatchedSeriesBatchEditRequest,
   PatchedSystemWriteRequest,
   PaymentIntegrationRequest,
   PaymentIntegrationStatus,
@@ -375,6 +379,9 @@ import type {
   SearchResponse,
   SectionImportResponse,
   SendOrderRequestRequest,
+  SeriesBatchConfirmRequest,
+  SeriesCreateRequest,
+  SeriesSheet,
   ServicesResponse,
   ServicesWriteRequest,
   ShareQuoteResponse,
@@ -6553,6 +6560,71 @@ export const catalogEvidenceReview = async (
   });
 };
 
+export type catalogFamilyTemplatesResponse200 = {
+  data: FamilyTemplateList;
+  status: 200;
+};
+
+export type catalogFamilyTemplatesResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogFamilyTemplatesResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogFamilyTemplatesResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogFamilyTemplatesResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogFamilyTemplatesResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogFamilyTemplatesResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogFamilyTemplatesResponseSuccess = catalogFamilyTemplatesResponse200 & {
+  headers: Headers;
+};
+export type catalogFamilyTemplatesResponseError = (
+  | catalogFamilyTemplatesResponse400
+  | catalogFamilyTemplatesResponse401
+  | catalogFamilyTemplatesResponse403
+  | catalogFamilyTemplatesResponse404
+  | catalogFamilyTemplatesResponse409
+  | catalogFamilyTemplatesResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogFamilyTemplatesResponse =
+  catalogFamilyTemplatesResponseSuccess | catalogFamilyTemplatesResponseError;
+
+export const getCatalogFamilyTemplatesUrl = () => {
+  return `/api/v1/catalogs/family-templates/`;
+};
+
+export const catalogFamilyTemplates = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogFamilyTemplatesResponse> => {
+  return apiMutator<catalogFamilyTemplatesResponse>(getCatalogFamilyTemplatesUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
 export type catalogGlassPreviewResponse200 = {
   data: GlassPreviewOutput;
   status: 200;
@@ -7884,6 +7956,387 @@ export const catalogSectionImportCreate = async (
     method: "POST",
     body: formData,
   });
+};
+
+export type catalogSeriesCreateResponse201 = {
+  data: SeriesSheet;
+  status: 201;
+};
+
+export type catalogSeriesCreateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogSeriesCreateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogSeriesCreateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogSeriesCreateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogSeriesCreateResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogSeriesCreateResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogSeriesCreateResponseSuccess = catalogSeriesCreateResponse201 & {
+  headers: Headers;
+};
+export type catalogSeriesCreateResponseError = (
+  | catalogSeriesCreateResponse400
+  | catalogSeriesCreateResponse401
+  | catalogSeriesCreateResponse403
+  | catalogSeriesCreateResponse404
+  | catalogSeriesCreateResponse409
+  | catalogSeriesCreateResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogSeriesCreateResponse =
+  catalogSeriesCreateResponseSuccess | catalogSeriesCreateResponseError;
+
+export const getCatalogSeriesCreateUrl = () => {
+  return `/api/v1/catalogs/series/`;
+};
+
+export const catalogSeriesCreate = async (
+  seriesCreateRequest: SeriesCreateRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogSeriesCreateResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<catalogSeriesCreateResponse>(getCatalogSeriesCreateUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(seriesCreateRequest),
+  });
+};
+
+export type catalogSeriesSheetResponse200 = {
+  data: SeriesSheet;
+  status: 200;
+};
+
+export type catalogSeriesSheetResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogSeriesSheetResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogSeriesSheetResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogSeriesSheetResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogSeriesSheetResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogSeriesSheetResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogSeriesSheetResponseSuccess = catalogSeriesSheetResponse200 & {
+  headers: Headers;
+};
+export type catalogSeriesSheetResponseError = (
+  | catalogSeriesSheetResponse400
+  | catalogSeriesSheetResponse401
+  | catalogSeriesSheetResponse403
+  | catalogSeriesSheetResponse404
+  | catalogSeriesSheetResponse409
+  | catalogSeriesSheetResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogSeriesSheetResponse =
+  catalogSeriesSheetResponseSuccess | catalogSeriesSheetResponseError;
+
+export const getCatalogSeriesSheetUrl = (systemId: string) => {
+  return `/api/v1/catalogs/series/${systemId}/`;
+};
+
+export const catalogSeriesSheet = async (
+  systemId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogSeriesSheetResponse> => {
+  return apiMutator<catalogSeriesSheetResponse>(getCatalogSeriesSheetUrl(systemId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type catalogSeriesEditCellsResponse200 = {
+  data: SeriesSheet;
+  status: 200;
+};
+
+export type catalogSeriesEditCellsResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogSeriesEditCellsResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogSeriesEditCellsResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogSeriesEditCellsResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogSeriesEditCellsResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogSeriesEditCellsResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogSeriesEditCellsResponseSuccess = catalogSeriesEditCellsResponse200 & {
+  headers: Headers;
+};
+export type catalogSeriesEditCellsResponseError = (
+  | catalogSeriesEditCellsResponse400
+  | catalogSeriesEditCellsResponse401
+  | catalogSeriesEditCellsResponse403
+  | catalogSeriesEditCellsResponse404
+  | catalogSeriesEditCellsResponse409
+  | catalogSeriesEditCellsResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogSeriesEditCellsResponse =
+  catalogSeriesEditCellsResponseSuccess | catalogSeriesEditCellsResponseError;
+
+export const getCatalogSeriesEditCellsUrl = (systemId: string) => {
+  return `/api/v1/catalogs/series/${systemId}/cells/`;
+};
+
+export const catalogSeriesEditCells = async (
+  systemId: string,
+  patchedSeriesBatchEditRequest?: PatchedSeriesBatchEditRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogSeriesEditCellsResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<catalogSeriesEditCellsResponse>(getCatalogSeriesEditCellsUrl(systemId), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(patchedSeriesBatchEditRequest),
+  });
+};
+
+export type catalogSeriesConfirmCellsResponse200 = {
+  data: SeriesSheet;
+  status: 200;
+};
+
+export type catalogSeriesConfirmCellsResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogSeriesConfirmCellsResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogSeriesConfirmCellsResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogSeriesConfirmCellsResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogSeriesConfirmCellsResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogSeriesConfirmCellsResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogSeriesConfirmCellsResponseSuccess = catalogSeriesConfirmCellsResponse200 & {
+  headers: Headers;
+};
+export type catalogSeriesConfirmCellsResponseError = (
+  | catalogSeriesConfirmCellsResponse400
+  | catalogSeriesConfirmCellsResponse401
+  | catalogSeriesConfirmCellsResponse403
+  | catalogSeriesConfirmCellsResponse404
+  | catalogSeriesConfirmCellsResponse409
+  | catalogSeriesConfirmCellsResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogSeriesConfirmCellsResponse =
+  catalogSeriesConfirmCellsResponseSuccess | catalogSeriesConfirmCellsResponseError;
+
+export const getCatalogSeriesConfirmCellsUrl = (systemId: string) => {
+  return `/api/v1/catalogs/series/${systemId}/confirm/`;
+};
+
+export const catalogSeriesConfirmCells = async (
+  systemId: string,
+  seriesBatchConfirmRequest: SeriesBatchConfirmRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogSeriesConfirmCellsResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<catalogSeriesConfirmCellsResponse>(getCatalogSeriesConfirmCellsUrl(systemId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(seriesBatchConfirmRequest),
+  });
+};
+
+export type catalogSeriesCellHistoryResponse200 = {
+  data: CellHistory;
+  status: 200;
+};
+
+export type catalogSeriesCellHistoryResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogSeriesCellHistoryResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogSeriesCellHistoryResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogSeriesCellHistoryResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogSeriesCellHistoryResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogSeriesCellHistoryResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogSeriesCellHistoryResponseSuccess = catalogSeriesCellHistoryResponse200 & {
+  headers: Headers;
+};
+export type catalogSeriesCellHistoryResponseError = (
+  | catalogSeriesCellHistoryResponse400
+  | catalogSeriesCellHistoryResponse401
+  | catalogSeriesCellHistoryResponse403
+  | catalogSeriesCellHistoryResponse404
+  | catalogSeriesCellHistoryResponse409
+  | catalogSeriesCellHistoryResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogSeriesCellHistoryResponse =
+  catalogSeriesCellHistoryResponseSuccess | catalogSeriesCellHistoryResponseError;
+
+export const getCatalogSeriesCellHistoryUrl = (
+  systemId: string,
+  params: CatalogSeriesCellHistoryParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/catalogs/series/${systemId}/history/?${stringifiedParams}`
+    : `/api/v1/catalogs/series/${systemId}/history/`;
+};
+
+export const catalogSeriesCellHistory = async (
+  systemId: string,
+  params: CatalogSeriesCellHistoryParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogSeriesCellHistoryResponse> => {
+  return apiMutator<catalogSeriesCellHistoryResponse>(
+    getCatalogSeriesCellHistoryUrl(systemId, params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
 };
 
 export type catalogSystemListResponse200 = {

@@ -2150,3 +2150,13 @@ SUGGESTED sin precios ni SKU. Una base local sintética separada pasó 1.507
 aserciones pgTAP y cuatro integraciones nuevas; diez unitarias validan los datos.
 Los endpoints, niveles y bloqueos siguen pendientes. Véase
 [catálogo](product/catalog-authority.md) y [estado](../dekopen2/ESTADO.md).
+
+## 2026-10-21 · DEKOPEN 2 P01d: ficha, lotes y cálculo desde plantilla
+
+La rama `gpt/dk2-p01d-ficha-y-lotes` conecta alta transaccional desde plantilla,
+seis pestañas y lotes con historial y revisión optimista. Las revisiones
+existentes también registran orígenes. El motor recibe versiones coincidentes
+con las celdas actuales; el cálculo abatible de 1200 × 1100 conserva el mismo
+despiece después de confirmar los sugeridos. Lint SQL y 1.507 aserciones pgTAP
+aprobadas en la base aislada; niveles y bloqueos siguen pendientes. Referencias:
+[catálogo](product/catalog-authority.md), [estado](../dekopen2/ESTADO.md).

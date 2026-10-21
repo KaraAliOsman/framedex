@@ -5,10 +5,10 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
-import type { CatalogAssumptionOriginEnum } from "./catalogAssumptionOriginEnum";
+import type { CatalogSuggestionEnum } from "./catalogSuggestionEnum";
 
 export interface CatalogAssumption {
   rule: string;
   value: string;
-  origin: CatalogAssumptionOriginEnum;
+  origin: CatalogSuggestionEnum;
 }

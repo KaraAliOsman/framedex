@@ -374,6 +374,8 @@ def _lock_singleton_role(system_id):
 
 def create(resource, org_id, values, actor_id=None):
     _bind_parent(resource, org_id, values)
+    if resource is not SYSTEMS and values.get("system_id") is not None:
+        _lock_singleton_role(values["system_id"])
     if resource is SYSTEMS:
         _check_process_profile(org_id, values)
     if resource is ARTICLES and "section" in values:
@@ -407,7 +409,10 @@ def create(resource, org_id, values, actor_id=None):
 
 
 def update(resource, org_id, row_id, values, expected_revision=None, actor_id=None):
-    _require_owned(retrieve(resource, org_id, row_id), org_id)
+    initial = retrieve(resource, org_id, row_id)
+    _require_owned(initial, org_id)
+    require_revision(initial, expected_revision)
+    _lock_singleton_role(initial["id"] if resource is SYSTEMS else initial.get("system_id") or initial["id"])
     current = retrieve(resource, org_id, row_id, lock=True)
     _require_owned(current, org_id)
     require_revision(current, expected_revision)
@@ -480,6 +485,10 @@ def review(resource, org_id, row_id, user_id, expected_revision=None):
     human has vouched for becomes MANUAL; other provenance stays truthful.
     If-Match is required: approving a revision that was edited under you is
     not a review of what you read."""
+    initial = retrieve(resource, org_id, row_id)
+    _require_owned(initial, org_id)
+    require_revision(initial, expected_revision)
+    _lock_singleton_role(initial["id"] if resource is SYSTEMS else initial.get("system_id") or initial["id"])
     current = retrieve(resource, org_id, row_id, lock=True)
     _require_owned(current, org_id)
     require_revision(current, expected_revision)
@@ -506,7 +515,10 @@ def review(resource, org_id, row_id, user_id, expected_revision=None):
 
 
 def delete(resource, org_id, row_id, expected_revision=None):
-    _require_owned(retrieve(resource, org_id, row_id), org_id)
+    initial = retrieve(resource, org_id, row_id)
+    _require_owned(initial, org_id)
+    require_revision(initial, expected_revision)
+    _lock_singleton_role(initial["id"] if resource is SYSTEMS else initial.get("system_id") or initial["id"])
     current = retrieve(resource, org_id, row_id, lock=True)
     _require_owned(current, org_id)
     require_revision(current, expected_revision)

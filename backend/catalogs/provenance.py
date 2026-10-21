@@ -46,7 +46,12 @@ def _value(row, field):
         "sliding.rail_type": "rail_type"}
     if field.startswith("sliding.") and row.get("sliding_parameters"):
         return row["sliding_parameters"].get(field.removeprefix("sliding."))
-    return row.get(aliases.get(field, field))
+    value = row
+    for key in aliases.get(field, field).split("."):
+        if not isinstance(value, dict):
+            return None
+        value = value.get(key)
+    return value
 
 
 def evidence_matches(row, evidence):
