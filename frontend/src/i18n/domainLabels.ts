@@ -1,5 +1,6 @@
 /** One glossary for API enums. Unknown additions must fail the exhaustiveness gate. */
 export const domainLabels: Readonly<Record<string, string>> = {
+  SUGGESTED: "Sugerido",
   // v1 06–07: document compositions, acceptance policy, assistant autonomy,
   // cut draft and finish samples.
   NONE: "Ninguno",

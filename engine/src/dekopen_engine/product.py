@@ -1117,6 +1117,8 @@ def _prefix_result(module_id: str, result: EngineResult) -> EngineResult:
         prefixed = prefixed.model_copy(update={"extra_suggestions": [
             item.model_copy(update={"module_id": module_id})
             for item in result.extra_suggestions]})
+    if "assumptions" in result.model_fields_set:
+        prefixed = prefixed.model_copy(update={"assumptions": result.assumptions})
     return prefixed
 
 
@@ -1215,6 +1217,8 @@ def _evaluate_contour_module(
         )
 
     frame = params.effective_profile_articles[ProfileRole.FRAME]
+    from .catalog_assumptions import profile_inputs, system_inputs
+    profile_inputs(frame.sku, "face_width_mm")
     validate_profile_authority(frame, legacy=params.uses_legacy_rules, reinforced_member=True)
     per_end = joint_adjustment_per_end(params, frame)
     n = len(contour.vertices)
@@ -1319,6 +1323,7 @@ def _evaluate_contour_module(
             )
         )
 
+    system_inputs("glass_clearance_foil_mm" if is_foiled else "glass_clearance_white_mm")
     clearance_mm = params.glass_clearance_foil_mm if is_foiled else params.glass_clearance_white_mm
     # Inward offset that lands exactly on the rect-path pocket math:
     # pocket = finished - 2*face + 2*rebate - 2*clearance.
@@ -1706,9 +1711,13 @@ def contour_module_computation(
     the BOM path runs, returned as a GeometryComputation whose manufacturing
     trace carries the real contour members, glass polygon and bead sets
     instead of a rectangular approximation."""
-    _result, issues, computation = _evaluate_contour_module(
-        module, params, is_foiled=is_foiled, finish=finish
-    )
+    from .catalog_assumptions import catalog_consumption
+    with catalog_consumption(params) as trace:
+        _result, issues, computation = _evaluate_contour_module(
+            module, params, is_foiled=is_foiled, finish=finish
+        )
+        if computation is not None and computation.result is not None:
+            computation.result = trace.attach(computation.result)
     return computation, issues
 
 
@@ -1878,15 +1887,18 @@ def evaluate_product(
     is_foiled: bool = False,
     finish: str | None = None,
 ) -> ProductEvaluation:
+    from contextlib import nullcontext
     from decimal import localcontext
     from .advanced_openings import ADVANCED_GEOMETRY_CONTEXT, has_advanced_opening
+    from .catalog_assumptions import catalog_consumption
 
-    if any(has_advanced_opening(module.tree) for module in product.assembly.modules):
-        with localcontext(ADVANCED_GEOMETRY_CONTEXT):
-            return _evaluate_product(product, params, coupler_articles=coupler_articles,
-                                     is_foiled=is_foiled, finish=finish)
-    return _evaluate_product(product, params, coupler_articles=coupler_articles,
-                             is_foiled=is_foiled, finish=finish)
+    advanced = any(has_advanced_opening(module.tree) for module in product.assembly.modules)
+    with catalog_consumption(params) as trace, localcontext(ADVANCED_GEOMETRY_CONTEXT) if advanced else nullcontext():
+        evaluation = _evaluate_product(product, params, coupler_articles=coupler_articles,
+                                       is_foiled=is_foiled, finish=finish)
+        if evaluation.bom is not None:
+            evaluation = evaluation.model_copy(update={"bom": trace.attach(evaluation.bom)})
+        return evaluation
 
 
 def _evaluate_product(
@@ -1935,6 +1947,8 @@ def _evaluate_product(
             )
         )
 
+    from .catalog_assumptions import system_inputs
+    system_inputs("depth_mm")
     plan, plan_issues = _plan_geometry(assembly, params.depth_mm, coupler_articles)
     issues.extend(plan_issues)
 
@@ -2318,6 +2332,9 @@ def _evaluate_product(
         if any("extra_suggestions" in result.model_fields_set for result in aggregated):
             bom = bom.model_copy(update={"extra_suggestions": [
                 item for result in aggregated for item in result.extra_suggestions]})
+        assumptions = {item.rule: item for result in aggregated for item in result.assumptions}
+        if assumptions:
+            bom = bom.model_copy(update={"assumptions": [assumptions[key] for key in sorted(assumptions)]})
 
     if any(issue.severity is Severity.ERROR for issue in issues):
         status = ProductStatus.INVALID

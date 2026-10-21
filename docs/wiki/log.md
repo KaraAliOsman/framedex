@@ -2129,3 +2129,13 @@ de prueba recupera las 35 pruebas del archivo sin relajar el control de vigencia
 Los dos goldens citados en la auditoría pasan al leer UTF-8 explícitamente en
 Windows; LF reproducible evita diferencias de checkout en el guardián de bytes.
 No se regeneran goldens ni se modifican fórmulas.
+
+## 2026-10-21 · DEKOPEN 2 P01b: sugeridos consumidos por el motor
+
+Se incorpora una traza de dependencias de catálogo local al cálculo. Registra
+solo SUGGESTED consumidos, conserva el detalle en conjuntos y mantiene los
+contratos históricos sin campos aditivos ausentes. Verificado con siete pruebas
+nuevas y comprobación de bytes dorados sin regeneración. La ficha editable,
+persistencia de orígenes y niveles de uso permanecen en P01. Referencia:
+`gpt/dk2-p01b-traza-sugeridos`, `engine/tests/test_catalog_assumptions.py` y
+[catálogo](product/catalog-authority.md).

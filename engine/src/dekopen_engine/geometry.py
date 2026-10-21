@@ -9,6 +9,7 @@ from typing import Any, Literal
 from dekopen_engine.advanced_openings import recipe_geometry_context
 
 from dekopen_engine.bom import build_engine_result
+from dekopen_engine.catalog_assumptions import catalog_consumption, consume, profile_inputs, system_inputs
 from dekopen_engine.extra_models import ExtraFact
 from dekopen_engine.extras import AccessoryLeaf
 from dekopen_engine.catalog_rules import (
@@ -369,7 +370,9 @@ def welding_loss_per_end(article: EffectiveProfileArticle) -> Decimal:
     rather than invent one; only welded (PVC) paths reach this."""
 
     if article.cut_rule is not None:
+        profile_inputs(article.sku, "cut_rule.welding_loss_per_end_mm")
         return article.cut_rule.welding_loss_per_end_mm
+    profile_inputs(article.sku, "welding_loss_mm")
     if article.welding_loss_mm is None:
         raise ValueError(
             f"welding_loss_mm unknown for article {article.sku} — "
@@ -390,9 +393,11 @@ def joint_adjustment_per_end(
     """
 
     if article.cut_rule is not None:
+        profile_inputs(article.sku, "cut_rule.welding_loss_per_end_mm", "cut_rule.joint_deduction_per_end_mm")
         return (article.cut_rule.welding_loss_per_end_mm
                 - article.cut_rule.joint_deduction_per_end_mm)
     if params.material is MaterialType.ALUMINIUM:
+        system_inputs("corner_bracket_loss_mm")
         return -params.corner_bracket_loss_mm
     return welding_loss_per_end(article)
 
@@ -406,6 +411,7 @@ def _article(params: SystemParams, role: ProfileRole) -> EffectiveProfileArticle
         raise ValueError(
             f"Effective profile article key {role.value} has role {article.role.value}"
         )
+    profile_inputs(article.sku, "face_width_mm")
     return article
 
 
@@ -438,7 +444,9 @@ def reinforcement_cut_length(
     welded_end_count: int,
 ) -> Decimal:
     if article.reinforcement_rule is not None:
+        profile_inputs(article.sku, "reinforcement_rule.cut_deduction_mm")
         return cut_mm - article.reinforcement_rule.cut_deduction_mm
+    profile_inputs(article.sku, "reinforcement_gap_mm")
     if article.reinforcement_gap_mm is None:
         raise ValueError(
             f"reinforcement_gap_mm unknown for article {article.sku} — "
@@ -469,6 +477,7 @@ def _append_profile(
                                reinforced_member=welded_ends is not None)
     length_mm = rounded_profile_cut(length_mm, article)
     if article.cut_rule is not None:
+        profile_inputs(article.sku, "cut_rule.angle_degrees")
         if welded_ends != 1:
             angle_left = angle_right = Decimal(article.cut_rule.angle_degrees).quantize(Decimal("0.1"))
         else:
@@ -618,6 +627,7 @@ def _append_frame(
 
 
 def resolve_bead_rule(infill_thickness_mm: Decimal, params: SystemParams) -> GlazingBeadRule:
+    consume("GLAZING", str(infill_thickness_mm.normalize()), "bead_profile_id", "cut_add_mm")
     try:
         rule = params.glazing_bead_rules[infill_thickness_mm]
     except KeyError as error:
@@ -739,6 +749,7 @@ def single_rectangular_sash_geometry(
     params: SystemParams,
 ) -> SashGeometry:
     """Shared finished-and-cut primitive for TURN, TILT_TURN and AWNING."""
+    system_inputs("sash_overlap_mm")
     return _jointed_sash(
         inner_width_mm + _TWO * params.sash_overlap_mm,
         inner_height_mm + _TWO * params.sash_overlap_mm,
@@ -750,12 +761,14 @@ def single_rectangular_sash_geometry(
 def rebate_depth(params: SystemParams) -> Decimal:
     """Glass bite the catalog must declare — absent means the pane position
     cannot be established and the calculation refuses, never guesses."""
+    system_inputs("rebate_depth_mm")
     if params.rebate_depth_mm is None:
         raise MissingFabricationAuthority("Missing rebate authority: rebate_depth_mm")
     return params.rebate_depth_mm
 
 
 def _end_milling_overlap(params: SystemParams) -> Decimal:
+    system_inputs("end_milling_overlap_mm")
     if params.end_milling_overlap_mm is None:
         raise MissingFabricationAuthority(
             "Missing end-milling authority: end_milling_overlap_mm")
@@ -1397,6 +1410,7 @@ def _append_paired_leaves(
     clearance_mm: Decimal,
 ) -> None:
     layout, rule = node.hinged_layout, params.paired_leaf_rule
+    system_inputs("paired_leaf_rule")
     if layout is None or rule is None:
         raise MissingFabricationAuthority("Sin dato: declara las hojas activa/pasiva y la regla del inversor.")
     width = (outer_rect.width_mm + rule.meeting_overlap_mm - rule.meeting_gap_mm) / _TWO
@@ -1619,6 +1633,7 @@ def _append_bay(
         return
     article = _article(params, leaf_profile_role(opening, params))
     if opening in (BayOpeningType.DOOR_ENTRY, BayOpeningType.DOOR_DOUBLE):
+        system_inputs("door_leaf_side_clearance_mm", "door_bottom_clearance_mm", "sash_overlap_mm")
         sash = _jointed_sash(rect.width_mm - _TWO * params.door_leaf_side_clearance_mm,
             rect.height_mm - params.door_bottom_clearance_mm + params.sash_overlap_mm, article, params)
         direct_rect = _Rect(rect.x_mm + params.door_leaf_side_clearance_mm,
@@ -1721,6 +1736,7 @@ def _append_door_frame(
         ],
     )
     clear_width = nominal_width_mm - _TWO * frame.face_width_mm
+    system_inputs("door_threshold_mm")
     threshold_y = nominal_height_mm - params.door_threshold_mm
     _append_profile(
         accumulator,
@@ -1765,6 +1781,7 @@ def _append_door(
         clearance_mm=clearance_mm)
     frame = _article(params, ProfileRole.FRAME)
     clear_width = reference_rect.width_mm
+    system_inputs("door_leaf_side_clearance_mm", "door_threshold_mm", "door_bottom_clearance_mm", "sash_overlap_mm")
     outer_width = clear_width - _TWO * params.door_leaf_side_clearance_mm
     outer_height = (
         nominal_height_mm
@@ -2029,8 +2046,25 @@ def _append_extras(accumulator: _GeometryAccumulator, root: ParametricNode, para
     return facts
 
 
-@recipe_geometry_context
 def compute_geometry(
+    root: ParametricNode,
+    params: SystemParams,
+    *,
+    is_foiled: bool = False,
+    diagnostic: bool = False,
+    diagnose_catalog_limits: bool = False,
+    finish: str | None = None,
+) -> GeometryComputation:
+    with catalog_consumption(params) as trace:
+        computation = _compute_geometry(root, params, is_foiled=is_foiled,
+            diagnostic=diagnostic, diagnose_catalog_limits=diagnose_catalog_limits, finish=finish)
+        if computation.result is not None:
+            computation.result = trace.attach(computation.result)
+        return computation
+
+
+@recipe_geometry_context
+def _compute_geometry(
     root: ParametricNode,
     params: SystemParams,
     *,
@@ -2073,6 +2107,7 @@ def compute_geometry(
         nominal_width_mm=nominal_width_mm,
         nominal_height_mm=nominal_height_mm,
     )
+    system_inputs("glass_clearance_foil_mm" if is_foiled else "glass_clearance_white_mm")
     clearance_mm = params.glass_clearance_foil_mm if is_foiled else params.glass_clearance_white_mm
     top_path = f"root/{top.id}"
     recipe = resolve_recipe(top, params)

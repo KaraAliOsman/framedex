@@ -5,6 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { CatalogAssumption } from "./catalogAssumption";
 import type { FittingPiece } from "./fittingPiece";
 import type { GlassPiece } from "./glassPiece";
 import type { HardwareItem } from "./hardwareItem";
@@ -15,6 +16,7 @@ import type { Reinforcement } from "./reinforcement";
 import type { ResolvedFinish } from "./resolvedFinish";
 
 export interface EngineCalculateResponse {
+  assumptions?: CatalogAssumption[];
   extras?: unknown[];
   extra_suggestions?: unknown[];
   finish?: ResolvedFinish | null;

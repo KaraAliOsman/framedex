@@ -4,6 +4,7 @@ from decimal import Decimal, localcontext
 from collections.abc import Sequence
 
 from dekopen_engine.catalog_rules import CatalogRuleError
+from dekopen_engine.catalog_assumptions import system_inputs
 from dekopen_engine.commercial import number
 from dekopen_engine.finish_models import ResolvedFinish
 from dekopen_engine.models import EffectiveProfileArticle, EngineResult, MaterialType, ProfileRole, SystemParams
@@ -14,6 +15,7 @@ def resolve_finish(params: SystemParams, code: str) -> ResolvedFinish | None:
     authority = params.finish_authority
     if authority is None:
         return None
+    system_inputs("finish_authority")
     if authority.material != params.material.value:
         raise CatalogRuleError("finish_material_invalid", "La carta de colores no corresponde al material de la serie. Revisa el catálogo.", {})
     combo = next((item for item in authority.combinations if item.code == code), None)

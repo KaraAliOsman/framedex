@@ -10,6 +10,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from decimal import ROUND_HALF_UP, Decimal
+from dekopen_engine.catalog_assumptions import profile_inputs, consume
 
 from dekopen_engine.models import (
     FittingPiece, HardwareKitRule, LeafWeight, ProfileCut, ProfileRole,
@@ -94,6 +95,7 @@ def base_leaf_weight(
         article = params.effective_profile_articles[cut.role]
         if article.sku != cut.sku:
             raise MissingWeightAuthority(f"Missing profile mass authority: {cut.sku}")
+        profile_inputs(article.sku, "weight_kg_m")
         density = article.weight_kg_m
         if density is None:
             pvc = None
@@ -109,6 +111,7 @@ def base_leaf_weight(
         article = params.effective_profile_articles[piece.role]
         if article.sku != piece.parent_profile_sku:
             raise MissingWeightAuthority(f"Missing steel mass authority: {piece.parent_profile_sku}")
+        profile_inputs(article.sku, "steel_weight_kg_m")
         density = article.steel_weight_kg_m
         if density is None:
             steel = None
@@ -121,6 +124,9 @@ def base_leaf_weight(
         reasons.append(infill_unknown_reason or "missing_infill_mass")
     screws: Decimal | None = Decimal("0")
     for fitting in fittings:
+        for article in params.effective_profile_articles.values():
+            if article.reinforcement_rule is not None and article.reinforcement_rule.screw_sku == fitting.sku:
+                profile_inputs(article.sku, "reinforcement_rule.screw_weight_kg")
         rules = [article.reinforcement_rule for article in params.effective_profile_articles.values()
                  if article.reinforcement_rule is not None
                  and article.reinforcement_rule.screw_sku == fitting.sku]
@@ -139,6 +145,7 @@ def base_leaf_weight(
 def with_hardware_weight(
     base: ExactLeafWeight, kit: HardwareKitRule, params: SystemParams,
 ) -> ExactLeafWeight:
+    consume("HARDWARE", kit.sku, "weight_kg")
     if kit.weight_kg is None:
         return ExactLeafWeight(
             base.pvc_weight_kg, base.steel_weight_kg, base.infill_weight_kg,

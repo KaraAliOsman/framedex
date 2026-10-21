@@ -132,6 +132,8 @@ def resolve_capability(node: ParametricNode, params: SystemParams) -> OpeningCap
             OpeningMovement.TURN, OpeningMovement.TILT_TURN):
         raise OpeningCapabilityError("Sin dato: declara el lado de las bisagras.", bay=node.id)
     matches = [cap for cap in params.opening_capabilities if matches_capability(cap, opening, use)]
+    from dekopen_engine.catalog_assumptions import system_inputs
+    system_inputs("opening_capabilities")
     if len(matches) == 1:
         return matches[0]
     compatible = tuple(name for name, caps in params.compatible_opening_systems

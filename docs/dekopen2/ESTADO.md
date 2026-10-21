@@ -6,7 +6,7 @@ Producción y precios comerciales requieren autorización aparte.
 
 | Fase | Alcance | Estado | Rama / PR |
 |---|---|---|---|
-| P01 | Catálogo v2: backend, origen, niveles y plantillas | En curso | P01a: `gpt/dk2-p01a-base-verificada`; P01b: modelo y API |
+| P01 | Catálogo v2: backend, origen, niveles y plantillas | En curso | [P01a #164](https://github.com/KaraAliOsman/framedex/pull/164); P01b: `gpt/dk2-p01b-traza-sugeridos` |
 | P02 | Ficha de serie editable | Pendiente | — |
 | P03 | Alta de serie y ventana de prueba | Pendiente | — |
 | P04 | Precio simple automático | Pendiente | — |
@@ -55,3 +55,19 @@ Se revisan las autoridades existentes para conservar compatibilidad e historial
 al añadir valores sugeridos. Cotizar admitirá sugeridos identificados; fabricar
 exigirá confirmarlos y verificar la serie. La verificación de usuario pertenece
 a P03; P01 deja preparado su contrato y su bloqueo.
+
+### P01b · Traza de valores sugeridos
+
+- `SystemParams.value_origins` aporta metadatos resueltos sin modificar cifras.
+  El resultado añade `assumptions` solo para reglas SUGGESTED consumidas.
+- El cálculo registra consultas a reglas de corte/refuerzo, vidrios, límites,
+  herrajes y acabados; los módulos contribuyen al conjunto sin duplicados.
+  Los contextos no se filtran entre hilos ni después de un error.
+- Los campos nuevos se omiten al serializar contratos históricos que nunca
+  los declararon. La comprobación de bytes dorados pasa sin regenerarlos.
+- OpenAPI y orval regenerados. Las pruebas de inventario de parámetros ahora
+  enumeran 37 campos y clasifican `value_origins` como metadato; mantienen la
+  comprobación exhaustiva y apuntan al consumidor real tras extraer el wrapper.
+- Pendiente de P01: persistencia/historial por celda, cuatro plantillas,
+  niveles de uso, endpoints por pestaña/lote y bloqueos por dependencia.
+  Esta sub-PR todavía no habilita una serie para cotizar ni fabricar.
