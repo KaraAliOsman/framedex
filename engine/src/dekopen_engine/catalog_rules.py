@@ -1,6 +1,7 @@
 """Pure catalog authorities for family compatibility and exact manufacturing."""
 
 from decimal import ROUND_CEILING, ROUND_FLOOR, ROUND_HALF_UP, Decimal
+from dekopen_engine.catalog_assumptions import profile_inputs, system_inputs
 
 from dekopen_engine.models import (
     BayOpeningType, EffectiveProfileArticle, FittingPiece, ParametricNode, ProfileRole,
@@ -61,11 +62,15 @@ def validate_family(root: ParametricNode, params: SystemParams) -> None:
 
 def sliding_parameters(params: SystemParams) -> SlidingSystemParameters:
     if params.sliding is not None:
+        system_inputs("sliding_parameters")
         return params.sliding
     if not params.uses_legacy_rules:
         raise MissingFabricationAuthority("Sin dato: faltan los parámetros de corredera del sistema.")
     # Legacy snapshots carry explicit flat values; missing values never acquire
     # a synthetic sliding allowance. This decoder does not authorize new rows.
+    system_inputs("pulley_height_mm", "central_overlap_mm", "sliding_lateral_clearance_mm",
+        "sliding_end_add_mm", "sliding_glazing_deduction_width_mm", "sliding_glazing_deduction_height_mm",
+        "rail_type", "rail_count")
     values = (params.pulley_height_mm, params.central_overlap_mm,
               params.sliding_lateral_clearance_mm, params.sliding_end_add_mm,
               params.sliding_glazing_deduction_width_mm,
@@ -102,6 +107,7 @@ def rounded_profile_cut(length_mm: Decimal, article: EffectiveProfileArticle) ->
     rule = article.cut_rule
     if rule is None:
         return length_mm
+    profile_inputs(article.sku, "cut_rule.meeting_deduction_mm", "cut_rule.cut_step_mm", "cut_rule.rounding")
     modes = {"UP": ROUND_CEILING, "DOWN": ROUND_FLOOR, "NEAREST": ROUND_HALF_UP}
     return ((length_mm - rule.meeting_deduction_mm) / rule.cut_step_mm
             ).to_integral_value(rounding=modes[rule.rounding]) * rule.cut_step_mm
@@ -118,6 +124,7 @@ def validate_profile_authority(article: EffectiveProfileArticle, *, legacy: bool
 
 
 def reinforcement_sku(article: EffectiveProfileArticle) -> str | None:
+    profile_inputs(article.sku, "reinforcement_rule.reinforcement_sku" if article.reinforcement_rule else "reinforcement_sku")
     return (article.reinforcement_rule.reinforcement_sku
             if article.reinforcement_rule is not None else article.reinforcement_sku)
 
@@ -127,6 +134,8 @@ def reinforcement_required(article: EffectiveProfileArticle, length_mm: Decimal,
     rule = article.reinforcement_rule
     if rule is None:
         return True  # Historical behavior, only on legacy authorities.
+    profile_inputs(article.sku, "reinforcement_rule.minimum_length_mm", "reinforcement_rule.required_finishes",
+        "reinforcement_rule.required_non_white")
     return (length_mm >= rule.minimum_length_mm or finish in rule.required_finishes
             or (is_foiled and rule.required_non_white))
 
@@ -137,6 +146,7 @@ def reinforcement_screws(article: EffectiveProfileArticle, steel_length_mm: Deci
     rule = article.reinforcement_rule
     if rule is None:
         return None
+    profile_inputs(article.sku, "reinforcement_rule.screws_per_m", "reinforcement_rule.screw_sku")
     count = int((steel_length_mm / Decimal("1000") * rule.screws_per_m
                  ).to_integral_value(rounding=ROUND_CEILING)) * qty
     return FittingPiece(kind="REINFORCEMENT_SCREW", sku=rule.screw_sku, qty=count,
@@ -146,6 +156,7 @@ def reinforcement_screws(article: EffectiveProfileArticle, steel_length_mm: Deci
 def validate_leaf_limits(params: SystemParams, opening: BayOpeningType, *, bay_id: str,
                          width_mm: Decimal, height_mm: Decimal,
                          weight_kg: Decimal | None = None, check_weight: bool = False) -> None:
+    system_inputs("dimensional_limits")
     rules = [rule for rule in params.dimensional_limits if rule.opening_type is opening]
     if not rules:
         if not params.uses_legacy_rules:

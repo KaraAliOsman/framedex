@@ -1,7 +1,7 @@
 ---
 type: concept
 status: active
-updated: 2026-10-18
+updated: 2026-10-21
 volatility: medium
 verified_ref: codex/P16-catalogo-tecnico
 sources:
@@ -19,6 +19,23 @@ sources:
 ---
 
 # Autoridad de catálogo por familia
+
+## DEKOPEN 2 · Traza de sugeridos · 21-10-2026
+
+Verificado en `gpt/dk2-p01b-traza-sugeridos`: el motor acepta
+`SystemParams.value_origins` y adjunta `EngineResult.assumptions` para los
+valores SUGGESTED que consulta durante el cálculo. No resuelve ni inventa
+parámetros. La traza es local al contexto de cálculo, conserva las de los
+módulos al agregarlos y evita duplicados. Un junquillo se identifica por el
+espesor de paquete consumido, no por el espesor neto del vidrio.
+
+`engine/tests/test_catalog_assumptions.py` cubre reglas irrelevantes, vidrio
+doble, valores confirmados, corte estructurado, conjuntos, errores y concurrencia.
+Los serializadores omiten los campos aditivos ausentes en contratos históricos;
+`python -m engine.scripts.regenerate_golden --check` verifica los mismos bytes.
+La persistencia por celda, las plantillas y los niveles v2 siguen pendientes de
+las siguientes sub-PR de P01. El historial de autoridades descrito abajo sigue
+siendo aplicable a los contratos existentes.
 
 ## Biblioteca real y fuentes reunidas · 18-10-2026
 

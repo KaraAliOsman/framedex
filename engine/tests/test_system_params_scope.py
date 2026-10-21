@@ -1,4 +1,4 @@
-"""Canonical SHOT-06 scope: 25 mapped, 20 consumed, 2 metadata, 3 reserved."""
+"""Every resolved system field keeps its explicit consumer or metadata scope."""
 
 import ast
 from collections.abc import Callable
@@ -12,14 +12,14 @@ from dekopen_engine import catalog_rules, finishes, geometry, hardware, openings
 from engine.tests.test_shot06_core import core_node
 
 CORE_CONSUMERS: dict[str, Callable[..., object]] = {
-    "material": geometry.compute_geometry,
+    "material": geometry._compute_geometry,
     "effective_profile_articles": geometry._article,
     "glazing_bead_rules": geometry.resolve_bead_rule,
     "rebate_depth_mm": geometry.rebate_depth,
     "end_milling_overlap_mm": geometry._end_milling_overlap,
     "sash_overlap_mm": geometry.single_rectangular_sash_geometry,
-    "glass_clearance_white_mm": geometry.compute_geometry,
-    "glass_clearance_foil_mm": geometry.compute_geometry,
+    "glass_clearance_white_mm": geometry._compute_geometry,
+    "glass_clearance_foil_mm": geometry._compute_geometry,
     "pulley_height_mm": catalog_rules.sliding_parameters,
     "central_overlap_mm": catalog_rules.sliding_parameters,
     "sliding_end_add_mm": catalog_rules.sliding_parameters,
@@ -40,9 +40,9 @@ CORE_CONSUMERS: dict[str, Callable[..., object]] = {
     "compatible_opening_systems": openings.resolve_capability,
     "finish_authority": finishes.resolve_finish,
     "finish_profile_skus": finishes.resolve_finish,
-    "extra_authority": geometry.compute_geometry,
+    "extra_authority": geometry._compute_geometry,
 }
-METADATA = {"system_code", "depth_mm"}
+METADATA = {"system_code", "depth_mm", "value_origins"}
 RESERVED = {"sliding_lateral_clearance_mm", "corner_bracket_loss_mm", "hook_depth_mm"}
 # Input-validity authority consumed by the API adapter (finish membership gates
 # `color`), not a formula input — `backend/engine_api/adapter.py` reads it.
@@ -52,7 +52,7 @@ API_BOUNDARY = {"finishes", "legacy_authority"}
 def test_every_system_parameter_has_an_explicit_scope() -> None:
     assert (
         len(CORE_CONSUMERS) == 29
-        and len(METADATA) == 2
+        and len(METADATA) == 3
         and len(RESERVED) == 3
         and len(API_BOUNDARY) == 2
     )

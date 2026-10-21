@@ -71,6 +71,9 @@ def evaluate_hardware_candidates(
             continue
         if explicit_sku is not None and kit.sku != explicit_sku:
             continue
+        from dekopen_engine.catalog_assumptions import consume
+        consume("HARDWARE", kit.sku, "opening_type", "min_leaf_width_mm", "max_leaf_width_mm",
+            "min_leaf_height_mm", "max_leaf_height_mm", "max_leaf_weight_kg", "rail_type", "class_authority", "contents")
         expansion = None
         violations: list[tuple[str, str]] = []
         if kit.class_authority is not None:

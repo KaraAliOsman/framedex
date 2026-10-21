@@ -29361,6 +29361,24 @@ components:
       - code
       - cycle
       - trial_ends_at
+    CatalogAssumption:
+      type: object
+      properties:
+        rule:
+          type: string
+        value:
+          type: string
+        origin:
+          $ref: '#/components/schemas/CatalogAssumptionOriginEnum'
+      required:
+      - origin
+      - rule
+      - value
+    CatalogAssumptionOriginEnum:
+      enum:
+      - SUGGESTED
+      type: string
+      description: '* `SUGGESTED` - SUGGESTED'
     CatalogChange:
       type: object
       properties:
@@ -33811,6 +33829,10 @@ components:
     EngineCalculateResponse:
       type: object
       properties:
+        assumptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatalogAssumption'
         extras:
           type: array
           items: {}
@@ -33996,6 +34018,10 @@ components:
     EngineResultPayload:
       type: object
       properties:
+        assumptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatalogAssumption'
         extras:
           type: array
           items: {}

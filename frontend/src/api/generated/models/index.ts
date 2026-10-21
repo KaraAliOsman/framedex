@@ -168,6 +168,8 @@ export * from "./capabilityEnum";
 export * from "./capabilityLimits";
 export * from "./capabilityPlan";
 export * from "./catalogArticleListParams";
+export * from "./catalogAssumption";
+export * from "./catalogAssumptionOriginEnum";
 export * from "./catalogBeadListParams";
 export * from "./catalogChange";
 export * from "./catalogChangeActionEnum";

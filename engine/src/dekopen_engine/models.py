@@ -987,16 +987,31 @@ class SystemDimensionalLimit(EngineModel):
         return self
 
 
+class CatalogValueOrigin(EngineModel):
+    scope: Literal["SYSTEM", "PROFILE", "GLAZING", "HARDWARE"]
+    key: str = ""
+    rule: str
+    value: str
+    origin: Literal["MANUAL", "WORKSHOP", "SUGGESTED"]
+
+
+class CatalogAssumption(EngineModel):
+    rule: str
+    value: str
+    origin: Literal["SUGGESTED"] = "SUGGESTED"
+
+
 class SystemParams(EngineModel):
     @model_serializer(mode="wrap")
     def preserve_historical_finish_authority(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
         result: dict[str, Any] = handler(self)
-        for key in ("finish_authority", "finish_profile_skus", "extra_authority"):
+        for key in ("finish_authority", "finish_profile_skus", "extra_authority", "value_origins"):
             if key not in self.model_fields_set:
                 result.pop(key, None)
         return result
 
     system_code: str
+    value_origins: tuple[CatalogValueOrigin, ...] = ()
     # None decodes pre-family snapshots. New catalogs must declare a family;
     # they never gain legacy mixed-family permission from a guessed value.
     system_family: SystemFamily | None = None
@@ -1276,6 +1291,7 @@ class AdvancedLeafFact(EngineModel):
 
 
 class EngineResult(EngineModel):
+    assumptions: list[CatalogAssumption] = Field(default_factory=list)
     extras: list[ExtraFact] = Field(default_factory=list)
     extra_suggestions: list[ExtraSuggestion] = Field(default_factory=list)
     finish: ResolvedFinish | None = None
@@ -1291,7 +1307,7 @@ class EngineResult(EngineModel):
     @model_serializer(mode="wrap")
     def preserve_historical_bom(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
         result: dict[str, Any] = handler(self)
-        for key in ("opening_leaves", "finish", "extras", "extra_suggestions"):
+        for key in ("opening_leaves", "finish", "extras", "extra_suggestions", "assumptions"):
             if key not in self.model_fields_set:
                 result.pop(key, None)
         return result

@@ -161,7 +161,14 @@ class LeafWeightSerializer(serializers.Serializer):
     )
 
 
+class CatalogAssumptionSerializer(serializers.Serializer):
+    rule = serializers.CharField()
+    value = serializers.CharField()
+    origin = serializers.ChoiceField(choices=["SUGGESTED"])
+
+
 class EngineResultPayloadSerializer(serializers.Serializer):
+    assumptions = CatalogAssumptionSerializer(many=True, required=False)
     extras = serializers.ListField(child=serializers.JSONField(),required=False)
     extra_suggestions = serializers.ListField(child=serializers.JSONField(),required=False)
     finish = ResolvedFinishSerializer(required=False, allow_null=True)
