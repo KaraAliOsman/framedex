@@ -67,7 +67,7 @@ CREATE POLICY catalog_series_setup_write ON public.catalog_series_setup FOR ALL 
 -- accepts that representation, never a rounded or otherwise different value.
 CREATE FUNCTION private.catalog_values_equal(a JSONB,b JSONB) RETURNS BOOLEAN
 LANGUAGE plpgsql IMMUTABLE SET search_path='' AS $$
-DECLARE k TEXT; i INTEGER; av TEXT; bv TEXT;
+DECLARE k TEXT; av TEXT; bv TEXT;
 BEGIN
     IF a IS NOT DISTINCT FROM b THEN RETURN TRUE; END IF;
     IF a IS NULL OR b IS NULL THEN RETURN FALSE; END IF;
@@ -122,7 +122,7 @@ BEGIN
         AND e.review_state='REVIEWED' AND e.extraction_method IS DISTINCT FROM 'HUMAN_CORRECTION'
         AND (e.source_page IS NOT NULL OR e.source_ref IS NOT NULL OR e.source_url IS NOT NULL)
         AND private.catalog_values_equal(target#>string_to_array(e.field_name,'.'),
-            COALESCE(e.canonical_value,to_jsonb(e.value_text)))
+            COALESCE(NULLIF(e.canonical_value,'null'::jsonb),to_jsonb(e.value_text)))
         AND (NEW.field_name=e.field_name OR starts_with(NEW.field_name,e.field_name || '.'))) THEN
         RAISE EXCEPTION 'catalog_manual_evidence_required' USING ERRCODE='23514';
     END IF;
@@ -266,7 +266,7 @@ DO $$ DECLARE tab TEXT; item RECORD; cell RECORD; ev RECORD; val NUMERIC; js JSO
                     AND e.extraction_method IS DISTINCT FROM 'HUMAN_CORRECTION'
                     AND (e.source_page IS NOT NULL OR e.source_ref IS NOT NULL OR e.source_url IS NOT NULL)
                     AND (cell.field_name=e.field_name OR starts_with(cell.field_name,e.field_name||'.'))
-                    AND private.catalog_values_equal(item.data#>string_to_array(e.field_name,'.'),COALESCE(e.canonical_value,to_jsonb(e.value_text)))
+                    AND private.catalog_values_equal(item.data#>string_to_array(e.field_name,'.'),COALESCE(NULLIF(e.canonical_value,'null'::jsonb),to_jsonb(e.value_text)))
                     ORDER BY e.reviewed_at DESC,e.id LIMIT 1;
                 val:=NULL; js:=cell.value;
                 IF jsonb_typeof(js) IN ('number','string') AND (js#>>'{}') ~ '^[+-]?[0-9]+([.][0-9]+)?$' THEN
