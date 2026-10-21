@@ -6,7 +6,7 @@ Producción y precios comerciales requieren autorización aparte.
 
 | Fase | Alcance | Estado | Rama / PR |
 |---|---|---|---|
-| P01 | Catálogo v2: backend, origen, niveles y plantillas | En curso | [P01a #164](https://github.com/KaraAliOsman/framedex/pull/164), [P01b #165](https://github.com/KaraAliOsman/framedex/pull/165) y [P01c #166](https://github.com/KaraAliOsman/framedex/pull/166) fusionadas; [P01d #167](https://github.com/KaraAliOsman/framedex/pull/167); [P01e #168](https://github.com/KaraAliOsman/framedex/pull/168) |
+| P01 | Catálogo v2: backend, origen, niveles y plantillas | En curso | [P01a #164](https://github.com/KaraAliOsman/framedex/pull/164), [P01b #165](https://github.com/KaraAliOsman/framedex/pull/165), [P01c #166](https://github.com/KaraAliOsman/framedex/pull/166) y [P01d #167](https://github.com/KaraAliOsman/framedex/pull/167) fusionadas; [P01e #168](https://github.com/KaraAliOsman/framedex/pull/168) |
 | P02 | Ficha de serie editable | Pendiente | — |
 | P03 | Alta de serie y ventana de prueba | Pendiente | — |
 | P04 | Precio simple automático | Pendiente | — |
@@ -109,8 +109,8 @@ a P03; P01 deja preparado su contrato y su bloqueo.
   valor actual. Una ventana PRO6004 de prueba de 1200 × 1100 abatible produce
   despiece y sugeridos consumidos; confirmarlos elimina las suposiciones sin
   cambiar ninguna medida del despiece.
-- OpenAPI y orval regenerados. El lint SQL y las 1.507 aserciones pgTAP pasan;
-  continúa la validación de integración y unitarias antes del cierre de la PR.
+- OpenAPI y orval regenerados. P01d quedó fusionada en `68bf4e29` después de
+  aprobar Lint & Typecheck, Test Suite, Frontend Build y Database Gate.
 - Pendientes para completar P01: niveles de uso, precios/cotización QUOTABLE,
   fabricación MANUFACTURABLE y sus decisiones congeladas.
 
@@ -168,3 +168,13 @@ a P03; P01 deja preparado su contrato y su bloqueo.
   editor aún exigía QUOTABLE: ahora consulta DRAWABLE, sin convertir una serie
   sin precios en cotizable. Las pruebas mantienen la negativa de precios y
   comprueban que los perfiles incompletos siguen fuera del selector.
+- La ejecución local estable aprobó 15 de 16 E2E; el único fallo fue la carga
+  completa de Catálogo, que superó los 20 segundos. El perfilado halló 6.189
+  consultas para 51 versiones. La lista nueva `summary=true` conserva los
+  niveles v2 exactos sin repetir el diagnóstico antiguo de taller. Los mapeos
+  de compra se cargan en lote y las tarifas de ejemplo se indexan por serie/SKU
+  y se leen una vez por petición. El contrato por defecto y el detalle
+  mantienen el diagnóstico completo. Siete integraciones de resumen/niveles,
+  26 pruebas de precio y 24 unitarias de catálogo/onboarding aprobadas;
+  regresión E2E dirigida aprobada en 49,4 segundos con el límite original de
+  respuesta del catálogo. CI final de #168 pendiente.

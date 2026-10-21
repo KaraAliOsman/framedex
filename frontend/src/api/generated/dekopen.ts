@@ -86,6 +86,7 @@ import type {
   CatalogReviewResponse,
   CatalogSectionImportCreateBody,
   CatalogSeriesCellHistoryParams,
+  CatalogSystemListParams,
   CatalogTemplateDownloadParams,
   CatalogTemplateSchema,
   CatalogThermalDeclare201,
@@ -8391,14 +8392,27 @@ export type catalogSystemListResponseError = (
 export type catalogSystemListResponse =
   catalogSystemListResponseSuccess | catalogSystemListResponseError;
 
-export const getCatalogSystemListUrl = () => {
-  return `/api/v1/catalogs/systems/`;
+export const getCatalogSystemListUrl = (params?: CatalogSystemListParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/catalogs/systems/?${stringifiedParams}`
+    : `/api/v1/catalogs/systems/`;
 };
 
 export const catalogSystemList = async (
+  params?: CatalogSystemListParams,
   options?: Parameters<typeof apiMutator>[1],
 ): Promise<catalogSystemListResponse> => {
-  return apiMutator<catalogSystemListResponse>(getCatalogSystemListUrl(), {
+  return apiMutator<catalogSystemListResponse>(getCatalogSystemListUrl(params), {
     ...options,
     method: "GET",
   });

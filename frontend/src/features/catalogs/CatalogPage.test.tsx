@@ -337,10 +337,10 @@ describe("CatalogPage client permissions", () => {
       await mount();
 
       expect(button("catalog.newSystem")).toBeEnabled();
-      expect(client.catalogSystemList).toHaveBeenCalledWith({
-        headers: { "X-Organization-ID": identity.id },
-        signal: expect.any(AbortSignal),
-      });
+      expect(client.catalogSystemList).toHaveBeenCalledWith(
+        { summary: true },
+        { headers: { "X-Organization-ID": identity.id }, signal: expect.any(AbortSignal) },
+      );
       for (const request of [
         client.catalogArticleList,
         client.catalogBeadList,

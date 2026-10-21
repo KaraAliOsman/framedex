@@ -655,7 +655,7 @@ export function catalogApi(orgId: string) {
       const request = { ...options, signal };
       const response =
         resource === "systems"
-          ? await client.catalogSystemList(request)
+          ? await client.catalogSystemList({ summary: true }, request)
           : resource === "articles"
             ? await client.catalogArticleList(undefined, request)
             : resource === "glazing"

@@ -1,5 +1,6 @@
 """Cost coverage uses the purchasing identities consumed by the calculator."""
 
+from collections import defaultdict
 from datetime import datetime
 import json
 from zoneinfo import ZoneInfo
@@ -7,7 +8,7 @@ from zoneinfo import ZoneInfo
 from pricing.repository import commercial_backend, demo_cost_rows, rows
 
 
-def catalog_coverage(org_id, *, system_id=None, effective_date=None):
+def catalog_coverage(org_id, *, system_id=None, effective_date=None, demo_prices=None):
     catalog = {}
     scope = ' AND s.id=%s' if system_id is not None else ''
     scoped = [org_id, system_id] if system_id is not None else [org_id]
@@ -20,16 +21,23 @@ def catalog_coverage(org_id, *, system_id=None, effective_date=None):
     profiles = rows('SELECT a.id,a.sku,a.name,a.commercial_length_mm,a.reinforcement_rule,s.finish_authority '
         'FROM profile_articles a JOIN profile_systems s ON s.id=a.system_id '
         'WHERE s.is_active AND (a.org_id=%s OR a.org_id IS NULL)' + scope, scoped)
+    purchases = defaultdict(list)
+    for table, uses_finishes in (('profile_purchase_mappings', False), ('catalog_color_skus', True)):
+        profile_ids = [profile['id'] for profile in profiles if (profile['finish_authority'] is not None) == uses_finishes]
+        if not profile_ids:
+            continue
+        physical = ' AND stock_color=finish' if uses_finishes else ''
+        mappings = rows(f'SELECT profile_article_id,commercial_sku,org_id,purchase_unit FROM {table} '
+            f'WHERE profile_article_id=ANY(%s::uuid[]) AND is_active AND (org_id=%s OR org_id IS NULL){physical}',
+            [profile_ids, org_id])
+        for mapping in mappings:
+            purchases[mapping['profile_article_id']].append(mapping)
     for profile in profiles:
         rule = profile['reinforcement_rule']
         rule = json.loads(rule) if isinstance(rule, str) else rule
         if rule:
             add(rule.get('screw_sku'), 'Tornillo de refuerzo', 'FITTING', 'EA')
-        table = 'catalog_color_skus' if profile['finish_authority'] is not None else 'profile_purchase_mappings'
-        physical = ' AND stock_color=finish' if table == 'catalog_color_skus' else ''
-        mappings = rows(f'SELECT commercial_sku,org_id,purchase_unit FROM {table} '
-            f'WHERE profile_article_id=%s AND is_active AND (org_id=%s OR org_id IS NULL){physical}',
-            [profile['id'], org_id])
+        mappings = purchases[profile['id']]
         local = [item for item in mappings if item['org_id'] == org_id]
         mappings = local or mappings
         if not mappings:
@@ -84,15 +92,21 @@ def catalog_coverage(org_id, *, system_id=None, effective_date=None):
         costs = rows('SELECT i.sku,i.unit,l.valid_from FROM cost_list_items i '
             'JOIN cost_lists l ON l.id=i.cost_list_id AND l.org_id=i.org_id WHERE i.org_id=%s '
             'AND l.is_active AND l.valid_from<=%s AND (l.valid_to IS NULL OR l.valid_to>=%s)', [org_id,today,today])
-        demo = demo_cost_rows()
+        demo = demo_cost_rows() if demo_prices is None else demo_prices
+    costs_by_sku = defaultdict(list)
+    demo_by_sku = defaultdict(list)
+    for cost in costs:
+        costs_by_sku[cost['sku']].append(cost)
+    for cost in demo:
+        demo_by_sku[cost['sku']].append(cost)
     for item in catalog.values():
-        found = [row for row in costs if row['sku'] == item['sku']]
+        found = costs_by_sku[item['sku']]
         if found:
             latest = max(row['valid_from'] for row in found)
             found = [row for row in found if row['valid_from'] == latest]
-        item['is_demo'] = not found and any(row['sku'] == item['sku'] for row in demo)
+        item['is_demo'] = not found and bool(demo_by_sku[item['sku']])
         if not found:
-            found = [row for row in demo if row['sku'] == item['sku']]
+            found = demo_by_sku[item['sku']]
         units = {'BAR','M'} if item['required_unit'] == 'BAR' else {item['required_unit']}
         item['active_cost_items'] = 1 if len(found) == 1 and found[0]['unit'] in units and not item['blocker'] else 0
         item['blocker'] = item['blocker'] or ('Hay costos vigentes ambiguos.' if len(found)>1

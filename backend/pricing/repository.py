@@ -1,5 +1,6 @@
 """Resolved commercial authorities inside verified, transaction-local RLS."""
 
+from collections import defaultdict
 from contextlib import contextmanager
 from datetime import date
 from decimal import Decimal
@@ -62,13 +63,15 @@ def demo_cost_rows():
             'WHERE s.org_id IS NULL AND s.is_global AND s.is_demo AND s.is_active AND r.org_id IS NULL AND r.is_active')
     direct = {item['sku'] for item in prices}
     output = {(item['sku'], str(item['id'])): item for item in prices}
+    by_series_sku = defaultdict(list)
+    for price in prices:
+        by_series_sku[(price['system_id'], price['sku'])].append(price)
     for alias in aliases:
         if alias['commercial_sku'] in direct:
             continue
-        for price in prices:
-            if price['sku'] == alias['sku'] and price['system_id'] == alias['system_id']:
-                copied = {**price, 'sku': alias['commercial_sku']}
-                output[(copied['sku'], str(copied['id']))] = copied
+        for price in by_series_sku[(alias['system_id'], alias['sku'])]:
+            copied = {**price, 'sku': alias['commercial_sku']}
+            output[(copied['sku'], str(copied['id']))] = copied
     return list(output.values())
 
 

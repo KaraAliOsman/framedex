@@ -92,6 +92,17 @@ function itemCode(row: Row<Resource>): string {
 }
 
 function systemReadinessLabel(system: Row<"systems">): string {
+  if (system.usage) {
+    if (system.usage.is_example) return "Ejemplo";
+    return system.usage.level
+      ? {
+          DRAWABLE: "Lista para dibujar",
+          QUOTABLE: "Lista para cotizar",
+          MANUFACTURABLE: "Lista para fabricar",
+          MACHINE_READY: "Lista para máquina",
+        }[system.usage.level]
+      : "Completar serie";
+  }
   if (!system.readiness) return ct("readinessUnknown");
   const readiness = system.readiness;
   if (!readiness.quote_ready) {

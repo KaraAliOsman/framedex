@@ -677,6 +677,10 @@ class CatalogFilterSerializer(StrictSerializer):
     system_id = serializers.UUIDField(required=False)
 
 
+class SystemListFilterSerializer(StrictSerializer):
+    summary = serializers.BooleanField(required=False, default=False)
+
+
 class ReinforcementRowSerializer(serializers.Serializer):
     """A declared reinforcement profile bound to a parent article — steel
     authority the workspace surfaces alongside the profile it stiffens."""

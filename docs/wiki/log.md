@@ -2191,3 +2191,16 @@ de #168 aprobó 1.514 aserciones pgTAP y 618 integraciones; sus E2E detectaron
 la dependencia antigua entre selector y precios. El editor consulta DRAWABLE,
 con regresiones para series sin precios y perfiles incompletos. La cotización
 conserva su control independiente. Véase [catálogo](product/catalog-authority.md).
+
+## 2026-10-21 · P01e: descubrimiento de catálogo sin repetir diagnósticos
+
+El E2E local estable aprobó autenticación, emisión y los flujos de lienzo/editor;
+la apertura final de Catálogo excedió su límite de 20 segundos. El perfilado
+identificó 6.189 consultas para 51 versiones. `summary=true` conserva los niveles
+v2 exactos y deja el diagnóstico antiguo en el contrato por defecto/detalle.
+Las tarifas sintéticas se indexan por serie y SKU y se leen una vez por lista;
+los mapeos de compra se cargan en lote. Siete integraciones de niveles/resumen,
+26 pruebas de precios y 24 unitarias de catálogo/onboarding aprobadas. La
+regresión de navegador de proyectos pasa en 49,4 segundos con el límite
+original de carga de Catálogo; CI final de #168 pendiente.
+Véase [catálogo](product/catalog-authority.md).

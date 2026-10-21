@@ -7258,6 +7258,12 @@ paths:
           format: uuid
         description: Active organization; validated against the JWT user's active
           memberships.
+      - in: query
+        name: summary
+        schema:
+          type: boolean
+        description: Exact v2 use levels without the deprecated workshop diagnostic
+          ladder.
       tags:
       - catalogs
       security:

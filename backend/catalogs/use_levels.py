@@ -59,7 +59,7 @@ def _pending(field, rule, action, required_for, *, origin=None, resource="system
         "required_for": list(required_for), "resource": resource, "row_id": str(row_id) if row_id else None}
 
 
-def series_use(org_id, system_id, *, params=None, result=None, priced=False, effective_date=None):
+def series_use(org_id, system_id, *, params=None, result=None, priced=False, effective_date=None, demo_prices=None):
     """Full-series coverage or an exact engine-resolved position.
 
     ``priced`` is internal evidence from position_cost after every consumed
@@ -130,7 +130,8 @@ def series_use(org_id, system_id, *, params=None, result=None, priced=False, eff
         # Coverage returns presence/ambiguity only; no confidential costs leave
         # this projection. Technical mappings use the member's existing grants.
         with authenticated_read():
-            coverage = catalog_coverage(org_id, system_id=system_id, effective_date=effective_date)
+            coverage = catalog_coverage(org_id, system_id=system_id, effective_date=effective_date,
+                demo_prices=demo_prices)
         if not coverage:
             pending.append(_pending("prices", "prices", "Añade los precios del taller.", ["QUOTABLE"], row_id=system_id))
         for item in coverage:

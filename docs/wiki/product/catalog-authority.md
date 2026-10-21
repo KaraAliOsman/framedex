@@ -87,6 +87,16 @@ dibujar. La regresión E2E de lienzo comprueba expresamente una empresa nueva
 con QUOTABLE falso y un cálculo geométrico correcto. Los controles de precio
 y emisión permanecen en sus operaciones respectivas.
 
+La lista admite `summary=true`: calcula los mismos permisos v2 y el alias de
+cotización sin reconstruir el diagnóstico antiguo de cada versión. La consulta
+por defecto y el detalle conservan la escalera histórica. Catálogo y onboarding
+usan el resumen. `test_catalog_summary.py` compara los permisos completos,
+conserva el bloqueo por precios y comprueba que ninguna serie de otro tenant
+aparece en la lista. El primer perfilado local detectó 6.189 consultas para 51
+versiones; el resumen y la resolución indexada de tarifas evitan repetir las
+búsquedas y la carga de ejemplos en cada serie. Los ejemplos se leen una vez
+por petición, sin caché compartida entre peticiones ni empresas.
+
 Dibujar requiere perfiles con rol y ancho visible. Cotizar acepta SUGGESTED
 y comprueba reglas y precios vigentes, unidades y ambigüedades. Para un precio
 concreto el motor y el repositorio resuelven exactamente los materiales usados;
