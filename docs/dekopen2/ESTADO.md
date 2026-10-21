@@ -6,7 +6,7 @@ Producción y precios comerciales requieren autorización aparte.
 
 | Fase | Alcance | Estado | Rama / PR |
 |---|---|---|---|
-| P01 | Catálogo v2: backend, origen, niveles y plantillas | En curso | [P01a #164](https://github.com/KaraAliOsman/framedex/pull/164); P01b: `gpt/dk2-p01b-traza-sugeridos` |
+| P01 | Catálogo v2: backend, origen, niveles y plantillas | En curso | [P01a #164](https://github.com/KaraAliOsman/framedex/pull/164); [P01b #165](https://github.com/KaraAliOsman/framedex/pull/165); P01c: `gpt/dk2-p01c-valores-y-plantillas` |
 | P02 | Ficha de serie editable | Pendiente | — |
 | P03 | Alta de serie y ventana de prueba | Pendiente | — |
 | P04 | Precio simple automático | Pendiente | — |
@@ -71,3 +71,23 @@ a P03; P01 deja preparado su contrato y su bloqueo.
 - Pendiente de P01: persistencia/historial por celda, cuatro plantillas,
   niveles de uso, endpoints por pestaña/lote y bloqueos por dependencia.
   Esta sub-PR todavía no habilita una serie para cotizar ni fabricar.
+
+### P01c · Historial por celda y plantillas versionadas
+
+- Cuatro plantillas de familia en JSON, sin precios, SKU ni anchos visibles
+  inventados. Sus valores típicos llevan SUGGESTED y «revisar con fabricante».
+- `catalog_value_history` conserva cada cambio y confirmación, valor anterior,
+  actor y fecha. Las cifras escalares usan NUMERIC; objetos se descomponen en
+  celdas y tablas ordenadas permanecen atómicas. Borrar un valor deja una
+  versión nula, sin convertir la ausencia en una confirmación.
+- Los cambios de las rutas existentes también registran historia. Los registros
+  históricos revisados se clasifican WORKSHOP, o MANUAL con evidencia vigente y
+  coincidente. Las semillas sintéticas no se convierten en datos del fabricante.
+- `catalog_series_setup` prepara la verificación de P03. Editar una regla
+  invalida la comprobación anterior. Ambas tablas tienen tenant, RLS y permisos
+  de escritura solo para el backend técnico.
+- Base sintética aislada `dk2-catalog-20261021`: migraciones desde cero,
+  1.507 aserciones pgTAP y cuatro pruebas nuevas de integración aprobadas;
+  diez pruebas unitarias de plantilla aprobadas. REVIEW conserva su estado.
+- Pendientes de las siguientes sub-PR: conectar creación desde plantilla,
+  fichas y lotes, cargar orígenes al motor y aplicar niveles/bloqueos v2.

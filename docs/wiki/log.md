@@ -2139,3 +2139,14 @@ nuevas y comprobación de bytes dorados sin regeneración. La ficha editable,
 persistencia de orígenes y niveles de uso permanecen en P01. Referencia:
 `gpt/dk2-p01b-traza-sugeridos`, `engine/tests/test_catalog_assumptions.py` y
 [catálogo](product/catalog-authority.md).
+
+## 2026-10-21 · DEKOPEN 2 P01c: historia exacta y cuatro plantillas
+
+`gpt/dk2-p01c-valores-y-plantillas` añade versiones por celda sobre las tablas
+existentes, NUMERIC para escalares, actor/fecha y valor anterior. Los datos
+históricos revisados se clasifican sin convertir semillas en manuales; MANUAL
+requiere evidencia revisada coincidente. Las plantillas versionadas son datos
+SUGGESTED sin precios ni SKU. Una base local sintética separada pasó 1.507
+aserciones pgTAP y cuatro integraciones nuevas; diez unitarias validan los datos.
+Los endpoints, niveles y bloqueos siguen pendientes. Véase
+[catálogo](product/catalog-authority.md) y [estado](../dekopen2/ESTADO.md).

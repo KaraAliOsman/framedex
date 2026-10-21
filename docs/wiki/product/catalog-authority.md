@@ -33,9 +33,26 @@ espesor de paquete consumido, no por el espesor neto del vidrio.
 doble, valores confirmados, corte estructurado, conjuntos, errores y concurrencia.
 Los serializadores omiten los campos aditivos ausentes en contratos históricos;
 `python -m engine.scripts.regenerate_golden --check` verifica los mismos bytes.
-La persistencia por celda, las plantillas y los niveles v2 siguen pendientes de
-las siguientes sub-PR de P01. El historial de autoridades descrito abajo sigue
-siendo aplicable a los contratos existentes.
+El historial de autoridades descrito abajo sigue siendo aplicable a los
+contratos existentes.
+
+### Origen por celda y datos de plantilla
+
+En `gpt/dk2-p01c-valores-y-plantillas`, `catalog_value_history` añade versiones
+inmutables por campo de sistema, perfil, junquillo y herraje. El valor actual
+sigue en las tablas tipadas existentes. Los cambios registran el anterior,
+incluida la eliminación del valor; confirmar su origen añade otra versión.
+MANUAL requiere una evidencia revisada que coincida exactamente con el dato.
+La migración solo clasifica datos históricos ya revisados y conserva la
+distinción sintética. No promociona registros desconocidos por omisión.
+
+`backend/catalogs/templates/families-v1.json` contiene cuatro familias con
+valores de oficio explícitamente SUGGESTED, sin precios ni identidades del
+proveedor. `catalog_series_setup` prepara la verificación del taller y la
+invalida al editar reglas. Las pruebas en una base local sintética independiente
+comprueban tenant/RLS, historia inmutable, evidencia y verificación; no prueban
+todavía el flujo completo de alta ni habilitan fabricación. La conexión a
+endpoints, al motor y a los niveles de uso continúa en las siguientes sub-PR.
 
 ## Biblioteca real y fuentes reunidas · 18-10-2026
 
