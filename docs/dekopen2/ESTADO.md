@@ -43,6 +43,11 @@ Producción y precios comerciales requieren autorización aparte.
   formateo, conservando sus archivos. Suites completas y demás guardas en curso.
 - Esta estación no tiene GNU make; se ejecutan los mismos comandos de su
   Makefile mediante Python del proyecto y npm. El CI ejecuta los targets make.
+- Primer Database Gate de P01a: 1.483 aserciones pgTAP y 601 pruebas de
+  integración aprobaron. El E2E de emisión caducaba el 19-10-2026 y esperaba
+  una petición que el control de vigencia rechazaba antes de enviarla. La
+  fixture ahora usa una fecha 30 días posterior a la ejecución, conservando
+  el reloj real necesario para Magic Link/TOTP y todos los controles de emisión.
 
 ## P01 · Trabajo y pendientes
 

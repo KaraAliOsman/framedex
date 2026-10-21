@@ -639,7 +639,8 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await page.getByRole("button", { name: "Preparar emisión", exact: true }).click();
   await prepA;
   await page.getByLabel("Condiciones de pago", { exact: true }).fill("50% anticipo, 50% entrega");
-  await page.getByLabel("Cotización válida hasta", { exact: true }).fill("2026-10-19");
+  const quotationExpiry = new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10);
+  await page.getByLabel("Cotización válida hasta", { exact: true }).fill(quotationExpiry);
   await page
     .locator(".quotation-checklist")
     .getByRole("button", { name: /Plazo de entrega/ })
