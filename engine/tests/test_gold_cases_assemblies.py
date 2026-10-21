@@ -11,7 +11,7 @@ from engine.tests.assembly_cases import assembly_cases, bow_model, joint_article
 
 
 def test_reviewed_assembly_golden() -> None:
-    frozen=json.loads(Path(__file__).with_name('golden_assemblies.json').read_text())
+    frozen=json.loads(Path(__file__).with_name('golden_assemblies.json').read_text(encoding='utf-8'))
     assert assembly_cases()==frozen
     assert frozen['bow_22_5']['measures']['developed_width_mm']=='2400.00'
     assert frozen['bow_espaciado']['measures']['developed_width_mm']=='2448.00'

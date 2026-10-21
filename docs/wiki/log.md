@@ -2116,3 +2116,16 @@ entrega [el paquete](../research/2026-10-21-competencia/00-README.md): estrategi
 catálogo con valores sugeridos y ventana de prueba, agente con 12
 automatizaciones, nueve mockups y once fases con bucle continuo. Vista única de
 obra, panel lateral del agente y precios quedan como decisiones del dueño.
+
+## 2026-10-21 · Inicio autorizado de DEKOPEN 2 y base reproducible
+
+El dueño autoriza las once fases, PR por fase o subfase y fusión con los cuatro
+checks aprobados, sin activación productiva ni comercial. Se inicia P01 desde
+`ec3762fe` como permite el encargo: la dirección aún no está en `origin/main`.
+Se conserva el `main` local divergente. El [estado de trabajo](../dekopen2/ESTADO.md)
+distingue fases pendientes de resultados verificados. La base de #163 falla en
+cinco pruebas de emisión por vencimiento de la fixture el 19-10; fijar su fecha
+de prueba recupera las 35 pruebas del archivo sin relajar el control de vigencia.
+Los dos goldens citados en la auditoría pasan al leer UTF-8 explícitamente en
+Windows; LF reproducible evita diferencias de checkout en el guardián de bytes.
+No se regeneran goldens ni se modifican fórmulas.
