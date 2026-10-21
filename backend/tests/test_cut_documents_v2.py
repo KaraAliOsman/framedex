@@ -80,8 +80,8 @@ print(json.dumps({'version':doc.dxfversion,'units':doc.units,
     'texts':[entity.dxf.text for entity in doc.modelspace().query('TEXT')],
     'line_x':[entity.dxf.start.x for entity in doc.modelspace().query('LINE')]}))
 """
-    result = subprocess.run([sys.executable, "-W", "error", "-c", command],
-                            input=source, text=True, capture_output=True, check=True)
+    result = subprocess.run([sys.executable, "-X", "utf8", "-W", "error", "-c", command],
+                            input=source, text=True, encoding="utf-8", capture_output=True, check=True)
     return json.loads(result.stdout)
 
 

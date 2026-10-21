@@ -160,3 +160,6 @@ a P03; P01 deja preparado su contrato y su bloqueo.
   celda seguida de la verificación vigente sustituye una revisión antigua
   marcada pendiente. La emisión conserva el diagnóstico anterior, pero decide
   con MANUFACTURABLE y mantiene los controles físicos de fabricación y proceso.
+- La prueba DXF ejecuta también su lector secundario en UTF-8 explícito.
+  Así conserva «Ñ» en Windows aunque Python padre use otra configuración;
+  las dos regresiones de DXF y artefactos pasan sin cambiar el documento.
