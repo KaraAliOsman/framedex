@@ -2160,3 +2160,14 @@ con las celdas actuales; el cálculo abatible de 1200 × 1100 conserva el mismo
 despiece después de confirmar los sugeridos. Lint SQL y 1.507 aserciones pgTAP
 aprobadas en la base aislada; niveles y bloqueos siguen pendientes. Referencias:
 [catálogo](product/catalog-authority.md), [estado](../dekopen2/ESTADO.md).
+
+## 2026-10-21 · DEKOPEN 2 P01e: permisos por dependencia y decisión emitida
+
+La rama `gpt/dk2-p01e-niveles-y-bloqueos` distingue dibujo, cotización,
+fabricación y máquina; los sugeridos permiten cotizar y exigen confirmación
+y verificación antes de salida física. La revisión comercial puede conservar
+inspección/políticas pendientes, sin fabricar valores de taller. OT y documentos
+leen esa decisión congelada. La integración PRO6004 sintética calcula precio,
+emite PDF y comprueba el bloqueo y la posterior optimización; faltan aún las
+comprobaciones completas y CI para cerrar la sub-PR. Véase
+[catálogo](product/catalog-authority.md) y [estado](../dekopen2/ESTADO.md).

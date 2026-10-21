@@ -1,4 +1,7 @@
-"""Catalog readiness — explicit level ladder, never a compressed percentage.
+"""Deprecated diagnostic ladder plus DEKOPEN 2 dependency permissions.
+
+New clients consume ``usage`` from catalogs.use_levels. ``quote_ready`` is
+its QUOTABLE alias; the old reasons/levels remain diagnostic compatibility.
 
 Levels (each reports state + exact blockers + the authority that is missing +
 what is affected + why it matters + the action that resolves it):
@@ -390,14 +393,19 @@ def catalog_readiness(system_id, org_id) -> dict[str, Any]:
                 link["href"] = f"/catalogs/systems?system={system_id}&tab=reglas&anchor={anchor}"
         blocker["targets"] = links
 
-    # quote_ready keeps its legacy contract — the WHITE_FIXED_CATALOG gate is
-    # design + purchase + manufacturing authority; the new production/CNC
-    # levels report above it without tightening the existing gate.
+    # The old ladder remains diagnostic transport for existing clients. Its
+    # manufacturing blockers no longer decide the ability to quote.
     reasons = [b["code"] for b in design_b + quote_b + mfg_b]
+    from catalogs.use_levels import series_use
+    try:
+        usage = series_use(org_id, system_id, params=params)
+    except SystemNotFound:
+        usage = None
     return {
         "state": "BLOCK" if reasons else "WARN" if prod_b or cnc_b else "PASS",
         "authority_gate": shared_gate,
-        "quote_ready": not reasons,
+        "quote_ready": bool(usage and next(level["ok"] for level in usage["levels"] if level["level"] == "QUOTABLE")),
+        "usage": usage,
         "scope": "WHITE_FIXED_CATALOG",
         "reasons": reasons,
         "levels": [

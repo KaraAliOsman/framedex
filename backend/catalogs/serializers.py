@@ -3,10 +3,11 @@
 from decimal import Decimal, InvalidOperation
 import json
 
-from drf_spectacular.utils import extend_schema_field
+from drf_spectacular.utils import extend_schema_field, extend_schema_serializer
 from rest_framework import serializers
 
 from pricing.serializers import StrictSerializer
+from catalogs.use_serializers import CatalogUseSerializer
 from dekopen_engine.geometry import SUPPORTED_OPENING_TYPES
 from dekopen_engine.hardware import normalize_opening_type
 from dekopen_engine.models import (
@@ -567,10 +568,11 @@ class ReadinessLevelSerializer(serializers.Serializer):
     blockers = ReadinessBlockerSerializer(many=True)
 
 
+@extend_schema_serializer(deprecate_fields=["quote_ready"])
 class CatalogReadinessSerializer(serializers.Serializer):
     state = serializers.CharField(required=False)
     authority_gate = serializers.JSONField(required=False, allow_null=True)
-    quote_ready = serializers.BooleanField()
+    quote_ready = serializers.BooleanField(help_text="Compatibility alias for usage.levels[QUOTABLE].ok.")
     scope = serializers.CharField()
     reasons = serializers.ListField(child=serializers.CharField())
     levels = ReadinessLevelSerializer(many=True, required=False)
@@ -620,7 +622,9 @@ class ProvenanceFieldsMixin(serializers.Serializer):
     authority_provenance = AuthorityProvenanceSerializer(read_only=True, required=False)
 
 
+@extend_schema_serializer(deprecate_fields=["readiness"])
 class SystemResponseSerializer(ProvenanceFieldsMixin, SystemWriteSerializer):
+    usage = CatalogUseSerializer(source="readiness.usage", read_only=True, allow_null=True)
     finish_authority = FinishAuthoritySerializer(required=False, allow_null=True)
     system_family = serializers.ChoiceField(choices=[item.value for item in SystemFamily], allow_null=True)
     readiness = CatalogReadinessSerializer(read_only=True)

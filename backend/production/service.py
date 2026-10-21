@@ -764,6 +764,13 @@ def release_production(*, org_id: UUID, version_id: UUID, actor_id: UUID) -> dic
         frozen_measurements = version['snapshot_json']
         if isinstance(frozen_measurements,str):
             frozen_measurements = json.loads(frozen_measurements)
+        # New revisions retain the use decision made at issue time. Older
+        # immutable revisions keep their original gate and transport.
+        from catalogs.frozen_use import manufacturing_pending
+        pending_use = manufacturing_pending(frozen_measurements)
+        if pending_use:
+            raise DocumentaryError("catalog_use_incomplete", detail="Completa y vuelve a emitir la revisión antes de fabricar.",
+                extra={"required_level": "MANUFACTURABLE", "pending": pending_use})
         if frozen_measurements.get('measurements_required') and any(
             not isinstance(pos.get('measurements'),dict) or not pos['measurements'].get('current')
             or pos['measurements'].get('state')!='CONFIRMED' for pos in frozen_measurements.get('positions',[])):

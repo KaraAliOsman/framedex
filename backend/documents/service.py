@@ -79,7 +79,6 @@ from documents.repository import (
     glass_polishing,
     handle_intents,
     json_text,
-    load_manufacturing_policies,
     load_purchase_authorities,
     one,
     rows,
@@ -1175,6 +1174,15 @@ def compose_revision(
                 profile_skus={str(item.get("sku")) for item in current_bom.get("profile_cuts", [])},
                 hardware_skus={item.kit_sku for item in result.hardware_items},
                 panel_skus={str(item.get("sku")) for item in current_bom.get("panels", [])})
+            from catalogs.use_levels import require_use
+            catalog_use = require_use(org_id, system_id, "QUOTABLE", params=params,
+                result=result, priced=True)
+            manufacture_use = next(item for item in catalog_use["levels"] if item["level"] == "MANUFACTURABLE")
+            catalog_gate["usage"] = catalog_use
+            catalog_gate["ok"] = catalog_gate["ok"] and manufacture_use["ok"]
+            if not manufacture_use["ok"] and not allow_incomplete_workshop:
+                raise DocumentaryError("catalog_use_incomplete", detail="Completa la serie antes de fabricar.",
+                    extra={"required_level": "MANUFACTURABLE", "pending": manufacture_use["pending"]})
             production_allowed = production_allowed and catalog_gate["ok"]
             annotations = workshop_annotations(position["workshop_annotations"])
             structural = structural_inputs(position["structural_inputs"])
@@ -1206,8 +1214,6 @@ def compose_revision(
             ):
                 raise DocumentaryError("unsupported_documentary_color")
 
-            inspector_authorities = InspectorRepository().load(system_id, org_id)
-            cutting = stock_repository.for_result(result, system_id, org_id, color)
             calculation_request = {
                 "system_id": str(system_id),
                 "parametric_tree": tree,
@@ -1222,6 +1228,23 @@ def compose_revision(
             stored_identity = position["documentary_calculation_hash"]
             if stored_identity not in identity_hashes:
                 raise DocumentaryError("documentary_calculation_identity_stale")
+            from documents.workshop_gate import workshop_inputs, quote_only_position, require_workshop
+            inspector_authorities, cutting, policies, workshop_pending = workshop_inputs(
+                position, result, system_id, org_id, color, stock_repository)
+            if workshop_pending:
+                if not allow_incomplete_workshop:
+                    require_workshop(workshop_pending)
+                catalog_gate["workshop_pending"] = workshop_pending
+                catalog_gate["ok"] = False
+                production_allowed = False
+                documentary_complete = False
+                position_inputs.append(quote_only_position(position, system_id=system_id, tree=tree,
+                    result=result, bom=current_bom, drawing_plan=drawing_plan,
+                    system_facts=system_facts_by_id.get(str(system_id), {}), calculation_hash=source_hash,
+                    catalog_gate=catalog_gate, process_facts=process_facts, measurements=measure))
+                bom.append({"position_id": position_id, "quantity": int(position["quantity"]),
+                    "engine_result": current_bom, "calculation_hash": source_hash})
+                continue
             inspections: list[tuple[str | None, InspectorResult, bool, bool]] = []
             has_failures = False
             position_production_allowed = True
@@ -1307,13 +1330,6 @@ def compose_revision(
             production_allowed = production_allowed and position_production_allowed
             documentary_complete = documentary_complete and position_complete
 
-            policies = load_manufacturing_policies(
-                system_id=system_id,
-                org_id=org_id,
-                placement_id=UUID(str(position["manufacturing_placement_policy_id"])),
-                handle_id=UUID(str(position["handle_requirement_policy_id"])),
-                reinforcement_id=UUID(str(position["reinforcement_cut_policy_id"])),
-            )
             intents = handle_intents(position["handle_intents"])
             quantity = int(position["quantity"])
             unit_models: list[tuple[str | None, ManufacturingFactsV1]] = []
@@ -1512,7 +1528,9 @@ def compose_revision(
                 })
 
         if purchase_authorities is None:
-            raise DocumentaryError("purchase_authorities_required")
+            if not allow_incomplete_workshop:
+                raise DocumentaryError("purchase_authorities_required")
+            purchase_authorities = PurchaseAuthorities([], [], [], [], [])
         purchase = project_purchase_requirements_v1(
             positions=purchase_positions,
             stock_bindings=purchase_authorities.stock_bindings,
@@ -2021,15 +2039,20 @@ def prepare_documentary_inputs(
             and (item.get("bay_id"), item.get("leaf_id")) in valid_leaves
         ]
 
-        inspector_authority = inspector_authorities.setdefault(
-            system_id, InspectorRepository().load(system_id_uuid, org_id)
-        )
-        inspector_config = inspector_authority.config
+        from dekopen_engine.inspection_models import InspectorConfigurationError
+        try:
+            inspector_authority = inspector_authorities.get(system_id)
+            if inspector_authority is None:
+                inspector_authority = InspectorRepository().load(system_id_uuid, org_id)
+                inspector_authorities[system_id] = inspector_authority
+        except InspectorConfigurationError:
+            inspector_authority = None
+        inspector_config = inspector_authority.config if inspector_authority else None
         # Suggestions stay a separate channel: prepare returns what the
         # estimator actually stored, plus advisory defaults the emit form can
         # prefill. Absence is never synthesized into stored authority — what
         # the user sees and saves is what exists.
-        workshop_suggestions = _seed_workshop_defaults(calculations, [], inspector_config)
+        workshop_suggestions = _seed_workshop_defaults(calculations, [], inspector_config) if inspector_config else []
         polishing_suggestions = _seed_polishing_defaults(valid_glass, [])
 
         # Readiness preview: the emit button must state what the revision
@@ -2037,9 +2060,9 @@ def prepare_documentary_inputs(
         # freeze consumes, so "Sólo cotización" is never a surprise.
         preview_annotations = workshop_annotations(workshop)
         preview_structural = structural_inputs(structural)
-        production_ready = True
-        documentary_ready = True
-        for module_id, computation, _module_tree in calculations:
+        production_ready = inspector_authority is not None
+        documentary_ready = inspector_authority is not None
+        for module_id, computation, _module_tree in (calculations if inspector_authority is not None else []):
             inertias: dict[str, Decimal | None] = {}
             for span in computation.spans:
                 try:

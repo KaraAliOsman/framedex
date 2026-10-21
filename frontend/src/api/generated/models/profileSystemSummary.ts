@@ -5,6 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { CatalogUse } from "./catalogUse";
 
 export interface ProfileSystemSummary {
   /** @nullable */
@@ -13,6 +14,11 @@ export interface ProfileSystemSummary {
   code: string;
   name: string;
   is_demo: boolean;
+  /**
+   * Compatibility alias for usage.levels[QUOTABLE].ok.
+   * @deprecated
+   */
   quote_ready: boolean;
   readiness_reasons: string[];
+  usage?: CatalogUse | null;
 }

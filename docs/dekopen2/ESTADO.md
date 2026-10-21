@@ -6,7 +6,7 @@ Producción y precios comerciales requieren autorización aparte.
 
 | Fase | Alcance | Estado | Rama / PR |
 |---|---|---|---|
-| P01 | Catálogo v2: backend, origen, niveles y plantillas | En curso | [P01a #164](https://github.com/KaraAliOsman/framedex/pull/164); [P01b #165](https://github.com/KaraAliOsman/framedex/pull/165); P01c: `gpt/dk2-p01c-valores-y-plantillas` |
+| P01 | Catálogo v2: backend, origen, niveles y plantillas | En curso | [P01a #164](https://github.com/KaraAliOsman/framedex/pull/164) fusionada; [P01b #165](https://github.com/KaraAliOsman/framedex/pull/165); [P01c #166](https://github.com/KaraAliOsman/framedex/pull/166); [P01d #167](https://github.com/KaraAliOsman/framedex/pull/167); P01e: `gpt/dk2-p01e-niveles-y-bloqueos` |
 | P02 | Ficha de serie editable | Pendiente | — |
 | P03 | Alta de serie y ventana de prueba | Pendiente | — |
 | P04 | Precio simple automático | Pendiente | — |
@@ -20,10 +20,11 @@ Producción y precios comerciales requieren autorización aparte.
 
 ## Base y comprobaciones previas
 
-- Base de aplicación: `origin/main` en `0207763c`. El paquete de dirección
-  todavía está en la [PR #163](https://github.com/KaraAliOsman/framedex/pull/163),
-  rama `claude/dekopen2-direccion`, commit `ec3762fe`. Se usa esta rama según
-  la alternativa explícita del encargo; solo añade documentación a esa base.
+- Base inicial de aplicación: `origin/main` en `0207763c`, con dirección desde
+  `claude/dekopen2-direccion` (`ec3762fe`), como permite el encargo. La sub-PR
+  P01a ya incorporó ese paquete y las correcciones de base a `origin/main`
+  mediante merge commit `077ad7944e7cb327b6d649cc1a67ad7875b53143`, después
+  de aprobar los cuatro controles obligatorios.
 - `main` local tiene cuatro commits propios antiguos y diverge del remoto.
   `git pull --ff-only` lo detectó sin modificar su historia. Se preserva.
 - Se preservan los cinco archivos no rastreados preexistentes.
@@ -112,3 +113,40 @@ a P03; P01 deja preparado su contrato y su bloqueo.
   continúa la validación de integración y unitarias antes del cierre de la PR.
 - Pendientes para completar P01: niveles de uso, precios/cotización QUOTABLE,
   fabricación MANUFACTURABLE y sus decisiones congeladas.
+
+### P01e · Niveles y bloqueos por dependencia
+
+- `usage` expone DRAWABLE, QUOTABLE, MANUFACTURABLE y MACHINE_READY, pendientes
+  por campo/origen/acción y conteo de sugeridos actuales. `readiness` queda
+  obsoleto en OpenAPI; `quote_ready` es el alias de QUOTABLE. Dibujar no exige
+  inspector ni políticas de taller. Los costos solo bloquean cotización;
+  las confirmaciones y la verificación bloquean salida física.
+- QUOTABLE comprueba reglas y costos vigentes con sus unidades y ambigüedades.
+  Precio verifica los materiales realmente consumidos; un artículo ajeno al
+  diseño no invalida un precio que el motor ya resolvió. También comprueba
+  tornillos de refuerzo. Los precios sintéticos resuelven las identidades de
+  compra declaradas del propio ejemplo, copiando sus tarifas existentes.
+- MANUFACTURABLE exige confirmar los valores y una verificación con actor,
+  fecha y huella exacta de las reglas actuales. P03 implementará el clic y la
+  ventana de prueba. Los ejemplos globales conservan su carácter sintético;
+  no se etiquetan como manual ni como verificación real del taller.
+- Optimización y borrador de corte usan el permiso de fabricación. La emisión
+  admite una revisión solo comercial sin inventar inspector, políticas ni
+  hechos de taller. Las políticas ausentes son NULL; las declaradas conservan
+  claves foráneas, alcance de serie/tenant y protección de revisiones emitidas.
+- La revisión guarda la decisión completa. OT y documentos de taller leen
+  esos pendientes congelados; confirmar el catálogo después no modifica una
+  cotización ya emitida ni la habilita retroactivamente para fabricar.
+- Prueba local PRO6004: plantilla + perfiles y precios explícitos sintéticos,
+  ventana abatible 1200 × 1100, precio del motor, PDF comercial, corte bloqueado
+  con pendientes y optimización después de confirmar/verificar: aprobada.
+  Las pruebas negativas incluyen políticas de otra serie y verificación con
+  huella obsoleta. Motor: 1.071 aprobadas y dos xfail; backend: 1.638 aprobadas,
+  más la nueva regresión de tarifa de ejemplo por serie; frontend: 1.134
+  aprobadas. Ruff, mypy, Django, ESLint, tipos, Prettier, build, lint SQL,
+  guardas y reproducción OpenAPI/orval aprobados. Goldens idénticos sin
+  regeneración. La integración completa y el CI siguen en curso.
+- El Database Gate de P01c detectó que la limpieza E2E intentaba borrar una
+  empresa con historia nueva inmutable. La fixture ahora comprueba el rechazo
+  y conserva esa empresa sintética hasta terminar la pila aislada; no se
+  debilitaron restricciones ni se tocó REVIEW.

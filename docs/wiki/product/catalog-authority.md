@@ -3,7 +3,7 @@ type: concept
 status: active
 updated: 2026-10-21
 volatility: medium
-verified_ref: codex/P16-catalogo-tecnico
+verified_ref: gpt/dk2-p01e-niveles-y-bloqueos
 sources:
   - engine/src/dekopen_engine/catalog_rules.py
   - engine/tests/test_gold_cases_catalog_families.py
@@ -16,6 +16,10 @@ sources:
   - engine/src/dekopen_engine/catalog_authority.py
   - backend/catalogs/authority.py
   - supabase/migrations/20270121000000_catalog_review_sources.sql
+  - backend/catalogs/use_levels.py
+  - backend/catalogs/frozen_use.py
+  - backend/tests/integration/test_catalog_use_levels.py
+  - supabase/migrations/20270204000000_quote_without_workshop_policies.sql
 ---
 
 # Autoridad de catálogo por familia
@@ -67,7 +71,41 @@ integración `test_real_series_calculation_reports_only_consumed_suggestions`
 calcula 1200 × 1100 abatible y comprueba idéntico despiece tras confirmar los
 sugeridos. Las revisiones técnicas y de evidencia existentes también añaden
 orígenes; insertar/borrar perfiles invalida la ventana de prueba. Esto aún no
-implementa los niveles ni cambia los bloqueos de cotización/producción.
+implementa por sí sola los niveles; P01e añade los siguientes bloqueos.
+
+### Permisos por dependencia de P01e
+
+Verificado en `gpt/dk2-p01e-niveles-y-bloqueos` el 21-10-2026: el contrato
+`usage` identifica DRAWABLE, QUOTABLE, MANUFACTURABLE y MACHINE_READY, con
+pendientes que señalan campo, regla, origen, acción y operación afectada.
+El antiguo `readiness` queda obsoleto; su `quote_ready` se redefine como alias
+de QUOTABLE. Sus razones históricas conservan el diagnóstico antiguo y no
+deben usarse para decidir si se puede cotizar.
+
+Dibujar requiere perfiles con rol y ancho visible. Cotizar acepta SUGGESTED
+y comprueba reglas y precios vigentes, unidades y ambigüedades. Para un precio
+concreto el motor y el repositorio resuelven exactamente los materiales usados;
+un color o artículo ajeno no bloquea ese precio. El catálogo completo muestra
+la cobertura de toda la serie. La ausencia de costos no impide cortar una
+serie técnicamente confirmada: cada permiso tiene sus propias dependencias.
+
+Fabricar exige valores confirmados y verificación con fecha, actor y huella
+del catálogo actual. P03 aportará la ventana de prueba y su decisión humana.
+Los ejemplos globales permanecen explícitamente sintéticos: su uso de prueba
+no los convierte en series reales verificadas. Las estaciones, el inspector,
+las mediciones y el proceso conservan sus comprobaciones específicas.
+
+Una cotización puede emitirse sin políticas de taller: registra ausencias,
+precio y despiece exactos, sin sintetizar hechos de fabricación. Las políticas
+declaradas siguen ligadas a la serie y empresa correctas. El PDF comercial
+funciona; hoja de corte y OT informan los pendientes congelados. Ni liberar
+ni reutilizar un artefacto consulta el catálogo mutable para reinterpretar
+la revisión. Confirmar después exige otra revisión antes de fabricar.
+
+`test_catalog_use_levels.py` ejercita PRO6004 sintética de 1200 × 1100 con
+precios del taller, PDF y optimización; comprueba políticas de otra serie,
+huella obsoleta y rechazo físico después de emitir y luego confirmar.
+Estas pruebas no validan medidas ni precios reales de Proline.
 
 ## Biblioteca real y fuentes reunidas · 18-10-2026
 

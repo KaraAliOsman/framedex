@@ -1,0 +1,13 @@
+BEGIN;
+CREATE EXTENSION IF NOT EXISTS pgtap;
+SET LOCAL search_path=public,private,auth,extensions,pg_temp;
+SELECT plan(7);
+SELECT col_is_null('public','position_documentary_inputs','manufacturing_placement_policy_id','placement can remain pending for quote');
+SELECT col_is_null('public','position_documentary_inputs','handle_requirement_policy_id','handle rule can remain pending for quote');
+SELECT col_is_null('public','position_documentary_inputs','reinforcement_cut_policy_id','reinforcement rule can remain pending for quote');
+SELECT has_trigger('public','position_documentary_inputs','validate_position_documentary_policy_scope','declared policy scopes still checked');
+SELECT ok((SELECT relrowsecurity FROM pg_class WHERE oid='public.position_documentary_inputs'::regclass),'documentary input RLS remains enabled');
+SELECT has_trigger('public','position_documentary_inputs','guard_position_documentary_inputs','issued preparation remains immutable');
+SELECT has_fk('public','position_documentary_inputs','declared policies retain foreign keys');
+SELECT * FROM finish();
+ROLLBACK;

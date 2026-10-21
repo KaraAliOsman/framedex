@@ -199,6 +199,13 @@ def cut_draft(org_id: UUID, project_id: UUID) -> dict:
     for position in positions:
         result: EngineResult = position["result"]
         system = UUID(str(position["system_id"]))
+        from catalogs.use_levels import series_use
+        usage = series_use(org_id, system, result=result)
+        gate = next(item for item in usage["levels"] if item["level"] == "MANUFACTURABLE")
+        if not gate["ok"]:
+            missing.extend({"cause": item["action"], "action": item["action"],
+                "path": f"/catalogs/systems?system={system}", "pending": item} for item in gate["pending"])
+            continue
         defaults: dict[str, str] = {}
         ok = True
         for sku in sorted({cut.sku for cut in result.profile_cuts}):

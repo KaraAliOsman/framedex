@@ -13,7 +13,7 @@ from pricing import service
 
 @pytest.mark.parametrize("kind", [kind for kind in BayOpeningType if kind not in
     (BayOpeningType.DOOR_DOUBLE, BayOpeningType.SLIDING)])
-def test_dual_transport_keeps_complete_price_and_every_cost_line(kind, monkeypatch, legacy_glass_read_model):
+def test_dual_transport_keeps_complete_price_and_every_cost_line(kind, monkeypatch, legacy_glass_read_model, quotable_catalog_read_model):
     class Cursor:
         def __enter__(self):
             return self
@@ -27,6 +27,7 @@ def test_dual_transport_keeps_complete_price_and_every_cost_line(kind, monkeypat
     class Repo:
         org_id = "fixture"
         currency = "CLP"
+        effective_date = None
 
         def cost(self, sku, unit):
             # An explicit synthetic rate fixture, shared by both transports.

@@ -15,6 +15,21 @@ from pricing.xlsx_import import parse_xlsx
 MAPPING = {'sku':'SKU','description':'Description','unit':'Unit','unit_cost':'Cost'}
 
 
+def test_demo_purchase_alias_keeps_its_own_series_exact_rate(monkeypatch):
+    from contextlib import nullcontext
+    from pricing import repository
+
+    prices = [
+        {"id": "rate-a", "system_id": "series-a", "sku": "PROFILE", "unit_cost": Decimal("1234.5678")},
+        {"id": "rate-b", "system_id": "series-b", "sku": "PROFILE", "unit_cost": Decimal("9999.0001")},
+    ]
+    aliases = [{"system_id": "series-a", "sku": "PROFILE", "commercial_sku": "BUY-A"}]
+    monkeypatch.setattr(repository, "authenticated_read", nullcontext)
+    monkeypatch.setattr(repository, "rows", lambda sql: prices if "SELECT p.*" in sql else aliases)
+    copied = [row for row in repository.demo_cost_rows() if row["sku"] == "BUY-A"]
+    assert copied == [{**prices[0], "sku": "BUY-A"}]
+
+
 def test_indicative_price_rejects_organization_removed_during_simulation(monkeypatch):
     from contextlib import nullcontext
 
@@ -105,7 +120,7 @@ def test_pricing_request_cannot_supply_cost_or_actor():
     assert not PriceRequestSerializer(data=data).is_valid()
 
 
-def test_position_cost_uses_engine_area_for_shaped_glass(monkeypatch, legacy_glass_read_model):
+def test_position_cost_uses_engine_area_for_shaped_glass(monkeypatch, legacy_glass_read_model, quotable_catalog_read_model):
     """A contoured glass piece prices by polygon area, never by bounding box."""
     from types import SimpleNamespace
 
@@ -148,6 +163,7 @@ def test_position_cost_uses_engine_area_for_shaped_glass(monkeypatch, legacy_gla
     class Repo:
         org_id = "org"
         currency = "CLP"
+        effective_date = None
 
         def cost(self, sku, unit):
             assert (sku, unit) == ("V4", "M2")
@@ -177,7 +193,7 @@ def test_position_cost_uses_engine_area_for_shaped_glass(monkeypatch, legacy_gla
     assert total == Decimal("180")
 
 
-def test_position_cost_prices_fittings_as_unit_pieces(monkeypatch, legacy_glass_read_model):
+def test_position_cost_prices_fittings_as_unit_pieces(monkeypatch, legacy_glass_read_model, quotable_catalog_read_model):
     """Frameless fittings are real material: each declared SKU must resolve an
     'EA' cost-list entry or the quote fails — never silently priced at zero."""
     from types import SimpleNamespace
@@ -217,6 +233,7 @@ def test_position_cost_prices_fittings_as_unit_pieces(monkeypatch, legacy_glass_
     class Repo:
         org_id = "org"
         currency = "CLP"
+        effective_date = None
 
         def cost(self, sku, unit):
             calls.append((sku, unit))

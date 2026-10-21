@@ -4,21 +4,27 @@ from datetime import datetime
 import json
 from zoneinfo import ZoneInfo
 
-from pricing.repository import rows
+from pricing.repository import commercial_backend, demo_cost_rows, rows
 
 
-def catalog_coverage(org_id):
+def catalog_coverage(org_id, *, system_id=None, effective_date=None):
     catalog = {}
+    scope = ' AND s.id=%s' if system_id is not None else ''
+    scoped = [org_id, system_id] if system_id is not None else [org_id]
 
     def add(sku, name, kind, unit, *, blocker=None):
         if sku:
             catalog[(kind, sku, unit)] = {'sku': sku, 'name': name, 'kind': kind,
                 'required_unit': unit, 'blocker': blocker}
 
-    profiles = rows('SELECT a.id,a.sku,a.name,a.commercial_length_mm,s.finish_authority '
+    profiles = rows('SELECT a.id,a.sku,a.name,a.commercial_length_mm,a.reinforcement_rule,s.finish_authority '
         'FROM profile_articles a JOIN profile_systems s ON s.id=a.system_id '
-        'WHERE s.is_active AND (a.org_id=%s OR a.org_id IS NULL)', [org_id])
+        'WHERE s.is_active AND (a.org_id=%s OR a.org_id IS NULL)' + scope, scoped)
     for profile in profiles:
+        rule = profile['reinforcement_rule']
+        rule = json.loads(rule) if isinstance(rule, str) else rule
+        if rule:
+            add(rule.get('screw_sku'), 'Tornillo de refuerzo', 'FITTING', 'EA')
         table = 'catalog_color_skus' if profile['finish_authority'] is not None else 'profile_purchase_mappings'
         physical = ' AND stock_color=finish' if table == 'catalog_color_skus' else ''
         mappings = rows(f'SELECT commercial_sku,org_id,purchase_unit FROM {table} '
@@ -34,13 +40,13 @@ def catalog_coverage(org_id):
             add(mapping['commercial_sku'], profile['name'], 'PROFILE', 'BAR', blocker=blocker)
     for item in rows('SELECT a.commercial_sku,a.name,a.stock_length_mm,a.purchase_unit '
         'FROM reinforcement_articles a JOIN profile_systems s ON s.id=a.system_id '
-        'WHERE a.is_active AND s.is_active AND (a.org_id=%s OR a.org_id IS NULL)', [org_id]):
+        'WHERE a.is_active AND s.is_active AND (a.org_id=%s OR a.org_id IS NULL)' + scope, scoped):
         add(item['commercial_sku'], item['name'], 'REINFORCEMENT', 'BAR',
             blocker='Falta declarar largo y compra de barra.' if item['purchase_unit'] != 'BAR' or not item['stock_length_mm'] else None)
     for item in rows('SELECT g.technical_sku,g.glass_spec,c.product FROM glass_purchase_mappings g '
         'JOIN profile_systems s ON s.id=g.system_id LEFT JOIN catalog_glass_compositions c ON c.mapping_id=g.id '
         'WHERE s.is_active AND (g.org_id=%s OR g.org_id IS NULL) AND NOT EXISTS '
-        '(SELECT 1 FROM catalog_glass_retractions r WHERE r.mapping_id=g.id)', [org_id]):
+        '(SELECT 1 FROM catalog_glass_retractions r WHERE r.mapping_id=g.id)' + scope, scoped):
         add(item['technical_sku'], item['glass_spec'] or 'Vidrio', 'GLASS', 'M2')
         product = json.loads(item['product']) if isinstance(item['product'],str) else item['product']
         billing = (product or {}).get('billing') or {}
@@ -48,7 +54,7 @@ def catalog_coverage(org_id):
                             'bars_per_m_sku':'M','bars_per_crossing_sku':'EA'}.items():
             add(billing.get(field), 'Proceso o palillaje de vidrio', 'GLASS', unit)
     for item in rows('SELECT a.sku,a.name FROM infill_articles a JOIN profile_systems s ON s.id=a.system_id '
-        'WHERE a.is_active AND s.is_active AND (a.org_id=%s OR a.org_id IS NULL)', [org_id]):
+        'WHERE a.is_active AND s.is_active AND (a.org_id=%s OR a.org_id IS NULL)' + scope, scoped):
         add(item['sku'], item['name'], 'PANEL', 'M2')
 
     def hardware(value):
@@ -63,7 +69,7 @@ def catalog_coverage(org_id):
                     hardware(item)
     for item in rows('SELECT a.sku,a.name,a.class_authority FROM hardware_kits a '
         'JOIN profile_systems s ON s.id=a.system_id WHERE a.is_active AND s.is_active '
-        'AND (a.org_id=%s OR a.org_id IS NULL)', [org_id]):
+        'AND (a.org_id=%s OR a.org_id IS NULL)' + scope, scoped):
         if item['class_authority']:
             authority = json.loads(item['class_authority']) if isinstance(item['class_authority'],str) else item['class_authority']
             hardware(authority)
@@ -71,14 +77,14 @@ def catalog_coverage(org_id):
             add(item['sku'], item['name'], 'HARDWARE', 'KIT')
     for item in rows('SELECT f.technical_sku FROM fitting_purchase_mappings f '
         'JOIN profile_systems s ON s.id=f.system_id WHERE s.is_active '
-        'AND (f.org_id=%s OR f.org_id IS NULL)', [org_id]):
+        'AND (f.org_id=%s OR f.org_id IS NULL)' + scope, scoped):
         add(item['technical_sku'], 'Fijación sin marco', 'FITTING', 'EA')
-    today = datetime.now(ZoneInfo('America/Santiago')).date()
-    costs = rows('SELECT i.sku,i.unit,l.valid_from FROM cost_list_items i '
-        'JOIN cost_lists l ON l.id=i.cost_list_id AND l.org_id=i.org_id WHERE i.org_id=%s '
-        'AND l.is_active AND l.valid_from<=%s AND (l.valid_to IS NULL OR l.valid_to>=%s)', [org_id,today,today])
-    demo = rows('SELECT p.sku,p.unit FROM catalog_demo_prices p JOIN profile_systems s ON s.id=p.system_id '
-        'WHERE p.org_id IS NULL AND p.is_demo AND s.is_demo AND s.is_global AND s.is_active')
+    today = effective_date or datetime.now(ZoneInfo('America/Santiago')).date()
+    with commercial_backend():
+        costs = rows('SELECT i.sku,i.unit,l.valid_from FROM cost_list_items i '
+            'JOIN cost_lists l ON l.id=i.cost_list_id AND l.org_id=i.org_id WHERE i.org_id=%s '
+            'AND l.is_active AND l.valid_from<=%s AND (l.valid_to IS NULL OR l.valid_to>=%s)', [org_id,today,today])
+        demo = demo_cost_rows()
     for item in catalog.values():
         found = [row for row in costs if row['sku'] == item['sku']]
         if found:

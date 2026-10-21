@@ -5,6 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { CatalogUse } from "./catalogUse";
 import type { SeriesCell } from "./seriesCell";
 import type { SeriesSetup } from "./seriesSetup";
 import type { SeriesTabs } from "./seriesTabs";
@@ -13,6 +14,7 @@ export interface SeriesSheet {
   id: string;
   revision: string;
   setup: SeriesSetup;
+  usage: CatalogUse;
   tabs: SeriesTabs;
   cells: SeriesCell[];
 }

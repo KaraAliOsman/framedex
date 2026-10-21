@@ -149,6 +149,7 @@ def series_sheet(org_id, system_id, *, can_view_prices=False):
     revision = service.catalog_revision({"rows": {name: [(str(row["id"]), row["revision"]) for row in records]
         for name, records in grouped.items()}, "versions": sorted(str(item["id"]) for item in versions), "setup": setup})
     return {"id": system_id, "revision": revision, "setup": setup,
+        "usage": system["readiness"]["usage"],
         "cells": _cell_projections(org_id, system_id, grouped, versions),
         "tabs": {"profiles": workspace["articles"], "rules": system, "hardware": workspace["kits"],
             "glazing_colors": {"beads": workspace["beads"], "glasses": workspace["glasses"],

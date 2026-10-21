@@ -172,6 +172,10 @@ def materials_env(monkeypatch):
             return CuttingProfile(id="c", code="DEMO", kerf_mm=D("4"), head_trim_mm=D("15"), tail_trim_mm=D("15"))
 
     monkeypatch.setattr(materials, "CuttingRepository", Repository)
+    # This fixture tests the cut plan over resolved synthetic engineering data;
+    # catalog confirmation and verification are covered by live integrations.
+    monkeypatch.setattr("catalogs.use_levels.series_use", lambda *_args, **_kwargs: {
+        "levels": [{"level": "MANUFACTURABLE", "ok": True, "pending": []}]})
     return materials, positions, state
 
 

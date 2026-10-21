@@ -9,7 +9,7 @@ from dekopen_engine.cutting import StockRule, MissingStockAuthority, AmbiguousSt
 from dekopen_engine.models import SystemParams, EffectiveProfileArticle
 from engine_api.cutting_repository import CuttingRepository
 from engine_api.repository import SystemParamsRepository
-from pricing.repository import rows, json_text
+from pricing.repository import rows, json_text, demo_cost_rows
 
 
 def financial_bundle(repo):
@@ -21,8 +21,7 @@ def financial_bundle(repo):
             'WHERE i.org_id=%s AND l.is_active AND l.valid_from<=%s '
             'AND (l.valid_to IS NULL OR l.valid_to>=%s) ORDER BY l.valid_from DESC',
             [repo.org_id,repo.effective_date,repo.effective_date]),
-        'demo': rows('SELECT p.* FROM public.catalog_demo_prices p JOIN public.profile_systems s ON s.id=p.system_id '
-            'WHERE p.org_id IS NULL AND p.is_demo AND s.is_demo AND s.is_global AND s.is_active'),
+        'demo': demo_cost_rows(),
         'configurations': rows('SELECT * FROM public.pricing_configurations WHERE org_id=%s AND is_active',[repo.org_id]),
         'matrix': rows('SELECT * FROM public.pricing_matrix_cells WHERE org_id=%s',[repo.org_id]),
         'fx': rows('SELECT * FROM public.pricing_fx_snapshots WHERE org_id=%s',[repo.org_id]),

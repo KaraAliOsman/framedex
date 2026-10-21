@@ -144,6 +144,7 @@ SPECTACULAR_SETTINGS = {
     "ENUM_NAME_OVERRIDES": {
         "CatalogOriginEnum": ["MANUAL", "WORKSHOP", "SUGGESTED"],
         "CatalogSuggestionEnum": ["SUGGESTED"],
+        "CatalogUseLevelEnum": ["DRAWABLE", "QUOTABLE", "MANUFACTURABLE", "MACHINE_READY"],
         "CatalogCellResourceEnum": ["systems", "articles", "glazing", "hardware-kits"],
         "CurrencyEnum": ["CLP", "USD"],
         "QuotationTemplateEnum": ["ESENCIAL", "PROYECTO", "ALTERNATIVAS"],

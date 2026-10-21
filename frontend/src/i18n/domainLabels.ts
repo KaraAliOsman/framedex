@@ -1,5 +1,9 @@
 /** One glossary for API enums. Unknown additions must fail the exhaustiveness gate. */
 export const domainLabels: Readonly<Record<string, string>> = {
+  DRAWABLE: "Lista para dibujar",
+  QUOTABLE: "Lista para cotizar",
+  MANUFACTURABLE: "Lista para fabricar",
+  MACHINE_READY: "Lista para máquina",
   SUGGESTED: "Sugerido",
   WORKSHOP: "Del taller",
   systems: "Series",

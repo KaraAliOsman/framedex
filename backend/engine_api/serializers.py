@@ -1,9 +1,11 @@
 """OpenAPI-visible request and response shapes for engine calculation."""
 
 from rest_framework import serializers
+from drf_spectacular.utils import extend_schema_serializer
 
 from dekopen_engine.models import HARDWARE_COMPONENT_CATEGORIES
 from engine_api.finish_serializers import ResolvedFinishSerializer
+from catalogs.use_serializers import CatalogUseSerializer
 
 
 class DecimalStringField(serializers.DecimalField):
@@ -318,14 +320,16 @@ class EngineAssemblyCalculateResponseSerializer(serializers.Serializer):
     calculation_hash = serializers.RegexField(regex=r"^sha256:[0-9a-f]{64}$")
 
 
+@extend_schema_serializer(deprecate_fields=["quote_ready"])
 class ProfileSystemSummarySerializer(serializers.Serializer):
     system_family = serializers.CharField(allow_null=True)
     id = serializers.UUIDField()
     code = serializers.CharField()
     name = serializers.CharField()
     is_demo = serializers.BooleanField()
-    quote_ready = serializers.BooleanField()
+    quote_ready = serializers.BooleanField(help_text="Compatibility alias for usage.levels[QUOTABLE].ok.")
     readiness_reasons = serializers.ListField(child=serializers.CharField())
+    usage = CatalogUseSerializer(required=False, allow_null=True)
 
 
 class EngineSystemsResponseSerializer(serializers.Serializer):
