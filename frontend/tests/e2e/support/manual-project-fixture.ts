@@ -331,14 +331,17 @@ export const test = base.extend<{
     } finally {
       try {
         if (organizationCreationAttempted) {
-          const history = await readRows(
-            "project_edit_operations",
-            `org_id=eq.${organizationId}&select=id`,
+          const immutableTables = ["project_edit_operations", "catalog_value_history"];
+          const histories = await Promise.all(
+            immutableTables.map((table) =>
+              readRows(table, `org_id=eq.${organizationId}&select=id&limit=1`),
+            ),
           );
-          // Applied edit history deliberately prevents tenant deletion. Prove
+          const retainedTables = immutableTables.filter((_, index) => histories[index]!.length > 0);
+          // Applied edits and catalog history deliberately prevent tenant deletion. Prove
           // that protection, then retain the synthetic fixture until the
           // isolated gate drops its stack; never disable immutable audit.
-          if (history.length === 0) {
+          if (retainedTables.length === 0) {
             await admin(`/rest/v1/tenancy_organizations?id=eq.${organizationId}`, "DELETE");
           } else {
             const retained = await fetch(
@@ -348,7 +351,7 @@ export const test = base.extend<{
             expect(retained.status).toBe(409);
             const refusal = (await retained.json()) as { code: string; message: string };
             expect(refusal.code).toBe("23503");
-            expect(refusal.message).toContain("project_edit_operations");
+            expect(retainedTables.some((table) => refusal.message.includes(table))).toBe(true);
           }
         }
       } finally {
