@@ -58,8 +58,12 @@ def test_revoking_known_source_never_changes_sealed_thermal_or_pdf(documentary_t
     actor=users["OWNER"]
     project,position,system,reports,_=reviewed_case(org,actor)
     frozen=freeze_reviewed_case(org,actor,project,position)
+    assert not frozen["production_allowed"]
     with as_user(actor):
         _,snapshot=revision_snapshot(UUID(frozen["id"]),org)
+        from catalogs.frozen_use import manufacturing_pending
+        pending=manufacturing_pending(snapshot)
+        assert any(item["field"] == "verified_at" for item in pending)
         assert snapshot["thermal"]["assessment"]["verdict"] == "PASS"
         before,_=render_pdf_document("DOC-01",snapshot,pdf_identifier="thermal-sealed-regression")
         sealed=thermal.project_report(org,project)

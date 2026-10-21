@@ -29,7 +29,12 @@ def fixture(org,owner):
     _seed_project(org,owner)
     with as_user(owner):
         system=one("SELECT id FROM profile_systems WHERE code='DEMO_60' AND version=6")['id']
-        assert catalog_readiness(system,org)['quote_ready'], 'Nonstructural extras must remain quoteable with declared cuts and purchase bindings'
+        readiness = catalog_readiness(system, org)
+        # This fixture prepares a specific position's costs below. The full
+        # series can still lack costs for unused glass products at discovery.
+        assert next(level['ok'] for level in readiness['levels'] if level['level'] == 'QUOTE_READY')
+        quotable = next(level for level in readiness['usage']['levels'] if level['level'] == 'QUOTABLE')
+        assert all(item['field'] == 'prices' for item in quotable['pending']), quotable['pending']
         cost_list=one('SELECT id FROM cost_lists WHERE org_id=%s',[org])['id']
         for item in rows('SELECT sku,unit,unit_cost FROM catalog_demo_prices WHERE system_id=%s UNION SELECT commercial_sku,purchase_unit,100 FROM reinforcement_articles WHERE system_id=%s',[system,system]):
             if not rows('SELECT id FROM cost_list_items WHERE cost_list_id=%s AND sku=%s',[cost_list,item['sku']]):

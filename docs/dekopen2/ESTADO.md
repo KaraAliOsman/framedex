@@ -6,7 +6,7 @@ Producción y precios comerciales requieren autorización aparte.
 
 | Fase | Alcance | Estado | Rama / PR |
 |---|---|---|---|
-| P01 | Catálogo v2: backend, origen, niveles y plantillas | En curso | [P01a #164](https://github.com/KaraAliOsman/framedex/pull/164) fusionada; [P01b #165](https://github.com/KaraAliOsman/framedex/pull/165); [P01c #166](https://github.com/KaraAliOsman/framedex/pull/166); [P01d #167](https://github.com/KaraAliOsman/framedex/pull/167); P01e: `gpt/dk2-p01e-niveles-y-bloqueos` |
+| P01 | Catálogo v2: backend, origen, niveles y plantillas | En curso | [P01a #164](https://github.com/KaraAliOsman/framedex/pull/164), [P01b #165](https://github.com/KaraAliOsman/framedex/pull/165) y [P01c #166](https://github.com/KaraAliOsman/framedex/pull/166) fusionadas; [P01d #167](https://github.com/KaraAliOsman/framedex/pull/167); [P01e #168](https://github.com/KaraAliOsman/framedex/pull/168) |
 | P02 | Ficha de serie editable | Pendiente | — |
 | P03 | Alta de serie y ventana de prueba | Pendiente | — |
 | P04 | Precio simple automático | Pendiente | — |
@@ -150,3 +150,9 @@ a P03; P01 deja preparado su contrato y su bloqueo.
   empresa con historia nueva inmutable. La fixture ahora comprueba el rechazo
   y conserva esa empresa sintética hasta terminar la pila aislada; no se
   debilitaron restricciones ni se tocó REVIEW.
+- Integración de compatibilidad: 47 pruebas de extras, terreno y medición,
+  33 de contexto RLS y la regresión del PDF térmico aprobadas. Las fixtures
+  separan ahora completitud técnica de cobertura de precios: una lista vacía
+  no autoriza cotizar. El caso térmico conserva sus comprobaciones de cálculo
+  y PDF inmutable como revisión comercial y comprueba expresamente que no
+  habilita fabricación sin verificar la serie. Reejecución completa en curso.
