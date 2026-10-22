@@ -2276,3 +2276,12 @@ recalculadas y cuatro casos sintéticos congelados. Verificado en la rama
 gpt/dk2-p03a-prueba-motor: 1.086 pruebas del motor y goldens anteriores idénticos.
 P02 sigue pendiente de CI/fusiones; P03 aún no persiste ni publica verificación.
 Véanse product/catalog-authority.md y docs/dekopen2/ESTADO.md.
+
+## 2026-10-21 · Preparación P03b: caso del taller y revisión de cambios
+
+Entrada/salida del motor inmutables por empresa, RLS, progreso optimista y
+revisión exacta antes del commit para ficha, CRUD e importaciones. Verificado
+en gpt/dk2-p03b-verificacion-serie con 25 integraciones dirigidas y 23 pgTAP.
+La suite del backend detectó cinco rutas nuevas fuera de su inventario explícito;
+se añadieron sin retirar las aserciones de seguridad. P03 aún requiere UI,
+doble lectura y precios. Véanse product/catalog-authority.md y ESTADO.md.

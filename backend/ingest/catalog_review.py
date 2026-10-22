@@ -389,7 +389,8 @@ def preview(*, org_id, import_id, items):
 
 def publish(*, org_id, actor_id, import_id, items, review_token):
     from ingest.catalog_service import _public
-    with transaction.atomic():
+    from catalogs.reference_protection import protect_changes
+    with transaction.atomic(), protect_changes(org_id):
         row = _get(org_id, import_id, lock=True)
         if row["status"] == "CONFIRMED":
             return {"import": _public(row), "created": _public(row)["result"], "errors": []}
@@ -480,7 +481,8 @@ def publish(*, org_id, actor_id, import_id, items, review_token):
 
 def undo_publication(*, org_id, actor_id, import_id):
     from ingest.catalog_service import _public
-    with transaction.atomic():
+    from catalogs.reference_protection import protect_changes
+    with transaction.atomic(), protect_changes(org_id):
         row = _get(org_id, import_id, lock=True)
         if row["status"] == "UNDONE":
             return {"import": _public(row)}

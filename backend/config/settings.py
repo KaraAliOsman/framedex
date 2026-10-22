@@ -114,7 +114,7 @@ MAIL_SMTP_USER = os.environ.get("MAIL_SMTP_USER", "")
 MAIL_SMTP_PASSWORD = os.environ.get("MAIL_SMTP_PASSWORD", "")
 if PRODUCTION and not os.environ.get("MAIL_ENCRYPTION_KEY"):
     raise ValueError("MAIL_ENCRYPTION_KEY is required in production")
-CORS_ALLOW_HEADERS = (*default_headers, "x-organization-id")
+CORS_ALLOW_HEADERS = (*default_headers, "x-organization-id", "x-catalog-review")
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "http://127.0.0.1:25321").rstrip("/")
 SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY", "")
