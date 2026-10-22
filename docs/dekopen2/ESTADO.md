@@ -8,7 +8,7 @@ Producción y precios comerciales requieren autorización aparte.
 |---|---|---|---|
 | P01 | Catálogo v2: backend, origen, niveles y plantillas | Hecha | [P01a #164](https://github.com/KaraAliOsman/framedex/pull/164), [P01b #165](https://github.com/KaraAliOsman/framedex/pull/165), [P01c #166](https://github.com/KaraAliOsman/framedex/pull/166), [P01d #167](https://github.com/KaraAliOsman/framedex/pull/167) y [P01e #168](https://github.com/KaraAliOsman/framedex/pull/168) fusionadas |
 | P02 | Ficha de serie editable | En curso | [P02a #169](https://github.com/KaraAliOsman/framedex/pull/169), [P02b #170](https://github.com/KaraAliOsman/framedex/pull/170), [P02c #171](https://github.com/KaraAliOsman/framedex/pull/171); sub-PR ordenadas |
-| P03 | Alta de serie y ventana de prueba | Pendiente | — |
+| P03 | Alta de serie y ventana de prueba | En preparación, pendiente de fusionar P02 | `gpt/dk2-p03a-prueba-motor` |
 | P04 | Precio simple automático | Pendiente | — |
 | P05 | Navegación, Hoy y Obras | Pendiente | — |
 | P06 | Mesa de la obra y edición directa | Pendiente | — |
@@ -292,3 +292,18 @@ a P03; P01 deja preparado su contrato y su bloqueo.
   un código de proveedor adicional.
 - P02 espera sus cuatro controles por sub-PR y fusiones ordenadas. P03–P11
   continúan pendientes; no hay activación de producción ni precios comerciales.
+
+### P03a · Comparación y propuestas exactas del motor
+
+- Preparación dependiente de la pila P02, sin adelantar su fusión. El motor
+  proyecta cortes, refuerzos y medidas de vidrio para compararlos con decimales
+  declarados por el taller. No publica ni confirma datos del fabricante.
+- Ajustar una medida ofrece parámetros identificados y recalcula la ventana
+  completa. Solo devuelve candidatos que reproducen exactamente la medida;
+  varias causas posibles se presentan para elección humana. Conserva las
+  restricciones del modelo y rechaza aproximaciones o claves que desaparecieron.
+- Cuatro casos sintéticos nuevos se congelan mediante el comando de `goldgen`;
+  todos los goldens anteriores permanecen idénticos. Motor completo: 1.086
+  pruebas aprobadas y dos xfail existentes; mypy y Ruff aprobados.
+- Faltan persistencia/RLS del caso del taller, protección de ediciones, doble
+  lectura, mapeo de precios y asistente visual; P03 no está terminada.

@@ -1,0 +1,1586 @@
+{
+  "hoja_mas_2": {
+    "comparison": [
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "difference_mm": null,
+        "field": "length_mm",
+        "group": "profile_cuts",
+        "index": 0,
+        "key": "profile_cuts:0:length_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 2,
+        "role": "FRAME",
+        "sku": "DEMO_60-MARCO",
+        "value_mm": "1206.00"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "difference_mm": null,
+        "field": "length_mm",
+        "group": "profile_cuts",
+        "index": 1,
+        "key": "profile_cuts:1:length_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 2,
+        "role": "FRAME",
+        "sku": "DEMO_60-MARCO",
+        "value_mm": "1106.00"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "difference_mm": "0.00",
+        "field": "length_mm",
+        "group": "profile_cuts",
+        "index": 2,
+        "key": "profile_cuts:2:length_mm",
+        "manual_mm": "1104",
+        "matches": true,
+        "quantity": 2,
+        "role": "SASH",
+        "sku": "DEMO_60-HOJA",
+        "value_mm": "1104.00"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "difference_mm": null,
+        "field": "length_mm",
+        "group": "profile_cuts",
+        "index": 3,
+        "key": "profile_cuts:3:length_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 2,
+        "role": "SASH",
+        "sku": "DEMO_60-HOJA",
+        "value_mm": "1004.00"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "difference_mm": null,
+        "field": "length_mm",
+        "group": "profile_cuts",
+        "index": 4,
+        "key": "profile_cuts:4:length_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 2,
+        "role": "GLAZING_BEAD",
+        "sku": "DEMO_60-JQ-10",
+        "value_mm": "981.00"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "difference_mm": null,
+        "field": "length_mm",
+        "group": "profile_cuts",
+        "index": 5,
+        "key": "profile_cuts:5:length_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 2,
+        "role": "GLAZING_BEAD",
+        "sku": "DEMO_60-JQ-10",
+        "value_mm": "881.00"
+      },
+      {
+        "angle_left": "90",
+        "angle_right": "90",
+        "difference_mm": null,
+        "field": "length_mm",
+        "group": "reinforcements",
+        "index": 0,
+        "key": "reinforcements:0:length_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 2,
+        "role": "FRAME",
+        "sku": "DEMO_60-MARCO",
+        "value_mm": "1176.00"
+      },
+      {
+        "angle_left": "90",
+        "angle_right": "90",
+        "difference_mm": null,
+        "field": "length_mm",
+        "group": "reinforcements",
+        "index": 1,
+        "key": "reinforcements:1:length_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 2,
+        "role": "FRAME",
+        "sku": "DEMO_60-MARCO",
+        "value_mm": "1076.00"
+      },
+      {
+        "angle_left": "90",
+        "angle_right": "90",
+        "difference_mm": null,
+        "field": "length_mm",
+        "group": "reinforcements",
+        "index": 2,
+        "key": "reinforcements:2:length_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 2,
+        "role": "SASH",
+        "sku": "DEMO_60-HOJA",
+        "value_mm": "1074.00"
+      },
+      {
+        "angle_left": "90",
+        "angle_right": "90",
+        "difference_mm": null,
+        "field": "length_mm",
+        "group": "reinforcements",
+        "index": 3,
+        "key": "reinforcements:3:length_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 2,
+        "role": "SASH",
+        "sku": "DEMO_60-HOJA",
+        "value_mm": "974.00"
+      },
+      {
+        "angle_left": null,
+        "angle_right": null,
+        "difference_mm": null,
+        "field": "width_mm",
+        "group": "glasses",
+        "index": 0,
+        "key": "glasses:0:width_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 1,
+        "role": "GLASS",
+        "sku": "4-16-4 Float Incoloro",
+        "value_mm": "972.00"
+      },
+      {
+        "angle_left": null,
+        "angle_right": null,
+        "difference_mm": null,
+        "field": "height_mm",
+        "group": "glasses",
+        "index": 0,
+        "key": "glasses:0:height_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 1,
+        "role": "GLASS",
+        "sku": "4-16-4 Float Incoloro",
+        "value_mm": "872.00"
+      }
+    ],
+    "measurement": "profile_cuts:2:length_mm",
+    "parameter": {
+      "after": "9.00",
+      "before": "8.00",
+      "field": "sash_overlap_mm",
+      "glass_thickness_mm": null,
+      "resource": "systems",
+      "sku": null
+    },
+    "result": {
+      "fittings": [
+        {
+          "bay_id": null,
+          "kind": "REINFORCEMENT_SCREW",
+          "leaf_id": null,
+          "qty": 10,
+          "sku": "DEMO_60-TORNILLO-REF"
+        },
+        {
+          "bay_id": null,
+          "kind": "REINFORCEMENT_SCREW",
+          "leaf_id": null,
+          "qty": 10,
+          "sku": "DEMO_60-TORNILLO-REF"
+        },
+        {
+          "bay_id": "leaf",
+          "kind": "REINFORCEMENT_SCREW",
+          "leaf_id": null,
+          "qty": 10,
+          "sku": "DEMO_60-TORNILLO-REF"
+        },
+        {
+          "bay_id": "leaf",
+          "kind": "REINFORCEMENT_SCREW",
+          "leaf_id": null,
+          "qty": 8,
+          "sku": "DEMO_60-TORNILLO-REF"
+        }
+      ],
+      "glasses": [
+        {
+          "area_m2": "0.8476",
+          "article_sku": null,
+          "bay_id": "leaf",
+          "exposed_edges": null,
+          "glass_spec": "4-16-4 Float Incoloro",
+          "height_mm": "872.00",
+          "leaf_id": null,
+          "shape": null,
+          "thickness_net_mm": "8.00",
+          "weight_kg": "16.95",
+          "width_mm": "972.00"
+        }
+      ],
+      "hardware_items": [
+        {
+          "bay_id": "leaf",
+          "contents": [
+            {
+              "category": "HANDLE",
+              "name": "Manilla DEMO",
+              "qty": "1",
+              "sku": "DEMO_60-MANILLA",
+              "unit": "EA"
+            },
+            {
+              "category": "HINGE",
+              "name": "Bisagra DEMO",
+              "qty": "2",
+              "sku": "DEMO_60-BISAGRA",
+              "unit": "EA"
+            }
+          ],
+          "kit_sku": "DEMO_60-KIT-TURN",
+          "leaf_id": null,
+          "name": "Kit PVC practicable 60 mm · practicable",
+          "qty": 1,
+          "unit": "kit"
+        }
+      ],
+      "leaf_weights": [
+        {
+          "bay_id": "leaf",
+          "hardware_weight_kg": "2.55",
+          "infill_weight_kg": "16.95",
+          "leaf_id": null,
+          "pvc_weight_kg": "5.71",
+          "steel_weight_kg": "6.96",
+          "total_weight_kg": "32.18",
+          "weight_unknown_reasons": []
+        }
+      ],
+      "panels": [],
+      "profile_cuts": [
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": null,
+          "leaf_id": null,
+          "length_mm": "1206.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-MARCO"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": null,
+          "leaf_id": null,
+          "length_mm": "1106.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-MARCO"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": "leaf",
+          "leaf_id": null,
+          "length_mm": "1104.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "SASH",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-HOJA"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": "leaf",
+          "leaf_id": null,
+          "length_mm": "1004.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "SASH",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-HOJA"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "bay_id": "leaf",
+          "leaf_id": null,
+          "length_mm": "981.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-JQ-10"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "bay_id": "leaf",
+          "leaf_id": null,
+          "length_mm": "881.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-JQ-10"
+        }
+      ],
+      "reinforcements": [
+        {
+          "bay_id": null,
+          "leaf_id": null,
+          "length_mm": "1176.00",
+          "parent_profile_sku": "DEMO_60-MARCO",
+          "qty": 2,
+          "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+          "role": "FRAME",
+          "sagitta_mm": null
+        },
+        {
+          "bay_id": null,
+          "leaf_id": null,
+          "length_mm": "1076.00",
+          "parent_profile_sku": "DEMO_60-MARCO",
+          "qty": 2,
+          "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+          "role": "FRAME",
+          "sagitta_mm": null
+        },
+        {
+          "bay_id": "leaf",
+          "leaf_id": null,
+          "length_mm": "1074.00",
+          "parent_profile_sku": "DEMO_60-HOJA",
+          "qty": 2,
+          "reinforcement_sku": "DEMO_60-ACERO-HOJA",
+          "role": "SASH",
+          "sagitta_mm": null
+        },
+        {
+          "bay_id": "leaf",
+          "leaf_id": null,
+          "length_mm": "974.00",
+          "parent_profile_sku": "DEMO_60-HOJA",
+          "qty": 2,
+          "reinforcement_sku": "DEMO_60-ACERO-HOJA",
+          "role": "SASH",
+          "sagitta_mm": null
+        }
+      ]
+    },
+    "target_mm": "1104"
+  },
+  "junquillo_menos_2": {
+    "comparison": [
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "difference_mm": null,
+        "field": "length_mm",
+        "group": "profile_cuts",
+        "index": 0,
+        "key": "profile_cuts:0:length_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 2,
+        "role": "FRAME",
+        "sku": "DEMO_60-MARCO",
+        "value_mm": "1206.00"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "difference_mm": null,
+        "field": "length_mm",
+        "group": "profile_cuts",
+        "index": 1,
+        "key": "profile_cuts:1:length_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 2,
+        "role": "FRAME",
+        "sku": "DEMO_60-MARCO",
+        "value_mm": "1106.00"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "difference_mm": null,
+        "field": "length_mm",
+        "group": "profile_cuts",
+        "index": 2,
+        "key": "profile_cuts:2:length_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 2,
+        "role": "SASH",
+        "sku": "DEMO_60-HOJA",
+        "value_mm": "1102.00"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "difference_mm": null,
+        "field": "length_mm",
+        "group": "profile_cuts",
+        "index": 3,
+        "key": "profile_cuts:3:length_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 2,
+        "role": "SASH",
+        "sku": "DEMO_60-HOJA",
+        "value_mm": "1002.00"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "difference_mm": "0.00",
+        "field": "length_mm",
+        "group": "profile_cuts",
+        "index": 4,
+        "key": "profile_cuts:4:length_mm",
+        "manual_mm": "977",
+        "matches": true,
+        "quantity": 2,
+        "role": "GLAZING_BEAD",
+        "sku": "DEMO_60-JQ-10",
+        "value_mm": "977.00"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "difference_mm": null,
+        "field": "length_mm",
+        "group": "profile_cuts",
+        "index": 5,
+        "key": "profile_cuts:5:length_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 2,
+        "role": "GLAZING_BEAD",
+        "sku": "DEMO_60-JQ-10",
+        "value_mm": "877.00"
+      },
+      {
+        "angle_left": "90",
+        "angle_right": "90",
+        "difference_mm": null,
+        "field": "length_mm",
+        "group": "reinforcements",
+        "index": 0,
+        "key": "reinforcements:0:length_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 2,
+        "role": "FRAME",
+        "sku": "DEMO_60-MARCO",
+        "value_mm": "1176.00"
+      },
+      {
+        "angle_left": "90",
+        "angle_right": "90",
+        "difference_mm": null,
+        "field": "length_mm",
+        "group": "reinforcements",
+        "index": 1,
+        "key": "reinforcements:1:length_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 2,
+        "role": "FRAME",
+        "sku": "DEMO_60-MARCO",
+        "value_mm": "1076.00"
+      },
+      {
+        "angle_left": "90",
+        "angle_right": "90",
+        "difference_mm": null,
+        "field": "length_mm",
+        "group": "reinforcements",
+        "index": 2,
+        "key": "reinforcements:2:length_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 2,
+        "role": "SASH",
+        "sku": "DEMO_60-HOJA",
+        "value_mm": "1072.00"
+      },
+      {
+        "angle_left": "90",
+        "angle_right": "90",
+        "difference_mm": null,
+        "field": "length_mm",
+        "group": "reinforcements",
+        "index": 3,
+        "key": "reinforcements:3:length_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 2,
+        "role": "SASH",
+        "sku": "DEMO_60-HOJA",
+        "value_mm": "972.00"
+      },
+      {
+        "angle_left": null,
+        "angle_right": null,
+        "difference_mm": null,
+        "field": "width_mm",
+        "group": "glasses",
+        "index": 0,
+        "key": "glasses:0:width_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 1,
+        "role": "GLASS",
+        "sku": "4-16-4 Float Incoloro",
+        "value_mm": "970.00"
+      },
+      {
+        "angle_left": null,
+        "angle_right": null,
+        "difference_mm": null,
+        "field": "height_mm",
+        "group": "glasses",
+        "index": 0,
+        "key": "glasses:0:height_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 1,
+        "role": "GLASS",
+        "sku": "4-16-4 Float Incoloro",
+        "value_mm": "870.00"
+      }
+    ],
+    "measurement": "profile_cuts:4:length_mm",
+    "parameter": {
+      "after": "7.00",
+      "before": "9.00",
+      "field": "cut_add_mm",
+      "glass_thickness_mm": "24.00",
+      "resource": "glazing",
+      "sku": "DEMO_60-JQ-10"
+    },
+    "result": {
+      "fittings": [
+        {
+          "bay_id": null,
+          "kind": "REINFORCEMENT_SCREW",
+          "leaf_id": null,
+          "qty": 10,
+          "sku": "DEMO_60-TORNILLO-REF"
+        },
+        {
+          "bay_id": null,
+          "kind": "REINFORCEMENT_SCREW",
+          "leaf_id": null,
+          "qty": 10,
+          "sku": "DEMO_60-TORNILLO-REF"
+        },
+        {
+          "bay_id": "leaf",
+          "kind": "REINFORCEMENT_SCREW",
+          "leaf_id": null,
+          "qty": 10,
+          "sku": "DEMO_60-TORNILLO-REF"
+        },
+        {
+          "bay_id": "leaf",
+          "kind": "REINFORCEMENT_SCREW",
+          "leaf_id": null,
+          "qty": 8,
+          "sku": "DEMO_60-TORNILLO-REF"
+        }
+      ],
+      "glasses": [
+        {
+          "area_m2": "0.8439",
+          "article_sku": null,
+          "bay_id": "leaf",
+          "exposed_edges": null,
+          "glass_spec": "4-16-4 Float Incoloro",
+          "height_mm": "870.00",
+          "leaf_id": null,
+          "shape": null,
+          "thickness_net_mm": "8.00",
+          "weight_kg": "16.88",
+          "width_mm": "970.00"
+        }
+      ],
+      "hardware_items": [
+        {
+          "bay_id": "leaf",
+          "contents": [
+            {
+              "category": "HANDLE",
+              "name": "Manilla DEMO",
+              "qty": "1",
+              "sku": "DEMO_60-MANILLA",
+              "unit": "EA"
+            },
+            {
+              "category": "HINGE",
+              "name": "Bisagra DEMO",
+              "qty": "2",
+              "sku": "DEMO_60-BISAGRA",
+              "unit": "EA"
+            }
+          ],
+          "kit_sku": "DEMO_60-KIT-TURN",
+          "leaf_id": null,
+          "name": "Kit PVC practicable 60 mm · practicable",
+          "qty": 1,
+          "unit": "kit"
+        }
+      ],
+      "leaf_weights": [
+        {
+          "bay_id": "leaf",
+          "hardware_weight_kg": "2.55",
+          "infill_weight_kg": "16.88",
+          "leaf_id": null,
+          "pvc_weight_kg": "5.70",
+          "steel_weight_kg": "6.95",
+          "total_weight_kg": "32.08",
+          "weight_unknown_reasons": []
+        }
+      ],
+      "panels": [],
+      "profile_cuts": [
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": null,
+          "leaf_id": null,
+          "length_mm": "1206.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-MARCO"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": null,
+          "leaf_id": null,
+          "length_mm": "1106.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-MARCO"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": "leaf",
+          "leaf_id": null,
+          "length_mm": "1102.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "SASH",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-HOJA"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": "leaf",
+          "leaf_id": null,
+          "length_mm": "1002.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "SASH",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-HOJA"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "bay_id": "leaf",
+          "leaf_id": null,
+          "length_mm": "977.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-JQ-10"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "bay_id": "leaf",
+          "leaf_id": null,
+          "length_mm": "877.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-JQ-10"
+        }
+      ],
+      "reinforcements": [
+        {
+          "bay_id": null,
+          "leaf_id": null,
+          "length_mm": "1176.00",
+          "parent_profile_sku": "DEMO_60-MARCO",
+          "qty": 2,
+          "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+          "role": "FRAME",
+          "sagitta_mm": null
+        },
+        {
+          "bay_id": null,
+          "leaf_id": null,
+          "length_mm": "1076.00",
+          "parent_profile_sku": "DEMO_60-MARCO",
+          "qty": 2,
+          "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+          "role": "FRAME",
+          "sagitta_mm": null
+        },
+        {
+          "bay_id": "leaf",
+          "leaf_id": null,
+          "length_mm": "1072.00",
+          "parent_profile_sku": "DEMO_60-HOJA",
+          "qty": 2,
+          "reinforcement_sku": "DEMO_60-ACERO-HOJA",
+          "role": "SASH",
+          "sagitta_mm": null
+        },
+        {
+          "bay_id": "leaf",
+          "leaf_id": null,
+          "length_mm": "972.00",
+          "parent_profile_sku": "DEMO_60-HOJA",
+          "qty": 2,
+          "reinforcement_sku": "DEMO_60-ACERO-HOJA",
+          "role": "SASH",
+          "sagitta_mm": null
+        }
+      ]
+    },
+    "target_mm": "977"
+  },
+  "refuerzo_menos_2": {
+    "comparison": [
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "difference_mm": null,
+        "field": "length_mm",
+        "group": "profile_cuts",
+        "index": 0,
+        "key": "profile_cuts:0:length_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 2,
+        "role": "FRAME",
+        "sku": "DEMO_60-MARCO",
+        "value_mm": "1206.00"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "difference_mm": null,
+        "field": "length_mm",
+        "group": "profile_cuts",
+        "index": 1,
+        "key": "profile_cuts:1:length_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 2,
+        "role": "FRAME",
+        "sku": "DEMO_60-MARCO",
+        "value_mm": "1106.00"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "difference_mm": null,
+        "field": "length_mm",
+        "group": "profile_cuts",
+        "index": 2,
+        "key": "profile_cuts:2:length_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 2,
+        "role": "SASH",
+        "sku": "DEMO_60-HOJA",
+        "value_mm": "1102.00"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "difference_mm": null,
+        "field": "length_mm",
+        "group": "profile_cuts",
+        "index": 3,
+        "key": "profile_cuts:3:length_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 2,
+        "role": "SASH",
+        "sku": "DEMO_60-HOJA",
+        "value_mm": "1002.00"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "difference_mm": null,
+        "field": "length_mm",
+        "group": "profile_cuts",
+        "index": 4,
+        "key": "profile_cuts:4:length_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 2,
+        "role": "GLAZING_BEAD",
+        "sku": "DEMO_60-JQ-10",
+        "value_mm": "979.00"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "difference_mm": null,
+        "field": "length_mm",
+        "group": "profile_cuts",
+        "index": 5,
+        "key": "profile_cuts:5:length_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 2,
+        "role": "GLAZING_BEAD",
+        "sku": "DEMO_60-JQ-10",
+        "value_mm": "879.00"
+      },
+      {
+        "angle_left": "90",
+        "angle_right": "90",
+        "difference_mm": "0.00",
+        "field": "length_mm",
+        "group": "reinforcements",
+        "index": 0,
+        "key": "reinforcements:0:length_mm",
+        "manual_mm": "1174",
+        "matches": true,
+        "quantity": 2,
+        "role": "FRAME",
+        "sku": "DEMO_60-MARCO",
+        "value_mm": "1174.00"
+      },
+      {
+        "angle_left": "90",
+        "angle_right": "90",
+        "difference_mm": null,
+        "field": "length_mm",
+        "group": "reinforcements",
+        "index": 1,
+        "key": "reinforcements:1:length_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 2,
+        "role": "FRAME",
+        "sku": "DEMO_60-MARCO",
+        "value_mm": "1074.00"
+      },
+      {
+        "angle_left": "90",
+        "angle_right": "90",
+        "difference_mm": null,
+        "field": "length_mm",
+        "group": "reinforcements",
+        "index": 2,
+        "key": "reinforcements:2:length_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 2,
+        "role": "SASH",
+        "sku": "DEMO_60-HOJA",
+        "value_mm": "1072.00"
+      },
+      {
+        "angle_left": "90",
+        "angle_right": "90",
+        "difference_mm": null,
+        "field": "length_mm",
+        "group": "reinforcements",
+        "index": 3,
+        "key": "reinforcements:3:length_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 2,
+        "role": "SASH",
+        "sku": "DEMO_60-HOJA",
+        "value_mm": "972.00"
+      },
+      {
+        "angle_left": null,
+        "angle_right": null,
+        "difference_mm": null,
+        "field": "width_mm",
+        "group": "glasses",
+        "index": 0,
+        "key": "glasses:0:width_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 1,
+        "role": "GLASS",
+        "sku": "4-16-4 Float Incoloro",
+        "value_mm": "970.00"
+      },
+      {
+        "angle_left": null,
+        "angle_right": null,
+        "difference_mm": null,
+        "field": "height_mm",
+        "group": "glasses",
+        "index": 0,
+        "key": "glasses:0:height_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 1,
+        "role": "GLASS",
+        "sku": "4-16-4 Float Incoloro",
+        "value_mm": "870.00"
+      }
+    ],
+    "measurement": "reinforcements:0:length_mm",
+    "parameter": {
+      "after": "32.00",
+      "before": "30.00",
+      "field": "reinforcement_rule.cut_deduction_mm",
+      "glass_thickness_mm": null,
+      "resource": "articles",
+      "sku": "DEMO_60-MARCO"
+    },
+    "result": {
+      "fittings": [
+        {
+          "bay_id": null,
+          "kind": "REINFORCEMENT_SCREW",
+          "leaf_id": null,
+          "qty": 10,
+          "sku": "DEMO_60-TORNILLO-REF"
+        },
+        {
+          "bay_id": null,
+          "kind": "REINFORCEMENT_SCREW",
+          "leaf_id": null,
+          "qty": 10,
+          "sku": "DEMO_60-TORNILLO-REF"
+        },
+        {
+          "bay_id": "leaf",
+          "kind": "REINFORCEMENT_SCREW",
+          "leaf_id": null,
+          "qty": 10,
+          "sku": "DEMO_60-TORNILLO-REF"
+        },
+        {
+          "bay_id": "leaf",
+          "kind": "REINFORCEMENT_SCREW",
+          "leaf_id": null,
+          "qty": 8,
+          "sku": "DEMO_60-TORNILLO-REF"
+        }
+      ],
+      "glasses": [
+        {
+          "area_m2": "0.8439",
+          "article_sku": null,
+          "bay_id": "leaf",
+          "exposed_edges": null,
+          "glass_spec": "4-16-4 Float Incoloro",
+          "height_mm": "870.00",
+          "leaf_id": null,
+          "shape": null,
+          "thickness_net_mm": "8.00",
+          "weight_kg": "16.88",
+          "width_mm": "970.00"
+        }
+      ],
+      "hardware_items": [
+        {
+          "bay_id": "leaf",
+          "contents": [
+            {
+              "category": "HANDLE",
+              "name": "Manilla DEMO",
+              "qty": "1",
+              "sku": "DEMO_60-MANILLA",
+              "unit": "EA"
+            },
+            {
+              "category": "HINGE",
+              "name": "Bisagra DEMO",
+              "qty": "2",
+              "sku": "DEMO_60-BISAGRA",
+              "unit": "EA"
+            }
+          ],
+          "kit_sku": "DEMO_60-KIT-TURN",
+          "leaf_id": null,
+          "name": "Kit PVC practicable 60 mm · practicable",
+          "qty": 1,
+          "unit": "kit"
+        }
+      ],
+      "leaf_weights": [
+        {
+          "bay_id": "leaf",
+          "hardware_weight_kg": "2.55",
+          "infill_weight_kg": "16.88",
+          "leaf_id": null,
+          "pvc_weight_kg": "5.70",
+          "steel_weight_kg": "6.95",
+          "total_weight_kg": "32.08",
+          "weight_unknown_reasons": []
+        }
+      ],
+      "panels": [],
+      "profile_cuts": [
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": null,
+          "leaf_id": null,
+          "length_mm": "1206.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-MARCO"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": null,
+          "leaf_id": null,
+          "length_mm": "1106.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-MARCO"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": "leaf",
+          "leaf_id": null,
+          "length_mm": "1102.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "SASH",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-HOJA"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": "leaf",
+          "leaf_id": null,
+          "length_mm": "1002.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "SASH",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-HOJA"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "bay_id": "leaf",
+          "leaf_id": null,
+          "length_mm": "979.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-JQ-10"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "bay_id": "leaf",
+          "leaf_id": null,
+          "length_mm": "879.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-JQ-10"
+        }
+      ],
+      "reinforcements": [
+        {
+          "bay_id": null,
+          "leaf_id": null,
+          "length_mm": "1174.00",
+          "parent_profile_sku": "DEMO_60-MARCO",
+          "qty": 2,
+          "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+          "role": "FRAME",
+          "sagitta_mm": null
+        },
+        {
+          "bay_id": null,
+          "leaf_id": null,
+          "length_mm": "1074.00",
+          "parent_profile_sku": "DEMO_60-MARCO",
+          "qty": 2,
+          "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+          "role": "FRAME",
+          "sagitta_mm": null
+        },
+        {
+          "bay_id": "leaf",
+          "leaf_id": null,
+          "length_mm": "1072.00",
+          "parent_profile_sku": "DEMO_60-HOJA",
+          "qty": 2,
+          "reinforcement_sku": "DEMO_60-ACERO-HOJA",
+          "role": "SASH",
+          "sagitta_mm": null
+        },
+        {
+          "bay_id": "leaf",
+          "leaf_id": null,
+          "length_mm": "972.00",
+          "parent_profile_sku": "DEMO_60-HOJA",
+          "qty": 2,
+          "reinforcement_sku": "DEMO_60-ACERO-HOJA",
+          "role": "SASH",
+          "sagitta_mm": null
+        }
+      ]
+    },
+    "target_mm": "1174"
+  },
+  "vidrio_menos_2": {
+    "comparison": [
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "difference_mm": null,
+        "field": "length_mm",
+        "group": "profile_cuts",
+        "index": 0,
+        "key": "profile_cuts:0:length_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 2,
+        "role": "FRAME",
+        "sku": "DEMO_60-MARCO",
+        "value_mm": "1206.00"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "difference_mm": null,
+        "field": "length_mm",
+        "group": "profile_cuts",
+        "index": 1,
+        "key": "profile_cuts:1:length_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 2,
+        "role": "FRAME",
+        "sku": "DEMO_60-MARCO",
+        "value_mm": "1106.00"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "difference_mm": null,
+        "field": "length_mm",
+        "group": "profile_cuts",
+        "index": 2,
+        "key": "profile_cuts:2:length_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 2,
+        "role": "SASH",
+        "sku": "DEMO_60-HOJA",
+        "value_mm": "1102.00"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "difference_mm": null,
+        "field": "length_mm",
+        "group": "profile_cuts",
+        "index": 3,
+        "key": "profile_cuts:3:length_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 2,
+        "role": "SASH",
+        "sku": "DEMO_60-HOJA",
+        "value_mm": "1002.00"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "difference_mm": null,
+        "field": "length_mm",
+        "group": "profile_cuts",
+        "index": 4,
+        "key": "profile_cuts:4:length_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 2,
+        "role": "GLAZING_BEAD",
+        "sku": "DEMO_60-JQ-10",
+        "value_mm": "977.00"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "difference_mm": null,
+        "field": "length_mm",
+        "group": "profile_cuts",
+        "index": 5,
+        "key": "profile_cuts:5:length_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 2,
+        "role": "GLAZING_BEAD",
+        "sku": "DEMO_60-JQ-10",
+        "value_mm": "877.00"
+      },
+      {
+        "angle_left": "90",
+        "angle_right": "90",
+        "difference_mm": null,
+        "field": "length_mm",
+        "group": "reinforcements",
+        "index": 0,
+        "key": "reinforcements:0:length_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 2,
+        "role": "FRAME",
+        "sku": "DEMO_60-MARCO",
+        "value_mm": "1176.00"
+      },
+      {
+        "angle_left": "90",
+        "angle_right": "90",
+        "difference_mm": null,
+        "field": "length_mm",
+        "group": "reinforcements",
+        "index": 1,
+        "key": "reinforcements:1:length_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 2,
+        "role": "FRAME",
+        "sku": "DEMO_60-MARCO",
+        "value_mm": "1076.00"
+      },
+      {
+        "angle_left": "90",
+        "angle_right": "90",
+        "difference_mm": null,
+        "field": "length_mm",
+        "group": "reinforcements",
+        "index": 2,
+        "key": "reinforcements:2:length_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 2,
+        "role": "SASH",
+        "sku": "DEMO_60-HOJA",
+        "value_mm": "1072.00"
+      },
+      {
+        "angle_left": "90",
+        "angle_right": "90",
+        "difference_mm": null,
+        "field": "length_mm",
+        "group": "reinforcements",
+        "index": 3,
+        "key": "reinforcements:3:length_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 2,
+        "role": "SASH",
+        "sku": "DEMO_60-HOJA",
+        "value_mm": "972.00"
+      },
+      {
+        "angle_left": null,
+        "angle_right": null,
+        "difference_mm": "0.00",
+        "field": "width_mm",
+        "group": "glasses",
+        "index": 0,
+        "key": "glasses:0:width_mm",
+        "manual_mm": "968",
+        "matches": true,
+        "quantity": 1,
+        "role": "GLASS",
+        "sku": "4-16-4 Float Incoloro",
+        "value_mm": "968.00"
+      },
+      {
+        "angle_left": null,
+        "angle_right": null,
+        "difference_mm": null,
+        "field": "height_mm",
+        "group": "glasses",
+        "index": 0,
+        "key": "glasses:0:height_mm",
+        "manual_mm": null,
+        "matches": null,
+        "quantity": 1,
+        "role": "GLASS",
+        "sku": "4-16-4 Float Incoloro",
+        "value_mm": "868.00"
+      }
+    ],
+    "measurement": "glasses:0:width_mm",
+    "parameter": {
+      "after": "4.00",
+      "before": "3.00",
+      "field": "glass_clearance_white_mm",
+      "glass_thickness_mm": null,
+      "resource": "systems",
+      "sku": null
+    },
+    "result": {
+      "fittings": [
+        {
+          "bay_id": null,
+          "kind": "REINFORCEMENT_SCREW",
+          "leaf_id": null,
+          "qty": 10,
+          "sku": "DEMO_60-TORNILLO-REF"
+        },
+        {
+          "bay_id": null,
+          "kind": "REINFORCEMENT_SCREW",
+          "leaf_id": null,
+          "qty": 10,
+          "sku": "DEMO_60-TORNILLO-REF"
+        },
+        {
+          "bay_id": "leaf",
+          "kind": "REINFORCEMENT_SCREW",
+          "leaf_id": null,
+          "qty": 10,
+          "sku": "DEMO_60-TORNILLO-REF"
+        },
+        {
+          "bay_id": "leaf",
+          "kind": "REINFORCEMENT_SCREW",
+          "leaf_id": null,
+          "qty": 8,
+          "sku": "DEMO_60-TORNILLO-REF"
+        }
+      ],
+      "glasses": [
+        {
+          "area_m2": "0.8402",
+          "article_sku": null,
+          "bay_id": "leaf",
+          "exposed_edges": null,
+          "glass_spec": "4-16-4 Float Incoloro",
+          "height_mm": "868.00",
+          "leaf_id": null,
+          "shape": null,
+          "thickness_net_mm": "8.00",
+          "weight_kg": "16.80",
+          "width_mm": "968.00"
+        }
+      ],
+      "hardware_items": [
+        {
+          "bay_id": "leaf",
+          "contents": [
+            {
+              "category": "HANDLE",
+              "name": "Manilla DEMO",
+              "qty": "1",
+              "sku": "DEMO_60-MANILLA",
+              "unit": "EA"
+            },
+            {
+              "category": "HINGE",
+              "name": "Bisagra DEMO",
+              "qty": "2",
+              "sku": "DEMO_60-BISAGRA",
+              "unit": "EA"
+            }
+          ],
+          "kit_sku": "DEMO_60-KIT-TURN",
+          "leaf_id": null,
+          "name": "Kit PVC practicable 60 mm · practicable",
+          "qty": 1,
+          "unit": "kit"
+        }
+      ],
+      "leaf_weights": [
+        {
+          "bay_id": "leaf",
+          "hardware_weight_kg": "2.55",
+          "infill_weight_kg": "16.80",
+          "leaf_id": null,
+          "pvc_weight_kg": "5.70",
+          "steel_weight_kg": "6.95",
+          "total_weight_kg": "32.01",
+          "weight_unknown_reasons": []
+        }
+      ],
+      "panels": [],
+      "profile_cuts": [
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": null,
+          "leaf_id": null,
+          "length_mm": "1206.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-MARCO"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": null,
+          "leaf_id": null,
+          "length_mm": "1106.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-MARCO"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": "leaf",
+          "leaf_id": null,
+          "length_mm": "1102.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "SASH",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-HOJA"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": "leaf",
+          "leaf_id": null,
+          "length_mm": "1002.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "SASH",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-HOJA"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "bay_id": "leaf",
+          "leaf_id": null,
+          "length_mm": "977.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-JQ-10"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "bay_id": "leaf",
+          "leaf_id": null,
+          "length_mm": "877.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-JQ-10"
+        }
+      ],
+      "reinforcements": [
+        {
+          "bay_id": null,
+          "leaf_id": null,
+          "length_mm": "1176.00",
+          "parent_profile_sku": "DEMO_60-MARCO",
+          "qty": 2,
+          "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+          "role": "FRAME",
+          "sagitta_mm": null
+        },
+        {
+          "bay_id": null,
+          "leaf_id": null,
+          "length_mm": "1076.00",
+          "parent_profile_sku": "DEMO_60-MARCO",
+          "qty": 2,
+          "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+          "role": "FRAME",
+          "sagitta_mm": null
+        },
+        {
+          "bay_id": "leaf",
+          "leaf_id": null,
+          "length_mm": "1072.00",
+          "parent_profile_sku": "DEMO_60-HOJA",
+          "qty": 2,
+          "reinforcement_sku": "DEMO_60-ACERO-HOJA",
+          "role": "SASH",
+          "sagitta_mm": null
+        },
+        {
+          "bay_id": "leaf",
+          "leaf_id": null,
+          "length_mm": "972.00",
+          "parent_profile_sku": "DEMO_60-HOJA",
+          "qty": 2,
+          "reinforcement_sku": "DEMO_60-ACERO-HOJA",
+          "role": "SASH",
+          "sagitta_mm": null
+        }
+      ]
+    },
+    "target_mm": "968"
+  }
+}
