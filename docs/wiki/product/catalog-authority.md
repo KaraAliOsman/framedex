@@ -369,3 +369,21 @@ paso de corte impide la coincidencia. Los cuatro casos de
 los casos dorados anteriores conservan sus bytes. Esta base pura todavía
 no persiste verificación ni protege ediciones del catálogo: corresponde a las
 sub-PR siguientes de P03. Véase [estado](../../dekopen2/ESTADO.md).
+
+## Caso del taller y edición protegida · preparación P03b
+
+Verificado el 21-10-2026 en `gpt/dk2-p03b-verificacion-serie`, aún dependiente
+de P02/P03a. `catalog_reference_windows` conserva entrada y salida completa del
+motor sin las anotaciones de origen, para que confirmar un dato no parezca un
+cambio físico. Los casos son inmutables y tienen org/RLS. La confirmación del
+servidor comprueba token, medidas comparadas y catálogo vigente bajo el lock de
+serie; la salida esperada nunca viene del cliente.
+
+`reference_protection.py` compara antes/después al cerrar el lote de escritura.
+El CRUD común protege llamadas directas; ficha e importaciones comparten un
+contexto exterior para comparar el resultado final, incluidos los cambios
+compensados del lote. Un token temporal liga revisión y mutación exacta; si
+falta o cambió el contenido, se revierte la transacción con un diff nuevo.
+Aceptar el cambio no reescribe el caso original ni conserva la verificación
+de fabricación. Las pruebas son `test_catalog_reference_windows.py` y
+`252_catalog_reference_windows.test.sql`; la interfaz se integra después.

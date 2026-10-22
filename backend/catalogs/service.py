@@ -19,6 +19,7 @@ from catalogs.serializers import (
     KitWriteSerializer,
     SystemWriteSerializer,
 )
+from catalogs.reference_protection import protected_write
 
 
 @dataclass(frozen=True)
@@ -389,6 +390,7 @@ def _lock_singleton_role(system_id):
         )
 
 
+@protected_write("create")
 def create(resource, org_id, values, actor_id=None):
     _bind_parent(resource, org_id, values)
     if resource is not SYSTEMS and values.get("system_id") is not None:
@@ -425,6 +427,7 @@ def create(resource, org_id, values, actor_id=None):
     return retrieve(resource, org_id, row_id)
 
 
+@protected_write("update")
 def update(resource, org_id, row_id, values, expected_revision=None, actor_id=None):
     initial = retrieve(resource, org_id, row_id)
     _require_owned(initial, org_id)
@@ -531,6 +534,7 @@ def review(resource, org_id, row_id, user_id, expected_revision=None):
     return retrieve(resource, org_id, row_id)
 
 
+@protected_write("delete")
 def delete(resource, org_id, row_id, expected_revision=None):
     initial = retrieve(resource, org_id, row_id)
     _require_owned(initial, org_id)

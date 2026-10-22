@@ -366,7 +366,10 @@ import type {
   QuotationPreviewRequestRequest,
   RectificationRequest,
   RectificationResponse,
+  ReferenceChangeError,
   ReferenceRegistry,
+  ReferenceWindow,
+  ReferenceWindowList,
   RemakeRequestRequest,
   Remnant,
   RemnantActionRequest,
@@ -387,6 +390,8 @@ import type {
   SeriesSheet,
   ServicesResponse,
   ServicesWriteRequest,
+  SetupProgress,
+  SetupProgressInputRequest,
   ShareQuoteResponse,
   SheetFormatCreated,
   SheetFormatList,
@@ -420,6 +425,11 @@ import type {
   ThermalReviewRequest,
   ThermalWriteRequest,
   TodayResponse,
+  TrialInputRequest,
+  TrialProposalInputRequest,
+  TrialProposals,
+  TrialResponse,
+  TrialVerificationRequest,
   VersionHardwarePicking,
   Wallet,
   WithdrawRequest,
@@ -5127,7 +5137,7 @@ export type catalogImportExportResponse404 = {
 };
 
 export type catalogImportExportResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -5212,7 +5222,7 @@ export type catalogImportPageResponse404 = {
 };
 
 export type catalogImportPageResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -5289,7 +5299,7 @@ export type catalogImportPublishResponse404 = {
 };
 
 export type catalogImportPublishResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -5372,7 +5382,7 @@ export type catalogImportRetryResponse404 = {
 };
 
 export type catalogImportRetryResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -5447,7 +5457,7 @@ export type catalogImportReviewResponse404 = {
 };
 
 export type catalogImportReviewResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -5530,7 +5540,7 @@ export type catalogImportSourceResponse404 = {
 };
 
 export type catalogImportSourceResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -5602,7 +5612,7 @@ export type catalogImportTimelineResponse404 = {
 };
 
 export type catalogImportTimelineResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -5674,7 +5684,7 @@ export type catalogImportUndoResponse404 = {
 };
 
 export type catalogImportUndoResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -5757,7 +5767,7 @@ export type catalogTemplateSchemaResponse404 = {
 };
 
 export type catalogTemplateSchemaResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -5828,7 +5838,7 @@ export type catalogTemplateDownloadResponse404 = {
 };
 
 export type catalogTemplateDownloadResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -5912,7 +5922,7 @@ export type catalogArticleListResponse404 = {
 };
 
 export type catalogArticleListResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -5990,7 +6000,7 @@ export type catalogArticleCreateResponse404 = {
 };
 
 export type catalogArticleCreateResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -6066,7 +6076,7 @@ export type catalogArticleRetrieveResponse404 = {
 };
 
 export type catalogArticleRetrieveResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -6132,7 +6142,7 @@ export type catalogArticleUpdateResponse404 = {
 };
 
 export type catalogArticleUpdateResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -6209,7 +6219,7 @@ export type catalogArticleDeleteResponse404 = {
 };
 
 export type catalogArticleDeleteResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -6275,7 +6285,7 @@ export type catalogArticleReviewResponse404 = {
 };
 
 export type catalogArticleReviewResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -6344,7 +6354,7 @@ export type catalogEvidenceListResponse404 = {
 };
 
 export type catalogEvidenceListResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -6427,7 +6437,7 @@ export type catalogEvidenceDeclareResponse404 = {
 };
 
 export type catalogEvidenceDeclareResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -6508,7 +6518,7 @@ export type catalogEvidenceReviewResponse404 = {
 };
 
 export type catalogEvidenceReviewResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -6589,7 +6599,7 @@ export type catalogFamilyTemplatesResponse404 = {
 };
 
 export type catalogFamilyTemplatesResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -6654,7 +6664,7 @@ export type catalogGlassPreviewResponse404 = {
 };
 
 export type catalogGlassPreviewResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -6730,7 +6740,7 @@ export type catalogGlassRulesResponse404 = {
 };
 
 export type catalogGlassRulesResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -6795,7 +6805,7 @@ export type catalogGlassRulesReplaceResponse404 = {
 };
 
 export type catalogGlassRulesReplaceResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -6871,7 +6881,7 @@ export type catalogGlassVariantPublishResponse404 = {
 };
 
 export type catalogGlassVariantPublishResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -6947,7 +6957,7 @@ export type catalogBeadListResponse404 = {
 };
 
 export type catalogBeadListResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -7024,7 +7034,7 @@ export type catalogBeadCreateResponse404 = {
 };
 
 export type catalogBeadCreateResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -7100,7 +7110,7 @@ export type catalogBeadRetrieveResponse404 = {
 };
 
 export type catalogBeadRetrieveResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -7166,7 +7176,7 @@ export type catalogBeadUpdateResponse404 = {
 };
 
 export type catalogBeadUpdateResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -7243,7 +7253,7 @@ export type catalogBeadDeleteResponse404 = {
 };
 
 export type catalogBeadDeleteResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -7309,7 +7319,7 @@ export type catalogBeadReviewResponse404 = {
 };
 
 export type catalogBeadReviewResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -7378,7 +7388,7 @@ export type catalogKitListResponse404 = {
 };
 
 export type catalogKitListResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -7455,7 +7465,7 @@ export type catalogKitCreateResponse404 = {
 };
 
 export type catalogKitCreateResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -7531,7 +7541,7 @@ export type catalogKitRetrieveResponse404 = {
 };
 
 export type catalogKitRetrieveResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -7597,7 +7607,7 @@ export type catalogKitUpdateResponse404 = {
 };
 
 export type catalogKitUpdateResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -7674,7 +7684,7 @@ export type catalogKitDeleteResponse404 = {
 };
 
 export type catalogKitDeleteResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -7740,7 +7750,7 @@ export type catalogKitReviewResponse404 = {
 };
 
 export type catalogKitReviewResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -7809,7 +7819,7 @@ export type catalogProcessProfileListResponse404 = {
 };
 
 export type catalogProcessProfileListResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -7911,7 +7921,7 @@ export type catalogSectionImportCreateResponse404 = {
 };
 
 export type catalogSectionImportCreateResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -7987,7 +7997,7 @@ export type catalogSeriesCreateResponse404 = {
 };
 
 export type catalogSeriesCreateResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -8063,7 +8073,7 @@ export type catalogSeriesSheetResponse404 = {
 };
 
 export type catalogSeriesSheetResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -8129,7 +8139,7 @@ export type catalogSeriesEditCellsResponse404 = {
 };
 
 export type catalogSeriesEditCellsResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -8206,7 +8216,7 @@ export type catalogSeriesConfirmCellsResponse404 = {
 };
 
 export type catalogSeriesConfirmCellsResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -8283,7 +8293,7 @@ export type catalogSeriesCellHistoryResponse404 = {
 };
 
 export type catalogSeriesCellHistoryResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -8368,7 +8378,7 @@ export type catalogSeriesEditPricesResponse404 = {
 };
 
 export type catalogSeriesEditPricesResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -8445,7 +8455,7 @@ export type catalogSeriesPriceHistoryResponse404 = {
 };
 
 export type catalogSeriesPriceHistoryResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -8489,6 +8499,474 @@ export const catalogSeriesPriceHistory = async (
   );
 };
 
+export type catalogSeriesReferencesResponse200 = {
+  data: ReferenceWindowList;
+  status: 200;
+};
+
+export type catalogSeriesReferencesResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogSeriesReferencesResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogSeriesReferencesResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogSeriesReferencesResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogSeriesReferencesResponse409 = {
+  data: ReferenceChangeError;
+  status: 409;
+};
+
+export type catalogSeriesReferencesResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogSeriesReferencesResponseSuccess = catalogSeriesReferencesResponse200 & {
+  headers: Headers;
+};
+export type catalogSeriesReferencesResponseError = (
+  | catalogSeriesReferencesResponse400
+  | catalogSeriesReferencesResponse401
+  | catalogSeriesReferencesResponse403
+  | catalogSeriesReferencesResponse404
+  | catalogSeriesReferencesResponse409
+  | catalogSeriesReferencesResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogSeriesReferencesResponse =
+  catalogSeriesReferencesResponseSuccess | catalogSeriesReferencesResponseError;
+
+export const getCatalogSeriesReferencesUrl = (systemId: string) => {
+  return `/api/v1/catalogs/series/${systemId}/references/`;
+};
+
+export const catalogSeriesReferences = async (
+  systemId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogSeriesReferencesResponse> => {
+  return apiMutator<catalogSeriesReferencesResponse>(getCatalogSeriesReferencesUrl(systemId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type catalogSeriesSetupProgressResponse200 = {
+  data: SetupProgress;
+  status: 200;
+};
+
+export type catalogSeriesSetupProgressResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogSeriesSetupProgressResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogSeriesSetupProgressResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogSeriesSetupProgressResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogSeriesSetupProgressResponse409 = {
+  data: ReferenceChangeError;
+  status: 409;
+};
+
+export type catalogSeriesSetupProgressResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogSeriesSetupProgressResponseSuccess = catalogSeriesSetupProgressResponse200 & {
+  headers: Headers;
+};
+export type catalogSeriesSetupProgressResponseError = (
+  | catalogSeriesSetupProgressResponse400
+  | catalogSeriesSetupProgressResponse401
+  | catalogSeriesSetupProgressResponse403
+  | catalogSeriesSetupProgressResponse404
+  | catalogSeriesSetupProgressResponse409
+  | catalogSeriesSetupProgressResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogSeriesSetupProgressResponse =
+  catalogSeriesSetupProgressResponseSuccess | catalogSeriesSetupProgressResponseError;
+
+export const getCatalogSeriesSetupProgressUrl = (systemId: string) => {
+  return `/api/v1/catalogs/series/${systemId}/setup/`;
+};
+
+export const catalogSeriesSetupProgress = async (
+  systemId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogSeriesSetupProgressResponse> => {
+  return apiMutator<catalogSeriesSetupProgressResponse>(
+    getCatalogSeriesSetupProgressUrl(systemId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export type catalogSeriesSaveSetupProgressResponse200 = {
+  data: SetupProgress;
+  status: 200;
+};
+
+export type catalogSeriesSaveSetupProgressResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogSeriesSaveSetupProgressResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogSeriesSaveSetupProgressResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogSeriesSaveSetupProgressResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogSeriesSaveSetupProgressResponse409 = {
+  data: ReferenceChangeError;
+  status: 409;
+};
+
+export type catalogSeriesSaveSetupProgressResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogSeriesSaveSetupProgressResponseSuccess =
+  catalogSeriesSaveSetupProgressResponse200 & {
+    headers: Headers;
+  };
+export type catalogSeriesSaveSetupProgressResponseError = (
+  | catalogSeriesSaveSetupProgressResponse400
+  | catalogSeriesSaveSetupProgressResponse401
+  | catalogSeriesSaveSetupProgressResponse403
+  | catalogSeriesSaveSetupProgressResponse404
+  | catalogSeriesSaveSetupProgressResponse409
+  | catalogSeriesSaveSetupProgressResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogSeriesSaveSetupProgressResponse =
+  catalogSeriesSaveSetupProgressResponseSuccess | catalogSeriesSaveSetupProgressResponseError;
+
+export const getCatalogSeriesSaveSetupProgressUrl = (systemId: string) => {
+  return `/api/v1/catalogs/series/${systemId}/setup/`;
+};
+
+export const catalogSeriesSaveSetupProgress = async (
+  systemId: string,
+  setupProgressInputRequest: SetupProgressInputRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogSeriesSaveSetupProgressResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<catalogSeriesSaveSetupProgressResponse>(
+    getCatalogSeriesSaveSetupProgressUrl(systemId),
+    {
+      ...options,
+      method: "PUT",
+      headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+      body: JSON.stringify(setupProgressInputRequest),
+    },
+  );
+};
+
+export type catalogSeriesTrialResponse200 = {
+  data: TrialResponse;
+  status: 200;
+};
+
+export type catalogSeriesTrialResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogSeriesTrialResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogSeriesTrialResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogSeriesTrialResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogSeriesTrialResponse409 = {
+  data: ReferenceChangeError;
+  status: 409;
+};
+
+export type catalogSeriesTrialResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type catalogSeriesTrialResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogSeriesTrialResponseSuccess = catalogSeriesTrialResponse200 & {
+  headers: Headers;
+};
+export type catalogSeriesTrialResponseError = (
+  | catalogSeriesTrialResponse400
+  | catalogSeriesTrialResponse401
+  | catalogSeriesTrialResponse403
+  | catalogSeriesTrialResponse404
+  | catalogSeriesTrialResponse409
+  | catalogSeriesTrialResponse422
+  | catalogSeriesTrialResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogSeriesTrialResponse =
+  catalogSeriesTrialResponseSuccess | catalogSeriesTrialResponseError;
+
+export const getCatalogSeriesTrialUrl = (systemId: string) => {
+  return `/api/v1/catalogs/series/${systemId}/trial/`;
+};
+
+export const catalogSeriesTrial = async (
+  systemId: string,
+  trialInputRequest: TrialInputRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogSeriesTrialResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<catalogSeriesTrialResponse>(getCatalogSeriesTrialUrl(systemId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(trialInputRequest),
+  });
+};
+
+export type catalogSeriesTrialProposalsResponse200 = {
+  data: TrialProposals;
+  status: 200;
+};
+
+export type catalogSeriesTrialProposalsResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogSeriesTrialProposalsResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogSeriesTrialProposalsResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogSeriesTrialProposalsResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogSeriesTrialProposalsResponse409 = {
+  data: ReferenceChangeError;
+  status: 409;
+};
+
+export type catalogSeriesTrialProposalsResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type catalogSeriesTrialProposalsResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogSeriesTrialProposalsResponseSuccess = catalogSeriesTrialProposalsResponse200 & {
+  headers: Headers;
+};
+export type catalogSeriesTrialProposalsResponseError = (
+  | catalogSeriesTrialProposalsResponse400
+  | catalogSeriesTrialProposalsResponse401
+  | catalogSeriesTrialProposalsResponse403
+  | catalogSeriesTrialProposalsResponse404
+  | catalogSeriesTrialProposalsResponse409
+  | catalogSeriesTrialProposalsResponse422
+  | catalogSeriesTrialProposalsResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogSeriesTrialProposalsResponse =
+  catalogSeriesTrialProposalsResponseSuccess | catalogSeriesTrialProposalsResponseError;
+
+export const getCatalogSeriesTrialProposalsUrl = (systemId: string) => {
+  return `/api/v1/catalogs/series/${systemId}/trial/proposals/`;
+};
+
+export const catalogSeriesTrialProposals = async (
+  systemId: string,
+  trialProposalInputRequest: TrialProposalInputRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogSeriesTrialProposalsResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<catalogSeriesTrialProposalsResponse>(
+    getCatalogSeriesTrialProposalsUrl(systemId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+      body: JSON.stringify(trialProposalInputRequest),
+    },
+  );
+};
+
+export type catalogSeriesTrialVerifyResponse201 = {
+  data: ReferenceWindow;
+  status: 201;
+};
+
+export type catalogSeriesTrialVerifyResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogSeriesTrialVerifyResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogSeriesTrialVerifyResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogSeriesTrialVerifyResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogSeriesTrialVerifyResponse409 = {
+  data: ReferenceChangeError;
+  status: 409;
+};
+
+export type catalogSeriesTrialVerifyResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type catalogSeriesTrialVerifyResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogSeriesTrialVerifyResponseSuccess = catalogSeriesTrialVerifyResponse201 & {
+  headers: Headers;
+};
+export type catalogSeriesTrialVerifyResponseError = (
+  | catalogSeriesTrialVerifyResponse400
+  | catalogSeriesTrialVerifyResponse401
+  | catalogSeriesTrialVerifyResponse403
+  | catalogSeriesTrialVerifyResponse404
+  | catalogSeriesTrialVerifyResponse409
+  | catalogSeriesTrialVerifyResponse422
+  | catalogSeriesTrialVerifyResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogSeriesTrialVerifyResponse =
+  catalogSeriesTrialVerifyResponseSuccess | catalogSeriesTrialVerifyResponseError;
+
+export const getCatalogSeriesTrialVerifyUrl = (systemId: string) => {
+  return `/api/v1/catalogs/series/${systemId}/trial/verify/`;
+};
+
+export const catalogSeriesTrialVerify = async (
+  systemId: string,
+  trialVerificationRequest: TrialVerificationRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogSeriesTrialVerifyResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<catalogSeriesTrialVerifyResponse>(getCatalogSeriesTrialVerifyUrl(systemId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(trialVerificationRequest),
+  });
+};
+
 export type catalogSystemListResponse200 = {
   data: SystemList;
   status: 200;
@@ -8515,7 +8993,7 @@ export type catalogSystemListResponse404 = {
 };
 
 export type catalogSystemListResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -8593,7 +9071,7 @@ export type catalogSystemCreateResponse404 = {
 };
 
 export type catalogSystemCreateResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -8669,7 +9147,7 @@ export type catalogSystemRetrieveResponse404 = {
 };
 
 export type catalogSystemRetrieveResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -8735,7 +9213,7 @@ export type catalogSystemUpdateResponse404 = {
 };
 
 export type catalogSystemUpdateResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -8812,7 +9290,7 @@ export type catalogSystemDeleteResponse404 = {
 };
 
 export type catalogSystemDeleteResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -8878,7 +9356,7 @@ export type catalogSystemReviewResponse404 = {
 };
 
 export type catalogSystemReviewResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 
@@ -8947,7 +9425,7 @@ export type catalogSystemWorkspaceResponse404 = {
 };
 
 export type catalogSystemWorkspaceResponse409 = {
-  data: ErrorResponse;
+  data: ReferenceChangeError;
   status: 409;
 };
 

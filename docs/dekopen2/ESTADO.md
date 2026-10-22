@@ -8,7 +8,7 @@ Producción y precios comerciales requieren autorización aparte.
 |---|---|---|---|
 | P01 | Catálogo v2: backend, origen, niveles y plantillas | Hecha | [P01a #164](https://github.com/KaraAliOsman/framedex/pull/164), [P01b #165](https://github.com/KaraAliOsman/framedex/pull/165), [P01c #166](https://github.com/KaraAliOsman/framedex/pull/166), [P01d #167](https://github.com/KaraAliOsman/framedex/pull/167) y [P01e #168](https://github.com/KaraAliOsman/framedex/pull/168) fusionadas |
 | P02 | Ficha de serie editable | En curso | [P02a #169](https://github.com/KaraAliOsman/framedex/pull/169), [P02b #170](https://github.com/KaraAliOsman/framedex/pull/170), [P02c #171](https://github.com/KaraAliOsman/framedex/pull/171); sub-PR ordenadas |
-| P03 | Alta de serie y ventana de prueba | En preparación, pendiente de fusionar P02 | `gpt/dk2-p03a-prueba-motor` |
+| P03 | Alta de serie y ventana de prueba | En preparación, pendiente de fusionar P02 | [P03a #174](https://github.com/KaraAliOsman/framedex/pull/174), `gpt/dk2-p03b-verificacion-serie` |
 | P04 | Precio simple automático | Pendiente | — |
 | P05 | Navegación, Hoy y Obras | Pendiente | — |
 | P06 | Mesa de la obra y edición directa | Pendiente | — |
@@ -312,3 +312,26 @@ a P03; P01 deja preparado su contrato y su bloqueo.
   pruebas aprobadas y dos xfail existentes; mypy y Ruff aprobados.
 - Faltan persistencia/RLS del caso del taller, protección de ediciones, doble
   lectura, mapeo de precios y asistente visual; P03 no está terminada.
+
+### P03b · Verificación persistida y protección de la prueba
+
+- API de comparación, propuestas, confirmación, historial de pruebas y progreso
+  reanudable. Los resultados se recalculan en el servidor; un token liga la
+  confirmación a entrada, resultado y catálogo vigentes. El clic puede confirmar
+  explícitamente los valores sugeridos; nunca los atribuye al fabricante.
+- Caso por empresa inmutable con entrada, salida esperada y autor. RLS impide
+  leer otra empresa; ni el backend ni el usuario privilegiado reescriben o borran
+  el caso. La referencia impide borrar la serie que lo originó.
+- La ficha, el CRUD avanzado y publicación/deshacer de importaciones comparan el
+  lote completo antes del commit. Si cambia la ventana, devuelven antes/después
+  y un token de revisión ligado al cambio exacto. La edición no confirmada se
+  revierte íntegra; la confirmada conserva el caso original e invalida la
+  verificación de fabricación hasta volver a comprobar la serie.
+- Progreso con revisión optimista y borrador técnico. Los costos no se guardan
+  en ese estado compartido: conservan la API y permisos del dueño.
+- Pruebas locales: 24 integraciones de prueba/ficha/precios más una nueva de
+  publicación protegida; 23 pgTAP de RLS/inmutabilidad; 12 unitarias del contrato.
+  La suite completa del backend aprobó 1.669 pruebas y detectó el inventario de
+  cinco rutas nuevas; corregido ese inventario, sus 17 comprobaciones dirigidas
+  pasan. Ruff, guardas, tipos, formato y build aprobados; API regenerada.
+- Falta interfaz, doble lectura y mapeo de precios. Sin activación de producción.
