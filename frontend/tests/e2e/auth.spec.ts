@@ -513,6 +513,9 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await page.getByLabel("Ubicación del vano", { exact: true }).fill("Fijo comercial");
   await page.getByLabel("Cantidad", { exact: true }).fill("2");
   await page.locator(".editor-system-chip").click();
+  const examples = page.getByRole("checkbox", { name: "Mostrar ejemplos", exact: true });
+  await expect(examples).not.toBeChecked();
+  await examples.check();
   await page.getByRole("combobox", { name: "Serie de perfiles", exact: true }).selectOption({
     label: demoSeriesLabel,
   });
@@ -747,6 +750,7 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await expect(page).toHaveURL(new RegExp(`/projects/${compositeProject.id}/positions/new`));
   await page.getByLabel("Ubicación del vano", { exact: true }).fill("Fachada compuesta");
   await page.locator(".editor-system-chip").click();
+  await page.getByRole("checkbox", { name: "Mostrar ejemplos", exact: true }).check();
   await page.getByRole("combobox", { name: "Serie de perfiles", exact: true }).selectOption({
     label: demoSeriesLabel,
   });
