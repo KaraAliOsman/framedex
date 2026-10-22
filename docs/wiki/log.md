@@ -2323,3 +2323,15 @@ exposición del fondo de los diálogos al lector de pantalla. Suite frontend:
 1.188 pruebas; cinco E2E de flujo real/extremos aprobados. P02c se fusionó tras
 sus cuatro controles; P02d/e siguen pendientes y P03 no está completa. Véase
 product/catalog-authority.md y la evidencia de dk2-p03e.
+
+## 2026-10-22 · Preparación P03f: precios mapeados en pantalla
+
+La ficha conecta inspección, lista de destino, mapeo de cuatro columnas,
+revisión completa y confirmación con token. Crear una lista vacía requiere
+su propio clic; revisar no guarda precios. Cualquier cambio de archivo,
+mapeo, separador o lista descarta la revisión previa. La recuperación de red
+conserva el archivo y permite volver a leerlo. El E2E con XLSX sintético
+comprueba 12 filas, códigos con ceros y cuatro decimales en PostgreSQL.
+Los ensayos de 0/1/500 precios pasan a 1440/390/320 y texto al 200 %, con axe
+y montos completos. P03 conserva pendiente el asistente integral.
+Véase [catálogo](product/catalog-authority.md) y [evidencia](../redesign/captures/dk2-p03f/aceptacion.md).

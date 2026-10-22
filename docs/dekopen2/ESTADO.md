@@ -8,7 +8,7 @@ Producción y precios comerciales requieren autorización aparte.
 |---|---|---|---|
 | P01 | Catálogo v2: backend, origen, niveles y plantillas | Hecha | [P01a #164](https://github.com/KaraAliOsman/framedex/pull/164), [P01b #165](https://github.com/KaraAliOsman/framedex/pull/165), [P01c #166](https://github.com/KaraAliOsman/framedex/pull/166), [P01d #167](https://github.com/KaraAliOsman/framedex/pull/167) y [P01e #168](https://github.com/KaraAliOsman/framedex/pull/168) fusionadas |
 | P02 | Ficha de serie editable | En curso | [P02a #169](https://github.com/KaraAliOsman/framedex/pull/169), [P02b #170](https://github.com/KaraAliOsman/framedex/pull/170) y [P02c #171](https://github.com/KaraAliOsman/framedex/pull/171) fusionadas; [P02d #172](https://github.com/KaraAliOsman/framedex/pull/172) y [P02e #173](https://github.com/KaraAliOsman/framedex/pull/173) pendientes |
-| P03 | Alta de serie y ventana de prueba | En preparación, pendiente de fusionar P02 | [P03a #174](https://github.com/KaraAliOsman/framedex/pull/174), [P03b #175](https://github.com/KaraAliOsman/framedex/pull/175), [P03c #176](https://github.com/KaraAliOsman/framedex/pull/176), [P03d #177](https://github.com/KaraAliOsman/framedex/pull/177); interfaz `gpt/dk2-p03e-prueba-ui` |
+| P03 | Alta de serie y ventana de prueba | En preparación, pendiente de fusionar P02 | [P03a #174](https://github.com/KaraAliOsman/framedex/pull/174), [P03b #175](https://github.com/KaraAliOsman/framedex/pull/175), [P03c #176](https://github.com/KaraAliOsman/framedex/pull/176), [P03d #177](https://github.com/KaraAliOsman/framedex/pull/177), [P03e #178](https://github.com/KaraAliOsman/framedex/pull/178); precios `gpt/dk2-p03f-precios-ui` |
 | P04 | Precio simple automático | Pendiente | — |
 | P05 | Navegación, Hoy y Obras | Pendiente | — |
 | P06 | Mesa de la obra y edición directa | Pendiente | — |
@@ -392,3 +392,27 @@ a P03; P01 deja preparado su contrato y su bloqueo.
 - Faltan el asistente completo de cinco pasos, su lectura documental integrada,
   la UI de precios mapeados y la aceptación del alta desde plantilla. P03 sigue
   en curso; ninguna de sus sub-PR se fusionará antes de completar P02.
+
+### P03f · Importación visual de precios del proveedor
+
+- La pestaña Precios abre el mapeo de XLSX/CSV. El dueño elige o crea una lista
+  con proveedor, moneda y vigencia explícitos. Crear lista guarda solo esa lista
+  vacía; inspeccionar y revisar el archivo no publica precios.
+- Cuatro columnas sugeridas por el servidor, separador decimal explícito y una
+  muestra de diez filas. Revisar valida todo el archivo; el clic posterior guarda
+  con su token. Cambiar archivo, columna, separador o lista exige otra revisión.
+  Códigos con ceros y precios de cuatro decimales se conservan como cadenas.
+- La confirmación anuncia los precios guardados como datos del taller y recarga
+  la ficha. Solo el dueño ve la acción; el backend conserva sus permisos. Un
+  fallo de lectura permite reintentar el mismo archivo sin volver a seleccionarlo.
+- 1.197 pruebas de frontend aprobadas en la suite completa y 19 dirigidas tras
+  añadir la recuperación de lectura. E2E con Excel sintético comprueba 12 precios,
+  ausencia de escrituras antes del clic, token descartado al cambiar columnas y
+  exactitud en PostgreSQL a 1440/390 px. Tres E2E de extremos pasan a 1440/390/320,
+  texto al 200 %, códigos de 100 caracteres y 0/1/500 precios. ESLint, TypeScript,
+  guardas y build aprobados. [Evidencia](../redesign/captures/dk2-p03f/aceptacion.md).
+- La muestra tiene altura acotada y desplazamiento local por teclado. Los montos
+  enormes pueden distribuirse entre grupos de miles para permanecer completos a
+  320 px con texto al 200 %. La ruta de ensayo no entra al build de producción.
+- Falta integrar los cinco pasos reanudables, revisión de discrepancias del manual
+  y apertura de la primera cotización. La aceptación integral de P03 sigue pendiente.

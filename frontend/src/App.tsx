@@ -72,6 +72,7 @@ export const DEV_ONLY_ROUTE_PATHS = import.meta.env.DEV
       "/dev/correos",
       "/dev/tabla",
       "/dev/prueba-serie",
+      "/dev/precios-proveedor",
     ] as const)
   : [];
 
@@ -173,6 +174,9 @@ const EditableTablePage = import.meta.env.DEV
 const SeriesTrialPage = import.meta.env.DEV
   ? lazy(async () => ({ default: (await import("./dev/SeriesTrialPage")).SeriesTrialPage }))
   : null;
+const SupplierPricesPage = import.meta.env.DEV
+  ? lazy(async () => ({ default: (await import("./dev/SupplierPricesPage")).SupplierPricesPage }))
+  : null;
 
 function HomeRedirect(): JSX.Element {
   const auth = useAuthSession();
@@ -251,6 +255,16 @@ export function AppRoutes(): JSX.Element {
         />
         {import.meta.env.DEV && visibleDevOnlyRoutePaths().length > 0 && (
           <>
+            {SupplierPricesPage ? (
+              <Route
+                path="/dev/precios-proveedor"
+                element={
+                  <Suspense fallback={<Loading label="Cargando precios" />}>
+                    <SupplierPricesPage />
+                  </Suspense>
+                }
+              />
+            ) : null}
             {SeriesTrialPage ? (
               <Route
                 path="/dev/prueba-serie"
