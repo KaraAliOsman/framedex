@@ -2597,6 +2597,7 @@ de Hoy, las etapas de Obras y la purga global siguen en P05. Se conserva el
 - P08a/b en `claude/dk2-p08-agente`: origen por ventana verificado por el
   servidor, supuestos no numéricos, `undo-all`, Ctrl K «Pedir a DEKOPEN», panel
   lateral y tarjeta de origen. Evaluación grabada: 100 % de ventanas correctas,
-  cero medidas inventadas. Pendiente: bandeja en Hoy, planos y fotos, y la
-  decisión sobre `aal2` del trabajador para dueños.
+  cero medidas inventadas. Pendiente: bandeja en Hoy, planos y fotos.
+- El dueño decide que el trabajo del agente herede el `aal2` de la sesión que
+  lo delegó (sellado al encolar); el E2E de aceptación delega como dueño.
 
