@@ -220,7 +220,7 @@ def technical_plan(snapshot: dict) -> str:
         tree = _object(position.get("parametric_tree"), "invalid_frozen_parametric_tree")
         openings = _opening_labels(tree) or ["Fijo"]
         location = _value(position.get("location_tag"))
-        title = f"Posición {_value(index)}" + (f" · {location}" if location != "—" else "")
+        title = f"Ventana {_value(index)}" + (f" · {location}" if location != "—" else "")
         rows = [
             ("Producto", escape(_product_caption(position))),
             ("Sistema", escape(_value(position.get("system_name")))),
@@ -230,9 +230,9 @@ def technical_plan(snapshot: dict) -> str:
             ("Apertura y mano (vista interior)", escape(" · ".join(openings))),
             ("Perfiles por función", "<br>".join(
                 f"{escape(role)} · {escape(sku)} · {count} pzs" for (role, sku), count in sorted(profiles.items()))
-             or "Sin dato · faltan hechos de fabricación sellados"),
-            ("Vidrio / relleno", escape(" · ".join(infills)) or "Sin dato"),
-            ("Manillas", f"{handles}" if own else "Sin dato"),
+             or "Faltan datos de fabricación de esta revisión"),
+            ("Vidrio / relleno", escape(" · ".join(infills)) or "Falta completar"),
+            ("Manillas", f"{handles}" if own else "Falta completar"),
         ]
         body += (
             '<section class="plan-sheet">'

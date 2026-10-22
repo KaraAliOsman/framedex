@@ -558,7 +558,7 @@ def _pack_html(
         "</div>"
         '<div class="pack-meta">'
         f'<span>Color: <strong>{escape(_COLOR_ES.get(str(optimization.get("color")), _value(optimization.get("color"))))}</strong></span>'
-        f'<span>Estrategia: <strong>{escape(_STRATEGY_ES.get(str(optimization.get("strategy")), "Sin dato · falta estrategia"))}</strong></span>'
+        f'<span>Estrategia: <strong>{escape(_STRATEGY_ES.get(str(optimization.get("strategy")), "Falta completar la estrategia"))}</strong></span>'
         f'<span>Optimizado: <strong>{escape(_cldate(optimization.get("optimized_at")))}</strong></span>'
         f'<span>Merma de proceso: <strong>{_fmt_mm(metrics.get("process_waste_mm"))} mm</strong></span>'
         "</div>"
@@ -580,7 +580,7 @@ def _pack_html(
             for cut in (bar.get("cuts") or [])
             if isinstance(cut, dict)
         )
-        headers = ["Sec.", "Pieza", "Posición", "Vano / hoja", "Función", "Corte mm", "Ángulos"]
+        headers = ["Sec.", "Pieza", "Ventana", "Paño / hoja", "Función", "Corte mm", "Ángulos"]
         classes = ["", "", "", "", "", "dimension", ""]
         if has_sagitta:
             headers.append("Flecha")
@@ -589,7 +589,7 @@ def _pack_html(
             source = str(bar.get("source") or "NEW")
             badge = (
                 '<span class="badge badge-remnant">retazo '
-                + escape(str(bar.get("remnant_code") or "Sin dato"))
+                + escape(str(bar.get("remnant_code") or "Falta completar"))
                 + "</span>"
                 if source == "REMNANT"
                 else '<span class="badge badge-new">barra nueva</span>'
@@ -771,8 +771,8 @@ def _pack_html(
             "distancia (Dist.) se mide sobre la pieza desde el extremo A — "
             "la izquierda de la tira. Las operaciones que solo declaran un "
             'punto aparecen como <strong>Ref. montaje</strong>: no son '
-            "mecanizados ejecutables. Datos sin autoridad declarada nunca "
-            "se emiten.</p>"
+            "mecanizados ejecutables. Solo se emiten datos con origen "
+            "técnico declarado.</p>"
         )
         members_by_id = {
             member.member_id: member for unit in fact_units for member in unit.members
@@ -829,7 +829,7 @@ def _pack_html(
         body += "</div>"
     body += (
         f'<p class="muted">Cortes de sierra: {len(saw_ops)} — ver plan de '
-        "barras para posición en barra.</p></section>"
+        "barras para ubicación en la barra.</p></section>"
     )
     # ---- assembly ----
     if fact_units:
@@ -837,7 +837,7 @@ def _pack_html(
         for index, unit in enumerate(fact_units, start=1):
             pos_label = labels["position"].get(unit.position_id, unit.position_id[:8])
             body += (
-                f"<h3>Unidad {index} · Posición {escape(str(pos_label))} · "
+                f"<h3>Unidad {index} · Ventana {escape(str(pos_label))} · "
                 f"{_fmt_mm(unit.nominal_width_mm)}×"
                 f"{_fmt_mm(unit.nominal_height_mm)} mm · "
                 f"{escape(_VIEW_LABELS.get(unit.view, unit.view))}</h3>"
@@ -952,7 +952,7 @@ def _pack_html(
         body += (
             '<section class="pack-section"><h2>Control de calidad</h2>'
             '<p class="muted">Verifica cada pieza contra el valor esperado '
-            "de la revisión sellada; registra la medida real y marca "
+            "de la revisión emitida; registra la medida real y marca "
             "conforme/no conforme.</p>"
             + '<table><thead><tr><th>Pieza</th><th>Esperado</th>'
             "<th>Medido</th><th>OK</th><th>NC</th></tr></thead><tbody>"

@@ -51,11 +51,11 @@ table td { font-size: 8pt; padding: 0.4mm 1mm; overflow-wrap: break-word; }
 
 
 def mm(value: object) -> str:
-    return _survey_dim(value) if value is not None else "Sin dato"
+    return _survey_dim(value) if value is not None else "Falta completar"
 
 
 def angle(value: object) -> str:
-    return mm(value) + "°" if value is not None else "Sin dato"
+    return mm(value) + "°" if value is not None else "Falta completar"
 
 
 def compact_bar_svg(bar: dict) -> str:
@@ -76,7 +76,7 @@ def compact_bar_svg(bar: dict) -> str:
     for cut in ordered_cuts(bar):
         length = Decimal(str(cut["length_mm"])) * scale
         center = cursor + length / 2
-        code = str(cut.get("piece_code") or "Sin dato")
+        code = str(cut.get("piece_code") or "Falta completar")
         estimated = Decimal(len(code)) * font * Decimal("0.62")
         if estimated + 2 <= length:
             labels.append((code, center, Decimal("5"), False, center))
@@ -125,8 +125,8 @@ def remnant_destination(bar: dict) -> str:
         return f"{mm(remainder)} mm → desecho; no vuelve a stock"
     remnant = bar.get("produced_remnant") or {}
     if not remnant.get("code"):
-        return f"{mm(remainder)} mm → Sin dato · plan histórico sin dirección; reoptimiza antes de cortar"
-    return f"{mm(remainder)} mm → {remnant['code']} · {remnant.get('rack_location') or 'Sin dato · declara destino'} · alta en stock al completar corte"
+        return f"{mm(remainder)} mm → Plan histórico sin dirección; vuelve a optimizar antes de cortar"
+    return f"{mm(remainder)} mm → {remnant['code']} · {remnant.get('rack_location') or 'Falta declarar el destino'} · alta en stock al completar corte"
 
 
 def compact_sheet_svg(sheet: dict) -> str:
@@ -140,7 +140,7 @@ def compact_sheet_svg(sheet: dict) -> str:
             Decimal(str(item.get("y_mm") or 0)),Decimal(str(item.get("x_mm") or 0)))),1):
         x,y = Decimal(str(piece["x_mm"])) * scale,Decimal(str(piece["y_mm"])) * scale
         pw,ph = Decimal(str(piece["width_mm"])) * scale,Decimal(str(piece["height_mm"])) * scale
-        code = str(piece.get("piece_code") or "Sin dato")
+        code = str(piece.get("piece_code") or "Falta completar")
         result.append(f'<rect x="{x}" y="{y}" width="{pw}" height="{ph}" fill="#D4EFEA" stroke="#075F5A" stroke-width="0.2"/>')
         if pw >= Decimal(len(code))*Decimal("1.9")+2 and ph >= 6:
             text = code
@@ -156,7 +156,7 @@ def compact_sheet_svg(sheet: dict) -> str:
 UNNESTED = {
     "no_declared_sheet": "Sin lámina declarada → Catálogo › Vidrios › Formatos: declara un formato compatible y vuelve a optimizar.",
     "piece_larger_than_usable_sheet": "Mayor que la lámina útil → Catálogo › Vidrios › Formatos: revisa el suministro; no reduzcas la medida fabricada.",
-    "shaped_glass_outline": "Vidrio con forma → prepara la plantilla del contorno sellado para el vidriero.",
+    "shaped_glass_outline": "Vidrio con forma → prepara la plantilla del contorno de la revisión emitida para el vidriero.",
 }
 
 
@@ -178,21 +178,21 @@ def pack_html(*, order: dict, optimization: dict, snapshot: dict, fingerprint: s
         body += '<p>DEMO · Catálogo sintético, sin certificación.</p>'
     body += '<p class="cut-convention">Extremo inicial a la izquierda; alimentación →. Ángulos izq./der. desde arriba; marca de esquina = inglete. La tabla conserva la secuencia del motor.</p>'
     for bar in ordered_bars(optimization):
-        source = "barra nueva" if bar.get("source") != "REMNANT" else f"retazo {bar.get('remnant_code') or 'Sin dato · falta dirección'}"
+        source = "barra nueva" if bar.get("source") != "REMNANT" else f"retazo {bar.get('remnant_code') or 'Falta completar la dirección'}"
         kind = "Refuerzos" if all(cut.get("source_kind") == "REINFORCEMENT" for cut in ordered_cuts(bar)) else (
             "Junquillos" if all(_role_name(cut.get("role")) == "GLAZING_BEAD" for cut in ordered_cuts(bar)) else "Perfiles")
-        body += f'<section class="compact-bar"><h3>{kind} · Barra {bar["bar_index"]} · {escape(str(bar.get("commercial_sku") or "Sin dato"))} · {escape(_COLOR_ES.get(str(bar.get("color")), str(bar.get("color") or "Sin dato")))} · {mm(bar["stock_length_mm"])} mm · {escape(source)} · {_pct(bar.get("yield_pct"))} %</h3>'
+        body += f'<section class="compact-bar"><h3>{kind} · Barra {bar["bar_index"]} · {escape(str(bar.get("commercial_sku") or "Falta completar"))} · {escape(_COLOR_ES.get(str(bar.get("color")), str(bar.get("color") or "Falta completar")))} · {mm(bar["stock_length_mm"])} mm · {escape(source)} · {_pct(bar.get("yield_pct"))} %</h3>'
         body += compact_bar_svg(bar)
         data = []
         for cut in ordered_cuts(bar):
             home = homes.get(str(cut.get("piece_stable_id")), {})
-            role = home.get("role_label") or _ROLE_ES.get(_role_name(cut.get("role")), "Sin dato")
+            role = home.get("role_label") or _ROLE_ES.get(_role_name(cut.get("role")), "Falta completar")
             location = ' · '.join(str(value) for value in (home.get("position"), home.get("bay_code"), home.get("leaf_code")) if value)
             parent = home.get("parent_code")
             if parent:
                 location += ' → '+parent
             notes = f"Flecha {mm(cut['sagitta_mm'])} mm" if cut.get("sagitta_mm") not in (None, "0", "0.00") else ""
-            data.append([cut.get("sequence"), cut.get("piece_code"), role, location or "Sin dato · ubicación histórica",
+            data.append([cut.get("sequence"), cut.get("piece_code"), role, location or "Ubicación no registrada en el histórico",
                          mm(cut.get("length_mm")), angle(cut.get("angle_left")), angle(cut.get("angle_right")), notes])
         body += _table(["Sec.", "Pieza", "Función", "Destino / relación", "Corte mm", "∠ izq.", "∠ der.", "Obs."], data,
                        ["dimension", "technical-label", "", "", "dimension", "dimension", "dimension", ""])
@@ -207,7 +207,7 @@ def pack_html(*, order: dict, optimization: dict, snapshot: dict, fingerprint: s
     if grouped:
         body += '<section class="cut-section"><h2>Cortes agrupados · sierra manual</h2><p>Agrupación por suministro, color, función, largo y ángulos exactos. Las direcciones B/Sec. conservan el orden del plan.</p>'
         body += _table(["Material / color", "Función", "Corte mm", "∠ izq. / der.", "Cant.", "Etiquetas / secuencia"], [
-            [f"{group['sku']} · {_COLOR_ES.get(str(group['color']),str(group['color']))}", _ROLE_ES.get(_role_name(group['role']),"Sin dato"),
+            [f"{group['sku']} · {_COLOR_ES.get(str(group['color']),str(group['color']))}", _ROLE_ES.get(_role_name(group['role']),"Falta completar"),
              mm(group['length_mm']), f"{angle(group['angle_left'])} / {angle(group['angle_right'])}",group['quantity'],
              ' · '.join(f"B{piece['bar_index']}/{piece['sequence']} → {piece['code']}" for piece in group['pieces'])]
             for group in grouped_cuts(optimization)], ["", "", "dimension", "dimension", "dimension", "technical-label"])
@@ -217,8 +217,8 @@ def pack_html(*, order: dict, optimization: dict, snapshot: dict, fingerprint: s
         for cut in ordered_cuts(bar):
             if cut.get("source_kind") == "REINFORCEMENT" or _role_name(cut.get("role")) == "GLAZING_BEAD":
                 home = homes.get(str(cut.get("piece_stable_id")), {})
-                relations.append([cut.get("piece_code"),home.get("role_label") or "Sin dato",
-                    home.get("parent_code") or "Sin dato · relación histórica no declarada",
+                relations.append([cut.get("piece_code"),home.get("role_label") or "Falta completar",
+                    home.get("parent_code") or "Relación no registrada en el histórico",
                     f"B{bar['bar_index']}/{cut.get('sequence')}",mm(cut.get("length_mm"))])
     if relations:
         body += '<section class="cut-section"><h2>Refuerzos y junquillos · relación física</h2>'
@@ -232,21 +232,21 @@ def pack_html(*, order: dict, optimization: dict, snapshot: dict, fingerprint: s
     from documents.renderers import _piece_labels
 
     infill_codes = _piece_labels(snapshot)["infill"]
-    glasses = [[infill_codes.get(entity),home.get("position") or "Sin dato",home.get("unit_index"),
-                f"{mm(home.get('width_mm'))} × {mm(home.get('height_mm'))} mm",home.get("composition") or "Sin dato · declara composición",1]
+    glasses = [[infill_codes.get(entity),home.get("position") or "Falta completar",home.get("unit_index"),
+                f"{mm(home.get('width_mm'))} × {mm(home.get('height_mm'))} mm",home.get("composition") or "Falta declarar la composición",1]
                for entity,home in homes.items() if home["kind"] == "INFILL"
                and (not positions or home["position_id"] in positions)]
     if glasses or optimization.get("unnested") or optimization.get("sheets"):
         body += '<section class="cut-section"><h2>Vidrios y paneles</h2>'
-        body += _table(["Pieza", "Posición", "Unidad", "Medidas del motor", "Composición", "Cant."],glasses,
+        body += _table(["Pieza", "Ventana", "Unidad", "Medidas del motor", "Composición", "Cant."],glasses,
                        ["technical-label", "", "dimension", "dimension", "", "dimension"])
         if optimization.get("unnested"):
             body += '<h2>Piezas no ubicadas · qué falta</h2>' + _table(["Pieza / material", "Medidas", "Causa y acción"], [[
                 item.get('group'),f"{mm(item.get('width_mm'))} × {mm(item.get('height_mm'))} mm",
-                UNNESTED.get(item.get('reason'),"Sin dato · revisa la autoridad de suministro en Catálogo y vuelve a optimizar.")]
+                UNNESTED.get(item.get('reason'),"Revisa los datos de suministro en Catálogo y vuelve a optimizar.")]
                 for item in optimization['unnested']], ["", "dimension", ""])
         for sheet in optimization.get("sheets") or []:
-            origin = ("retazo " + str(sheet.get("remnant_code") or "Sin dato · falta dirección")
+            origin = ("retazo " + str(sheet.get("remnant_code") or "Falta completar la dirección")
                       if sheet.get("source") == "REMNANT" else "lámina nueva")
             body += f'<div class="sheet-layout"><h3>Lámina {sheet["sheet_index"]} · {escape(str(sheet.get("purchasing_sku")))} · {mm(sheet["sheet_width_mm"])} × {mm(sheet["sheet_height_mm"])} mm · {escape(origin)} · {_pct(sheet.get("yield_pct"))} %</h3>'
             body += compact_sheet_svg(sheet)
@@ -260,7 +260,7 @@ def pack_html(*, order: dict, optimization: dict, snapshot: dict, fingerprint: s
             if sheet.get("produced_remnant_labels"):
                 body += _table(["Retazo recuperable", "Medidas mm", "Destino al completar corte"], [[
                     entry["code"], f"{mm(entry['width_mm'])} × {mm(entry['height_mm'])}",
-                    entry.get("rack_location") or "Sin dato · declare destino en Ajustes"]
+                    entry.get("rack_location") or "Declara el destino en Ajustes"]
                     for entry in sheet["produced_remnant_labels"]], ["technical-label","dimension",""])
             elif sheet.get("produced_remnants"):
                 body += '<p>Retazos recuperables sin dirección histórica · vuelva a optimizar antes de cortar.</p>'

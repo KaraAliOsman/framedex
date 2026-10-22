@@ -131,7 +131,7 @@ def public_production_errors():
         raise contract_error(
             422,
             "documentary_authority_required",
-            "Falta o no coincide una autoridad técnica necesaria para optimizar la orden.",
+            "Falta o no coincide un dato técnico necesario para optimizar la orden.",
             error_extra={"reason": str(error)},
         ) from error
     except serializers.ValidationError as error:

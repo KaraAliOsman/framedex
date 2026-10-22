@@ -238,5 +238,5 @@ def test_next_station_uses_the_real_material_route_and_does_not_guess():
     assert next_piece_station({"source_kind":"REINFORCEMENT"}, route) == "Soldadura"
     assert next_piece_station({"role":"GLAZING_BEAD"}, route) == "Acristalado"
     assert next_piece_station({"width_mm":"810"}, route) == "Acristalado"
-    assert "Sin dato" in next_piece_station({"role":"GLAZING_BEAD"}, route[:-1])
-    assert "Sin dato" in next_piece_station({"role":"FRAME"}, [])
+    assert "Falta completar" in next_piece_station({"role":"GLAZING_BEAD"}, route[:-1])
+    assert "Falta completar" in next_piece_station({"role":"FRAME"}, [])

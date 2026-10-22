@@ -138,7 +138,7 @@ def addressed_plan(snapshot: dict, optimization: dict, *, order_id: object = Non
 def physical_labels(plan: dict, *, snapshot: dict | None = None,
                     order_code: str = "", fingerprint: str = "",
                     route: list[dict] | None = None,
-                    next_station: str = "Sin dato · consulta la ruta de la OT") -> list[dict]:
+                    next_station: str = "Falta completar · consulta la ruta de la OT") -> list[dict]:
     import segno
     from production.cut_manifest import next_piece_station, ordered_pieces, piece_context
 

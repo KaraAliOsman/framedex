@@ -3,7 +3,7 @@ type: concept
 status: active
 updated: 2026-10-22
 volatility: high
-verified_ref: gpt/dk2-p05i-mensajes-servidor
+verified_ref: gpt/dk2-p05j-documentos-taller
 sources:
   - docs/research/2026-10-21-competencia/prompts/P05-navegacion-hoy-obras.md
   - docs/design/CONSTITUCION.md
@@ -18,6 +18,10 @@ sources:
   - backend/pricing/workspace.py
   - backend/analytics/metrics.py
   - backend/search/service.py
+  - docs/redesign/captures/dk2-p05j/aceptacion.md
+  - backend/documents/quotation.py
+  - backend/production/cut_documents.py
+  - backend/production/field_pdf.py
   - docs/redesign/captures/dk2-p05i/aceptacion.md
   - docs/redesign/captures/dk2-p05g/aceptacion.md
 ---
@@ -75,8 +79,14 @@ Los errores conservan códigos, monedas, selección y ausencia de precio. La
 proyección actual usa textos humanos; los snapshots antiguos se reproducen sin
 reescribirlos. Consultas SQL, claves y literales numéricos permanecen idénticos.
 
-Los demás textos generados por backend, motor y documentos requieren las rondas
-siguientes; el recuento cero de TypeScript no acredita esas respuestas.
+P05j cubre veintiún módulos de documentos, corte, CNC y terreno. Los nuevos
+PDF muestran ventana, paño y revisión emitida; el CSV canónico de vidrio conserva
+su encabezado histórico para no romper consumidores. La comprobación de juntas
+estancas conserva el hecho físico. Los campos vacíos históricos se omiten sin
+reescribir snapshots ni documentos. Nueve PDF se revisan en 49 páginas; 288
+unitarias dirigidas y 74 integraciones documentales y de terreno pasan.
+
+Los demás textos generados por backend y motor requieren la ronda siguiente; el recuento cero de TypeScript no acredita esas respuestas.
 No se reescribe evidencia emitida ni prosa aportada por clientes para conseguir
 un recuento de cadenas. P05 sigue en curso hasta cerrar esa revisión y sus PR.
 

@@ -122,7 +122,7 @@ def annotations(tree: object, *, x: Decimal, y: Decimal, width: Decimal,
             for index, panel in enumerate(layout.panels):
                 if panel.kind.value == "FIXED" and panel.track is None:
                     text(bx+bw*(Decimal(index)+Decimal("0.5"))/len(layout.panels), inside+step,
-                         "Fijo · plano sin dato", anchor="middle")
+                         "Fijo · falta completar el plano", anchor="middle")
             plan_y = inside + step * 3
     if sliding:
         text(x, plan_y, "Orden de carriles: convención de dibujo")

@@ -182,7 +182,7 @@ def _bars_entities(
                 label += f" {angles}"
             from documents.renderers import _ROLE_ES, _role_name
 
-            role = _ROLE_ES.get(_role_name(cut.get("role")), "Sin dato")
+            role = _ROLE_ES.get(_role_name(cut.get("role")), "Falta completar")
             label += f" · {role} · {cut.get('workshop_sku') or ''}"
             entities += _text(
                 "LABEL", mid - _LABEL_HEIGHT, base_y + Decimal(10),

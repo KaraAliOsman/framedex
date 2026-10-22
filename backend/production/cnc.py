@@ -904,7 +904,7 @@ def _generate_program(
     if expected_preview != reviewed["review_fingerprint"]:
         raise DocumentaryError("cnc_preview_stale")
     if reviewed["verdict"] == "BLOCK":
-        raise DocumentaryError("cnc_program_blocked", detail="No se puede generar: completa las autoridades señaladas en la vista previa.", extra={"blockers": reviewed["blockers"]})
+        raise DocumentaryError("cnc_program_blocked", detail="No se puede generar: completa los datos técnicos señalados en la vista previa.", extra={"blockers": reviewed["blockers"]})
     bundle = _order_ops(org_id=org_id, order_id=order_id)
     if str(bundle["order"]["status"]) == "CANCELLED":
         raise DocumentaryError("work_order_cancelled")

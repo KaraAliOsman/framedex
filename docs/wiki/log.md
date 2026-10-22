@@ -2541,3 +2541,17 @@ de Hoy, las etapas de Obras y la purga global siguen en P05. Se conserva el
 - SQL, claves y literales numéricos idénticos; snapshots antiguos sin reescritura.
   Documentos, diagnósticos del motor y otras respuestas siguen pendientes. P05h
   se publicó como #196; la cadena se fusiona en orden con cuatro controles verdes.
+
+## [2026-10-22] DEKOPEN 2 P05j | Documentos y taller
+
+- Veintiún módulos usan ventana, paño, ubicación en barra, revisión emitida y
+  comprobante. Las juntas estancas conservan el hecho físico de instalación.
+  El CSV canónico mantiene su encabezado y la cotización reconoce marcadores
+  históricos sin reescribir bytes ni prosa del cliente. SQL/claves/números iguales.
+- 288 pruebas dirigidas, 19 finales de cotización, 74 integraciones PostgreSQL
+  y cuatro E2E pasan. Nueve PDF y 49 páginas revisadas con Poppler; trece páginas
+  y ocho pantallas seleccionadas en [aceptación](../redesign/captures/dk2-p05j/aceptacion.md).
+- P05f retroporta las expectativas del índice real y conserva pruebas: once E2E
+  de cinco roles y creación pasan en su propio build; `4ac52381` repite CI.
+  P04c #184 está fusionada (`85bb9151`); P04d repite controles. P05 sigue con
+  el motor y mensajes restantes; P06–P11 pendientes.

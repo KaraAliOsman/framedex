@@ -258,7 +258,7 @@ def _context(org, data):
                 or str(order["project_version_id"]) != str(version_id)
                 or str(payload["position_id"]) != str(choice["position_id"])
             ):
-                reject("La OT no corresponde a esta posición y revisión.")
+                reject("La OT no corresponde a esta ventana y revisión.")
             manifest = (payload.get("packing") or {}).get("units") or []
             physical = next((u for u in manifest if u["unit_index"] == choice["unit_index"]), None)
             if not physical:
@@ -398,7 +398,7 @@ def schedule(org, actor, data):
                     address=context["address"],
                     installer_name=data["team"],
                     unit_indexes=indexes,
-                    notes=f"Vehículo: {data.get('vehicle') or 'Sin dato'}",
+                    notes=f"Vehículo: {data.get('vehicle') or 'Falta completar'}",
                 )
                 trip = one(
                     "SELECT id FROM public.deliveries WHERE org_id=%s AND order_id=%s AND status='SCHEDULED' FOR UPDATE",
@@ -591,7 +591,7 @@ def warranty(org, context, order_id, unit_index=None):
             "expires_on": deadline,
             "reason": None
             if deadline
-            else "Sin dato · falta plazo sellado, aprobación o hecho de inicio acreditado.",
+            else "Falta registrar el plazo, la aprobación o el inicio acreditado.",
             "text": terms.get("warranty"),
         }
     )
@@ -649,7 +649,7 @@ def _asset(org, actor, visit, unit, kind, content, media, key, payload):
 
 def _photo(org, actor, visit, unit, data):
     if not data.get("photo_b64"):
-        reject("Toma una foto de esta posición antes de guardar.")
+        reject("Toma una foto de esta ventana antes de guardar.")
     content, media = image_bytes(data["photo_b64"])
     return _asset(
         org,
@@ -678,7 +678,7 @@ def _unit(visit, data):
         None,
     )
     if not u:
-        reject("La posición y unidad no pertenecen a esta visita.")
+        reject("La ventana y unidad no pertenecen a esta visita.")
     return u
 
 
@@ -689,7 +689,7 @@ def scan_unit(unit, text, org):
 
     address = _scan_address(text)
     if address and address["order"] != unit["order_id"]:
-        reject("La etiqueta pertenece a otra OT. Escanea el bulto de esta posición.")
+        reject("La etiqueta pertenece a otra OT. Escanea el bulto de esta ventana.")
     if text == unit.get("label_code"):
         return {"label_code": text, "unit_index": unit["unit_index"]}
     if text.startswith("DEKOPEN|"):
@@ -813,7 +813,7 @@ def command(org, actor, visit_id, data):
                 if set(checks) != set(CHECKS) or not all(
                     isinstance(checks[k], bool) for k in CHECKS
                 ):
-                    reject("Completa las cinco comprobaciones de esta posición.")
+                    reject("Completa las cinco comprobaciones de esta ventana.")
                 payload["checks"] = checks
             if action == "MEASURE":
                 from projects.mounting import SURVEYS, derive_design
@@ -830,7 +830,7 @@ def command(org, actor, visit_id, data):
                     len(s.widths_mm) != 3 or len(s.heights_mm) != 3 or s.origin != "SITE"
                     for s in surveys
                 ):
-                    reject("Mide el vano en tres puntos por eje y declara que son medidas de obra.")
+                    reject("Mide la abertura de obra en tres puntos por eje y declara que son medidas de obra.")
                 tree = unit["design"]["parametric_tree"]
                 targets = (
                     {m["id"] for m in tree["assembly"]["modules"]}
@@ -838,7 +838,7 @@ def command(org, actor, visit_id, data):
                     else {None}
                 )
                 if {s.module_id for s in surveys} != targets or len(surveys) != len(targets):
-                    reject("Mide cada marco del conjunto antes de enviar la posición a revisión.")
+                    reject("Mide cada marco del conjunto antes de enviar la ventana a revisión.")
                 design, evidence = derive_design(
                     org, unit["design"], surveys, sealed_rules=unit["mounting_rules"]
                 )
@@ -865,7 +865,7 @@ def command(org, actor, visit_id, data):
                     reject("Elige el tipo de incidencia.")
                 piece = scan_unit(unit, data["scan"], org) if data.get("scan") else None
                 if not data.get("note"):
-                    reject("Describe qué ocurrió en esta posición.")
+                    reject("Describe qué ocurrió en esta ventana.")
             if action != "LOAD":
                 payload["photo"] = _photo(org, actor, visit, unit, data)
             if action == "INCIDENT":
@@ -881,7 +881,7 @@ def command(org, actor, visit_id, data):
                         kind,
                         unit["unit_index"],
                         (piece or {}).get("piece_id"),
-                        data.get("note") or reject("Describe qué ocurrió en esta posición."),
+                        data.get("note") or reject("Describe qué ocurrió en esta ventana."),
                         json_text(
                             {
                                 "photo": payload["photo"],
@@ -1225,7 +1225,7 @@ def resolve(org, actor, visit, data):
         resolution = {"remake_order_id": result["id"], "remake_code": result["order_code"]}
     elif action == "PURCHASE":
         if case["kind"] != "MISSING" or not visit["project_version_id"]:
-            reject("La compra requiere un faltante en una revisión sellada.")
+            reject("La compra requiere un faltante en una revisión emitida.")
         from purchasing.field_purchase import replacement_order
 
         resolution = replacement_order(org, actor, visit["project_version_id"], case, data)
@@ -1361,7 +1361,7 @@ def review_measurement(org, actor, visit_id, data, tenant):
             proposal["project_code"] = project["code"]
         else:
             if not visit["project_version_id"]:
-                reject("Falta una revisión fuente sellada para la corrección.")
+                reject("Falta una revisión original emitida para la corrección.")
             snapshot = decoded(_version(org, visit["project_version_id"])["snapshot_json"])
             design, evidence = derive_design(
                 org, unit["design"], SURVEYS.validate_json(json_text(measured["measurements"]))
@@ -1450,7 +1450,7 @@ def review_measurement(org, actor, visit_id, data, tenant):
                 "revision_code": "REV-A",
                 "project_id": None,
                 "project_code": None,
-                "scope": "Borrador correctivo de una unidad. El Δ compara la geometría de la posición en la revisión fuente; la nueva venta requiere revisión propia.",
+                "scope": "Borrador correctivo de una unidad. El Δ compara la geometría de la ventana en la revisión original; la nueva venta requiere revisión propia.",
             }
             token = documentary_sha256_v1(
                 {"org": org, "visit": visit_id, "event": event["id"], "proposal": proposal}

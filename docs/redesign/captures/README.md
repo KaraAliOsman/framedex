@@ -2,6 +2,9 @@
 
 ## DEKOPEN 2
 
+- [P05j · Documentos y taller](dk2-p05j/aceptacion.md): nueve PDF nuevos,
+  49 páginas revisadas y compatibilidad con documentos históricos.
+
 - [P05g · Lenguaje global](dk2-p05g/aceptacion.md): guardián de producto,
   valores pendientes explícitos y veintidós capturas de once pantallas.
 

@@ -133,7 +133,7 @@ def glass_order(*, org_id, order_ids, app_url=""):
     output.sort(key=lambda row: (*authority_by_order[row["order_code"]], row["position_index"], row["piece_index"]))
     labels.sort(key=lambda label: (*authority_by_order[label["order_code"]], label["position_index"], label["code"]))
     return {"rows": output, "labels": labels, "revisions": list(revisions.values()),
-            "authority": "Medidas del BOM sellado; exterior a interior. No recalculadas con el catálogo vigente."}
+            "authority": "Medidas del despiece de la revisión emitida; exterior a interior. No recalculadas con el catálogo vigente."}
 
 
 def _synthetic_recipe(value):
@@ -178,14 +178,14 @@ def glass_pdf(report):
         instructions = " · ".join(value for value in row["instructions"] if not value.startswith("DEMO"))
         table += (f"<tr><td><strong>{escape(row['order_code'])}</strong>"
                   f"<p>P{row['position_index']:02d} · {escape(row['location'])}</p>"
-                  f"<small class='mono'>Huella {escape(fingerprints.get(row['order_code'], 'Sin dato'))}</small></td>"
+                  f"<small class='mono'>Huella {escape(fingerprints.get(row['order_code'], 'Falta completar'))}</small></td>"
                   f"<td class='mono'>{escape(_display_size(row['width_mm']))}<br>× {escape(_display_size(row['height_mm']))}<br>mm</td>"
                   f"<td class='mono qty'>{row['quantity']}</td><td>{escape(row['composition'])}</td>"
                   f"<td>{escape(_processing_label(row['processing']))}<p class='instruction'>{escape(instructions)}</p></td></tr>")
     labels = "".join(f"<div class='glass-label'><strong class='mono'>{escape(label['code'])}</strong><p>{escape(label['order_code'])} · P{label['position_index']:02d} · {escape(label['location'])}</p>"
         f"<p class='dimension'>{escape(_display_size(label['width_mm']))} × {escape(_display_size(label['height_mm']))} mm</p>"
         f"<p>{escape(label['composition'])}</p><div class='label-foot'>{label['qr_svg']}"
-        f"<small class='mono'>BOM sellado<br>{escape(label['bom_hash'][:12])}</small></div></div>" for label in report["labels"])
+        f"<small class='mono'>Despiece emitido<br>{escape(label['bom_hash'][:12])}</small></div></div>" for label in report["labels"])
     demo = "<p class='demo-notice'>DEMO · catálogo sintético; no certifica seguridad ni rendimiento térmico.</p>" if any(
         value.startswith("DEMO") for row in report["rows"] for value in row["instructions"]) else ""
     authorities = "; ".join(f"{item['project_code']} · {item['revision_code']} · {item['bom_hash'][:12]}" for item in report["revisions"])
@@ -193,10 +193,10 @@ def glass_pdf(report):
         ".mono{font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums}.qty{text-align:right}" \
         "tr{break-inside:avoid}small,.instruction{font-size:8pt}.instruction{color:#465158}" \
         ".glass-labels{page-break-before:always}.glass-label{display:inline-block;vertical-align:top;width:88mm;min-height:55mm;border:0.3mm solid #465158;padding:3mm;margin:2mm;break-inside:avoid}.glass-label p{margin:2mm 0}.glass-label svg{width:18mm;height:18mm}.label-foot{display:flex;align-items:center;gap:4mm}" \
-        f"</style></head><body>{demo}<div class='titleblock'><div class='tb-cell tb-wide'><span class='tb-label'>Documento</span><span class='tb-value'>Pedido de vidrio</span></div><div class='tb-cell'><span class='tb-label'>Fuente</span><span class='tb-value'>BOM sellado · huella por OT</span></div><div class='tb-cell'><span class='tb-label'>Página</span><span class='tb-value pg'></span></div></div>" \
+        f"</style></head><body>{demo}<div class='titleblock'><div class='tb-cell tb-wide'><span class='tb-label'>Documento</span><span class='tb-value'>Pedido de vidrio</span></div><div class='tb-cell'><span class='tb-label'>Origen</span><span class='tb-value'>Despiece emitido · huella por OT</span></div><div class='tb-cell'><span class='tb-label'>Página</span><span class='tb-value pg'></span></div></div>" \
         "<main><h1>Pedido de vidrio</h1><div class='rule-stack'></div><p>Solicite cada pieza a su medida exacta. Exterior a interior.</p>" \
         f"<p>{escape(report['authority'])}</p><p class='mono instruction'>{escape(authorities)}</p>" \
-        f"<table><colgroup><col style='width:25%'><col style='width:14%'><col style='width:7%'><col style='width:27%'><col style='width:27%'></colgroup><thead><tr><th>OT · posición</th><th>Corte</th><th>Cant.</th><th>Composición</th><th>Procesos · instrucciones</th></tr></thead><tbody>{table}</tbody></table>" \
+        f"<table><colgroup><col style='width:25%'><col style='width:14%'><col style='width:7%'><col style='width:27%'><col style='width:27%'></colgroup><thead><tr><th>OT · ventana</th><th>Corte</th><th>Cant.</th><th>Composición</th><th>Procesos · instrucciones</th></tr></thead><tbody>{table}</tbody></table>" \
         f"<section class='glass-labels'><h2>Etiquetas de vidrio</h2>{labels}</section></main></body></html>"
     return HTML(string=html, url_fetcher=_url_fetcher).write_pdf()
 
@@ -234,7 +234,7 @@ class ProductionGlassOrderView(APIView):
             try:
                 report = glass_order(org_id=org_id, order_ids=ids, app_url=settings.DEKOPEN_PUBLIC_APP_URL)
             except ValueError as error:
-                raise contract_error(422, "glass_order_authority_missing", "Sin dato · revisa la composición y cantidad de la revisión sellada.") from error
+                raise contract_error(422, "glass_order_authority_missing", "Revisa la composición y cantidad de la revisión emitida.") from error
         if format_name == "JSON":
             return Response(GlassOrderSerializer(report).data)
         body = glass_csv(report) if format_name == "CSV" else glass_pdf(report)

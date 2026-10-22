@@ -47,7 +47,7 @@ def test_pdf_pages_have_content_exact_totals_and_no_text_collisions(count, curre
             words = [word for word in page.get_text("words") if 35 < word[1] and word[3] < page.rect.height - 70]
             assert len(words) > 10, (page_index, page.get_text())
             body_text = " ".join(word[4] for word in words)
-            assert any(marker in body_text for marker in ("Cotización", "Resumen", "Posición", "Aceptación", "Condiciones", "en línea", "$")), (page_index, body_text)
+            assert any(marker in body_text for marker in ("Cotización", "Resumen", "Ventana", "Aceptación", "Condiciones", "en línea", "$")), (page_index, body_text)
             assert not re.search(r"\b[0-9a-fA-F]{10,}\b", body_text)
             assert "costo" not in body_text.casefold() and "margen" not in body_text.casefold()
             # Test monetary columns and wrapped names in actual table words.
@@ -87,6 +87,13 @@ def test_historical_payment_text_never_invents_a_schedule_or_discount():
     assert "Anticipo al aprobar" in html
     snapshot["organization"]["document_preferences"] = document_preferences({})
     assert _doc01(snapshot) == html
+
+
+def test_legacy_missing_marker_is_omitted_without_rewriting_customer_prose():
+    from documents.quotation import known
+
+    assert known("Sin dato") == known("Falta completar") == ""
+    assert known("Cliente solicita conservar la fuente de agua") == "Cliente solicita conservar la fuente de agua"
 
 
 def test_tax_label_uses_sealed_rules_not_a_guessed_ratio():

@@ -20,6 +20,17 @@ Producción y precios comerciales requieren autorización aparte.
 
 ## P05 · Navegación, Hoy y Obras
 
+- P05j `gpt/dk2-p05j-documentos-taller`: veintiún módulos de documentos,
+  corte, CNC y terreno con glosario contextual. 288 unitarias dirigidas,
+  19 finales de cotización, 74 integraciones PostgreSQL y cuatro E2E pasan.
+  Nueve PDF, 49 páginas rasterizadas y revisadas; códigos/QR, cifras y bytes
+  históricos conservados. [PDF y 21 capturas](../redesign/captures/dk2-p05j/aceptacion.md).
+  Queda la ronda final de diagnósticos del motor y otros mensajes de servidor.
+- P04c #184 se fusionó en `85bb9151` el 22-10-2026. P04d #185 integra
+  main en `f79926de` y repite los cuatro controles. P05f #194 corrige las
+  expectativas antiguas de navegación/índice en `4ac52381`; once E2E pasan
+  sobre su build propio. Las fusiones continúan en orden.
+
 - P05i `gpt/dk2-p05i-mensajes-servidor`: diecinueve módulos de obras,
   precios, búsqueda e informes con textos de taller. Backend 1.737 PASS y
   18 regresiones finales; integraciones PostgreSQL y 31 regresiones finales

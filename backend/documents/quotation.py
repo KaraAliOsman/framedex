@@ -181,7 +181,7 @@ def stylesheet(snapshot: dict) -> str:
 
 
 def known(value: object) -> str:
-    if value is None or value == "" or value == "—" or value == "Sin dato":
+    if value is None or value == "" or value == "—" or value in ("Sin dato", "Falta completar"):
         return ""
     return _value(value)
 
@@ -264,7 +264,7 @@ def plan_figure(position: dict) -> str:
             f'{label} {_survey_dim(measures[key])} mm' for label,key in (
                 ("Ancho desarrollado","developed_width_mm"),("Frente / cuerda","front_width_mm"),
                 ("Proyección","projection_mm"),("Altura","height_mm"))) + '</p>'
-    return f'<div class="q-plan"><p>Planta del conjunto · elevación desarrollada · datos sellados del motor</p>{svg}{dimensions}</div>'
+    return f'<div class="q-plan"><p>Planta del conjunto · elevación desarrollada · datos del motor de esta revisión</p>{svg}{dimensions}</div>'
 
 
 def sliding_specs(position: dict) -> str:
@@ -294,9 +294,9 @@ def extras_table(items: list, currency: str, *, prices: bool, base=None, caption
     headings = '<th>Accesorio o servicio</th><th class="q-num">Cantidad</th>' + ('<th class="q-num">P. unit. neto</th><th class="q-num">Total neto</th>' if prices else '')
     rows = ''
     if prices and base is not None:
-        rows += f'<tr><td>Base de la posición</td><td></td><td></td><td class="q-num">{escape(_money(base, currency))}</td></tr>'
+        rows += f'<tr><td>Base de la ventana</td><td></td><td></td><td class="q-num">{escape(_money(base, currency))}</td></tr>'
     for item in items:
-        unit = {"EA": "un.", "M": "m", "M2": "m²", "KG": "kg", "WINDOW": "vanos"}.get(str(item.get("unit")), "")
+        unit = {"EA": "un.", "M": "m", "M2": "m²", "KG": "kg", "WINDOW": "ventanas"}.get(str(item.get("unit")), "")
         name = known(item.get("name") or item.get("label")) + (" · DEMO" if item.get("synthetic") else "")
         qty = _survey_dim(item["quantity"]) if item.get("quantity") is not None else ""
         rows += f'<tr><td>{escape(name)}</td><td class="q-num">{escape(qty + " " + unit)}</td>'
@@ -522,7 +522,7 @@ def render(snapshot: dict, *, portal_url: str | None = None, layout_name: str | 
             out += f'<span>Unitario neto <strong class="q-num">{escape(_money(value.unit_net, currency))}</strong></span>'
         out += f'<span>Total <strong class="q-num">{escape(_money(value.net, currency))}</strong></span></div>'
         if value.adjustment:
-            out += f'<p class="q-legend">Cantidad × unitario + ajuste de moneda <span class="q-num">{escape(_money(value.adjustment, currency))}</span> = total sellado.</p>'
+            out += f'<p class="q-legend">Cantidad × unitario + ajuste de moneda <span class="q-num">{escape(_money(value.adjustment, currency))}</span> = total emitido.</p>'
         return out
 
     def position_card(position: dict, *, compact: bool) -> str:
@@ -682,7 +682,7 @@ def thermal_annex(report: dict | None) -> str:
             continue
         valid.append(position)
         trace = metric.get("trace") or {}
-        html += f'<article class="q-position"><h3>Posición {int(position["position_index"])} · {escape(position.get("location_tag") or "Sin ubicación")}</h3><dl>'
+        html += f'<article class="q-position"><h3>Ventana {int(position["position_index"])} · {escape(position.get("location_tag") or "Sin ubicación")}</h3><dl>'
         html += spec_row("Uw", str(_num(metric["uw"]).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)).replace(".", ",") + " W/m²K", numeric=True)
         for label, field in (("Clase de aire a 100 Pa", "air_class"), ("Clase de agua", "water_class"), ("Clase de viento", "wind_class")):
             if metric.get(field) is not None:
@@ -702,7 +702,7 @@ def thermal_annex(report: dict | None) -> str:
             html += f'<p>{escape(source["applicability"])}</p>'
         html += '</article>'
     if not valid:
-        html += '<p>No se adjuntan valores térmicos: las posiciones no tienen todas sus entradas autoritativas. Complete sus informes en una nueva revisión.</p>'
+        html += '<p>No se adjuntan valores térmicos: faltan datos e informes de las ventanas. Complétalos en una nueva revisión.</p>'
     html += f'<p>{escape(assessment.get("scope") or "")}</p>'
-    html += f'<p>Fuente normativa: {escape(assessment.get("source_label") or "OGUC 4.1.10")}</p></section>'
+    html += f'<p>Normativa de referencia: {escape(assessment.get("source_label") or "OGUC 4.1.10")}</p></section>'
     return html
