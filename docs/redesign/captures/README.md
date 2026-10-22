@@ -2,6 +2,9 @@
 
 ## DEKOPEN 2
 
+- [P03f · precios del proveedor](dk2-p03f/aceptacion.md): mapeo, revisión del
+  archivo completo, confirmación explícita y extremos de precios exactos.
+
 - [P03e · ventana de prueba](dk2-p03e/aceptacion.md): comparación exacta,
   ajustes, verificación humana, edición protegida y extremos de 0/1/500 piezas.
 

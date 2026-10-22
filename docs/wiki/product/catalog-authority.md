@@ -3,7 +3,7 @@ type: concept
 status: active
 updated: 2026-10-22
 volatility: medium
-verified_ref: gpt/dk2-p03e-prueba-ui
+verified_ref: gpt/dk2-p03f-precios-ui
 sources:
   - engine/src/dekopen_engine/catalog_rules.py
   - engine/tests/test_gold_cases_catalog_families.py
@@ -20,6 +20,9 @@ sources:
   - backend/catalogs/frozen_use.py
   - backend/tests/integration/test_catalog_use_levels.py
   - supabase/migrations/20270204000000_quote_without_workshop_policies.sql
+  - frontend/src/features/catalogs/SupplierPriceImport.tsx
+  - frontend/tests/e2e/catalog-prices.spec.ts
+  - docs/redesign/captures/dk2-p03f/aceptacion.md
 ---
 
 # Autoridad de catálogo por familia
@@ -441,3 +444,19 @@ originales no se reescriben. El ensayo móvil detectó un problema del diálogo
 compartido, corregido aislando el fondo para teclado y lector de pantalla.
 La [aceptación](../../redesign/captures/dk2-p03e/aceptacion.md) conserva pruebas,
 capturas y límites. Faltan los otros pasos del alta; P03 no está completa.
+
+## Importación visual de precios · preparación P03f
+
+Verificado el 22-10-2026 en `gpt/dk2-p03f-precios-ui`: la pestaña Precios
+permite al dueño elegir un XLSX/CSV, revisar las cuatro columnas y confirmar
+la lista completa con su token. Crear una lista vacía exige un clic distinto;
+inspeccionar o revisar no escribe costos. Cambiar el archivo, columnas,
+separador o lista descarta la revisión anterior. Un fallo de lectura conserva
+el archivo y ofrece reintento. La ficha recarga sus precios después de guardar.
+
+La muestra tiene hasta diez filas y conserva códigos como `001` y cuatro
+decimales mediante cadenas. El E2E con 12 precios sintéticos consulta la API
+con la sesión real y comprueba el límite de publicación y la exactitud de
+PostgreSQL. Los extremos de 0/1/500 precios, nombres largos, Unicode y montos
+grandes se ejercitan a 1440/390/320 px y texto al 200 %, con scroll accesible.
+El asistente completo y la aceptación integral de P03 siguen pendientes.
