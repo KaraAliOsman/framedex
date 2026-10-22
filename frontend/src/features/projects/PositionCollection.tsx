@@ -503,8 +503,11 @@ export function PositionCollection({
       });
     const count = view === "grid" ? columns : 1;
     for (let index = 0; index < entries.length; index += count) {
+      // Rows are keyed by their place, not by their first window: a column
+      // change (a scrollbar appearing, a resize) regroups the cards without
+      // remounting them, so an open price breakdown stays open.
       const chunk = entries.slice(index, index + count),
-        key = chunk[0]!.id;
+        key = `row:${title}:${index / count}`;
       chunk.forEach((position) => rowForPosition.set(position.id, key));
       rows.push({
         key,
