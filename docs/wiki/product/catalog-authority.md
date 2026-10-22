@@ -1,9 +1,9 @@
 ---
 type: concept
 status: active
-updated: 2026-10-21
+updated: 2026-10-22
 volatility: medium
-verified_ref: gpt/dk2-p02a-tabla-editable
+verified_ref: gpt/dk2-p03e-prueba-ui
 sources:
   - engine/src/dekopen_engine/catalog_rules.py
   - engine/tests/test_gold_cases_catalog_families.py
@@ -418,3 +418,26 @@ existente exige usar otra lista o editar el precio actual. No se atribuyen
 estos precios al fabricante: su origen es el taller. Las ocho integraciones
 de `test_supplier_price_import.py` verifican revisión, exactitud, permisos,
 aislamiento y rechazos sin escrituras parciales. La UI se incorpora después.
+
+## Comparación visible y revisión humana · preparación P03e
+
+Verificado el 22-10-2026 en `gpt/dk2-p03e-prueba-ui`: la ventana llama a las
+APIs de prueba/propuestas/verificación. Todas las medidas y diferencias vienen
+del motor; la UI mantiene entradas decimales de texto y no resuelve reglas.
+El taller elige una propuesta y confirma explícitamente el despiece y los
+valores sugeridos. Un resultado vacío o una comparación fallida no reutiliza
+la confirmación previa.
+
+`CatalogChangeReview` presenta las referencias afectadas antes de reintentar
+la mutación. La cancelación devuelve el conflicto al editor conservando su
+borrador. La aceptación utiliza el mismo cuerpo, URL y empresa, con el token
+exacto una sola vez; `apiMutator` vuelve a comprobar el contexto de empresa.
+Además de medidas/cantidades, la revisión expone ángulos y diferencias de toda
+la salida física. Los códigos numéricos mantienen sus ceros iniciales.
+
+El E2E real verifica y luego cambia una regla: cancelar mantiene fabricación;
+aceptar guarda el cambio y exige verificar de nuevo. Los casos dorados
+originales no se reescriben. El ensayo móvil detectó un problema del diálogo
+compartido, corregido aislando el fondo para teclado y lector de pantalla.
+La [aceptación](../../redesign/captures/dk2-p03e/aceptacion.md) conserva pruebas,
+capturas y límites. Faltan los otros pasos del alta; P03 no está completa.

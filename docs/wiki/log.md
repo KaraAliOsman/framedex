@@ -2303,3 +2303,14 @@ y sin sobrescritura implícita. Verificado con 44 unitarias y ocho integraciones
 PostgreSQL; la interfaz del asistente sigue pendiente. El CI de P03b detectó
 tres grupos sin traducción; el glosario se completó conservando su guarda.
 Véase product/catalog-authority.md.
+
+## 2026-10-22 · Preparación P03e: prueba visible y cambios protegidos
+
+La comparación de cortes utiliza las APIs del motor, propone alternativas
+exactas y exige confirmación humana. Un conflicto de ventana verificada abre
+el antes/después; cancelar conserva el borrador y aceptar reintenta únicamente
+la misma mutación/empresa con su token. El ensayo móvil detectó y corrigió la
+exposición del fondo de los diálogos al lector de pantalla. Suite frontend:
+1.188 pruebas; cinco E2E de flujo real/extremos aprobados. P02c se fusionó tras
+sus cuatro controles; P02d/e siguen pendientes y P03 no está completa. Véase
+product/catalog-authority.md y la evidencia de dk2-p03e.

@@ -2,6 +2,9 @@
 
 ## DEKOPEN 2
 
+- [P03e · ventana de prueba](dk2-p03e/aceptacion.md): comparación exacta,
+  ajustes, verificación humana, edición protegida y extremos de 0/1/500 piezas.
+
 - [P02a · tabla editable](dk2-p02a/aceptacion.md): diez capturas seleccionadas
   de escritorio/móvil, extremos, accesibilidad y alcance del componente.
 

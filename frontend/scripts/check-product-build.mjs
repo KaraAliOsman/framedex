@@ -7,7 +7,7 @@ const forbiddenCopy = /Devin|Test Org|Próximamente|\blorem\b/i;
 // Spanish “todo” is ordinary product copy. Only the unfinished-work marker
 // is forbidden; model enums are covered by the rendered-route text detector.
 const unfinishedCopy = /\bTODO\b/;
-const developmentRoutes = /\/dev\/(?:ui|marca|correos|tabla)|\/projects\/demo\//;
+const developmentRoutes = /\/dev\/(?:ui|marca|correos|tabla|prueba-serie)|\/projects\/demo\//;
 for (const name of await readdir(assets)) {
   if (!name.endsWith(".js") && !name.endsWith(".css")) continue;
   const code = await readFile(path.join(assets, name), "utf8");
