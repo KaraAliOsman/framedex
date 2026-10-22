@@ -8,7 +8,7 @@ import {
 } from "../../api/generated/dekopen";
 import { ApiError } from "../../api/apiMutator";
 import type { ProjectResponse } from "../../api/generated/models";
-import { formatDateTime, formatRevision } from "../../format";
+import { formatDateTime, formatRevision, formatMoney } from "../../format";
 import { domainLabel } from "../../i18n/domainLabels";
 import { Loading, StatusBadge } from "../../ui";
 import { ProjectPrices } from "../pricing/ProjectPrices";
@@ -16,6 +16,8 @@ import { usePricingRequest } from "../pricing/PricingPage";
 import { actionErrorDetail } from "../errors";
 import type { FactsSection } from "./ProjectPages";
 import { ProjectMaterials } from "./ProjectMaterials";
+import { projectPrice } from "../pricing/workingPrice";
+import "../pricing/working-price.css";
 
 function ProjectPricePanel({
   project,
@@ -39,10 +41,68 @@ function ProjectPricePanel({
     },
     [request],
   );
+  const price = projectPrice(project);
+  const working = project.working_price;
   return (
-    <section className="pricing-page">
-      <h2>Precio del proyecto</h2>
-      <ProjectPrices request={updatedRequest} owner={isOwner} projectId={project.id} />
+    <section className="working-price-panel">
+      <h2>Precio de la obra</h2>
+      {price ? (
+        <>
+          <p>
+            {price.working
+              ? "Calculado con los datos y precios vigentes. Se registra al emitir la cotización."
+              : "Precio registrado para esta revisión."}
+          </p>
+          {!price.ready && (
+            <p role="status">El precio necesita aprobación del dueño antes de emitir.</p>
+          )}
+          <dl className="working-price-totals">
+            <div>
+              <dt>Precio neto</dt>
+              <dd>{formatMoney(price.net, price.currency)}</dd>
+            </div>
+            <div>
+              <dt>IVA</dt>
+              <dd>{formatMoney(price.tax, price.currency)}</dd>
+            </div>
+            <div>
+              <dt>Total con IVA</dt>
+              <dd>{formatMoney(price.gross, price.currency)}</dd>
+            </div>
+          </dl>
+          <p>
+            Abre el precio de una ventana para ver de dónde sale. El total de la obra incluye los
+            servicios agregados.
+          </p>
+        </>
+      ) : (
+        <p role="status">
+          {working?.error?.detail ||
+            (project.position_count === 0
+              ? "Agrega una ventana para calcular el precio."
+              : "Revisa los datos y precios de la serie.")}
+        </p>
+      )}
+      {isOwner && (
+        <p>
+          <Link to="/settings/general?section=prices">Cómo calculo mis precios</Link>
+        </p>
+      )}
+      {!price && project.position_count > 0 && (
+        <p>
+          <button type="button" onClick={() => void onChanged()}>
+            Volver a consultar
+          </button>
+        </p>
+      )}
+      {(working?.use_advanced || project.pricing_current) && (
+        <details open={project.pricing_current || working?.state === "PENDING"}>
+          <summary>Ajustes y aprobaciones avanzadas</summary>
+          <div className="pricing-page">
+            <ProjectPrices request={updatedRequest} owner={isOwner} projectId={project.id} />
+          </div>
+        </details>
+      )}
     </section>
   );
 }

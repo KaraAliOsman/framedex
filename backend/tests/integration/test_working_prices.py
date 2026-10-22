@@ -35,6 +35,7 @@ def test_three_windows_get_a_working_total_and_policy_change_never_applies_it(co
         first = refresh_working(org, tenant(org, 'OWNER'), project)
         public = working_public(first, 'OWNER')
         assert public['state'] == 'READY'
+        assert public['use_advanced'] is False and public['policy']['margin'] == '0.3500'
         assert D(public['project_net']) == D('1470') and D(public['project_gross']) == D('1749')
         assert len(public['lines']) == 3 and all(D(item['unit_price']) == D('490') for item in public['lines'])
         assert all('e' not in amount.lower() for item in public['lines'] for amount in item['breakdown'].values())
@@ -84,6 +85,7 @@ def test_working_cache_and_breakdown_keep_tenant_and_cost_privacy(commercial_row
         value = refresh_working(org, tenant(org, 'ESTIMATOR'), project)
         public = working_public(value, 'ESTIMATOR')
         assert public['state'] == 'READY' and D(public['project_net']) == D('490')
+        assert 'policy' not in public
         assert set(public['lines'][0]) == {'position_index', 'quantity', 'unit_price', 'discount_pct', 'line_net'}
         with pytest.raises(DatabaseError), transaction.atomic():
             rows('SELECT * FROM public.project_working_prices')
@@ -123,6 +125,7 @@ def test_advanced_modes_keep_their_projection_and_do_not_apply(commercial_rows, 
         working = refresh_working(org, tenant(org, 'OWNER'), project)
         assert working['state'] == 'READY'
         public = working_public(working, 'OWNER')
+        assert public['use_advanced'] is True and 'policy' not in public
         expected = '500' if mode in ('COST_PLUS_MARGIN', 'TARGET_GROSS_MARGIN_PROJECT') else '2000'
         assert D(public['project_net']) == D(expected)
         with commercial_backend():

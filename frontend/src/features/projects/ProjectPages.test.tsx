@@ -662,12 +662,31 @@ it.each([409, 503])(
   },
 );
 
-it("prepares and explicitly emits the current priced revision", async () => {
+it.each(["applied", "working"])("prepares and explicitly emits the %s price", async (kind) => {
   const position = makePosition();
   const priced = makeProject({
-    pricing_current: true,
+    pricing_current: kind === "applied",
     currency: "CLP",
-    current_pricing_operation_id: "operation-a",
+    current_pricing_operation_id: kind === "applied" ? "operation-a" : null,
+    ...(kind === "working"
+      ? {
+          working_price: {
+            state: "READY" as const,
+            use_advanced: false,
+            currency: "CLP" as const,
+            policy_revision: 1,
+            computed_at: "2026-10-22T00:00:00Z",
+            error: null,
+            project_net: "1000",
+            project_tax: "190",
+            project_gross: "1190",
+            lines: [],
+          },
+          client_rut: "12.345.678-5",
+          client_email: "cliente@example.invalid",
+          delivery_address: "Obra Norte",
+        }
+      : {}),
     total_price_gross: "1190.00",
     position_count: 1,
     positions: [position],
@@ -706,9 +725,9 @@ it("prepares and explicitly emits the current priced revision", async () => {
             calculation_hash: "sha256:" + "a".repeat(64),
             location_tag: position.location_tag,
             system_name: "Demo 60",
-            manufacturing_placement_policy_id: "placement-a",
-            handle_requirement_policy_id: "handle-a",
-            reinforcement_cut_policy_id: "reinforcement-a",
+            manufacturing_placement_policy_id: kind === "working" ? null : "placement-a",
+            handle_requirement_policy_id: kind === "working" ? null : "handle-a",
+            reinforcement_cut_policy_id: kind === "working" ? null : "reinforcement-a",
             placement_options: [{ id: "placement-a", label: "Fabricación v1", version: 1 }],
             handle_options: [{ id: "handle-a", label: "Manillas v1", version: 1 }],
             reinforcement_options: [{ id: "reinforcement-a", label: "Refuerzos v1", version: 1 }],
@@ -753,6 +772,9 @@ it("prepares and explicitly emits the current priced revision", async () => {
     .mocked(apiMutator)
     .mock.calls.filter(([url]) => /\/(inputs|quotation-preview|issue)\/$/.test(String(url)));
   expect(lifecycle).toHaveLength(4);
+  expect(JSON.parse(String(lifecycle[2]![1]!.body))).toEqual(
+    kind === "applied" ? { pricing_operation_id: "operation-a" } : {},
+  );
   expect(lifecycle.map(([url]) => url)).toEqual([
     "/api/v1/documents/projects/project-a/inputs/",
     "/api/v1/documents/projects/project-a/inputs/",
@@ -1912,4 +1934,104 @@ it("starts a dated draft quotation from the home and opens its first window", as
   const [body, options] = vi.mocked(projectsCreate).mock.calls[0]!;
   expect(body).toMatchObject({ client_name: "" });
   expect(options).toEqual({ headers: { "X-Organization-ID": "org-a" } });
+});
+
+it("shows draft server money, opens its private breakdown and returns focus on Escape", async () => {
+  const position = {
+    ...makePosition(),
+    commercial: {
+      unit_net: "10.00",
+      line_net: "20.00",
+      source: "Precio de trabajo calculado con los datos vigentes.",
+      breakdown: {
+        materials: "5",
+        waste: "0",
+        labor: "1",
+        installation: "1",
+        extras_cost: "0",
+        direct_cost: "7",
+        profit: "3",
+        rounding: "0",
+        exact_unit_price: "10",
+        unit_net: "10",
+        extras_net: "0",
+      },
+      catalog_use: { suggested_count: 2 },
+    },
+  };
+  const project = makeProject({
+    position_count: 1,
+    positions: [position],
+    total_price_gross: "999999",
+    working_price: {
+      use_advanced: false,
+      state: "READY",
+      currency: "USD",
+      policy_revision: 2,
+      computed_at: "2026-10-22T00:00:00Z",
+      error: null,
+      project_net: "20.00",
+      project_tax: "3.80",
+      project_gross: "23.80",
+      lines: [],
+    },
+  });
+  vi.mocked(projectsRetrieve).mockResolvedValue(response(200, project));
+  mount("/projects/project-a");
+  await screen.findByText("US$ 23,80");
+  expect(screen.queryByText("$999.999")).not.toBeInTheDocument();
+  const button = (
+    await screen.findAllByRole("button", {
+      name: "¿De dónde sale el precio de Dormitorio principal?",
+    })
+  )[0]!;
+  fireEvent.click(button);
+  const detail = screen.getByRole("region", { name: "Precio de Dormitorio principal" });
+  expect(within(detail).getByText("Materiales")).toBeVisible();
+  expect(within(detail).getByText(/La serie usa valores sugeridos/)).toBeVisible();
+  fireEvent.keyDown(document, { key: "Escape" });
+  expect(
+    screen.queryByRole("region", { name: "Precio de Dormitorio principal" }),
+  ).not.toBeInTheDocument();
+  expect(button).toHaveFocus();
+});
+
+it("keeps blocked and pending draft prices out of emission", () => {
+  const project = makeProject({
+    position_count: 1,
+    positions: [makePosition()],
+    working_price: {
+      use_advanced: true,
+      state: "PENDING",
+      currency: "CLP",
+      policy_revision: 1,
+      computed_at: "2026-10-22T00:00:00Z",
+      error: null,
+      project_net: "1000",
+      project_tax: "190",
+      project_gross: "1190",
+      lines: [],
+    },
+  });
+  expect(projectNextAction(project, undefined, true, true, [], 0)?.section).toBe("pricing");
+  expect(
+    projectNextAction(
+      { ...project, working_price: { ...project.working_price!, state: "READY" } },
+      undefined,
+      true,
+      true,
+      [],
+      0,
+    )?.section,
+  ).toBe("quote");
+  expect(
+    projectNextAction(
+      { ...project, working_price: { ...project.working_price!, state: "BLOCKED" } },
+      undefined,
+      true,
+      true,
+      [],
+      0,
+    )?.section,
+  ).toBe("pricing");
 });

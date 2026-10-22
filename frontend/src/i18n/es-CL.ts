@@ -578,7 +578,7 @@ export const messages = {
   "quotation.current": "Revisión actual",
   "quotation.prepare": "Preparar emisión",
   "quotation.editQuoted": "Crear nueva revisión",
-  "quotation.priceFirst": "Calcula y aplica el precio para poder emitir esta revisión.",
+  "quotation.priceFirst": "Completa los datos y precios de la serie para preparar esta cotización.",
   "quotation.paymentTerms": "Condiciones de pago",
   "quotation.validUntil": "Cotización válida hasta",
   "quotation.position": "Vano",
@@ -608,10 +608,11 @@ export const messages = {
   "quotation.confirm":
     "Confirmo la emisión: esta revisión, sus precios y su evidencia quedarán inmutables.",
   "quotation.missingTitle": "Para emitir falta:",
-  "quotation.missingPricing": "Precios aplicados — cotiza y aplica la operación",
+  "quotation.missingPricing":
+    "Precio listo para cotizar — revisa los datos o la aprobación pendiente",
   "quotation.missingSeedConfirm": "Confirmar o corregir la altura de manija sugerida",
   "quotation.emit": "Emitir cotización",
-  "quotation.emitNeedsPricing": "Aplica una cotización de precios antes de emitir",
+  "quotation.emitNeedsPricing": "El precio debe estar listo antes de preparar la cotización",
   "quotation.emitNeedsValidUntil": "Indica la fecha de validez de la cotización",
   "quotation.emitNeedsLocation": 'Cada posición necesita una ubicación (ej. "Dormitorio")',
   "quotation.emitNeedsPolicies":
@@ -3475,7 +3476,7 @@ export const messages = {
   "projects.stepBlockedDeposit": "Anticipo pendiente",
   "projects.next.addPositions": "Agregar vanos",
   "projects.next.complete": "Completar {count} posiciones",
-  "projects.next.quote": "Cotizar proyecto",
+  "projects.next.quote": "Revisar precio",
   "projects.next.emit": "Emitir cotización",
   "projects.next.share": "Enviar al cliente",
   "projects.next.awaiting": "Revisar envío al cliente",

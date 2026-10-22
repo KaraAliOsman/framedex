@@ -38,6 +38,7 @@ import {
   isValidRut,
 } from "../../format";
 import { compareDecimal } from "../../decimal";
+import { projectPrice, priceReady } from "../pricing/workingPrice";
 import { projectNameWrite } from "./projectNames";
 import { useProjectView } from "./useProject";
 import "./projects.css";
@@ -614,7 +615,7 @@ export function projectNextAction(
             to: `/projects/${project.id}/positions/${incomplete[0]!.id}/edit`,
           };
       }
-      if (!project.pricing_current) return { labelKey: "projects.next.quote", section: "pricing" };
+      if (!priceReady(project)) return { labelKey: "projects.next.quote", section: "pricing" };
       return { labelKey: "projects.next.emit", section: "quote" };
     case "QUOTED":
       if (!canWrite) return undefined;
@@ -734,6 +735,7 @@ function ProjectHeader({
   // The commercial track follows a quotation once it left the draft; while
   // drafting, every document is already available from «Sacar PDF».
   const showTrack = project.status !== "DRAFT";
+  const price = projectPrice(project);
   return (
     <div className="project-head">
       <div className="project-head__row">
@@ -781,15 +783,17 @@ function ProjectHeader({
           </p>
         </div>
         <div className="project-head__side">
-          {project.pricing_current ? (
+          {price ? (
             <div className="project-head__total">
-              <span>Total con IVA</span>
-              <strong>{formatMoney(project.total_price_gross, project.currency)}</strong>
+              <span>{price.ready ? "Total con IVA" : "Total por aprobar"}</span>
+              <strong>{formatMoney(price.gross, price.currency)}</strong>
             </div>
           ) : (project.position_count ?? 0) > 0 ? (
             <div className="project-head__total is-pending">
               <span>Total con IVA</span>
-              <span className="project-head__pending">Falta calcular el precio</span>
+              <span className="project-head__pending">
+                {project.working_price?.error?.detail || "Revisa los datos y precios de la serie"}
+              </span>
             </div>
           ) : null}
           {canWrite && project.status === "DRAFT" && (project.position_count ?? 0) > 0 ? (

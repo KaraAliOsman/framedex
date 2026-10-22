@@ -139,12 +139,36 @@ async function reviewAndIssueQuotation(
 }
 
 async function openProjectPrices(page: Page): Promise<void> {
+  // This gate exercises the explicit advanced override and approval history.
+  // Normal drafts now use working money and issue without a manual apply.
+  const projectUrl = new URL(page.url());
+  await page.getByRole("tab", { name: "Cotización", exact: true }).click();
+  await page.getByRole("radio", { name: "Precio y margen", exact: true }).click();
+  await page.getByRole("link", { name: "Cómo calculo mis precios", exact: true }).click();
+  await page.getByRole("switch", { name: "Usar precios avanzados", exact: true }).check();
+  const save = page.waitForResponse(
+    (response) =>
+      response.request().method() === "PUT" &&
+      new URL(response.url()).pathname === "/api/v1/pricing/simple-policy/",
+  );
+  await page.getByRole("button", { name: "Guardar mis precios", exact: true }).click();
+  expect((await save).status()).toBe(200);
   const projection = page.waitForResponse(
     (response) =>
       response.request().method() === "POST" &&
       new URL(response.url()).pathname === "/api/v1/pricing/workspace/",
   );
-  await page.getByRole("button", { name: "Cotizar proyecto", exact: true }).click();
+  await page
+    .getByRole("navigation", { name: "Navegación principal", exact: true })
+    .getByRole("link", { name: "Proyectos", exact: true })
+    .click();
+  await page.locator(`a[href="${projectUrl.pathname}"]`).first().click();
+  await page.getByRole("tab", { name: "Cotización", exact: true }).click();
+  await page.getByRole("radio", { name: "Precio y margen", exact: true }).click();
+  const advanced = page.locator("details", {
+    has: page.locator("summary", { hasText: "Ajustes y aprobaciones avanzadas" }),
+  });
+  if ((await advanced.getAttribute("open")) === null) await advanced.locator("summary").click();
   const projected = await projection;
   expect(projected.status(), await projected.text()).toBe(200);
   expect((await projected.json()).workspace.positions.length).toBeGreaterThan(0);
@@ -598,6 +622,7 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
       .first(),
   ).toContainText(formatMoney(quote.project_gross, "CLP"));
   await page.goto(`/projects/${draft.id}`);
+  await expect(page.locator(".project-head")).toBeVisible({ timeout: 15_000 });
   const projectGross = page
     .locator(".project-head__total strong")
     .filter({ hasText: formatMoney(quote.project_gross, "CLP") });

@@ -4,21 +4,43 @@ Encargo del dueño: 21-10-2026. Cada fase se entrega por PR y se fusiona con
 Lint & Typecheck, Test Suite, Frontend Build y Database Gate aprobados.
 Producción y precios comerciales requieren autorización aparte.
 
-| Fase | Alcance                                            | Estado                                                                                   | Rama / PR                                                                                                                                                                                                                                                                                                                                  |
-| ---- | -------------------------------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| P01  | Catálogo v2: backend, origen, niveles y plantillas | Hecha                                                                                    | [P01a #164](https://github.com/KaraAliOsman/framedex/pull/164), [P01b #165](https://github.com/KaraAliOsman/framedex/pull/165), [P01c #166](https://github.com/KaraAliOsman/framedex/pull/166), [P01d #167](https://github.com/KaraAliOsman/framedex/pull/167) y [P01e #168](https://github.com/KaraAliOsman/framedex/pull/168) fusionadas |
-| P02  | Ficha de serie editable                            | Hecha                                                                                    | Sub-PR [#169](https://github.com/KaraAliOsman/framedex/pull/169)–[#173](https://github.com/KaraAliOsman/framedex/pull/173) fusionadas                                                                                                                                                                                                      |
+| Fase | Alcance                                            | Estado                                       | Rama / PR                                                                                                                                                                                                                                                                                                                                  |
+| ---- | -------------------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| P01  | Catálogo v2: backend, origen, niveles y plantillas | Hecha                                        | [P01a #164](https://github.com/KaraAliOsman/framedex/pull/164), [P01b #165](https://github.com/KaraAliOsman/framedex/pull/165), [P01c #166](https://github.com/KaraAliOsman/framedex/pull/166), [P01d #167](https://github.com/KaraAliOsman/framedex/pull/167) y [P01e #168](https://github.com/KaraAliOsman/framedex/pull/168) fusionadas |
+| P02  | Ficha de serie editable                            | Hecha                                        | Sub-PR [#169](https://github.com/KaraAliOsman/framedex/pull/169)–[#173](https://github.com/KaraAliOsman/framedex/pull/173) fusionadas                                                                                                                                                                                                      |
 | P03 | Alta de serie y ventana de prueba | Implementada; fusión final en curso | #174–#180 fusionadas; [P03h #181](https://github.com/KaraAliOsman/framedex/pull/181) espera sus cuatro controles |
-| P04 | Precio simple automático | En curso: configuración de Empresa lista; interfaz de obra pendiente | [#182](https://github.com/KaraAliOsman/framedex/pull/182)–[#186](https://github.com/KaraAliOsman/framedex/pull/186), `gpt/dk2-p04f-empresa-precios` |
-| P05  | Navegación, Hoy y Obras                            | Pendiente                                                                                | —                                                                                                                                                                                                                                                                                                                                          |
-| P06  | Mesa de la obra y edición directa                  | Pendiente                                                                                | —                                                                                                                                                                                                                                                                                                                                          |
-| P07  | Cotización y portal                                | Pendiente                                                                                | —                                                                                                                                                                                                                                                                                                                                          |
-| P08  | Agente v2                                          | Pendiente                                                                                | —                                                                                                                                                                                                                                                                                                                                          |
-| P09  | Taller e instalación                               | Pendiente                                                                                | —                                                                                                                                                                                                                                                                                                                                          |
-| P10  | Onboarding, biblioteca Chile y aceptación Proline  | Pendiente                                                                                | —                                                                                                                                                                                                                                                                                                                                          |
-| P11  | Pulido y cierre                                    | Pendiente                                                                                | —                                                                                                                                                                                                                                                                                                                                          |
+| P04  | Precio simple automático                           | Implementada; aceptación final y CI en curso | [#182](https://github.com/KaraAliOsman/framedex/pull/182)–[#187](https://github.com/KaraAliOsman/framedex/pull/187), `gpt/dk2-p04g-precio-obra`                                                                                                                                                                                            |
+| P05  | Navegación, Hoy y Obras                            | Pendiente                                    | —                                                                                                                                                                                                                                                                                                                                          |
+| P06  | Mesa de la obra y edición directa                  | Pendiente                                    | —                                                                                                                                                                                                                                                                                                                                          |
+| P07  | Cotización y portal                                | Pendiente                                    | —                                                                                                                                                                                                                                                                                                                                          |
+| P08  | Agente v2                                          | Pendiente                                    | —                                                                                                                                                                                                                                                                                                                                          |
+| P09  | Taller e instalación                               | Pendiente                                    | —                                                                                                                                                                                                                                                                                                                                          |
+| P10  | Onboarding, biblioteca Chile y aceptación Proline  | Pendiente                                    | —                                                                                                                                                                                                                                                                                                                                          |
+| P11  | Pulido y cierre                                    | Pendiente                                    | —                                                                                                                                                                                                                                                                                                                                          |
 
 ## P04 · Precio simple automático
+
+### P04g · Total, desglose y cotización desde el precio de trabajo
+
+- Cabecera, ventanas y Precio usan importes del backend con su moneda.
+  READY permite cotizar sin Aplicar; PENDING conserva aprobación. El popover
+  ofrece el desglose y política solo al dueño. Avanzado conserva sus ajustes.
+- La interfaz admite los pendientes de fabricación permitidos por la API
+  para cotizar, conservando condiciones, confirmaciones y revisión humana.
+  Los precios emitidos de cada ventana salen de las líneas congeladas del
+  motor; política futura no cambia total, versión ni bytes del PDF.
+- Dos E2E reales aprueban en 1440/390; 43 unitarias UI y 39 integraciones
+  aprueban. Extremos: 0, 3 y 500 ventanas, importes/nombres largos, 320 px y
+  texto al 200 %. Corregidos contraste y desbordes de cabecera/listado.
+  [Aceptación y veinte capturas](../redesign/captures/dk2-p04g/aceptacion.md).
+- La regresión avanzada completa también aprueba sobre el build de producción:
+  dos emisiones, correo sandbox y PDF inmutable. Vite observaba los HTML de
+  las trazas de `.run` y provocaba recargas durante el ensayo de desarrollo.
+- `9223078d` corrige en P04d–f la prueba de clonación: una lectura puede
+  avanzar la fecha de cálculo de trabajo; los demás campos del original se
+  comparan exactamente. Diez integraciones pasan en ambas bases.
+- P04 espera sus cuatro controles por head y las fusiones de P03. P05–P11
+  siguen pendientes; no se declara terminada la fase por tener interfaz local.
 
 ### P04f · Cómo calculo mis precios
 
@@ -31,9 +53,9 @@ Producción y precios comerciales requieren autorización aparte.
   aprobadas. Lint, tipos, build, guardas y API reproducible aprobados.
 - Se corrigieron transporte científico de cero, importes largos y desborde al
   200 % de texto. [Aceptación y capturas](../redesign/captures/dk2-p04f/aceptacion.md).
-- P04e publicada en [#186](https://github.com/KaraAliOsman/framedex/pull/186).
-  P04g conserva pendientes el total automático visible de la obra, su desglose
-  y el E2E de emisión; las sub-PR P04 esperan completar P03 y sus cuatro gates.
+- P04f publicada en [#187](https://github.com/KaraAliOsman/framedex/pull/187).
+  P04g completa el total automático, su desglose y el E2E de emisión;
+  las sub-PR P04 esperan completar P03 y sus cuatro gates.
 
 ### P04e · Revisar y emitir el mismo PDF
 

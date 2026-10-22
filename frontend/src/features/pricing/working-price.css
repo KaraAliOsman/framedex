@@ -1,0 +1,55 @@
+.position-price {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--interactive);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: var(--space-1);
+  cursor: pointer;
+  min-height: var(--control-height);
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+.position-price:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: var(--space-1);
+}
+.working-price-detail {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.working-price-detail h3 {
+  margin: 0 0 var(--space-3);
+  font-size: var(--type-title-m);
+}
+.working-price-detail dl > div,
+.working-price-totals > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-block: var(--space-2);
+}
+.working-price-detail dd,
+.working-price-totals dd {
+  margin: 0 0 0 auto;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.working-price-panel {
+  min-width: 0;
+}
+.working-price-panel > details {
+  margin-top: var(--space-5);
+}
+.working-price-totals {
+  max-width: 40rem;
+}
+.working-price-totals > div:last-child {
+  border-top: 1px solid var(--border-default);
+  padding-top: var(--space-3);
+  font-weight: 600;
+}

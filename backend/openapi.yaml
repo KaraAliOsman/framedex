@@ -53769,6 +53769,10 @@ components:
     WorkingPrice:
       type: object
       properties:
+        use_advanced:
+          type: boolean
+        policy:
+          $ref: '#/components/schemas/SimplePolicyResponse'
         state:
           $ref: '#/components/schemas/WorkingPriceStateEnum'
         currency:
@@ -53805,6 +53809,7 @@ components:
       - project_net
       - project_tax
       - state
+      - use_advanced
     WorkingPriceError:
       type: object
       properties:

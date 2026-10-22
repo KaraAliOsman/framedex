@@ -274,6 +274,8 @@ def project_public(org_id, row, *, detail=False, authority=_UNSET,
         if authority is None and row['status'] == 'DRAFT':
             from pricing.working import refresh_for_member
             value['working_price'] = refresh_for_member(org_id, row['id'])
+            if value['working_price']:
+                value['currency'] = value['working_price']['currency']
         value["effective_design_defaults"] = design_defaults.effective(org_id, value)
         value["positions"] = positions(org_id, row["id"])
         value["versions"] = project_versions(org_id, row["id"])
@@ -292,11 +294,14 @@ def project_public(org_id, row, *, detail=False, authority=_UNSET,
         commercial = {}
         if authority:
             with commercial_backend():
-                result = rows("SELECT result->'workspace'->'positions' AS lines FROM public.pricing_operations WHERE id=%s AND org_id=%s",
+                result = rows("SELECT COALESCE(result->'workspace'->'positions',result->'line_detail') AS lines, "
+                              "result->'lines' AS totals FROM public.pricing_operations WHERE id=%s AND org_id=%s",
                               [authority["id"], org_id])
             lines = decoded(result[0]["lines"]) if result and result[0]["lines"] else []
+            totals = dict(decoded(result[0]['totals']) or []) if result else {}
             commercial = {line["position_index"]: {"unit_net": line.get("unit_price"),
-                "line_net": line.get("line_net"), "source": "Precio aplicado de esta revisión; motor comercial."} for line in lines}
+                "line_net": line.get("line_net", totals.get(line['position_index'])),
+                "source": "Precio aplicado de esta revisión; motor comercial."} for line in lines}
         for item in value["positions"]:
             item["commercial"] = commercial.get(item["position_index"])
         working = value.get('working_price')
