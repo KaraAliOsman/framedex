@@ -75,6 +75,12 @@ comerciales se rediseñan en sus fases posteriores.
 
 ## Capturas seleccionadas
 
+Corrección del Database Gate (22-10): el recorrido SHOT-10 esperaba el GET
+anterior de proyectos. Obras consulta `/projects/works/` desde P05e. Se ajusta
+solo esa espera al contrato vigente, conservando la respuesta vacía y todo el
+recorrido de guardado, BOM, clonación e inmutabilidad. Repetición local sobre
+la rama de P05g: **1 E2E aprobado, 1,3 min**, sin reintentos.
+
 Los viewports son 1440 × 900 y 390 × 844. Se conserva la página completa,
 incluidas las secciones largas. Las trazas de diagnóstico quedan en `.run/`.
 

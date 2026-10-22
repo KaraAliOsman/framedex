@@ -105,6 +105,8 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
       .click();
   const freshRead = () => page.reload();
 
+  // Obras reads its stage-aware projection since P05e. Keep the real GET
+  // assertion on that endpoint before exercising the complete editing flow.
   const emptyProjects = await responseTo<WorksResponse>(
     page,
     "GET",
