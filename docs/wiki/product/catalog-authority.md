@@ -3,7 +3,7 @@ type: concept
 status: active
 updated: 2026-10-21
 volatility: medium
-verified_ref: gpt/dk2-p01e-niveles-y-bloqueos
+verified_ref: gpt/dk2-p02a-tabla-editable
 sources:
   - engine/src/dekopen_engine/catalog_rules.py
   - engine/tests/test_gold_cases_catalog_families.py
@@ -23,6 +23,21 @@ sources:
 ---
 
 # Autoridad de catálogo por familia
+
+## DEKOPEN 2 · Tabla editable de P02a · 21-10-2026
+
+P01 terminó en el merge `9f711d53` (#168), con los cuatro controles de CI
+aprobados. P02a añade `frontend/src/ui/EditableTable.tsx`: conserva lexemas
+decimales, aplica validación por columna/celda y envía lotes a su consumidor.
+Deshacer una edición guardada solicita otra escritura; no elimina historia.
+Los conflictos conservan el borrador y evitan revertir cambios ajenos.
+
+La ruta `/dev/tabla` permite revisar vacío, una fila, nombres de 80 caracteres
+y 300 perfiles. Trece pruebas unitarias y cuatro E2E verifican pegado, teclado,
+precisión y accesibilidad a dos tamaños. Las capturas y límites de rendimiento
+están en [la aceptación](../../redesign/captures/dk2-p02a/aceptacion.md).
+El build excluye la ruta de desarrollo. Esta entrega prepara la ficha: todavía
+no conecta el catálogo ni implementa la verificación humana de P03.
 
 ## DEKOPEN 2 · Traza de sugeridos · 21-10-2026
 
