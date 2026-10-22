@@ -63,6 +63,7 @@ import { ProjectThermalPanel, PositionThermal } from "./ProjectThermalPanel";
 import { RectificationPanel } from "./RectificationPanel";
 import { ProjectsHome } from "./ProjectsHome";
 import { ProjectDesignDefaults } from "./DesignDefaults";
+import { NewProjectSeries } from "./NewProjectSeries";
 import { InlineEdit } from "../../ui/InlineEdit";
 import { Icon } from "../../ui/Icon";
 import { Menu, type MenuItem } from "../../ui/Overlays";
@@ -125,6 +126,7 @@ function ProjectMetadataForm({
   onChange,
   onSave,
   onCancel,
+  newProjectOrgId,
 }: {
   draft: Draft;
   clients: ClientResponse[];
@@ -132,6 +134,7 @@ function ProjectMetadataForm({
   onChange(value: Draft): void;
   onSave(): void;
   onCancel(): void;
+  newProjectOrgId?: string;
 }): JSX.Element {
   const fieldError = !isValidRut(draft.value.client_rut ?? "")
     ? "projects.rutInvalid"
@@ -263,6 +266,19 @@ function ProjectMetadataForm({
             </label>
           );
         })}
+        {newProjectOrgId && (
+          <NewProjectSeries
+            orgId={newProjectOrgId}
+            value={draft.value.design_defaults?.system_id ?? ""}
+            disabled={disabled}
+            onChange={(systemId) =>
+              onChange({
+                ...draft,
+                value: { ...draft.value, design_defaults: { system_id: systemId } },
+              })
+            }
+          />
+        )}
         <details
           className="project-metadata__extra"
           open={fields.slice(2).some(([key]) => (draft.value[key] ?? "") !== "")}
@@ -1300,7 +1316,16 @@ function ProjectWorkspace({
   const queryClient = useQueryClient();
   const [params, setParams] = useSearchParams();
   const [draft, setDraft] = useState<Draft | null>(() =>
-    !id && canWrite && params.get("create") === "1" ? { value: metadata() } : null,
+    !id && canWrite && params.get("create") === "1"
+      ? {
+          value: {
+            ...metadata(),
+            ...(params.get("system")
+              ? { design_defaults: { system_id: params.get("system")! } }
+              : {}),
+          },
+        }
+      : null,
   );
   const initialClient = useRef(params.get("client"));
   const [quotationDirty, setQuotationDirty] = useState(false);
@@ -1730,6 +1755,7 @@ function ProjectWorkspace({
 
         {draft ? (
           <ProjectMetadataForm
+            newProjectOrgId={!id ? orgId : undefined}
             draft={draft}
             clients={clientsQuery.data ?? []}
             disabled={disabled}
