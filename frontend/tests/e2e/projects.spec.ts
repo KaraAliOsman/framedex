@@ -4,6 +4,7 @@ import type {
   EngineAssemblyCalculateResponse,
   PositionResponse,
   ProjectResponse,
+  WorksResponse,
 } from "../../src/api/generated/models";
 import { fmtMm } from "../../src/format";
 import { test } from "./support/manual-project-fixture";
@@ -104,10 +105,12 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
       .click();
   const freshRead = () => page.reload();
 
-  const emptyProjects = await responseTo<{ items: ProjectResponse[] }>(
+  // Obras reads its stage-aware projection since P05e. Keep the real GET
+  // assertion on that endpoint before exercising the complete editing flow.
+  const emptyProjects = await responseTo<WorksResponse>(
     page,
     "GET",
-    "/api/v1/projects/",
+    "/api/v1/projects/works/",
     200,
     () => page.goto("/projects"),
   );
