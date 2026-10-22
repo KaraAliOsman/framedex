@@ -1382,6 +1382,7 @@ function PositionWorkspace({
             quantity={quantityInvalid ? 1 : Number(quantity)}
             libraryOpen={libraryOpen}
             onLibraryToggle={() => setLibraryOpen((open) => !open)}
+            onLibraryClose={() => setLibraryOpen(false)}
             libraryTitle={systemId ? "Biblioteca de tipologías" : "¿Con qué serie la fabricas?"}
             library={
               options.isError ? (

@@ -761,7 +761,14 @@ test("tablet choices stay compatible and mobile edits and saves through the same
   for (const name of await choices.getByRole("button").allTextContents())
     expect(name.trim().length).toBeGreaterThan(4);
   await expect(page.locator(".assembly-side")).toBeVisible();
+  // Escape closes one layer at a time: the opening choices, then the inspector.
   await page.keyboard.press("Escape");
+  await expect(choices).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("button", { name: "Inspector", exact: true })).toHaveAttribute(
+    "aria-expanded",
+    "false",
+  );
   await page.setViewportSize({ width: 390, height: 844 });
   // P06 explicitly removes the width-based write ban; permissions and sealed
   // revisions remain server checked. The narrow inspector is a bottom sheet.

@@ -192,6 +192,9 @@ for (const viewport of [
       ).toContainText("Primera obra sintética");
       // The empty state repeats the same action; use the section toolbar.
       await page.getByRole("link", { name: "Añadir ventana", exact: true }).first().click();
+      // Below 1280 px the series lives in the inspector sheet, closed by default.
+      if (viewport.width < 1280)
+        await page.getByRole("button", { name: "Inspector", exact: true }).click();
       await page.getByRole("button", { name: "PRO6004 · ensayo sintético", exact: true }).click();
       await expect(
         page.getByRole("combobox", { name: "Serie de perfiles", exact: true }),

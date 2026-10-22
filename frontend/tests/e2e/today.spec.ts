@@ -116,16 +116,12 @@ for (const viewport of [
       await page.getByRole("button", { name: "Nueva cotización", exact: true }).click();
       const result = (await (await created).json()) as { id: string };
       await expect(page).toHaveURL(new RegExp(`/projects/${result.id}/positions/new`));
-      if (viewport.width >= 1024)
-        await expect(
-          page.getByRole("heading", {
-            name: /Biblioteca de tipologías|¿Con qué serie la fabricas/,
-          }),
-        ).toBeVisible();
-      else
-        await expect(
-          page.getByRole("status").filter({ hasText: "Vista de lectura" }),
-        ).toBeVisible();
+      // P06 edits at every width: the first decision opens on phones too.
+      await expect(
+        page.getByRole("heading", {
+          name: /Biblioteca de tipologías|¿Con qué serie la fabricas/,
+        }),
+      ).toBeVisible();
       await page.goto("/dashboard");
 
       // Stress data enters only through this test's API boundary. The picker is
