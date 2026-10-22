@@ -158,6 +158,16 @@ jobs:
           SUPABASE_INTERNAL_IMAGE_REGISTRY: docker.io
         run: make test-db
 
+      # A failed browser gate keeps its traces and screenshots for diagnosis.
+      - name: Keep Playwright traces of a failed gate
+        if: failure()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: playwright-results
+          path: frontend/test-results
+          retention-days: 7
+          if-no-files-found: ignore
+
     services:
       postgres16:
         image: postgres:16-alpine
