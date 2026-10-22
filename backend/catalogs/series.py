@@ -8,6 +8,7 @@ from django.db import connection, transaction
 from authentication.errors import ContractAPIException, contract_error
 from authentication.rls import catalog_backend
 from catalogs import service
+from catalogs.reference_protection import protect_changes
 from catalogs.evidence import list_evidence
 from catalogs.family_templates import family_template
 from catalogs.value_origins import (
@@ -211,7 +212,7 @@ def _unique_addresses(items):
 
 def edit_cells(org_id, system_id, actor_id, data, *, can_view_prices=False):
     _unique_addresses(data["changes"])
-    with transaction.atomic():
+    with transaction.atomic(), protect_changes(org_id):
         _lock_sheet(org_id, system_id, data["revision"])
         grouped = {}
         for item in data["changes"]:
