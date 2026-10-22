@@ -2335,3 +2335,13 @@ comprueba 12 filas, códigos con ceros y cuatro decimales en PostgreSQL.
 Los ensayos de 0/1/500 precios pasan a 1440/390/320 y texto al 200 %, con axe
 y montos completos. P03 conserva pendiente el asistente integral.
 Véase [catálogo](product/catalog-authority.md) y [evidencia](../redesign/captures/dk2-p03f/aceptacion.md).
+
+## 2026-10-22 · P03g: diferencias del manual con ambas citas
+
+- Verificado en `gpt/dk2-p03g-asistente-serie`: revisión centrada en diferencias,
+  con elección citada, corrección del taller y acuerdos como propuestas.
+- Los enlaces documentales cargan solo la fuente requerida. Dos E2E usan
+  lecturas simuladas y publicación/almacenamiento/PostgreSQL reales; tres
+  ensayos comprueban extremos y accesibilidad. Frontend completo: 1.209 PASS.
+- Se actualizaron catálogo, estado y evidencia seleccionada. P03 sigue en curso:
+  falta el asistente y la aceptación integral, sin adelantar las fusiones de P02.

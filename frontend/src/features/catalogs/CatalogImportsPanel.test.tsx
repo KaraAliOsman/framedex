@@ -6,6 +6,7 @@ import { CatalogImportsPanel } from "./CatalogImportsPanel";
 
 vi.mock("../../api/generated/dekopen", () => ({
   catalogImportsList: vi.fn(),
+  catalogImportGet: vi.fn(),
   catalogTemplateSchema: vi.fn(),
   catalogImportsCreate: vi.fn(),
   catalogImportReview: vi.fn(),
@@ -130,5 +131,94 @@ describe("CatalogImportsPanel", () => {
       screen.queryByRole("button", { name: "Publicar catálogo revisado" }),
     ).not.toBeInTheDocument();
     expect(api.catalogImportPublish).not.toHaveBeenCalled();
+  });
+  it("loads only the linked manual and offers recovery without fetching the catalog history", async () => {
+    vi.mocked(api.catalogImportGet)
+      .mockRejectedValueOnce(new Error("offline"))
+      .mockResolvedValue({ status: 200, data: { import: entry } } as never);
+    render(
+      <ConfirmProvider>
+        <CatalogImportsPanel
+          orgId="org"
+          initialImportId="import-1"
+          reviewOnly
+          systems={[]}
+          canWrite
+        />
+      </ConfirmProvider>,
+    );
+    fireEvent.click(await screen.findByRole("button", { name: "Volver a cargar el manual" }));
+    await screen.findByText("Ficha del proveedor");
+    expect(api.catalogImportGet).toHaveBeenLastCalledWith("import-1", {
+      headers: { "X-Organization-ID": "org" },
+    });
+    expect(api.catalogImportsList).not.toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: "Elegir planilla" })).not.toBeInTheDocument();
+  });
+  it("reviews only differences from two readings and publishes agreed proposals only after the human click", async () => {
+    vi.mocked(api.catalogImportsList).mockResolvedValue({
+      status: 200,
+      data: {
+        imports: [
+          {
+            ...entry,
+            candidates: [
+              {
+                ...entry.candidates[0],
+                double_read: { identity_unique: true },
+                fields: {
+                  system_code: {
+                    comparison: "AGREED",
+                    confidence: "HIGH",
+                    readings: [{ value: "SERIE" }, { value: "SERIE" }],
+                  },
+                  depth_mm: {
+                    comparison: "REVIEW",
+                    confidence: "LOW",
+                    readings: [
+                      {
+                        value: "60.00",
+                        ref: "Página 1",
+                        quote: "Profundidad 60 mm",
+                        confidence: "HIGH",
+                      },
+                      {
+                        value: "62.00",
+                        ref: "Página 2",
+                        quote: "Profundidad 62 mm",
+                        confidence: "HIGH",
+                      },
+                    ],
+                  },
+                },
+              },
+            ],
+          },
+        ],
+      },
+    } as never);
+    render(
+      <ConfirmProvider>
+        <CatalogImportsPanel orgId="org" systems={[]} canWrite />
+      </ConfirmProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Importar catálogo" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Revisar referencia y cambios" }));
+    expect(
+      screen.getByRole("region", { name: "Diferencias entre las dos lecturas" }),
+    ).toBeVisible();
+    expect(screen.queryByLabelText(/^Código de serie/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Usar lectura 1" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: /Incluir SERIE/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Comparar cambios" }));
+    const publish = await screen.findByRole("button", { name: "Publicar catálogo revisado" });
+    expect(publish).toBeDisabled();
+    expect(api.catalogImportPublish).not.toHaveBeenCalled();
+    expect(vi.mocked(api.catalogImportReview).mock.calls[0]?.[1]).toMatchObject({
+      items: [{ key: "ai0", values: { system_code: "SERIE", depth_mm: "60.00" } }],
+    });
+    fireEvent.click(screen.getByLabelText(/Revisé la referencia/));
+    fireEvent.click(publish);
+    await waitFor(() => expect(api.catalogImportPublish).toHaveBeenCalledTimes(1));
   });
 });

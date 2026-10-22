@@ -7,8 +7,8 @@ Producción y precios comerciales requieren autorización aparte.
 | Fase | Alcance | Estado | Rama / PR |
 |---|---|---|---|
 | P01 | Catálogo v2: backend, origen, niveles y plantillas | Hecha | [P01a #164](https://github.com/KaraAliOsman/framedex/pull/164), [P01b #165](https://github.com/KaraAliOsman/framedex/pull/165), [P01c #166](https://github.com/KaraAliOsman/framedex/pull/166), [P01d #167](https://github.com/KaraAliOsman/framedex/pull/167) y [P01e #168](https://github.com/KaraAliOsman/framedex/pull/168) fusionadas |
-| P02 | Ficha de serie editable | En curso | [P02a #169](https://github.com/KaraAliOsman/framedex/pull/169), [P02b #170](https://github.com/KaraAliOsman/framedex/pull/170) y [P02c #171](https://github.com/KaraAliOsman/framedex/pull/171) fusionadas; [P02d #172](https://github.com/KaraAliOsman/framedex/pull/172) y [P02e #173](https://github.com/KaraAliOsman/framedex/pull/173) pendientes |
-| P03 | Alta de serie y ventana de prueba | En preparación, pendiente de fusionar P02 | [P03a #174](https://github.com/KaraAliOsman/framedex/pull/174), [P03b #175](https://github.com/KaraAliOsman/framedex/pull/175), [P03c #176](https://github.com/KaraAliOsman/framedex/pull/176), [P03d #177](https://github.com/KaraAliOsman/framedex/pull/177), [P03e #178](https://github.com/KaraAliOsman/framedex/pull/178); precios `gpt/dk2-p03f-precios-ui` |
+| P02 | Ficha de serie editable | En curso | [P02a #169](https://github.com/KaraAliOsman/framedex/pull/169), [P02b #170](https://github.com/KaraAliOsman/framedex/pull/170), [P02c #171](https://github.com/KaraAliOsman/framedex/pull/171) y [P02d #172](https://github.com/KaraAliOsman/framedex/pull/172) fusionadas; [P02e #173](https://github.com/KaraAliOsman/framedex/pull/173) pendiente |
+| P03 | Alta de serie y ventana de prueba | En preparación, pendiente de fusionar P02 | [P03a #174](https://github.com/KaraAliOsman/framedex/pull/174), [P03b #175](https://github.com/KaraAliOsman/framedex/pull/175), [P03c #176](https://github.com/KaraAliOsman/framedex/pull/176), [P03d #177](https://github.com/KaraAliOsman/framedex/pull/177), [P03e #178](https://github.com/KaraAliOsman/framedex/pull/178), [P03f #179](https://github.com/KaraAliOsman/framedex/pull/179); revisión del manual `gpt/dk2-p03g-asistente-serie` |
 | P04 | Precio simple automático | Pendiente | — |
 | P05 | Navegación, Hoy y Obras | Pendiente | — |
 | P06 | Mesa de la obra y edición directa | Pendiente | — |
@@ -416,3 +416,22 @@ a P03; P01 deja preparado su contrato y su bloqueo.
   320 px con texto al 200 %. La ruta de ensayo no entra al build de producción.
 - Falta integrar los cinco pasos reanudables, revisión de discrepancias del manual
   y apertura de la primera cotización. La aceptación integral de P03 sigue pendiente.
+
+### P03g · Revisión de diferencias del manual
+
+- Las dos lecturas se contrastan con sus páginas, citas y valores. Los acuerdos
+  se resumen como propuestas; las diferencias requieren elección o corrección.
+  Elegir no incluye la fila ni publica. La revisión completa permanece accesible.
+- Los enlaces de fuente cargan solo su importación, esquema e historial; ya no
+  esperan las cuatro colecciones del catálogo avanzado. Se conserva esa ruta
+  avanzada para editar el catálogo completo. Hay recuperación de errores.
+- 1.209 pruebas frontend y 19 dirigidas aprobadas. Dos E2E publican sobre
+  PostgreSQL con lecturas simuladas, Magic Link/TOTP y almacenamiento reales;
+  tres ensayos prueban 0/1/500 filas, 1440/390/320 y texto al 200 %, con axe.
+  ESLint, TypeScript, Prettier, Ruff, guardas y build aprobados.
+- Seis capturas inspeccionadas en [aceptación](../redesign/captures/dk2-p03g/aceptacion.md).
+  No se añadió movimiento. Se corrigió el contraste de la fecha de importación.
+- P03 no termina aquí: faltan el asistente reanudable, la primera obra con serie
+  preseleccionada y la aceptación integral desde plantilla. P02e espera su gate
+  de base; el formato de P03f señalado por CI se corrigió en `488dc936` y vuelve
+  a ejecutar sus cuatro controles.
