@@ -391,7 +391,9 @@ export function ExtraImport<T extends { schema_version: 1 }>({
             setProposed(parse(JSON.parse(text)));
             setError("");
           } catch {
-            setError("El archivo no declara una configuración válida. Revisa su estructura y versión.");
+            setError(
+              "El archivo no declara una configuración válida. Revisa su estructura y versión.",
+            );
           }
         }}
       >
