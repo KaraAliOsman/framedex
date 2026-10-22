@@ -284,11 +284,18 @@ def _freeze_attempt(token, claims, organization_header, project_id, data):
                 "documentary_permission_denied",
                 "Tu rol no permite realizar esta operación documental.",
             )
+        operation_id = data['pricing_operation_id']
+        if operation_id is None:
+            from pricing.views import public_pricing_errors
+            from pricing.working import apply_for_issue
+            with public_pricing_errors():
+                operation_id = apply_for_issue(tenant.active_organization.organization_id,
+                    tenant, token.user_id, project_id, confirmed=data['confirmed'], email=token.email)
         output = freeze_revision_a(
             org_id=tenant.active_organization.organization_id,
             actor_id=token.user_id,
             project_id=project_id,
-            pricing_operation_id=data["pricing_operation_id"],
+            pricing_operation_id=operation_id,
             confirmed=data["confirmed"],
             allow_incomplete_workshop=True,
         )

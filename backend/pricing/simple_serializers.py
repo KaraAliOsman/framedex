@@ -72,3 +72,30 @@ class SimplePolicyExampleResponseSerializer(serializers.Serializer):
     project_gross = serializers.CharField(allow_null=True)
     assumptions = serializers.JSONField()
     detail = serializers.CharField()
+
+
+class WorkingPriceErrorSerializer(serializers.Serializer):
+    code = serializers.CharField()
+    detail = serializers.CharField()
+
+
+class WorkingPriceLineSerializer(serializers.Serializer):
+    position_index = serializers.IntegerField()
+    quantity = serializers.IntegerField()
+    unit_price = serializers.CharField()
+    discount_pct = serializers.CharField()
+    line_net = serializers.CharField()
+    breakdown = SimplePriceBreakdownSerializer(required=False, allow_null=True)
+    catalog_use = serializers.JSONField(required=False, allow_null=True)
+
+
+class WorkingPriceSerializer(serializers.Serializer):
+    state = serializers.ChoiceField(choices=['READY', 'BLOCKED', 'PENDING'])
+    currency = serializers.ChoiceField(choices=['CLP', 'USD'])
+    policy_revision = serializers.IntegerField()
+    computed_at = serializers.DateTimeField()
+    error = WorkingPriceErrorSerializer(allow_null=True)
+    project_net = serializers.CharField(allow_null=True)
+    project_tax = serializers.CharField(allow_null=True)
+    project_gross = serializers.CharField(allow_null=True)
+    lines = WorkingPriceLineSerializer(many=True)

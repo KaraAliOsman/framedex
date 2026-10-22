@@ -248,7 +248,7 @@ class DocumentaryPreparationResponseSerializer(serializers.Serializer):
 
 
 class FreezeRequestSerializer(StrictSerializer):
-    pricing_operation_id = serializers.UUIDField()
+    pricing_operation_id = serializers.UUIDField(required=False, allow_null=True, default=None)
     confirmed = serializers.BooleanField()
 
 

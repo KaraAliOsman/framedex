@@ -7,6 +7,7 @@
  */
 
 export interface FreezeRequestRequest {
-  pricing_operation_id: string;
+  /** @nullable */
+  pricing_operation_id?: string | null;
   confirmed: boolean;
 }

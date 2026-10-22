@@ -2160,7 +2160,12 @@ def prepare_documentary_inputs(
         missing.append({"code": "quotation_valid_until_missing", "detail": "Declara la vigencia de la cotización en Preparar emisión."})
     from projects.service import _priced
     if not _priced(org_id, project_id, project["current_revision"]):
-        missing.append({"code": "pricing_not_applied", "detail": "Calcula y aplica los precios vigentes del proyecto."})
+        from pricing.working import refresh_for_member
+        working = refresh_for_member(org_id, project_id)
+        if not working or working['state'] != 'READY':
+            missing.append({'code': 'working_price_required',
+                'detail': ((working.get('error') or {}).get('detail') if working else None)
+                    or 'Revisa los precios de la serie y la configuración de tu empresa.'})
     for position in prepared:
         identity = str(position["position_id"])
         existing = position_inputs.get(identity)

@@ -36227,11 +36227,11 @@ components:
         pricing_operation_id:
           type: string
           format: uuid
+          nullable: true
         confirmed:
           type: boolean
       required:
       - confirmed
-      - pricing_operation_id
     FreezeResponse:
       type: object
       properties:
@@ -47131,6 +47131,10 @@ components:
           type: string
         design_defaults:
           $ref: '#/components/schemas/DesignDefaults'
+        working_price:
+          allOf:
+          - $ref: '#/components/schemas/WorkingPrice'
+          nullable: true
         effective_design_defaults:
           $ref: '#/components/schemas/EffectiveDesignDefaults'
         accepted_version_id:
@@ -52334,6 +52338,90 @@ components:
           allOf:
           - $ref: '#/components/schemas/StrategyEnum'
           default: auto
+    WorkingPrice:
+      type: object
+      properties:
+        state:
+          $ref: '#/components/schemas/WorkingPriceStateEnum'
+        currency:
+          $ref: '#/components/schemas/CurrencyEnum'
+        policy_revision:
+          type: integer
+        computed_at:
+          type: string
+          format: date-time
+        error:
+          allOf:
+          - $ref: '#/components/schemas/WorkingPriceError'
+          nullable: true
+        project_net:
+          type: string
+          nullable: true
+        project_tax:
+          type: string
+          nullable: true
+        project_gross:
+          type: string
+          nullable: true
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkingPriceLine'
+      required:
+      - computed_at
+      - currency
+      - error
+      - lines
+      - policy_revision
+      - project_gross
+      - project_net
+      - project_tax
+      - state
+    WorkingPriceError:
+      type: object
+      properties:
+        code:
+          type: string
+        detail:
+          type: string
+      required:
+      - code
+      - detail
+    WorkingPriceLine:
+      type: object
+      properties:
+        position_index:
+          type: integer
+        quantity:
+          type: integer
+        unit_price:
+          type: string
+        discount_pct:
+          type: string
+        line_net:
+          type: string
+        breakdown:
+          allOf:
+          - $ref: '#/components/schemas/SimplePriceBreakdown'
+          nullable: true
+        catalog_use:
+          nullable: true
+      required:
+      - discount_pct
+      - line_net
+      - position_index
+      - quantity
+      - unit_price
+    WorkingPriceStateEnum:
+      enum:
+      - READY
+      - BLOCKED
+      - PENDING
+      type: string
+      description: |-
+        * `READY` - READY
+        * `BLOCKED` - BLOCKED
+        * `PENDING` - PENDING
     WorkshopAnnotation:
       type: object
       properties:

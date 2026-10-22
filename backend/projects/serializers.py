@@ -14,6 +14,7 @@ from engine_api.serializers import (
     DecimalStringField,
 )
 from pricing.serializers import StrictSerializer
+from pricing.simple_serializers import WorkingPriceSerializer
 from projects.client_serializers import (
     ClientAddressSerializer, ClientAddressWriteSerializer,
     ClientContactSerializer, ClientContactWriteSerializer,
@@ -228,6 +229,7 @@ class ProjectVersionResponseSerializer(serializers.Serializer):
 
 
 class ProjectResponseSerializer(ProjectWriteSerializer):
+    working_price = WorkingPriceSerializer(required=False, allow_null=True)
     # Always present in responses (blank while a draft has no client yet).
     client_name = serializers.CharField(max_length=255, allow_blank=True)
     effective_design_defaults = EffectiveDesignDefaultsSerializer(required=False)

@@ -73,6 +73,22 @@ Producción y precios comerciales requieren autorización aparte.
 - Esta subentrega todavía no conecta los hooks ni expone la proyección por HTTP.
   Siguen pendientes el automatismo público, la aplicación al emitir y la interfaz.
 
+### P04d · Guardado automático y emisión transaccional
+
+- Guardar/cambiar cantidad/eliminar una ventana actualiza su proyección sin
+  bloquear el diseño. Los lotes difieren el cálculo hasta su respuesta final.
+  Abrir la obra recalcula con la política y costos actuales y expone venta por
+  ventana; el desglose de costos sigue limitado al dueño.
+- La preparación documental admite precio de trabajo listo. El endpoint de
+  emisión directa acepta omitir la operación manual: calcula, registra y aplica
+  el precio dentro de la misma transacción repetible que guarda la revisión.
+  Un error revierte ambos y el clic repetido conserva una sola aplicación.
+- 57 integraciones de guardado, emisión y compatibilidad documental/catálogo/
+  operaciones aprobadas. Incluyen dueño y estimador, ausencia de confirmación,
+  rollback, cantidades y conservación de emitido después de cambiar el margen.
+- Sigue pendiente adaptar el PDF revisable y el envío guiado a este contrato,
+  además de mostrar configuración, totales y desglose en la interfaz.
+
 ## Base y comprobaciones previas
 
 - Base inicial de aplicación: `origin/main` en `0207763c`, con dirección desde

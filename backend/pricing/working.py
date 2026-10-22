@@ -42,7 +42,7 @@ def calculate_simple(org_id, project, positions, values, request):
     explicit_installation = any(item.installation for item in services)
     # These rules resolve material/extra facts. Only simple_price adds the
     # declared service units and material waste to the base window.
-    rules = {'waste_factor_pct': policy.waste, 'labor_rate_per_m2': D('0'),
+    rules = {'waste_factor_pct': policy.waste, 'tax_rate_pct': values['tax_rate'], 'labor_rate_per_m2': D('0'),
         'installation_rate_per_m2': D('0'), 'default_margin_pct': policy.margin}
     technical, lines, details, extras_by_index = [], [], [], {}
     for position in positions:
@@ -151,3 +151,70 @@ def working_public(record, role):
         | ({'breakdown': item.get('breakdown'), 'catalog_use': item.get('catalog_use')} if role == 'OWNER' else {})
         for item in result.get('line_detail', [])]
     return public
+
+
+def member_actor(org_id):
+    """Resolve the actual member for domain hooks, including audited AI edits."""
+    from authentication.rls import authenticated_read
+    from authentication.tenancy import MembershipRepository, resolve_tenant_context, enforce_owner_mfa
+    with authenticated_read():
+        identity = one('SELECT auth.uid() AS id, '
+            "nullif(current_setting('request.jwt.claims',true),'')::jsonb->>'aal' AS aal")
+        if identity['id'] is None:
+            return None
+        members = MembershipRepository().list_active_for_user(identity['id'])
+        if not any(item.organization_id == org_id and item.role in ('OWNER', 'ESTIMATOR') for item in members):
+            return None
+        actor = resolve_tenant_context(members, str(org_id))
+        enforce_owner_mfa(actor, identity['aal'] or '')
+        return actor
+
+
+def refresh_for_member(org_id, project_id):
+    actor = member_actor(org_id)
+    if actor is None:
+        return None
+    record = refresh_working(org_id, actor, project_id)
+    return working_public(record, actor.active_organization.role) if record else None
+
+
+def apply_for_issue(org_id, actor, actor_id, project_id, *, confirmed, email=None):
+    """Called only inside the issuance transaction; failure rolls everything back."""
+    from pricing.service import apply_operation
+    from pricing.repository import audit_reason
+    from projects.service import project_row, _pricing_authority
+    if not confirmed:
+        raise ContractAPIException(status_code=409, code='documentary_freeze_confirmation_required',
+            detail='Confirma la emisión de la cotización.')
+    project = project_row(org_id, project_id, lock=True)
+    applied = _pricing_authority(org_id, project_id, project['current_revision'])
+    if applied:
+        return applied['id']
+    working = refresh_working(org_id, actor, project_id)
+    if working is None:
+        raise PricingError('commercial_revision_required')
+    if working['state'] != 'READY':
+        result = decoded(working['result'])
+        if working['state'] == 'PENDING':
+            raise PricingError('owner_approval_required')
+        from authentication.errors import contract_error
+        error = result['error']
+        raise contract_error(422, error['code'], error['detail'])
+    reason = 'Precio registrado al emitir la cotización'
+    request = {**decoded(working['request']), 'confirmed': confirmed, 'reason': reason,
+        '_actor_id': actor_id, '_actor_email': email}
+    with commercial_backend():
+        if read_policy(org_id)['use_advanced']:
+            operation_id = preview(org_id, actor, request)['id']
+        else:
+            audit_reason(reason)
+            operation_id = one('INSERT INTO public.pricing_operations(org_id,project_id,requested_by,'
+                'requested_by_email,request,input_snapshot,result,source_revision,revision_code,state,reason) '
+                "VALUES(%s,%s,%s,%s,%s::jsonb,%s::jsonb,%s::jsonb,%s,%s,'PREVIEW',%s) RETURNING id",
+                [org_id, project_id, actor_id, email,
+                    json_text({key: value for key, value in request.items() if not key.startswith('_')}),
+                    json_text(decoded(working['input_snapshot'])), json_text(decoded(working['result'])),
+                    working['source_revision'], working['revision_code'], reason])['id']
+    with commercial_backend():
+        apply_operation(org_id, actor_id, actor.active_organization.role, operation_id, reason, confirmed)
+    return operation_id
