@@ -18,6 +18,7 @@ import type {
   EngineCalculateResponse,
   PositionDesignRequest,
   PositionResponse,
+  ProfileSystemSummary,
 } from "../../api/generated/models";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { ApiError } from "../../api/apiMutator";
@@ -387,9 +388,15 @@ function canonicalize(value: unknown): string {
   return JSON.stringify(order(value));
 }
 
-/** Quote-ready series of the company — synthetic DEMO lives in Laboratorio. */
-function isCompanySeries(system: { quote_ready: boolean; is_demo: boolean }): boolean {
-  return system.quote_ready && system.is_demo === false;
+/** Drawing does not require prices or workshop verification. */
+function isDrawable(system: Pick<ProfileSystemSummary, "usage" | "quote_ready">): boolean {
+  return system.usage
+    ? system.usage.levels.some((capability) => capability.level === "DRAWABLE" && capability.ok)
+    : system.quote_ready;
+}
+
+function isCompanySeries(system: ProfileSystemSummary): boolean {
+  return isDrawable(system) && system.is_demo === false;
 }
 
 function PositionWorkspace({
@@ -1041,7 +1048,7 @@ function PositionWorkspace({
               <option value="">{t("projects.chooseSystem")}</option>
               {systemId &&
                 systems.data &&
-                !systems.data.some((system) => system.id === systemId && system.quote_ready) && (
+                !systems.data.some((system) => system.id === systemId && isDrawable(system)) && (
                   <option value={systemId}>
                     Catálogo histórico del producto{options.data?.is_demo ? " · DEMO" : ""}
                   </option>
@@ -1055,10 +1062,10 @@ function PositionWorkspace({
                   ))}
                 </optgroup>
               ) : null}
-              {systems.data?.some((system) => system.quote_ready && system.is_demo) ? (
+              {systems.data?.some((system) => isDrawable(system) && system.is_demo) ? (
                 <optgroup label="Laboratorio · DEMO sintético, sin certificación">
                   {systems.data
-                    ?.filter((system) => system.quote_ready && system.is_demo)
+                    ?.filter((system) => isDrawable(system) && system.is_demo)
                     .map((system) => (
                       <option key={system.id} value={system.id}>
                         {system.name.replace(/\s*·\s*DEMO\s*$/u, "")} · DEMO
@@ -1559,7 +1566,7 @@ function CutBar({ lengthMm, maxMm }: { lengthMm: number; maxMm: number }): JSX.E
 type SeriesSummary = { id: string; code: string; name: string; system_family: string | null };
 
 /** First decision of a new window: the series, picked in one click from the
- * same quote-ready list the strip offers (company first, DEMO apart). */
+ * same drawable list the strip offers (company first, DEMO apart). */
 function SeriesChooser({
   systems,
   failed,
@@ -1567,7 +1574,7 @@ function SeriesChooser({
   onRetry,
   onPick,
 }: {
-  systems?: (SeriesSummary & { quote_ready: boolean; is_demo: boolean })[];
+  systems?: ProfileSystemSummary[];
   failed: boolean;
   disabled: boolean;
   onRetry(): void;
@@ -1576,11 +1583,11 @@ function SeriesChooser({
   if (failed) return <ErrorState title="No se pudieron cargar las series" onRetry={onRetry} />;
   if (systems === undefined) return <LoadingState label="Cargando las series" />;
   const company = systems.filter(isCompanySeries);
-  const lab = systems.filter((system) => system.quote_ready && system.is_demo);
+  const lab = systems.filter((system) => isDrawable(system) && system.is_demo);
   if (company.length + lab.length === 0)
     return (
       <p className="series-chooser__empty">
-        No hay series listas para cotizar. Complétalas en{" "}
+        Completa los perfiles de una serie para empezar a dibujar en{" "}
         <Link to="/catalogs/systems">Catálogo</Link>.
       </p>
     );

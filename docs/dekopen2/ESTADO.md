@@ -6,7 +6,7 @@ Producción y precios comerciales requieren autorización aparte.
 
 | Fase | Alcance | Estado | Rama / PR |
 |---|---|---|---|
-| P01 | Catálogo v2: backend, origen, niveles y plantillas | En curso | [P01a #164](https://github.com/KaraAliOsman/framedex/pull/164); [P01b #165](https://github.com/KaraAliOsman/framedex/pull/165); P01c: `gpt/dk2-p01c-valores-y-plantillas` |
+| P01 | Catálogo v2: backend, origen, niveles y plantillas | En curso | [P01a #164](https://github.com/KaraAliOsman/framedex/pull/164), [P01b #165](https://github.com/KaraAliOsman/framedex/pull/165), [P01c #166](https://github.com/KaraAliOsman/framedex/pull/166) y [P01d #167](https://github.com/KaraAliOsman/framedex/pull/167) fusionadas; [P01e #168](https://github.com/KaraAliOsman/framedex/pull/168) |
 | P02 | Ficha de serie editable | Pendiente | — |
 | P03 | Alta de serie y ventana de prueba | Pendiente | — |
 | P04 | Precio simple automático | Pendiente | — |
@@ -20,10 +20,11 @@ Producción y precios comerciales requieren autorización aparte.
 
 ## Base y comprobaciones previas
 
-- Base de aplicación: `origin/main` en `0207763c`. El paquete de dirección
-  todavía está en la [PR #163](https://github.com/KaraAliOsman/framedex/pull/163),
-  rama `claude/dekopen2-direccion`, commit `ec3762fe`. Se usa esta rama según
-  la alternativa explícita del encargo; solo añade documentación a esa base.
+- Base inicial de aplicación: `origin/main` en `0207763c`, con dirección desde
+  `claude/dekopen2-direccion` (`ec3762fe`), como permite el encargo. La sub-PR
+  P01a ya incorporó ese paquete y las correcciones de base a `origin/main`
+  mediante merge commit `077ad7944e7cb327b6d649cc1a67ad7875b53143`, después
+  de aprobar los cuatro controles obligatorios.
 - `main` local tiene cuatro commits propios antiguos y diverge del remoto.
   `git pull --ff-only` lo detectó sin modificar su historia. Se preserva.
 - Se preservan los cinco archivos no rastreados preexistentes.
@@ -108,7 +109,77 @@ a P03; P01 deja preparado su contrato y su bloqueo.
   valor actual. Una ventana PRO6004 de prueba de 1200 × 1100 abatible produce
   despiece y sugeridos consumidos; confirmarlos elimina las suposiciones sin
   cambiar ninguna medida del despiece.
-- OpenAPI y orval regenerados. El lint SQL y las 1.507 aserciones pgTAP pasan;
-  continúa la validación de integración y unitarias antes del cierre de la PR.
+- OpenAPI y orval regenerados. P01d quedó fusionada en `68bf4e29` después de
+  aprobar Lint & Typecheck, Test Suite, Frontend Build y Database Gate.
 - Pendientes para completar P01: niveles de uso, precios/cotización QUOTABLE,
   fabricación MANUFACTURABLE y sus decisiones congeladas.
+
+### P01e · Niveles y bloqueos por dependencia
+
+- `usage` expone DRAWABLE, QUOTABLE, MANUFACTURABLE y MACHINE_READY, pendientes
+  por campo/origen/acción y conteo de sugeridos actuales. `readiness` queda
+  obsoleto en OpenAPI; `quote_ready` es el alias de QUOTABLE. Dibujar no exige
+  inspector ni políticas de taller. Los costos solo bloquean cotización;
+  las confirmaciones y la verificación bloquean salida física.
+- QUOTABLE comprueba reglas y costos vigentes con sus unidades y ambigüedades.
+  Precio verifica los materiales realmente consumidos; un artículo ajeno al
+  diseño no invalida un precio que el motor ya resolvió. También comprueba
+  tornillos de refuerzo. Los precios sintéticos resuelven las identidades de
+  compra declaradas del propio ejemplo, copiando sus tarifas existentes.
+- MANUFACTURABLE exige confirmar los valores y una verificación con actor,
+  fecha y huella exacta de las reglas actuales. P03 implementará el clic y la
+  ventana de prueba. Los ejemplos globales conservan su carácter sintético;
+  no se etiquetan como manual ni como verificación real del taller.
+- Optimización y borrador de corte usan el permiso de fabricación. La emisión
+  admite una revisión solo comercial sin inventar inspector, políticas ni
+  hechos de taller. Las políticas ausentes son NULL; las declaradas conservan
+  claves foráneas, alcance de serie/tenant y protección de revisiones emitidas.
+- La revisión guarda la decisión completa. OT y documentos de taller leen
+  esos pendientes congelados; confirmar el catálogo después no modifica una
+  cotización ya emitida ni la habilita retroactivamente para fabricar.
+- Prueba local PRO6004: plantilla + perfiles y precios explícitos sintéticos,
+  ventana abatible 1200 × 1100, precio del motor, PDF comercial, corte bloqueado
+  con pendientes y optimización después de confirmar/verificar: aprobada.
+  Las pruebas negativas incluyen políticas de otra serie y verificación con
+  huella obsoleta. Motor: 1.071 aprobadas y dos xfail; backend: 1.638 aprobadas,
+  más la nueva regresión de tarifa de ejemplo por serie; frontend: 1.134
+  aprobadas. Ruff, mypy, Django, ESLint, tipos, Prettier, build, lint SQL,
+  guardas y reproducción OpenAPI/orval aprobados. Goldens idénticos sin
+  regeneración. La integración completa y el CI siguen en curso.
+- El Database Gate de P01c detectó que la limpieza E2E intentaba borrar una
+  empresa con historia nueva inmutable. La fixture ahora comprueba el rechazo
+  y conserva esa empresa sintética hasta terminar la pila aislada; no se
+  debilitaron restricciones ni se tocó REVIEW.
+- Integración de compatibilidad: 47 pruebas de extras, terreno y medición,
+  33 de contexto RLS y la regresión del PDF térmico aprobadas. Las fixtures
+  separan ahora completitud técnica de cobertura de precios: una lista vacía
+  no autoriza cotizar. El caso térmico conserva sus comprobaciones de cálculo
+  y PDF inmutable como revisión comercial y comprueba expresamente que no
+  habilita fabricación sin verificar la serie. Reejecución completa en curso.
+- Doce integraciones de permisos y emisión aprobadas: una confirmación por
+  celda seguida de la verificación vigente sustituye una revisión antigua
+  marcada pendiente. La emisión conserva el diagnóstico anterior, pero decide
+  con MANUFACTURABLE y mantiene los controles físicos de fabricación y proceso.
+- La prueba DXF ejecuta también su lector secundario en UTF-8 explícito.
+  Así conserva «Ñ» en Windows aunque Python padre use otra configuración;
+  las dos regresiones de DXF y artefactos pasan sin cambiar el documento.
+- P01d quedó fusionada con los cuatro controles aprobados. En P01e, CI aprobó
+  1.514 aserciones pgTAP y 618 integraciones. El E2E detectó que el selector del
+  editor aún exigía QUOTABLE: ahora consulta DRAWABLE, sin convertir una serie
+  sin precios en cotizable. Las pruebas mantienen la negativa de precios y
+  comprueban que los perfiles incompletos siguen fuera del selector.
+- La ejecución local estable aprobó 15 de 16 E2E; el único fallo fue la carga
+  completa de Catálogo, que superó los 20 segundos. El perfilado halló 6.189
+  consultas para 51 versiones. La lista nueva `summary=true` conserva los
+  niveles v2 exactos sin repetir el diagnóstico antiguo de taller. Los mapeos
+  de compra se cargan en lote y las tarifas de ejemplo se indexan por serie/SKU
+  y se leen una vez por petición. El contrato por defecto y el detalle
+  mantienen el diagnóstico completo. Siete integraciones de resumen/niveles,
+  26 pruebas de precio y 24 unitarias de catálogo/onboarding aprobadas;
+  regresión E2E dirigida aprobada en 49,4 segundos con el límite original de
+  respuesta del catálogo. CI final de #168 pendiente.
+- El último gate aprobó 618 integraciones, pgTAP y 17 de 18 E2E. La prueba
+  de reapertura comparaba el resumen nuevo con el diagnóstico histórico de
+  la respuesta de edición. Ahora compara todos los campos persistidos, los
+  niveles v2 completos y el alias de cotización; mantiene las comprobaciones
+  de perfiles, junquillos, teclado, permisos y persistencia. CI reejecutado.

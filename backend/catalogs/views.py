@@ -40,6 +40,7 @@ from catalogs.serializers import (
     BeadListSerializer,
     BeadResponseSerializer,
     CatalogFilterSerializer,
+    SystemListFilterSerializer,
     KitListSerializer,
     KitResponseSerializer,
     SystemListSerializer,
@@ -136,17 +137,15 @@ class CatalogCollectionView(APIView):
 
     def get(self, request):
         with catalog_scope(request, roles=READ_ROLES) as org_id:
-            filters = _validated(CatalogFilterSerializer, request.query_params.dict())
-            if self.resource is service.SYSTEMS and filters:
-                raise contract_error(
-                    400,
-                    "catalog_validation_error",
-                    "catalogs.errors.validation",
-                )
+            filters = _validated(
+                SystemListFilterSerializer if self.resource is service.SYSTEMS else CatalogFilterSerializer,
+                request.query_params.dict(),
+            )
             rows = service.list_rows(
                 self.resource,
                 org_id,
                 filters.get("system_id"),
+                **({"summary": filters["summary"]} if self.resource is service.SYSTEMS else {}),
             )
             output = self.list_serializer({"items": rows}).data
         return Response(output)
@@ -242,7 +241,8 @@ def _endpoint_classes(name, resource, response_serializer, list_serializer):
     )
     detail = type(f"{name}DetailView", (CatalogDetailView,), attributes)
     filters = (
-        []
+        [OpenApiParameter("summary", OpenApiTypes.BOOL, OpenApiParameter.QUERY,
+            description="Exact v2 use levels without the deprecated workshop diagnostic ladder.")]
         if resource is service.SYSTEMS
         else [
             OpenApiParameter("system_id", OpenApiTypes.UUID, OpenApiParameter.QUERY),

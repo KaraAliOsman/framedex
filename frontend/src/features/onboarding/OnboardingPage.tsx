@@ -69,7 +69,7 @@ export function OnboardingPage(): JSX.Element {
     enabled: Boolean(orgId) && canWrite,
     queryFn: async ({ signal }) => {
       const [response, available] = await Promise.all([
-        catalogSystemList({ ...options, signal }),
+        catalogSystemList({ summary: true }, { ...options, signal }),
         engineSystems({ ...options, signal }),
       ]);
       if (response.status !== 200) throw new ApiError(response.status, response.data);

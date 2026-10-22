@@ -23,9 +23,12 @@ export interface PositionDocumentaryInputRequest {
    * @maxLength 120
    */
   location_tag: string;
-  manufacturing_placement_policy_id: string;
-  handle_requirement_policy_id: string;
-  reinforcement_cut_policy_id: string;
+  /** @nullable */
+  manufacturing_placement_policy_id: string | null;
+  /** @nullable */
+  handle_requirement_policy_id: string | null;
+  /** @nullable */
+  reinforcement_cut_policy_id: string | null;
   workshop_annotations: WorkshopAnnotationRequest[];
   structural_inputs: DocumentaryStructuralInputRequest[];
   glass_polishing: GlassPolishingRequest[];

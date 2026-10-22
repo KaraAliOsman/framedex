@@ -2160,3 +2160,47 @@ con las celdas actuales; el cálculo abatible de 1200 × 1100 conserva el mismo
 despiece después de confirmar los sugeridos. Lint SQL y 1.507 aserciones pgTAP
 aprobadas en la base aislada; niveles y bloqueos siguen pendientes. Referencias:
 [catálogo](product/catalog-authority.md), [estado](../dekopen2/ESTADO.md).
+
+## 2026-10-21 · DEKOPEN 2 P01e: permisos por dependencia y decisión emitida
+
+La rama `gpt/dk2-p01e-niveles-y-bloqueos` distingue dibujo, cotización,
+fabricación y máquina; los sugeridos permiten cotizar y exigen confirmación
+y verificación antes de salida física. La revisión comercial puede conservar
+inspección/políticas pendientes, sin fabricar valores de taller. OT y documentos
+leen esa decisión congelada. La integración PRO6004 sintética calcula precio,
+emite PDF y comprueba el bloqueo y la posterior optimización; faltan aún las
+comprobaciones completas y CI para cerrar la sub-PR. Véase
+[catálogo](product/catalog-authority.md) y [estado](../dekopen2/ESTADO.md).
+
+## 2026-10-21 · P01e: compatibilidad de revisión y cotización térmica
+
+En `gpt/dk2-p01e-niveles-y-bloqueos`, doce integraciones reales verifican que
+la confirmación por celda y la verificación vigente sustituyen la revisión
+antigua pendiente sin omitir fabricación ni proceso. Las 33 integraciones RLS
+comprueban el contrato aditivo y la falta de tarifas sin inventarlas. El PDF
+térmico conserva su prueba de inmutabilidad y confirma expresamente el bloqueo
+físico; revisar un informe térmico no verifica las reglas de la serie. Las
+sub-PR #165 y #166 se fusionaron con los cuatro controles aprobados. Continúa
+el cierre de #167 y #168 y la integración completa. Referencias:
+[catálogo](product/catalog-authority.md), [estado](../dekopen2/ESTADO.md).
+
+## 2026-10-21 · P01e: selección de series por capacidad de dibujo
+
+P01d #167 quedó fusionada con los cuatro controles aprobados. Database Gate
+de #168 aprobó 1.514 aserciones pgTAP y 618 integraciones; sus E2E detectaron
+la dependencia antigua entre selector y precios. El editor consulta DRAWABLE,
+con regresiones para series sin precios y perfiles incompletos. La cotización
+conserva su control independiente. Véase [catálogo](product/catalog-authority.md).
+
+## 2026-10-21 · P01e: descubrimiento de catálogo sin repetir diagnósticos
+
+El E2E local estable aprobó autenticación, emisión y los flujos de lienzo/editor;
+la apertura final de Catálogo excedió su límite de 20 segundos. El perfilado
+identificó 6.189 consultas para 51 versiones. `summary=true` conserva los niveles
+v2 exactos y deja el diagnóstico antiguo en el contrato por defecto/detalle.
+Las tarifas sintéticas se indexan por serie y SKU y se leen una vez por lista;
+los mapeos de compra se cargan en lote. Siete integraciones de niveles/resumen,
+26 pruebas de precios y 24 unitarias de catálogo/onboarding aprobadas. La
+regresión de navegador de proyectos pasa en 49,4 segundos con el límite
+original de carga de Catálogo; CI final de #168 pendiente.
+Véase [catálogo](product/catalog-authority.md).

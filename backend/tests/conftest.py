@@ -34,6 +34,25 @@ def legacy_glass_read_model(monkeypatch):
     monkeypatch.setattr(glass, "rows", read)
 
 
+@pytest.fixture
+def quotable_catalog_read_model(monkeypatch):
+    """Explicit catalog I/O boundary for pure cost-composition unit tests.
+
+    The real suggested-value, price and tenant gates run in integration tests.
+    These tests supply already resolved synthetic geometry and cost inputs.
+    """
+    from catalogs import use_levels
+
+    def require(org_id, system_id, level, **kwargs):
+        assert level == "QUOTABLE"
+        assert kwargs["priced"] and kwargs["result"] is not None
+        return {"level": "QUOTABLE", "levels": [{"level": level, "ok": True, "pending": []}],
+            "pending": [], "suggested_count": 0, "verified": False, "is_example": True,
+            "scope": "PRICED_POSITION"}
+
+    monkeypatch.setattr(use_levels, "require_use", require)
+
+
 @pytest.fixture(autouse=True)
 def _stub_branding(monkeypatch):
     monkeypatch.setattr(

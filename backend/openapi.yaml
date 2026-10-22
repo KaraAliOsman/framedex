@@ -7258,6 +7258,12 @@ paths:
           format: uuid
         description: Active organization; validated against the JWT user's active
           memberships.
+      - in: query
+        name: summary
+        schema:
+          type: boolean
+        description: Exact v2 use levels without the deprecated workshop diagnostic
+          ladder.
       tags:
       - catalogs
       security:
@@ -30076,6 +30082,38 @@ components:
         * `MANUAL` - MANUAL
         * `WORKSHOP` - WORKSHOP
         * `SUGGESTED` - SUGGESTED
+    CatalogPending:
+      type: object
+      properties:
+        field:
+          type: string
+        rule:
+          type: string
+        origin:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/CatalogOriginEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        action:
+          type: string
+        required_for:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatalogUseLevelEnum'
+        resource:
+          type: string
+        row_id:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+      - action
+      - field
+      - origin
+      - required_for
+      - resource
+      - row_id
+      - rule
     CatalogProfileRoleEnum:
       enum:
       - FRAME
@@ -30142,6 +30180,8 @@ components:
           nullable: true
         quote_ready:
           type: boolean
+          description: Compatibility alias for usage.levels[QUOTABLE].ok.
+          deprecated: true
         scope:
           type: string
         reasons:
@@ -30268,6 +30308,66 @@ components:
           type: boolean
       required:
       - confirmed
+    CatalogUse:
+      type: object
+      properties:
+        level:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/CatalogUseLevelEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        levels:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatalogUseCapability'
+        pending:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatalogPending'
+        suggested_count:
+          type: integer
+          minimum: 0
+        verified:
+          type: boolean
+        is_example:
+          type: boolean
+        scope:
+          type: string
+      required:
+      - is_example
+      - level
+      - levels
+      - pending
+      - scope
+      - suggested_count
+      - verified
+    CatalogUseCapability:
+      type: object
+      properties:
+        level:
+          $ref: '#/components/schemas/CatalogUseLevelEnum'
+        ok:
+          type: boolean
+        pending:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatalogPending'
+      required:
+      - level
+      - ok
+      - pending
+    CatalogUseLevelEnum:
+      enum:
+      - DRAWABLE
+      - QUOTABLE
+      - MANUFACTURABLE
+      - MACHINE_READY
+      type: string
+      description: |-
+        * `DRAWABLE` - DRAWABLE
+        * `QUOTABLE` - QUOTABLE
+        * `MANUFACTURABLE` - MANUFACTURABLE
+        * `MACHINE_READY` - MACHINE_READY
     CategoryEnum:
       enum:
       - HANDLE
@@ -44745,12 +44845,15 @@ components:
         manufacturing_placement_policy_id:
           type: string
           format: uuid
+          nullable: true
         handle_requirement_policy_id:
           type: string
           format: uuid
+          nullable: true
         reinforcement_cut_policy_id:
           type: string
           format: uuid
+          nullable: true
         workshop_annotations:
           type: array
           items:
@@ -46121,10 +46224,16 @@ components:
           type: boolean
         quote_ready:
           type: boolean
+          description: Compatibility alias for usage.levels[QUOTABLE].ok.
+          deprecated: true
         readiness_reasons:
           type: array
           items:
             type: string
+        usage:
+          allOf:
+          - $ref: '#/components/schemas/CatalogUse'
+          nullable: true
       required:
       - code
       - id
@@ -48992,6 +49101,8 @@ components:
           type: string
         setup:
           $ref: '#/components/schemas/SeriesSetup'
+        usage:
+          $ref: '#/components/schemas/CatalogUse'
         tabs:
           $ref: '#/components/schemas/SeriesTabs'
         cells:
@@ -49004,6 +49115,7 @@ components:
       - revision
       - setup
       - tabs
+      - usage
     SeriesTabs:
       type: object
       properties:
@@ -50220,10 +50332,16 @@ components:
           type: string
           format: uuid
           nullable: true
+        usage:
+          allOf:
+          - $ref: '#/components/schemas/CatalogUse'
+          readOnly: true
+          nullable: true
         readiness:
           allOf:
           - $ref: '#/components/schemas/CatalogReadiness'
           readOnly: true
+          deprecated: true
         revision:
           type: string
           readOnly: true
@@ -50263,6 +50381,7 @@ components:
       - system_family
       - technical_reviewed_at
       - technical_reviewed_by
+      - usage
       - version
     SystemWorkspace:
       type: object

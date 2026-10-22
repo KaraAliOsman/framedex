@@ -28,7 +28,7 @@ def manufacturing_review_gate(system_id, org_id, *, consumed=None):
 
 
 def catalog_authority_gate(*, system_id, org_id, params, process_facts,
-                           profile_skus=None, hardware_skus=None, panel_skus=None):
+                           profile_skus=None, hardware_skus=None, panel_skus=None, usage=None):
     """The catalog and emission share this predicate, with explicit scopes.
 
     A sealed decision is self-contained: release uses it and the sealed process
@@ -38,6 +38,12 @@ def catalog_authority_gate(*, system_id, org_id, params, process_facts,
     review = manufacturing_review_gate(system_id, org_id, consumed=consumed)
     fabrication = fabrication_authority_gate(params, profile_skus=profile_skus, hardware_skus=hardware_skus)
     process = process_authority_gate(process_facts)
+    # New issues use the exact confirmed cells and verification fingerprint.
+    # The row-wide legacy review remains diagnostic; it cannot veto a newer
+    # complete review. Physical fabrication/process checks still apply.
+    reviewed = review["ok"] if usage is None else next(
+        level["ok"] for level in usage["levels"] if level["level"] == "MANUFACTURABLE")
     return {"scope": "CATALOG_COVERAGE" if consumed is None else "CONSUMED_POSITION",
         "review": review, "fabrication": fabrication, "process": process,
-        "ok": review["ok"] and fabrication["ok"] and process["ok"]}
+        "ok": reviewed and fabrication["ok"] and process["ok"],
+        **({"usage": usage} if usage is not None else {})}

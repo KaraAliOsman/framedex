@@ -1,5 +1,6 @@
 """Resolved commercial authorities inside verified, transaction-local RLS."""
 
+from collections import defaultdict
 from contextlib import contextmanager
 from datetime import date
 from decimal import Decimal
@@ -8,7 +9,7 @@ from uuid import UUID
 
 from django.db import connection, DatabaseError
 
-from authentication.rls import tx_aborted
+from authentication.rls import authenticated_read, tx_aborted
 from psycopg import sql
 
 from dekopen_engine.commercial import PricingError, convert_cost
@@ -44,6 +45,34 @@ def one(query, parameters=(), code='authority_not_found'):
     if len(result) != 1:
         raise PricingError('ambiguous_authority' if result else code)
     return result[0]
+
+
+def demo_cost_rows():
+    """Synthetic prices also resolve the demo's declared purchase identities.
+
+    Copy the existing exact price; never derive a rate from a code prefix or
+    extend a workshop mapping into the platform's example price list.
+    """
+    prices = rows('SELECT p.* FROM public.catalog_demo_prices p JOIN public.profile_systems s ON s.id=p.system_id '
+        'WHERE p.org_id IS NULL AND p.is_demo AND s.is_demo AND s.is_global AND s.is_active')
+    with authenticated_read():
+        aliases = rows('SELECT a.system_id,a.sku,m.commercial_sku FROM public.profile_articles a '
+            'JOIN public.profile_systems s ON s.id=a.system_id JOIN public.profile_purchase_mappings m ON m.profile_article_id=a.id '
+            'WHERE s.org_id IS NULL AND s.is_global AND s.is_demo AND s.is_active AND a.org_id IS NULL AND m.org_id IS NULL AND m.is_active '
+            'UNION SELECT r.system_id,r.sku,r.commercial_sku FROM public.reinforcement_articles r JOIN public.profile_systems s ON s.id=r.system_id '
+            'WHERE s.org_id IS NULL AND s.is_global AND s.is_demo AND s.is_active AND r.org_id IS NULL AND r.is_active')
+    direct = {item['sku'] for item in prices}
+    output = {(item['sku'], str(item['id'])): item for item in prices}
+    by_series_sku = defaultdict(list)
+    for price in prices:
+        by_series_sku[(price['system_id'], price['sku'])].append(price)
+    for alias in aliases:
+        if alias['commercial_sku'] in direct:
+            continue
+        for price in by_series_sku[(alias['system_id'], alias['sku'])]:
+            copied = {**price, 'sku': alias['commercial_sku']}
+            output[(copied['sku'], str(copied['id']))] = copied
+    return list(output.values())
 
 
 def audit_reason(reason: str):
@@ -137,11 +166,8 @@ class PricingRepository:
             'AND (l.valid_to IS NULL OR l.valid_to>=%s) ORDER BY l.valid_from DESC',
             [self.org_id,sku,self.effective_date,self.effective_date])
         if not candidates:
-            demo = self._demo_candidates.get(sku, []) if self.financial is not None else self._rows(
-                'SELECT p.id,p.sku,p.unit,p.unit_cost,p.currency,p.system_id,p.is_demo,p.seed,p.source '
-                'FROM public.catalog_demo_prices p JOIN public.profile_systems s ON s.id=p.system_id '
-                'WHERE p.sku=%s AND p.org_id IS NULL AND p.is_demo AND s.is_demo AND s.is_global '
-                'AND s.is_active', [sku])
+            demo = self._demo_candidates.get(sku, []) if self.financial is not None else [
+                item for item in demo_cost_rows() if item['sku'] == sku]
             if not demo:
                 raise PricingError('cost_list_not_found')
             if len(demo) != 1:

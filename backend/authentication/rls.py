@@ -55,6 +55,23 @@ def _current_role_and_claims(cursor) -> tuple[str, str | None, str | None]:
 
 
 @contextmanager
+def authenticated_read() -> Iterator[None]:
+    """Read member-visible technical facts inside another backend role."""
+    if connection.vendor != "postgresql":
+        yield
+        return
+    with connection.cursor() as cursor:
+        previous_role, _, _ = _current_role_and_claims(cursor)
+        cursor.execute("SET LOCAL ROLE authenticated")
+    try:
+        yield
+    finally:
+        if not tx_aborted():
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT set_config('role', %s, true)", [previous_role])
+
+
+@contextmanager
 def catalog_backend() -> Iterator[None]:
     """Catalog writes run under the dedicated backend role: member-facing
     `authenticated` holds only column-wise grants over the writable fields, so

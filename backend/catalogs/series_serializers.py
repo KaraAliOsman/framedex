@@ -9,6 +9,7 @@ from catalogs.serializers import (
     PurchaseMappingRowSerializer, ReinforcementRowSerializer,
 )
 from pricing.serializers import StrictSerializer
+from catalogs.use_serializers import CatalogUseSerializer
 
 RESOURCES = ("systems", "articles", "glazing", "hardware-kits")
 
@@ -141,6 +142,7 @@ class SeriesSheetSerializer(serializers.Serializer):
     id = serializers.UUIDField()
     revision = serializers.CharField()
     setup = SeriesSetupSerializer()
+    usage = CatalogUseSerializer()
     tabs = SeriesTabsSerializer()
     cells = SeriesCellSerializer(many=True)
 

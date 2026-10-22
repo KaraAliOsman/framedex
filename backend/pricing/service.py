@@ -8,7 +8,7 @@ import json
 from django.db import connection
 
 from authentication.errors import contract_error
-from authentication.rls import tx_aborted
+from authentication.rls import authenticated_read, tx_aborted
 from dekopen_engine.commercial import (
     CommercialLine, PricingError, PricingMode, direct_cost, discount_state,
     finish_lines, target_project, unit_price, validate_segment,
@@ -325,6 +325,12 @@ def position_cost(repo, position, rules):
                  'labor_rate_per_m2':str(rules['labor_rate_per_m2']),
                  'installation_rate_per_m2':str(installation),
                  'area_m2':str(area)}
+    if not getattr(repo, 'frozen', False):
+        from catalogs.use_levels import require_use
+        with authenticated_read():
+            usage = require_use(repo.org_id, position['system_id'], 'QUOTABLE',
+                params=params, result=result, priced=True, effective_date=repo.effective_date)
+            formation['catalog_use'] = usage
     return total, area, result, formation
 
 

@@ -10,6 +10,10 @@ import type { ReadinessLevel } from "./readinessLevel";
 export interface CatalogReadiness {
   state?: string;
   authority_gate?: unknown | null;
+  /**
+   * Compatibility alias for usage.levels[QUOTABLE].ok.
+   * @deprecated
+   */
   quote_ready: boolean;
   scope: string;
   reasons: string[];

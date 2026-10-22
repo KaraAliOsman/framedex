@@ -78,7 +78,8 @@ class EngineSystemsView(APIView):
             for system in systems:
                 readiness = catalog_readiness(system.id, tenant.active_organization.organization_id)
                 items.append({**system.public_dict(), "quote_ready": readiness["quote_ready"],
-                              "readiness_reasons": readiness["reasons"]})
+                              "readiness_reasons": readiness["reasons"],
+                              **({"usage": readiness["usage"]} if "usage" in readiness else {})})
 
         return Response(
             {"systems": items},

@@ -93,6 +93,15 @@ function system(): SystemResponse {
     is_global: true,
     system_family: null,
     is_demo: true,
+    usage: {
+      level: "QUOTABLE",
+      levels: [{ level: "QUOTABLE", ok: true, pending: [] }],
+      pending: [],
+      suggested_count: 0,
+      verified: false,
+      is_example: true,
+      scope: "SERIES",
+    },
     readiness: { quote_ready: true, scope: "WHITE_FIXED_CATALOG", reasons: [] },
     revision: REVISION,
     ...PROVENANCE,
@@ -328,10 +337,10 @@ describe("CatalogPage client permissions", () => {
       await mount();
 
       expect(button("catalog.newSystem")).toBeEnabled();
-      expect(client.catalogSystemList).toHaveBeenCalledWith({
-        headers: { "X-Organization-ID": identity.id },
-        signal: expect.any(AbortSignal),
-      });
+      expect(client.catalogSystemList).toHaveBeenCalledWith(
+        { summary: true },
+        { headers: { "X-Organization-ID": identity.id }, signal: expect.any(AbortSignal) },
+      );
       for (const request of [
         client.catalogArticleList,
         client.catalogBeadList,

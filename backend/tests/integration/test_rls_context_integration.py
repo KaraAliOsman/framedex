@@ -461,25 +461,52 @@ def test_engine_system_discovery_is_rls_visible_and_deterministic(
     assert response.status_code == 200
     systems = response.json()["systems"]
     demo = next(system for system in systems if system["code"] == "DEMO_60")
+    usage = demo["usage"]
     assert demo == {
         "id": str(real_rows.global_systems["DEMO_60"]),
         "code": "DEMO_60",
         "name": "PVC practicable 60 mm · acoples v7 · DEMO",
         "is_demo": True,
         "system_family": "CASEMENT",
-        "quote_ready": True,
+        # This tenant has a cost list but no rates. A complete synthetic
+        # example remains drawable/manufacturable without inventing prices.
+        "quote_ready": False,
         "readiness_reasons": [],
+        "usage": usage,
     }
+    assert {key: value for key, value in usage.items() if key not in {"levels", "pending"}} == {
+        "level": "MACHINE_READY", "suggested_count": 0, "verified": False,
+        "is_example": True, "scope": "SERIES",
+    }
+    assert [(level["level"], level["ok"]) for level in usage["levels"]] == [
+        ("DRAWABLE", True), ("QUOTABLE", False),
+        ("MANUFACTURABLE", True), ("MACHINE_READY", True),
+    ]
+    assert all(set(level) == {"level", "ok", "pending"} for level in usage["levels"])
+    assert usage["pending"] == usage["levels"][1]["pending"]
+    assert usage["pending"]
+    for pending in usage["pending"]:
+        assert set(pending) == {"field", "rule", "origin", "action", "required_for", "resource", "row_id"}
+        assert pending["field"] == "prices" and pending["rule"] and pending["action"]
+        assert pending["required_for"] == ["QUOTABLE"]
+        assert pending["origin"] is None and pending["resource"] == "systems"
+        assert pending["row_id"] == demo["id"]
+    assert all(not level["pending"] for level in usage["levels"] if level["ok"])
     assert {system["id"] for system in systems} == {
         *(str(row_id) for row_id in real_rows.global_systems.values()),
         str(real_rows.systems[tenant]),
     }
     assert all(set(system) == {
-        "id", "code", "name", "is_demo", "quote_ready", "readiness_reasons", "system_family",
+        "id", "code", "name", "is_demo", "quote_ready", "readiness_reasons", "system_family", "usage",
     } for system in systems)
+    assert all(system["quote_ready"] == next(
+        level["ok"] for level in system["usage"]["levels"] if level["level"] == "QUOTABLE"
+    ) for system in systems)
     own = next(system for system in systems if system["id"] == str(real_rows.systems[tenant]))
     assert own["quote_ready"] is False
     assert own["readiness_reasons"]
+    assert own["usage"]["level"] == "DRAWABLE"
+    assert own["usage"]["is_example"] is False
     assert_no_context()
 
 

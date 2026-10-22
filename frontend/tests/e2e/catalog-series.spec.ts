@@ -363,7 +363,12 @@ test("manager creates, updates and reopens a synthetic series and bead compatibi
 
   // Full navigation discards the catalog component's in-memory records.
   const reopened = await loadCatalog(page);
-  expect(reopened.systems.find((row) => row.id === system.id)).toEqual(system);
+  const reopenedSystem = reopened.systems.find((row) => row.id === system.id)!;
+  // The list intentionally returns the v2 summary, while mutations return the
+  // full historical diagnosis. Persisted fields and current use levels agree.
+  expect({ ...reopenedSystem, readiness: system.readiness }).toEqual(system);
+  expect(reopenedSystem.readiness?.quote_ready).toBe(system.readiness?.quote_ready);
+  expect(reopenedSystem.usage).toEqual(system.usage);
   expect(reopened.articles.find((row) => row.id === article.id)).toEqual(article);
   expect(reopened.glazing.find((row) => row.id === bead.id)).toEqual(bead);
 

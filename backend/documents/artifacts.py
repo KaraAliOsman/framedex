@@ -148,7 +148,11 @@ def generate_artifact(
             version, frozen_revision = _revision_snapshot(project_version_id, org_id)
             if document_type in ("DOC-02", "DOC-03", "DOC-04", "DOC-05", "DOC-06", "DOC-08"):
                 if version.get("production_allowed") is not True:
-                    raise DocumentaryError("production_document_blocked")
+                    from catalogs.frozen_use import manufacturing_pending
+                    pending = manufacturing_pending(frozen_revision)
+                    raise DocumentaryError("production_document_blocked",
+                        detail="Completa los pendientes de fabricación y vuelve a emitir la revisión.",
+                        extra={"required_level": "MANUFACTURABLE", "pending": pending})
                 if version.get("documentary_complete") is not True:
                     raise DocumentaryError("manufacturing_document_incomplete")
             order: dict[str, object] | None = None

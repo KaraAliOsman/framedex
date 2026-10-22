@@ -57,6 +57,8 @@ def _execute(request: Request, *, inspection: bool) -> Response:
             arguments["params"] = params
             stocks = CuttingRepository()
             if not inspection:
+                from catalogs.use_levels import require_use
+                require_use(org_id, system_id, "MANUFACTURABLE", params=params)
                 result = calculate_from_api(**arguments)
                 authorities = stocks.for_result(result, system_id, org_id, data["color"])
                 pieces = pieces_from_result(result, color=data["color"],

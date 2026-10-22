@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { environment } from "./support/environment";
 import * as OTPAuth from "otpauth";
+import type { ProfileSystemSummary } from "../../src/api/generated/models";
 
 const supabase = environment("SUPABASE_URL")!;
 const service = environment("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -62,9 +63,12 @@ test.beforeAll(async () => {
   const systems = await fetch(`${backend}/api/v1/engine/systems/`, { headers });
   expect(systems.ok).toBeTruthy();
   const available = (await systems.json()).systems.filter(
-    (item: { code: string; quote_ready: boolean }) => item.code === "DEMO_60" && item.quote_ready,
+    (item: ProfileSystemSummary) =>
+      item.code === "DEMO_60" &&
+      item.usage?.levels.some((level) => level.level === "DRAWABLE" && level.ok),
   );
   expect(available).toHaveLength(1);
+  expect(available[0].quote_ready).toBe(false);
   systemId = available[0].id;
   // Commercial writes go through an OWNER with actual MFA and audit reasons.
   const ownerEmail = `editor-owner-${crypto.randomUUID()}@example.invalid`;

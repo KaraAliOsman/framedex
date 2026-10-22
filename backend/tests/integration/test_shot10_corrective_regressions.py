@@ -500,7 +500,11 @@ def test_backend_readiness_excludes_incomplete_system(documentary_tenant):
         assert readiness["reasons"] == ["manufacturing"]
         assert not catalog_readiness(system, other)["quote_ready"]
         demo = one("SELECT id FROM public.profile_systems WHERE code='DEMO_60' AND version=1")["id"]
-        assert catalog_readiness(demo, org)["quote_ready"]
+        demo_readiness = catalog_readiness(demo, org)
+        # v1 has no declared prices. Technical readiness cannot supply them.
+        assert not demo_readiness["quote_ready"]
+        quotable = next(item for item in demo_readiness["usage"]["levels"] if item["level"] == "QUOTABLE")
+        assert quotable["pending"] and all(item["field"] == "prices" for item in quotable["pending"])
 
 
 @pytest.mark.parametrize("coverage", ["NONE_REQUIRED", "DECLARED"])
@@ -709,7 +713,7 @@ def test_reviewed_catalog_edit_reopens_readiness(documentary_tenant):
 
 def test_readiness_levels_report_exact_blockers(documentary_tenant):
     """§E: the levels ladder names the missing authority, what it affects and
-    the action that resolves it — quote_ready keeps its legacy contract."""
+    the action that resolves it; quote_ready aliases price-aware QUOTABLE."""
     from catalogs.readiness import catalog_readiness
     org, _, users, _ = documentary_tenant
     demo = one("SELECT id FROM public.profile_systems WHERE code='DEMO_60' AND version=1")["id"]
@@ -729,8 +733,10 @@ def test_readiness_levels_report_exact_blockers(documentary_tenant):
     assert blocker["why"]
     assert blocker["action"]
     assert readiness["process_via"] is not None
-    # quote_ready must not absorb the new production/CNC blockers.
-    assert readiness["quote_ready"] is True
+    # The old diagnostic ladder remains; the alias now requires actual prices.
+    assert readiness["quote_ready"] is False
+    quotable = next(item for item in readiness["usage"]["levels"] if item["level"] == "QUOTABLE")
+    assert quotable["pending"] and all(item["field"] == "prices" for item in quotable["pending"])
 
     with as_user(users["WORKSHOP_MANAGER"]), documentary_backend():
         for code, name, kind, order in (

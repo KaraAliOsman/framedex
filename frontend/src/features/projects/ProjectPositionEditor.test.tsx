@@ -1045,7 +1045,7 @@ it("refuses generic FOILED canvas state at the persisted project boundary", asyn
   expect(create).not.toHaveBeenCalled();
 });
 
-it("does not offer FOILED or a catalog the backend marks incomplete", async () => {
+it("offers drawable series without prices and excludes incomplete profiles", async () => {
   vi.mocked(engineSystems).mockResolvedValue(
     ok({
       systems: [
@@ -1062,11 +1062,38 @@ it("does not offer FOILED or a catalog the backend marks incomplete", async () =
         {
           id: "system-b",
           code: "B",
-          name: "Incomplete system",
+          name: "Serie sin precios",
           system_id: "3067da09-3119-5ad0-a1d5-498cd2dfd753",
           system_family: null,
           is_demo: false,
           quote_ready: false,
+          usage: {
+            level: "DRAWABLE",
+            levels: [{ level: "DRAWABLE", ok: true, pending: [] }],
+            pending: [],
+            suggested_count: 0,
+            verified: false,
+            is_example: false,
+            scope: "SERIES",
+          },
+          readiness_reasons: ["prices"],
+        },
+        {
+          id: "system-c",
+          code: "C",
+          name: "Incomplete system",
+          system_family: null,
+          is_demo: false,
+          quote_ready: false,
+          usage: {
+            level: null,
+            levels: [{ level: "DRAWABLE", ok: false, pending: [] }],
+            pending: [],
+            suggested_count: 0,
+            verified: false,
+            is_example: false,
+            scope: "SERIES",
+          },
           readiness_reasons: ["manufacturing"],
         },
       ],
@@ -1074,7 +1101,9 @@ it("does not offer FOILED or a catalog the backend marks incomplete", async () =
   );
   mount();
   await ready();
+  fireEvent.click(document.querySelector<HTMLButtonElement>(".editor-system-chip")!);
   expect(screen.queryByRole("option", { name: /FOILED|Foliado/ })).not.toBeInTheDocument();
+  expect(screen.getByRole("option", { name: "Serie sin precios" })).toBeInTheDocument();
   expect(screen.queryByRole("option", { name: "Incomplete system" })).not.toBeInTheDocument();
 });
 

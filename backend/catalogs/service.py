@@ -167,7 +167,7 @@ def _visibility(resource):
     return visibility_sql(child=resource is not SYSTEMS)
 
 
-def list_rows(resource, org_id, system_id=None):
+def list_rows(resource, org_id, system_id=None, *, summary=False):
     where = _visibility(resource)
     params = [org_id]
     if system_id is not None:
@@ -176,8 +176,19 @@ def list_rows(resource, org_id, system_id=None):
     values = _fetch(resource, where, params, org_id=org_id)
     if resource is SYSTEMS:
         from catalogs.readiness import catalog_readiness
+        if summary:
+            from pricing.repository import commercial_backend, demo_cost_rows
+            with commercial_backend():
+                demo_prices = demo_cost_rows()
         for value in values:
-            value["readiness"] = catalog_readiness(value["id"], org_id)
+            if summary:
+                from catalogs.use_levels import series_use
+                usage = series_use(org_id, value["id"], demo_prices=demo_prices)
+                quoted = next(item for item in usage["levels"] if item["level"] == "QUOTABLE")
+                value["readiness"] = {"usage": usage, "quote_ready": quoted["ok"], "scope": "SERIES",
+                    "reasons": list(dict.fromkeys(item["rule"] for item in quoted["pending"]))}
+            else:
+                value["readiness"] = catalog_readiness(value["id"], org_id)
     return values
 
 

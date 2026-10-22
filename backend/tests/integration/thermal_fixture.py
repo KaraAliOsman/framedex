@@ -172,4 +172,7 @@ def freeze_reviewed_case(org,actor,project,position):
                     ("handle_requirement_policy_id","handle_options"),("reinforcement_cut_policy_id","reinforcement_options")):
                     item[field]=source[options][0]["id"]
             save_documentary_inputs(org_id=org,actor_id=actor,project_id=project,data=data)
-        return freeze_revision_a(org_id=org,actor_id=actor,project_id=project,pricing_operation_id=UUID(operation["id"]),confirmed=True)
+        # Reviewed thermal evidence does not verify manufacturing rules. This
+        # fixture exercises a commercial PDF and retains those physical gaps.
+        return freeze_revision_a(org_id=org,actor_id=actor,project_id=project,
+            pricing_operation_id=UUID(operation["id"]),confirmed=True,allow_incomplete_workshop=True)

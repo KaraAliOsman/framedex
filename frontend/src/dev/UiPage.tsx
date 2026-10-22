@@ -167,7 +167,10 @@ function Manual(): JSX.Element {
     queryKey: ["ui-manual-systems", orgId],
     enabled: Boolean(orgId),
     queryFn: async ({ signal }) => {
-      const response = await catalogSystemList({ signal, headers: { "X-Organization-ID": orgId } });
+      const response = await catalogSystemList(
+        { summary: true },
+        { signal, headers: { "X-Organization-ID": orgId } },
+      );
       if (response.status !== 200) throw new ApiError(response.status, response.data);
       return response.data.items;
     },

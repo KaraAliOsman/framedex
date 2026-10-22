@@ -7,6 +7,7 @@
  */
 import type { AuthorityProvenance } from "./authorityProvenance";
 import type { CatalogReadiness } from "./catalogReadiness";
+import type { CatalogUse } from "./catalogUse";
 import type { DataProvenanceEnum } from "./dataProvenanceEnum";
 import type { FinishAuthority } from "./finishAuthority";
 import type { MaterialEnum } from "./materialEnum";
@@ -131,6 +132,8 @@ export interface SystemResponse {
   finishes?: string[];
   /** @nullable */
   process_profile_id?: string | null;
+  readonly usage: CatalogUse | null;
+  /** @deprecated */
   readonly readiness: CatalogReadiness;
   readonly revision: string;
   read_only: boolean;
