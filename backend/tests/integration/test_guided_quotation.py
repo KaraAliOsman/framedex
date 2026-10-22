@@ -294,7 +294,11 @@ def test_deadline_is_shared_by_portal_and_mail_and_regeneration_is_idempotent(
     with as_user(owner):
         follow_up = quotation_rows(org)
         assert follow_up[0]["expires_at"] < datetime.now(timezone.utc)
-        assert quote_public(follow_up[0], datetime.now(timezone.utc).date())["state"] == "link_expired"
+        # A DOCUMENT link embedded in an unsent PDF is not proof of sharing.
+        # Its deadline still gates portal and mail, independently of follow-up.
+        assert follow_up[0]["shared_at"] is None
+        assert follow_up[0]["view_count"] in (None, 0)
+        assert quote_public(follow_up[0], datetime.now(timezone.utc).date())["state"] == "unshared"
         assert follow_up[0]["id"] == project
     with (
         pytest.raises(DocumentaryError, match="quote_expired"),
