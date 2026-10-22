@@ -8,6 +8,7 @@ import {
   catalogImportUndo,
   catalogImportsCreate,
   catalogImportsList,
+  catalogImportGet,
   catalogTemplateSchema,
 } from "../../api/generated/dekopen";
 import type {
@@ -37,26 +38,13 @@ import type { FinishAuthority } from "../../api/generated/models";
 import { physicalLabel, type Capability } from "../canvas/physicalOpenings";
 import { SourceHighlight } from "./CatalogProvenance";
 import { ImportedSectionFields } from "./ImportedSectionFields";
-
-type Evidence = {
-  ref?: string;
-  quote?: string;
-  literal?: string;
-  confidence?: string;
-  proposed?: unknown;
-};
-type ReviewRow = {
-  key: string;
-  sheet: string;
-  row: number;
-  method: string;
-  confidence: string;
-  include: boolean;
-  values: Record<string, unknown>;
-  fields: Record<string, Evidence>;
-  errors: Array<{ field: string; message: string }>;
-  warnings: string[];
-};
+import { CatalogDoubleReadReview } from "./CatalogDoubleReadReview";
+import {
+  hasDoubleReading,
+  unresolvedReadFields,
+  type CatalogEvidence as Evidence,
+  type CatalogReviewRow as ReviewRow,
+} from "./catalogDoubleReadModel";
 const STATUS: Record<string, string> = {
   UPLOADED: "En cola",
   EXTRACTING: "Analizando referencia",
@@ -142,7 +130,7 @@ function display(value: unknown, column?: CatalogTemplateColumn, field?: string)
     return fmtMm(String(value));
   return String(value);
 }
-function typedRow(raw: Record<string, unknown>): ReviewRow | null {
+function typedRow(raw: Record<string, unknown>, systemCode?: string): ReviewRow | null {
   if (!raw.sheet || !raw.values || typeof raw.values !== "object") return null;
   return {
     key: String(raw.key),
@@ -154,7 +142,9 @@ function typedRow(raw: Record<string, unknown>): ReviewRow | null {
     fields: (raw.fields ?? {}) as ReviewRow["fields"],
     errors: (raw.errors ?? []) as ReviewRow["errors"],
     warnings: (raw.warnings ?? []) as string[],
+    double_read: raw.double_read as ReviewRow["double_read"],
     include:
+      (!systemCode || (raw.values as Record<string, unknown>).system_code === systemCode) &&
       raw.confidence === "HIGH_CANDIDATE" &&
       !Object.values((raw.fields ?? {}) as Record<string, Evidence>).some(
         (field) => field.confidence === "LOW",
@@ -166,16 +156,29 @@ export function CatalogImportsPanel({
   canWrite,
   onConfirmed,
   onExpandedChange,
+  initialImportId,
+  reviewOnly = false,
+  setup,
 }: {
   orgId: string;
   canWrite: boolean;
   systems: Array<{ id: string; name: string; code: string }>;
   onConfirmed?: () => void;
   onExpandedChange?: (expanded: boolean) => void;
+  initialImportId?: string;
+  reviewOnly?: boolean;
+  setup?: {
+    systemCode: string;
+    onImport: (id: string) => void;
+    onBusyChange: (busy: boolean) => void;
+    onDirtyChange: (dirty: boolean) => void;
+  };
 }): JSX.Element {
   const confirm = useConfirm();
-  const requestedImport = useRef(new URLSearchParams(window.location.search).get("import"));
-  const [expanded, setExpanded] = useState(!!requestedImport.current);
+  const requestedImport = useRef(
+    initialImportId ?? new URLSearchParams(window.location.search).get("import"),
+  );
+  const [expanded, setExpanded] = useState(!!requestedImport.current || !!setup);
   useEffect(() => onExpandedChange?.(expanded), [expanded, onExpandedChange]);
   const [imports, setImports] = useState<CatalogImportResponse[]>([]);
   const [sheets, setSheets] = useState<CatalogTemplateSheet[]>([]);
@@ -187,6 +190,7 @@ export function CatalogImportsPanel({
   const [rows, setRows] = useState<ReviewRow[]>([]);
   const [sheetName, setSheetName] = useState("Sistemas");
   const [rowKey, setRowKey] = useState("");
+  const [reviewView, setReviewView] = useState<"differences" | "all">("differences");
   const [diff, setDiff] = useState<CatalogReviewResponse | null>(null);
   const [reviewed, setReviewed] = useState(false);
   const [dirty, setDirty] = useState(false);
@@ -198,6 +202,10 @@ export function CatalogImportsPanel({
   const generation = useRef(0);
   const fileInput = useRef<HTMLInputElement>(null);
   const options = { headers: { "X-Organization-ID": orgId } };
+  const setupBusy = setup?.onBusyChange;
+  const setupDirty = setup?.onDirtyChange;
+  useEffect(() => setupBusy?.(busy), [busy, setupBusy]);
+  useEffect(() => setupDirty?.(dirty || !!paste.trim()), [dirty, paste, setupDirty]);
   useEffect(() => {
     mounted.current = true;
     return () => {
@@ -208,15 +216,24 @@ export function CatalogImportsPanel({
     const version = ++generation.current;
     setLoading(true);
     try {
-      const response = await catalogImportsList({ headers: { "X-Organization-ID": orgId } });
-      if (response.status !== 200) throw new ApiError(response.status, response.data);
-      if (mounted.current && version === generation.current) setImports(response.data.imports);
+      const requestOptions = { headers: { "X-Organization-ID": orgId } };
+      let entries: CatalogImportResponse[];
+      if (reviewOnly && initialImportId) {
+        const response = await catalogImportGet(initialImportId, requestOptions);
+        if (response.status !== 200) throw new ApiError(response.status, response.data);
+        entries = [response.data.import];
+      } else {
+        const response = await catalogImportsList(requestOptions);
+        if (response.status !== 200) throw new ApiError(response.status, response.data);
+        entries = response.data.imports;
+      }
+      if (mounted.current && version === generation.current) setImports(entries);
     } catch (error) {
       if (mounted.current && version === generation.current) setMessage(errorText(error));
     } finally {
       if (mounted.current && version === generation.current) setLoading(false);
     }
-  }, [orgId]);
+  }, [orgId, initialImportId, reviewOnly]);
   useEffect(() => {
     if (!expanded) return;
     void load();
@@ -241,10 +258,10 @@ export function CatalogImportsPanel({
   }, [imports, load]);
   useEffect(() => {
     const wanted = imports.find((item) => item.id === requestedImport.current);
-    if (wanted) {
+    if (wanted && !["UPLOADED", "EXTRACTING"].includes(wanted.status)) {
       requestedImport.current = null;
       const candidates = wanted.candidates
-        .map(typedRow)
+        .map((raw) => typedRow(raw, setup?.systemCode))
         .filter((row): row is ReviewRow => row !== null);
       setReviewId(wanted.id);
       setRows(candidates);
@@ -252,7 +269,7 @@ export function CatalogImportsPanel({
       setRowKey(candidates[0]?.key ?? "");
     }
     // A deep link opens once; subsequent list refreshes preserve local edits.
-  }, [imports]);
+  }, [imports, setup?.systemCode]);
   useEffect(() => {
     if (!reviewId) return;
     const controller = new AbortController();
@@ -294,6 +311,8 @@ export function CatalogImportsPanel({
     try {
       const response = await catalogImportsCreate({ file }, options);
       if (response.status !== 200) throw new ApiError(response.status, response.data);
+      requestedImport.current = response.data.import.id;
+      setup?.onImport(response.data.import.id);
       setPaste("");
       await load();
       setMessage(
@@ -308,7 +327,7 @@ export function CatalogImportsPanel({
   async function openReview(entry: CatalogImportResponse): Promise<void> {
     if (dirty && !(await confirm({ title: "¿Descartar los cambios de esta revisión?" }))) return;
     const candidates = entry.candidates
-      .map(typedRow)
+      .map((raw) => typedRow(raw, setup?.systemCode))
       .filter((row): row is ReviewRow => row !== null);
     if (!candidates.length) {
       setMessage(
@@ -319,9 +338,11 @@ export function CatalogImportsPanel({
     const first = candidates[0];
     if (!first) return;
     setReviewId(entry.id);
+    setup?.onImport(entry.id);
     setRows(candidates);
     setSheetName(first.sheet);
     setRowKey(first.key);
+    setReviewView("differences");
     setDiff(null);
     setReviewed(false);
     setDirty(false);
@@ -348,10 +369,34 @@ export function CatalogImportsPanel({
     setReviewed(false);
     setDirty(true);
   }
+  function inScope(row: ReviewRow): boolean {
+    if (!setup) return true;
+    return row.values.system_code === setup.systemCode;
+  }
   const items = () =>
-    rows.filter((row) => row.include).map((row) => ({ key: row.key, values: row.values }));
+    rows
+      .filter((row) => row.include && inScope(row))
+      .map((row) => ({ key: row.key, values: row.values }));
+  function includeRow(key: string, include: boolean): void {
+    setRows((current) => current.map((row) => (row.key === key ? { ...row, include } : row)));
+    setDiff(null);
+    setReviewed(false);
+    setDirty(true);
+  }
   async function preview(): Promise<void> {
     if (!reviewId) return;
+    if (rows.some((row) => row.include && !inScope(row))) {
+      setMessage(
+        `Excluye las filas de otras series o sin código exacto ${setup?.systemCode}. No se reasignan automáticamente.`,
+      );
+      setReviewView("all");
+      return;
+    }
+    if (rows.some((row) => row.include && unresolvedReadFields(row).length > 0)) {
+      setMessage("Resuelve las diferencias de las filas incluidas o exclúyelas antes de comparar.");
+      setReviewView("differences");
+      return;
+    }
     setBusy(true);
     setMessage("");
     setReviewed(false);
@@ -440,6 +485,7 @@ export function CatalogImportsPanel({
   const selected = rows.find((row) => row.key === rowKey);
   const sheet = sheets.find((item) => item.name === sheetName);
   const canReview = canWrite && entry?.status === "REVIEW_READY";
+  const doubleReading = rows.some(hasDoubleReading);
 
   const copilot = useCopilot();
   // PDF/image reading is an AI capability; without it the deterministic
@@ -491,33 +537,50 @@ export function CatalogImportsPanel({
       </section>
     );
   return (
-    <section className="catalog-ingest" aria-label="Importar catálogo" aria-busy={busy}>
-      <UnsavedChangesGuard
-        dirty={dirty || paste.trim().length > 0}
-        message="Hay cambios de catálogo sin publicar."
-      />
-      <header className="catalog-toolbar">
-        <h3>Importar catálogo</h3>
-        <button
-          type="button"
-          disabled={busy || dirty || !!paste.trim()}
-          onClick={() => setExpanded(false)}
-        >
-          Cerrar importador
-        </button>
-      </header>
-      <p className="catalog-ingest-lead">
-        {aiReading
-          ? "Sube el PDF del proveedor tal como lo recibiste. El asistente lo lee por partes, también las páginas escaneadas, y deja candidatos para que los revises antes de publicar."
-          : "Carga los datos con la plantilla XLSX o CSV: cada fila queda para revisar antes de publicar. Una celda vacía queda pendiente de completar."}
-      </p>
+    <section
+      className="catalog-ingest"
+      aria-label={reviewOnly ? "Revisión del manual" : "Importar catálogo"}
+      aria-busy={busy}
+    >
+      {!setup && (
+        <UnsavedChangesGuard
+          dirty={dirty || paste.trim().length > 0}
+          message="Hay cambios de catálogo sin publicar."
+        />
+      )}
+      {setup && (
+        <p>
+          Publica solo filas con el código exacto {setup.systemCode}. Las identidades dudosas y las
+          otras series deben quedar excluidas; puedes revisarlas después en los ajustes del
+          catálogo.
+        </p>
+      )}
+      {!reviewOnly && !setup && (
+        <header className="catalog-toolbar">
+          <h3>Importar catálogo</h3>
+          <button
+            type="button"
+            disabled={busy || dirty || !!paste.trim()}
+            onClick={() => setExpanded(false)}
+          >
+            Cerrar importador
+          </button>
+        </header>
+      )}
+      {!reviewOnly && (
+        <p className="catalog-ingest-lead">
+          {aiReading
+            ? "Sube el PDF del proveedor tal como lo recibiste. El asistente lo lee por partes, también las páginas escaneadas, y deja candidatos para que los revises antes de publicar."
+            : "Carga los datos con la plantilla XLSX o CSV: cada fila queda para revisar antes de publicar. Una celda vacía queda pendiente de completar."}
+        </p>
+      )}
       {!canWrite && (
         <p role="status">
           Puedes consultar las importaciones. Para cargar y publicar datos necesitas el rol de dueño
           o encargado de taller.
         </p>
       )}
-      {canWrite && !aiReading && (
+      {!reviewOnly && canWrite && !aiReading && (
         <div className="catalog-ingest-methods catalog-ingest-methods--manual">
           {templateBlock}
           <div
@@ -540,6 +603,7 @@ export function CatalogImportsPanel({
             <input
               ref={fileInput}
               type="file"
+              aria-label="Archivo del catálogo"
               className="imports-file-input"
               accept=".xlsx,.xlsm,.csv"
               onChange={(event) => {
@@ -559,7 +623,7 @@ export function CatalogImportsPanel({
           </div>
         </div>
       )}
-      {canWrite && aiReading && (
+      {!reviewOnly && canWrite && aiReading && (
         <>
           <div
             className={`catalog-dropzone catalog-dropzone--primary${dragging ? " is-dragging" : ""}`}
@@ -583,6 +647,7 @@ export function CatalogImportsPanel({
             <input
               ref={fileInput}
               type="file"
+              aria-label="Archivo del catálogo"
               className="imports-file-input"
               accept=".pdf,.xlsx,.xlsm,.csv,.txt,.eml,.png,.jpg,.jpeg,.webp"
               onChange={(event) => {
@@ -634,12 +699,24 @@ export function CatalogImportsPanel({
         </p>
       )}
       {loading && imports.length === 0 && <p role="status">Cargando importaciones…</p>}
-      {!loading && !imports.length && (
-        <p>
-          Tu catálogo todavía no tiene importaciones. Descarga la plantilla o sube una ficha para
-          comenzar.
-        </p>
-      )}
+      {!loading &&
+        !imports.length &&
+        (reviewOnly ? (
+          <div>
+            <p>
+              No se pudo abrir este manual. Vuelve a cargarlo o abre otra referencia desde el
+              catálogo.
+            </p>
+            <button type="button" onClick={() => void load()}>
+              Volver a cargar el manual
+            </button>
+          </div>
+        ) : (
+          <p>
+            Tu catálogo todavía no tiene importaciones. Descarga la plantilla o sube una ficha para
+            comenzar.
+          </p>
+        ))}
       <div className="catalog-import-history">
         {imports.map((item) => (
           <div key={item.id} className="catalog-import-entry">
@@ -672,7 +749,7 @@ export function CatalogImportsPanel({
                     : "Ver referencia"}
                 </button>
               )}
-              {canWrite && item.status === "CONFIRMED" && (
+              {canWrite && !setup && item.status === "CONFIRMED" && (
                 <button type="button" disabled={busy} onClick={() => void undo(item)}>
                   Deshacer publicación
                 </button>
@@ -707,227 +784,260 @@ export function CatalogImportsPanel({
               {WARNINGS[warning] ?? warning}
             </p>
           ))}
-          <ExceptionGroups
-            rows={rows}
-            label={(row) =>
-              inputText(row.values.sku || row.values.system_code || row.values.code) || "Sin código"
-            }
-            onPick={(row) => {
-              setSheetName(row.sheet);
-              setRowKey(row.key);
-            }}
-          />
-          <div className="catalog-sheet-tabs" role="group" aria-label="Hojas de la importación">
-            {sheets
-              .filter((item) => rows.some((row) => row.sheet === item.name))
-              .map((item) => (
-                <button
-                  type="button"
-                  key={item.name}
-                  aria-pressed={sheetName === item.name}
-                  onClick={() => {
-                    setSheetName(item.name);
-                    setRowKey(rows.find((row) => row.sheet === item.name)?.key ?? "");
-                  }}
-                >
-                  {item.name} · {rows.filter((row) => row.sheet === item.name).length}
-                </button>
-              ))}
-          </div>
-          <div className="catalog-review-layout">
-            <div className="catalog-review-rows">
-              {rows
-                .filter((row) => row.sheet === sheetName)
-                .map((row) => (
-                  <div key={row.key} className={rowKey === row.key ? "is-selected" : ""}>
-                    {canReview && (
-                      <input
-                        type="checkbox"
-                        aria-label={`Incluir fila ${row.row}`}
-                        checked={row.include}
-                        disabled={busy}
-                        onChange={(event) => {
-                          setRows((current) =>
-                            current.map((item) =>
-                              item.key === row.key
-                                ? { ...item, include: event.target.checked }
-                                : item,
-                            ),
-                          );
-                          setDiff(null);
-                          setReviewed(false);
-                          setDirty(true);
-                        }}
-                      />
-                    )}
+          {doubleReading && (
+            <div className="catalog-toolbar" role="group" aria-label="Vista de la revisión">
+              <button
+                type="button"
+                aria-pressed={reviewView === "differences"}
+                onClick={() => setReviewView("differences")}
+              >
+                Solo diferencias
+              </button>
+              <button
+                type="button"
+                aria-pressed={reviewView === "all"}
+                onClick={() => setReviewView("all")}
+              >
+                Acuerdos y filas completas
+              </button>
+            </div>
+          )}
+          {doubleReading && reviewView === "differences" ? (
+            <CatalogDoubleReadReview
+              rows={rows}
+              sheets={sheets}
+              disabled={busy || !canReview}
+              onPatch={patch}
+              onInclude={includeRow}
+              onOpenRow={(row) => {
+                setSheetName(row.sheet);
+                setRowKey(row.key);
+                setReviewView("all");
+              }}
+            />
+          ) : (
+            <>
+              <ExceptionGroups
+                rows={rows}
+                label={(row) =>
+                  inputText(row.values.sku || row.values.system_code || row.values.code) ||
+                  "Sin código"
+                }
+                onPick={(row) => {
+                  setSheetName(row.sheet);
+                  setRowKey(row.key);
+                }}
+              />
+              <div className="catalog-sheet-tabs" role="group" aria-label="Hojas de la importación">
+                {sheets
+                  .filter((item) => rows.some((row) => row.sheet === item.name))
+                  .map((item) => (
                     <button
                       type="button"
-                      aria-pressed={rowKey === row.key}
-                      onClick={() => setRowKey(row.key)}
+                      key={item.name}
+                      aria-pressed={sheetName === item.name}
+                      onClick={() => {
+                        setSheetName(item.name);
+                        setRowKey(rows.find((row) => row.sheet === item.name)?.key ?? "");
+                      }}
                     >
-                      <strong>
-                        {inputText(row.values.sku || row.values.system_code) || "Sin código"}
-                      </strong>
-                      <span>
-                        Fila {row.row} · {row.method === "AI" ? "Propuesta de IA" : "Plantilla"}
-                      </span>
-                      <span>
-                        {row.confidence === "HIGH_CANDIDATE"
-                          ? "Lectura con referencia"
-                          : row.confidence === "LOW"
-                            ? "Lectura dudosa"
-                            : "Requiere revisión"}
-                      </span>
-                      {row.errors.length > 0 && <span>Requiere corrección</span>}
+                      {item.name} · {rows.filter((row) => row.sheet === item.name).length}
                     </button>
-                  </div>
-                ))}
-            </div>
-            {selected && sheet && (
-              <fieldset className="catalog-review-fields" disabled={busy || !canReview}>
-                <legend>
-                  {sheet.name} · fila {selected.row}
-                </legend>
-                <div className="catalog-review-heading">
-                  <span>Campo</span>
-                  <span>Valor revisado</span>
-                  <span>Ficha del proveedor</span>
-                </div>
-                {sheet.columns.map((column) => {
-                  if (column.key === "paired_leaf_rule") return null;
-                  if (column.key === "finishes" && selected.values.finish_authority) return null;
-                  const evidence = selected.fields[column.key] ?? {};
-                  const value = selected.values[column.key];
-                  const errors = diff
-                    ? diff.errors.filter(
-                        (error) => error.key === selected.key && error.field === column.key,
-                      )
-                    : selected.errors.filter((error) => error.field === column.key);
-                  const id = `review-${selected.key}-${column.key}`;
-                  return (
-                    <div className="catalog-review-field" key={column.key}>
-                      <label htmlFor={id}>
-                        {column.label}
-                        {column.required && <small>Requerido</small>}
-                      </label>
-                      <div>
-                        {column.key === "section" ? (
-                          <ImportedSectionFields
-                            value={value}
-                            onChange={(next) => patch(selected.key, column.key, next)}
-                          />
-                        ) : column.key === "extra_authority" ? (
-                          <ExtraAuthorityEditor
-                            value={(value as ExtraAuthority | null) ?? null}
-                            onChange={(next) => patch(selected.key, column.key, next)}
-                          />
-                        ) : column.key === "finish_authority" ? (
-                          <FinishAuthorityEditor
-                            value={(value as FinishAuthority | null) ?? null}
-                            material={String(selected.values.material ?? "PVC")}
-                            onChange={(next) => patch(selected.key, column.key, next)}
-                          />
-                        ) : column.key === "opening_capabilities" ? (
-                          <OpeningCapabilitiesEditor
-                            capabilities={Array.isArray(value) ? (value as Capability[]) : []}
-                            paired={(selected.values.paired_leaf_rule as PairedRule | null) ?? null}
-                            family={String(selected.values.system_family ?? "CASEMENT")}
-                            kits={rows
-                              .filter(
-                                (row) =>
-                                  row.sheet === "Herrajes" &&
-                                  row.values.system_code === selected.values.system_code,
-                              )
-                              .map((row) => ({
-                                id: row.key,
-                                sku: String(row.values.sku ?? ""),
-                                name: String(
-                                  row.values.name ??
-                                    "Falta información: falta el nombre del herraje",
-                                ),
-                              }))}
-                            onChange={(next) => patch(selected.key, column.key, next)}
-                            onPair={(next) => patch(selected.key, "paired_leaf_rule", next)}
-                          />
-                        ) : column.kind === "json" ? (
-                          <ComponentFields
-                            id={id}
-                            value={value}
-                            onChange={(next) => patch(selected.key, column.key, next)}
-                          />
-                        ) : column.choices || column.kind === "boolean" ? (
-                          <select
-                            id={id}
-                            value={inputText(value)}
-                            onChange={(event) =>
-                              patch(selected.key, column.key, event.target.value || null)
-                            }
-                          >
-                            <option value="">Completar</option>
-                            {Object.entries(column.choices ?? { Sí: "Sí", No: "No" }).map(
-                              ([key, label]) => (
-                                <option key={key} value={key}>
-                                  {String(label)}
-                                </option>
-                              ),
-                            )}
-                          </select>
-                        ) : (
+                  ))}
+              </div>
+              <div className="catalog-review-layout">
+                <div className="catalog-review-rows">
+                  {rows
+                    .filter((row) => row.sheet === sheetName)
+                    .map((row) => (
+                      <div key={row.key} className={rowKey === row.key ? "is-selected" : ""}>
+                        {canReview && (
                           <input
-                            id={id}
-                            value={inputText(value)}
-                            placeholder="Completar"
-                            inputMode={
-                              ["decimal", "positive"].includes(column.kind) ? "decimal" : undefined
-                            }
-                            onChange={(event) =>
-                              patch(selected.key, column.key, event.target.value || null)
-                            }
+                            type="checkbox"
+                            aria-label={`Incluir fila ${row.row}`}
+                            checked={row.include}
+                            disabled={busy}
+                            onChange={(event) => includeRow(row.key, event.target.checked)}
                           />
                         )}
-                        {errors.map((error) => (
-                          <p key={error.message} className="catalog-field-error" role="alert">
-                            {error.message}
-                          </p>
-                        ))}
-                      </div>
-                      <div className="catalog-source">
-                        <span>
-                          {evidence.ref?.replace(/^(.+)!([A-Z]+[0-9]+)$/u, "$1 · celda $2") ||
-                            "Sin referencia"}
-                        </span>
-                        {column.kind === "json" ||
-                        column.key === "finishes" ||
-                        /\d+[.,]\d{4,}/u.test(evidence.quote ?? "") ? (
-                          <details>
-                            <summary>Ver texto original de la referencia</summary>
-                            <div>
-                              <SourceHighlight quote={evidence.quote} literal={evidence.literal} />
-                            </div>
-                          </details>
-                        ) : (
-                          <SourceHighlight quote={evidence.quote} literal={evidence.literal} />
-                        )}
-                        {evidence.confidence !== "HIGH" && (
+                        <button
+                          type="button"
+                          aria-pressed={rowKey === row.key}
+                          onClick={() => setRowKey(row.key)}
+                        >
                           <strong>
-                            {evidence.confidence === "LOW"
-                              ? "Lectura dudosa · revisa la referencia"
-                              : "Falta · la referencia no lo declara"}
+                            {inputText(row.values.sku || row.values.system_code) || "Sin código"}
                           </strong>
-                        )}
-                        {evidence.proposed != null && value == null && (
-                          <small>Lectura dudosa: {display(evidence.proposed, column)}</small>
-                        )}
+                          <span>
+                            Fila {row.row} · {row.method === "AI" ? "Propuesta de IA" : "Plantilla"}
+                          </span>
+                          <span>
+                            {row.confidence === "HIGH_CANDIDATE"
+                              ? "Lectura con referencia"
+                              : row.confidence === "LOW"
+                                ? "Lectura dudosa"
+                                : "Requiere revisión"}
+                          </span>
+                          {row.errors.length > 0 && <span>Requiere corrección</span>}
+                        </button>
                       </div>
+                    ))}
+                </div>
+                {selected && sheet && (
+                  <fieldset className="catalog-review-fields" disabled={busy || !canReview}>
+                    <legend>
+                      {sheet.name} · fila {selected.row}
+                    </legend>
+                    <div className="catalog-review-heading">
+                      <span>Campo</span>
+                      <span>Valor revisado</span>
+                      <span>Ficha del proveedor</span>
                     </div>
-                  );
-                })}
-              </fieldset>
-            )}
-            {selected && (
-              <SourcePage importId={entry.id} page={sourcePageOf(selected)} orgId={orgId} />
-            )}
-          </div>
+                    {sheet.columns.map((column) => {
+                      if (column.key === "paired_leaf_rule") return null;
+                      if (column.key === "finishes" && selected.values.finish_authority)
+                        return null;
+                      const evidence = selected.fields[column.key] ?? {};
+                      const value = selected.values[column.key];
+                      const errors = diff
+                        ? diff.errors.filter(
+                            (error) => error.key === selected.key && error.field === column.key,
+                          )
+                        : selected.errors.filter((error) => error.field === column.key);
+                      const id = `review-${selected.key}-${column.key}`;
+                      return (
+                        <div className="catalog-review-field" key={column.key}>
+                          <label htmlFor={id}>
+                            {column.label}
+                            {column.required && <small>Requerido</small>}
+                          </label>
+                          <div>
+                            {column.key === "section" ? (
+                              <ImportedSectionFields
+                                value={value}
+                                onChange={(next) => patch(selected.key, column.key, next)}
+                              />
+                            ) : column.key === "extra_authority" ? (
+                              <ExtraAuthorityEditor
+                                value={(value as ExtraAuthority | null) ?? null}
+                                onChange={(next) => patch(selected.key, column.key, next)}
+                              />
+                            ) : column.key === "finish_authority" ? (
+                              <FinishAuthorityEditor
+                                value={(value as FinishAuthority | null) ?? null}
+                                material={String(selected.values.material ?? "PVC")}
+                                onChange={(next) => patch(selected.key, column.key, next)}
+                              />
+                            ) : column.key === "opening_capabilities" ? (
+                              <OpeningCapabilitiesEditor
+                                capabilities={Array.isArray(value) ? (value as Capability[]) : []}
+                                paired={
+                                  (selected.values.paired_leaf_rule as PairedRule | null) ?? null
+                                }
+                                family={String(selected.values.system_family ?? "CASEMENT")}
+                                kits={rows
+                                  .filter(
+                                    (row) =>
+                                      row.sheet === "Herrajes" &&
+                                      row.values.system_code === selected.values.system_code,
+                                  )
+                                  .map((row) => ({
+                                    id: row.key,
+                                    sku: String(row.values.sku ?? ""),
+                                    name: String(
+                                      row.values.name ??
+                                        "Falta información: falta el nombre del herraje",
+                                    ),
+                                  }))}
+                                onChange={(next) => patch(selected.key, column.key, next)}
+                                onPair={(next) => patch(selected.key, "paired_leaf_rule", next)}
+                              />
+                            ) : column.kind === "json" ? (
+                              <ComponentFields
+                                id={id}
+                                value={value}
+                                onChange={(next) => patch(selected.key, column.key, next)}
+                              />
+                            ) : column.choices || column.kind === "boolean" ? (
+                              <select
+                                id={id}
+                                value={inputText(value)}
+                                onChange={(event) =>
+                                  patch(selected.key, column.key, event.target.value || null)
+                                }
+                              >
+                                <option value="">Completar</option>
+                                {Object.entries(column.choices ?? { Sí: "Sí", No: "No" }).map(
+                                  ([key, label]) => (
+                                    <option key={key} value={key}>
+                                      {String(label)}
+                                    </option>
+                                  ),
+                                )}
+                              </select>
+                            ) : (
+                              <input
+                                id={id}
+                                value={inputText(value)}
+                                placeholder="Completar"
+                                inputMode={
+                                  ["decimal", "positive"].includes(column.kind)
+                                    ? "decimal"
+                                    : undefined
+                                }
+                                onChange={(event) =>
+                                  patch(selected.key, column.key, event.target.value || null)
+                                }
+                              />
+                            )}
+                            {errors.map((error) => (
+                              <p key={error.message} className="catalog-field-error" role="alert">
+                                {error.message}
+                              </p>
+                            ))}
+                          </div>
+                          <div className="catalog-source">
+                            <span>
+                              {evidence.ref?.replace(/^(.+)!([A-Z]+[0-9]+)$/u, "$1 · celda $2") ||
+                                "Sin referencia"}
+                            </span>
+                            {column.kind === "json" ||
+                            column.key === "finishes" ||
+                            /\d+[.,]\d{4,}/u.test(evidence.quote ?? "") ? (
+                              <details>
+                                <summary>Ver texto original de la referencia</summary>
+                                <div>
+                                  <SourceHighlight
+                                    quote={evidence.quote}
+                                    literal={evidence.literal}
+                                  />
+                                </div>
+                              </details>
+                            ) : (
+                              <SourceHighlight quote={evidence.quote} literal={evidence.literal} />
+                            )}
+                            {evidence.confidence !== "HIGH" && (
+                              <strong>
+                                {evidence.confidence === "LOW"
+                                  ? "Lectura dudosa · revisa la referencia"
+                                  : "Falta · la referencia no lo declara"}
+                              </strong>
+                            )}
+                            {evidence.proposed != null && value == null && (
+                              <small>Lectura dudosa: {display(evidence.proposed, column)}</small>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </fieldset>
+                )}
+                {selected && (
+                  <SourcePage importId={entry.id} page={sourcePageOf(selected)} orgId={orgId} />
+                )}
+              </div>
+            </>
+          )}
           <div className="catalog-toolbar">
             {canReview && (
               <button
@@ -961,6 +1071,7 @@ export function CatalogImportsPanel({
                       <button
                         type="button"
                         onClick={() => {
+                          setReviewView("all");
                           const row = rows.find((item) => item.key === error.key);
                           if (row) {
                             setSheetName(row.sheet);

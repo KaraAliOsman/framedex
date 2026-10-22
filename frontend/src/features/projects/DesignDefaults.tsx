@@ -54,7 +54,13 @@ export function useDefaultLabels(orgId: string, values: Partial<Record<Key, stri
   const finish = options.data?.finish_authority?.colors.find((item) => item.code === values.color);
   const glass = options.data?.glass_specs.find((item) => item.sku === values.glass_article_sku);
   return {
-    system_id: system ? system.name : values.system_id ? "Serie no disponible" : null,
+    system_id: system
+      ? system.name
+      : values.system_id
+        ? systems.isPending
+          ? "Cargando la serie…"
+          : "Serie no disponible"
+        : null,
     color: values.color ? (finish?.name ?? domainLabel(values.color)) : null,
     glass_article_sku: values.glass_article_sku ? (glass?.spec ?? values.glass_article_sku) : null,
   } as Record<Key, string | null>;

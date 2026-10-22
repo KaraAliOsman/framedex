@@ -454,6 +454,28 @@ it("creates a project, navigates to the server ID and renders persisted metadata
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 });
 
+it("saves the new work's preselected series and allows clearing it", async () => {
+  vi.mocked(engineSystems).mockResolvedValue(
+    response(200, { systems: [{ id: "system-a", name: "Serie del taller" }] }) as never,
+  );
+  vi.mocked(projectsCreate).mockResolvedValue(response(201, makeProject()));
+  mount("/projects?create=1&system=system-a");
+  const picker = await screen.findByRole("combobox", { name: "Serie inicial para las ventanas" });
+  await waitFor(() => expect(picker).toBeEnabled());
+  expect(picker).toHaveValue("system-a");
+  fireEvent.change(picker, { target: { value: "" } });
+  expect(picker).toHaveValue("");
+  fireEvent.change(picker, { target: { value: "system-a" } });
+  change("projects.name", "Primera obra");
+  submit();
+  await waitFor(() =>
+    expect(projectsCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "Primera obra", design_defaults: { system_id: "system-a" } }),
+      expect.any(Object),
+    ),
+  );
+});
+
 it("PATCHes the exact original timestamp and reloads persisted metadata", async () => {
   const original = makeProject();
   const saved = makeProject({
