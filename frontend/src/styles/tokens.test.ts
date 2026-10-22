@@ -52,8 +52,8 @@ describe("constitution tokens", () => {
     for (const family of [
       "g-950",
       "g-25",
-      "teal-950",
-      "teal-50",
+      "cobalt-950",
+      "cobalt-50",
       "orange-700",
       "orange-100",
       "canvas-handle",

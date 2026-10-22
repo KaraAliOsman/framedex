@@ -291,7 +291,7 @@
   scroll-margin-block-start: var(--space-64px);
 }
 .production-label-code {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: 0.85em;
 }
 .production-labels {
@@ -508,7 +508,7 @@
 .cutplan-sheet-card figcaption {
   font-size: var(--type-body);
   color: var(--theme-text-secondary);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
 }
 .cutplan-bar {
   display: block;
@@ -597,13 +597,13 @@
   font-size: var(--type-dim);
   font-weight: 600;
   fill: var(--g-950);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
 }
 .cutplan-cut-len {
   font-size: var(--type-dim);
   font-weight: 600;
   fill: var(--g-700);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
 }
 .cutplan-miter-notch {
   fill: var(--theme-mark);
@@ -612,7 +612,7 @@
 .cutplan-nest text {
   font-size: var(--type-dim);
   fill: var(--g-950);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   pointer-events: none;
 }
 .cutplan-cut text {
@@ -670,7 +670,7 @@
 }
 .cutplan-detail dd {
   margin: 0;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   word-break: break-word;
 }
 .cutplan-detail-empty {

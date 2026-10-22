@@ -845,7 +845,7 @@ p.handle-pending {
 
 .compare-row__index {
   color: var(--theme-text-secondary);
-  font-family: "IBM Plex Mono", "JetBrains Mono", monospace;
+  font-family: var(--font-mono);
   font-weight: 600;
 }
 

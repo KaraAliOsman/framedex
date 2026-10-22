@@ -147,7 +147,7 @@
 }
 .commercial-step[data-state="current"] .commercial-step__marker {
   border-color: var(--interactive-fill);
-  outline: 3px solid var(--teal-100);
+  outline: 3px solid var(--cobalt-100);
 }
 .commercial-step[data-state="blocked"] {
   color: var(--state-warning-ink);
