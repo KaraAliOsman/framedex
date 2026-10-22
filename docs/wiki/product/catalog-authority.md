@@ -356,3 +356,16 @@ La prueba preliminar llama al motor con opciones compatibles del catálogo;
 no persiste aún verificación. P03 añadirá revisión de cortes y caso dorado.
 La [aceptación integrada](../../redesign/captures/dk2-p02/aceptacion.md) distingue
 las pruebas locales, las 19 capturas y los gates todavía requeridos de CI.
+
+## Ventana de referencia · preparación P03a
+
+Verificado el 21-10-2026 en `gpt/dk2-p03a-prueba-motor`: `calibration.py`
+compara medidas Decimal y propone cambios de parámetros nombrados, siempre
+recalculados por `calculate_geometry`. Una sola medida puede admitir varias
+causas; el motor devuelve las alternativas para una elección humana y no
+atribuye la corrección al fabricante. No devuelve una aproximación cuando el
+paso de corte impide la coincidencia. Los cuatro casos de
+`test_gold_cases_calibration.py` congelan la ventana completa corregida;
+los casos dorados anteriores conservan sus bytes. Esta base pura todavía
+no persiste verificación ni protege ediciones del catálogo: corresponde a las
+sub-PR siguientes de P03. Véase [estado](../../dekopen2/ESTADO.md).

@@ -11,6 +11,7 @@ from dekopen_engine import EngineResult, ParametricNode, calculate_geometry
 from dekopen_engine.snapshot import calculation_response
 from engine.tests.catalog import demo_60_params
 from engine.tests.catalog_families import family_cases
+from engine.tests.calibration_cases import calibration_cases
 from engine.tests.glass_cases import glass_cases
 from engine.tests.opening_cases import opening_cases
 from engine.tests.hardware_cases import hardware_cases
@@ -31,6 +32,7 @@ from engine.tests.advanced_symbol_cases import generated_reservations, generated
 
 SNAPSHOT = Path(__file__).resolve().parents[1] / "tests" / "golden_example.json"
 FAMILY_SNAPSHOT = SNAPSHOT.with_name("golden_catalog_families.json")
+CALIBRATION_SNAPSHOT = SNAPSHOT.with_name("golden_calibration.json")
 GLASS_SNAPSHOT = SNAPSHOT.with_name("golden_glass_products.json")
 OPENING_SNAPSHOT = SNAPSHOT.with_name("golden_openings.json")
 HARDWARE_SNAPSHOT = SNAPSHOT.with_name("golden_hardware_classes.json")
@@ -51,6 +53,10 @@ ANALYTICS_SNAPSHOT = SNAPSHOT.with_name("golden_analytics.json")
 
 def generated_analytics_bytes() -> bytes:
     return (json.dumps(analytics_cases(), ensure_ascii=False, sort_keys=True, indent=2, allow_nan=False)+"\n").encode("utf-8")
+
+
+def generated_calibration_bytes() -> bytes:
+    return (json.dumps(calibration_cases(), ensure_ascii=False, sort_keys=True, indent=2, allow_nan=False)+"\n").encode("utf-8")
 
 
 def generated_thermal_bytes() -> bytes:
@@ -168,6 +174,8 @@ def main() -> None:
     parser.add_argument("--check", action="store_true", help="Compare bytes; never rewrite")
     args = parser.parse_args()
     if args.check:
+        if not CALIBRATION_SNAPSHOT.is_file() or CALIBRATION_SNAPSHOT.read_bytes() != generated_calibration_bytes():
+            raise SystemExit("Calibration golden drift: run make goldgen and review the diff")
         if not ANALYTICS_SNAPSHOT.is_file() or ANALYTICS_SNAPSHOT.read_bytes() != generated_analytics_bytes():
             raise SystemExit("Analytics golden drift: run make goldgen and review the diff")
         if not THERMAL_SNAPSHOT.is_file() or THERMAL_SNAPSHOT.read_bytes() != generated_thermal_bytes():
@@ -208,6 +216,7 @@ def main() -> None:
         if not QUOTATION_SNAPSHOT.is_file() or QUOTATION_SNAPSHOT.read_bytes() != generated_quotation_bytes():
             raise SystemExit("Quotation golden byte drift: run make goldgen and review the diff")
     else:
+        CALIBRATION_SNAPSHOT.write_bytes(generated_calibration_bytes())
         ANALYTICS_SNAPSHOT.write_bytes(generated_analytics_bytes())
         THERMAL_SNAPSHOT.write_bytes(generated_thermal_bytes())
         (SYMBOL_DIR/"advanced.json").write_bytes(generated_advanced_symbols())
