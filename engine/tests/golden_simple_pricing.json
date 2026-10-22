@@ -1,0 +1,336 @@
+{
+  "PRO6004-abatible": {
+    "input": {
+      "children": [],
+      "door_handedness": null,
+      "glass_article_sku": "GLASS-24",
+      "glass_processing": null,
+      "glass_product": null,
+      "glass_spec": "4-16-4",
+      "glass_thickness_mm": "24",
+      "handle_height_mm": null,
+      "hardware_set_sku": null,
+      "height_mm": "1100",
+      "id": "trial",
+      "is_sidelight": false,
+      "mullion_profile_sku": null,
+      "opening_type": "TURN_LEFT",
+      "panel_article_sku": null,
+      "sill_height_mm": null,
+      "sliding_layout": null,
+      "split_offset_mm": null,
+      "type": "BAY",
+      "width_mm": "1200"
+    },
+    "materials": [
+      {
+        "amount": "4452.9230769230769230769230769230769230769230769230769230769230769230769230769231",
+        "kind": "PROFILE",
+        "length_mm": "1206",
+        "quantity": 2,
+        "rate": "12000",
+        "sku": "PRO-F",
+        "stock_length_mm": "6500",
+        "unit": "BAR"
+      },
+      {
+        "amount": "4083.6923076923076923076923076923076923076923076923076923076923076923076923076923",
+        "kind": "PROFILE",
+        "length_mm": "1106",
+        "quantity": 2,
+        "rate": "12000",
+        "sku": "PRO-F",
+        "stock_length_mm": "6500",
+        "unit": "BAR"
+      },
+      {
+        "amount": "5086.1538461538461538461538461538461538461538461538461538461538461538461538461538",
+        "kind": "PROFILE",
+        "length_mm": "1102",
+        "quantity": 2,
+        "rate": "15000",
+        "sku": "PRO-S",
+        "stock_length_mm": "6500",
+        "unit": "BAR"
+      },
+      {
+        "amount": "4624.6153846153846153846153846153846153846153846153846153846153846153846153846154",
+        "kind": "PROFILE",
+        "length_mm": "1002",
+        "quantity": 2,
+        "rate": "15000",
+        "sku": "PRO-S",
+        "stock_length_mm": "6500",
+        "unit": "BAR"
+      },
+      {
+        "amount": "1532.3076923076923076923076923076923076923076923076923076923076923076923076923077",
+        "kind": "PROFILE",
+        "length_mm": "996",
+        "quantity": 2,
+        "rate": "5000",
+        "sku": "PRO-B",
+        "stock_length_mm": "6500",
+        "unit": "BAR"
+      },
+      {
+        "amount": "1378.4615384615384615384615384615384615384615384615384615384615384615384615384615",
+        "kind": "PROFILE",
+        "length_mm": "896",
+        "quantity": 2,
+        "rate": "5000",
+        "sku": "PRO-B",
+        "stock_length_mm": "6500",
+        "unit": "BAR"
+      },
+      {
+        "amount": "3136",
+        "kind": "REINFORCEMENT",
+        "length_mm": "1176",
+        "quantity": 2,
+        "rate": "8000",
+        "sku": "STEEL-F",
+        "stock_length_mm": "6000",
+        "unit": "BAR"
+      },
+      {
+        "amount": "2869.3333333333333333333333333333333333333333333333333333333333333333333333333333",
+        "kind": "REINFORCEMENT",
+        "length_mm": "1076",
+        "quantity": 2,
+        "rate": "8000",
+        "sku": "STEEL-F",
+        "stock_length_mm": "6000",
+        "unit": "BAR"
+      },
+      {
+        "amount": "2858.6666666666666666666666666666666666666666666666666666666666666666666666666667",
+        "kind": "REINFORCEMENT",
+        "length_mm": "1072",
+        "quantity": 2,
+        "rate": "8000",
+        "sku": "STEEL-S",
+        "stock_length_mm": "6000",
+        "unit": "BAR"
+      },
+      {
+        "amount": "2592",
+        "kind": "REINFORCEMENT",
+        "length_mm": "972",
+        "quantity": 2,
+        "rate": "8000",
+        "sku": "STEEL-S",
+        "stock_length_mm": "6000",
+        "unit": "BAR"
+      },
+      {
+        "amount": "17848.320000",
+        "height_mm": "896",
+        "kind": "GLASS",
+        "quantity": "0.892416",
+        "rate": "20000",
+        "sku": "GLASS-24",
+        "unit": "M2",
+        "width_mm": "996"
+      },
+      {
+        "amount": "12000",
+        "kind": "HARDWARE",
+        "quantity": 1,
+        "rate": "12000",
+        "sku": "PRO-TURN",
+        "unit": "KIT"
+      },
+      {
+        "amount": "200",
+        "kind": "FITTING",
+        "quantity": 10,
+        "rate": "20",
+        "sku": "SCREW-F",
+        "unit": "EA"
+      },
+      {
+        "amount": "200",
+        "kind": "FITTING",
+        "quantity": 10,
+        "rate": "20",
+        "sku": "SCREW-F",
+        "unit": "EA"
+      },
+      {
+        "amount": "200",
+        "kind": "FITTING",
+        "quantity": 10,
+        "rate": "20",
+        "sku": "SCREW-S",
+        "unit": "EA"
+      },
+      {
+        "amount": "160",
+        "kind": "FITTING",
+        "quantity": 8,
+        "rate": "20",
+        "sku": "SCREW-S",
+        "unit": "EA"
+      }
+    ],
+    "policy": {
+      "currency": "CLP",
+      "installation_basis": "M2",
+      "installation_rate": "5000",
+      "labor_basis": "WINDOW",
+      "labor_rate": "20000",
+      "margin": "0.35",
+      "rounding_step": "1000",
+      "waste": "0"
+    },
+    "price": {
+      "direct_cost": "89822.4738461538461538461538461538461538461538461538461538461538461538461538461538",
+      "exact_unit_price": "138188.42130177514792899408284023668639053254437869822485207100591715976331360947",
+      "installation": "6600.00",
+      "labor": "20000",
+      "materials": "63222.4738461538461538461538461538461538461538461538461538461538461538461538461538",
+      "profit": "49177.5261538461538461538461538461538461538461538461538461538461538461538461538462",
+      "rounding": "811.57869822485207100591715976331360946745562130177514792899408284023668639053",
+      "unit_net": "139000",
+      "waste": "0E-76"
+    },
+    "source": "Synthetic workshop fixture; not manufacturer data",
+    "system_code": "PRO6004-SYNTHETIC"
+  },
+  "PRO6004-fija": {
+    "input": {
+      "children": [],
+      "door_handedness": null,
+      "glass_article_sku": "GLASS-24",
+      "glass_processing": null,
+      "glass_product": null,
+      "glass_spec": "4-16-4",
+      "glass_thickness_mm": "24",
+      "handle_height_mm": null,
+      "hardware_set_sku": null,
+      "height_mm": "1100",
+      "id": "trial",
+      "is_sidelight": false,
+      "mullion_profile_sku": null,
+      "opening_type": "FIXED",
+      "panel_article_sku": null,
+      "sill_height_mm": null,
+      "sliding_layout": null,
+      "split_offset_mm": null,
+      "type": "BAY",
+      "width_mm": "1200"
+    },
+    "materials": [
+      {
+        "amount": "4452.9230769230769230769230769230769230769230769230769230769230769230769230769231",
+        "kind": "PROFILE",
+        "length_mm": "1206",
+        "quantity": 2,
+        "rate": "12000",
+        "sku": "PRO-F",
+        "stock_length_mm": "6500",
+        "unit": "BAR"
+      },
+      {
+        "amount": "4083.6923076923076923076923076923076923076923076923076923076923076923076923076923",
+        "kind": "PROFILE",
+        "length_mm": "1106",
+        "quantity": 2,
+        "rate": "12000",
+        "sku": "PRO-F",
+        "stock_length_mm": "6500",
+        "unit": "BAR"
+      },
+      {
+        "amount": "1692.3076923076923076923076923076923076923076923076923076923076923076923076923077",
+        "kind": "PROFILE",
+        "length_mm": "1100",
+        "quantity": 2,
+        "rate": "5000",
+        "sku": "PRO-B",
+        "stock_length_mm": "6500",
+        "unit": "BAR"
+      },
+      {
+        "amount": "1538.4615384615384615384615384615384615384615384615384615384615384615384615384615",
+        "kind": "PROFILE",
+        "length_mm": "1000",
+        "quantity": 2,
+        "rate": "5000",
+        "sku": "PRO-B",
+        "stock_length_mm": "6500",
+        "unit": "BAR"
+      },
+      {
+        "amount": "3136",
+        "kind": "REINFORCEMENT",
+        "length_mm": "1176",
+        "quantity": 2,
+        "rate": "8000",
+        "sku": "STEEL-F",
+        "stock_length_mm": "6000",
+        "unit": "BAR"
+      },
+      {
+        "amount": "2869.3333333333333333333333333333333333333333333333333333333333333333333333333333",
+        "kind": "REINFORCEMENT",
+        "length_mm": "1076",
+        "quantity": 2,
+        "rate": "8000",
+        "sku": "STEEL-F",
+        "stock_length_mm": "6000",
+        "unit": "BAR"
+      },
+      {
+        "amount": "22000.0",
+        "height_mm": "1000",
+        "kind": "GLASS",
+        "quantity": "1.1",
+        "rate": "20000",
+        "sku": "GLASS-24",
+        "unit": "M2",
+        "width_mm": "1100"
+      },
+      {
+        "amount": "200",
+        "kind": "FITTING",
+        "quantity": 10,
+        "rate": "20",
+        "sku": "SCREW-F",
+        "unit": "EA"
+      },
+      {
+        "amount": "200",
+        "kind": "FITTING",
+        "quantity": 10,
+        "rate": "20",
+        "sku": "SCREW-F",
+        "unit": "EA"
+      }
+    ],
+    "policy": {
+      "currency": "CLP",
+      "installation_basis": "WINDOW",
+      "installation_rate": "10000",
+      "labor_basis": "M2",
+      "labor_rate": "15000",
+      "margin": "0.35",
+      "rounding_step": "1000",
+      "waste": "0"
+    },
+    "price": {
+      "direct_cost": "69972.7179487179487179487179487179487179487179487179487179487179487179487179487179",
+      "exact_unit_price": "107650.33530571992110453648915187376725838264299802761341222879684418145956607495",
+      "installation": "10000",
+      "labor": "19800.00",
+      "materials": "40172.7179487179487179487179487179487179487179487179487179487179487179487179487179",
+      "profit": "38027.2820512820512820512820512820512820512820512820512820512820512820512820512821",
+      "rounding": "349.66469428007889546351084812623274161735700197238658777120315581854043392505",
+      "unit_net": "108000",
+      "waste": "0E-76"
+    },
+    "source": "Synthetic workshop fixture; not manufacturer data",
+    "system_code": "PRO6004-SYNTHETIC"
+  }
+}
