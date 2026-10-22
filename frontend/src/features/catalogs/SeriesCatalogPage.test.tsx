@@ -26,6 +26,7 @@ vi.mock("./SeriesSheetView", () => ({
   SeriesSheetView: ({ systemId }: { systemId: string }) => <h1>Ficha {systemId}</h1>,
 }));
 vi.mock("./SeriesTrialDialog", () => ({ SeriesTrialDialog: () => null }));
+vi.mock("./SeriesSetupWizard", () => ({ SeriesSetupWizard: () => <p>Alta reanudable</p> }));
 vi.mock("./CatalogPage", () => ({ CatalogPage: () => <h1>Ajustes del catálogo</h1> }));
 vi.mock("./CatalogImportReviewPage", () => ({
   CatalogImportReviewPage: ({ importId }: { importId: string }) => (

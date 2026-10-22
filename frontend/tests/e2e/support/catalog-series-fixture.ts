@@ -28,10 +28,17 @@ function local(name: string): string {
   return url.origin;
 }
 
-export const test = base.extend<{ catalog: CatalogFixture; doubleReadManual: boolean }>({
+export const test = base.extend<{
+  catalog: CatalogFixture;
+  doubleReadManual: boolean;
+  lightCatalog: boolean;
+  unpricedCatalog: boolean;
+}>({
   doubleReadManual: [false, { option: true }],
+  lightCatalog: [false, { option: true }],
+  unpricedCatalog: [false, { option: true }],
   catalog: [
-    async ({ page, doubleReadManual }, use) => {
+    async ({ page, doubleReadManual, lightCatalog, unpricedCatalog }, use) => {
       const supabaseUrl = local("SUPABASE_URL");
       const mailpit = local("MAILPIT_URL");
       const serviceKey = required("SUPABASE_SERVICE_ROLE_KEY");
@@ -83,6 +90,8 @@ export const test = base.extend<{ catalog: CatalogFixture; doubleReadManual: boo
             organizationId,
             userId,
             ...(doubleReadManual ? ["--double-read"] : []),
+            ...(lightCatalog ? ["--light"] : []),
+            ...(unpricedCatalog ? ["--unpriced"] : []),
           ],
           {
             cwd: fileURLToPath(new URL("../../../../", import.meta.url)),

@@ -68,6 +68,10 @@
   align-items: center;
   gap: 16px;
 }
+.series-sheet__tools > button {
+  max-width: 100%;
+  white-space: normal;
+}
 .series-sheet__legend {
   flex: 1 1 360px;
   font-size: var(--type-dense);

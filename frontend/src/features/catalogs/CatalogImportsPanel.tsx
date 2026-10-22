@@ -130,7 +130,7 @@ function display(value: unknown, column?: CatalogTemplateColumn, field?: string)
     return fmtMm(String(value));
   return String(value);
 }
-function typedRow(raw: Record<string, unknown>): ReviewRow | null {
+function typedRow(raw: Record<string, unknown>, systemCode?: string): ReviewRow | null {
   if (!raw.sheet || !raw.values || typeof raw.values !== "object") return null;
   return {
     key: String(raw.key),
@@ -144,6 +144,7 @@ function typedRow(raw: Record<string, unknown>): ReviewRow | null {
     warnings: (raw.warnings ?? []) as string[],
     double_read: raw.double_read as ReviewRow["double_read"],
     include:
+      (!systemCode || (raw.values as Record<string, unknown>).system_code === systemCode) &&
       raw.confidence === "HIGH_CANDIDATE" &&
       !Object.values((raw.fields ?? {}) as Record<string, Evidence>).some(
         (field) => field.confidence === "LOW",
@@ -157,6 +158,7 @@ export function CatalogImportsPanel({
   onExpandedChange,
   initialImportId,
   reviewOnly = false,
+  setup,
 }: {
   orgId: string;
   canWrite: boolean;
@@ -165,12 +167,18 @@ export function CatalogImportsPanel({
   onExpandedChange?: (expanded: boolean) => void;
   initialImportId?: string;
   reviewOnly?: boolean;
+  setup?: {
+    systemCode: string;
+    onImport: (id: string) => void;
+    onBusyChange: (busy: boolean) => void;
+    onDirtyChange: (dirty: boolean) => void;
+  };
 }): JSX.Element {
   const confirm = useConfirm();
   const requestedImport = useRef(
     initialImportId ?? new URLSearchParams(window.location.search).get("import"),
   );
-  const [expanded, setExpanded] = useState(!!requestedImport.current);
+  const [expanded, setExpanded] = useState(!!requestedImport.current || !!setup);
   useEffect(() => onExpandedChange?.(expanded), [expanded, onExpandedChange]);
   const [imports, setImports] = useState<CatalogImportResponse[]>([]);
   const [sheets, setSheets] = useState<CatalogTemplateSheet[]>([]);
@@ -194,6 +202,10 @@ export function CatalogImportsPanel({
   const generation = useRef(0);
   const fileInput = useRef<HTMLInputElement>(null);
   const options = { headers: { "X-Organization-ID": orgId } };
+  const setupBusy = setup?.onBusyChange;
+  const setupDirty = setup?.onDirtyChange;
+  useEffect(() => setupBusy?.(busy), [busy, setupBusy]);
+  useEffect(() => setupDirty?.(dirty || !!paste.trim()), [dirty, paste, setupDirty]);
   useEffect(() => {
     mounted.current = true;
     return () => {
@@ -246,10 +258,10 @@ export function CatalogImportsPanel({
   }, [imports, load]);
   useEffect(() => {
     const wanted = imports.find((item) => item.id === requestedImport.current);
-    if (wanted) {
+    if (wanted && !["UPLOADED", "EXTRACTING"].includes(wanted.status)) {
       requestedImport.current = null;
       const candidates = wanted.candidates
-        .map(typedRow)
+        .map((raw) => typedRow(raw, setup?.systemCode))
         .filter((row): row is ReviewRow => row !== null);
       setReviewId(wanted.id);
       setRows(candidates);
@@ -257,7 +269,7 @@ export function CatalogImportsPanel({
       setRowKey(candidates[0]?.key ?? "");
     }
     // A deep link opens once; subsequent list refreshes preserve local edits.
-  }, [imports]);
+  }, [imports, setup?.systemCode]);
   useEffect(() => {
     if (!reviewId) return;
     const controller = new AbortController();
@@ -299,6 +311,8 @@ export function CatalogImportsPanel({
     try {
       const response = await catalogImportsCreate({ file }, options);
       if (response.status !== 200) throw new ApiError(response.status, response.data);
+      requestedImport.current = response.data.import.id;
+      setup?.onImport(response.data.import.id);
       setPaste("");
       await load();
       setMessage(
@@ -313,7 +327,7 @@ export function CatalogImportsPanel({
   async function openReview(entry: CatalogImportResponse): Promise<void> {
     if (dirty && !(await confirm({ title: "¿Descartar los cambios de esta revisión?" }))) return;
     const candidates = entry.candidates
-      .map(typedRow)
+      .map((raw) => typedRow(raw, setup?.systemCode))
       .filter((row): row is ReviewRow => row !== null);
     if (!candidates.length) {
       setMessage(
@@ -324,6 +338,7 @@ export function CatalogImportsPanel({
     const first = candidates[0];
     if (!first) return;
     setReviewId(entry.id);
+    setup?.onImport(entry.id);
     setRows(candidates);
     setSheetName(first.sheet);
     setRowKey(first.key);
@@ -354,8 +369,14 @@ export function CatalogImportsPanel({
     setReviewed(false);
     setDirty(true);
   }
+  function inScope(row: ReviewRow): boolean {
+    if (!setup) return true;
+    return row.values.system_code === setup.systemCode;
+  }
   const items = () =>
-    rows.filter((row) => row.include).map((row) => ({ key: row.key, values: row.values }));
+    rows
+      .filter((row) => row.include && inScope(row))
+      .map((row) => ({ key: row.key, values: row.values }));
   function includeRow(key: string, include: boolean): void {
     setRows((current) => current.map((row) => (row.key === key ? { ...row, include } : row)));
     setDiff(null);
@@ -364,6 +385,13 @@ export function CatalogImportsPanel({
   }
   async function preview(): Promise<void> {
     if (!reviewId) return;
+    if (rows.some((row) => row.include && !inScope(row))) {
+      setMessage(
+        `Excluye las filas de otras series o sin código exacto ${setup?.systemCode}. No se reasignan automáticamente.`,
+      );
+      setReviewView("all");
+      return;
+    }
     if (rows.some((row) => row.include && unresolvedReadFields(row).length > 0)) {
       setMessage("Resuelve las diferencias de las filas incluidas o exclúyelas antes de comparar.");
       setReviewView("differences");
@@ -514,11 +542,20 @@ export function CatalogImportsPanel({
       aria-label={reviewOnly ? "Revisión del manual" : "Importar catálogo"}
       aria-busy={busy}
     >
-      <UnsavedChangesGuard
-        dirty={dirty || paste.trim().length > 0}
-        message="Hay cambios de catálogo sin publicar."
-      />
-      {!reviewOnly && (
+      {!setup && (
+        <UnsavedChangesGuard
+          dirty={dirty || paste.trim().length > 0}
+          message="Hay cambios de catálogo sin publicar."
+        />
+      )}
+      {setup && (
+        <p>
+          Publica solo filas con el código exacto {setup.systemCode}. Las identidades dudosas y las
+          otras series deben quedar excluidas; puedes revisarlas después en los ajustes del
+          catálogo.
+        </p>
+      )}
+      {!reviewOnly && !setup && (
         <header className="catalog-toolbar">
           <h3>Importar catálogo</h3>
           <button
@@ -566,6 +603,7 @@ export function CatalogImportsPanel({
             <input
               ref={fileInput}
               type="file"
+              aria-label="Archivo del catálogo"
               className="imports-file-input"
               accept=".xlsx,.xlsm,.csv"
               onChange={(event) => {
@@ -609,6 +647,7 @@ export function CatalogImportsPanel({
             <input
               ref={fileInput}
               type="file"
+              aria-label="Archivo del catálogo"
               className="imports-file-input"
               accept=".pdf,.xlsx,.xlsm,.csv,.txt,.eml,.png,.jpg,.jpeg,.webp"
               onChange={(event) => {
@@ -710,7 +749,7 @@ export function CatalogImportsPanel({
                     : "Ver referencia"}
                 </button>
               )}
-              {canWrite && item.status === "CONFIRMED" && (
+              {canWrite && !setup && item.status === "CONFIRMED" && (
                 <button type="button" disabled={busy} onClick={() => void undo(item)}>
                   Deshacer publicación
                 </button>

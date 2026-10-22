@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import {
@@ -43,6 +43,7 @@ export function SeriesTrial({
   onDraft,
   onBusyChange,
   onVerified,
+  onDirtyChange,
   onComplete,
 }: {
   orgId: string;
@@ -52,6 +53,7 @@ export function SeriesTrial({
   onDraft?: (draft: TrialInputRequest) => void;
   onBusyChange?: (busy: boolean) => void;
   onVerified?: (reference: ReferenceWindow) => void;
+  onDirtyChange?: (dirty: boolean) => void;
   onComplete: () => void;
 }): JSX.Element {
   const tree = initial?.parametric_tree as
@@ -72,6 +74,8 @@ export function SeriesTrial({
   const [suggested, setSuggested] = useState(false);
   const [receipt, setReceipt] = useState<ReferenceWindow | null>(null);
   const lock = useRef(false);
+  const [draftDirty, setDraftDirty] = useState(false);
+  useEffect(() => onDirtyChange?.(draftDirty), [draftDirty, onDirtyChange]);
   const options = { headers: { "X-Organization-ID": orgId } };
   const catalog = useQuery({
     queryKey: ["series-trial-options", orgId, sheet.id, sheet.revision],
@@ -131,6 +135,7 @@ export function SeriesTrial({
   const differences = result?.measurements.some((row) => row.matches === false) ?? false;
   const proposal = choices?.items[choice];
   function invalidate() {
+    setDraftDirty(true);
     setConfirmed(false);
     setReceipt(null);
     setChoices(null);
@@ -162,6 +167,7 @@ export function SeriesTrial({
     setConfirmed(false);
     setReceipt(null);
     onDraft?.(data);
+    setDraftDirty(false);
   }
   function compare() {
     if (!currentInput) {

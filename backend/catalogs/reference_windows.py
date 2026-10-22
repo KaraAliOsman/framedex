@@ -123,9 +123,10 @@ def verify(org_id, system_id, actor_id, data):
                 [org_id, system_id, json_text({**_request(data), "manual_values": {
                     key: str(value) for key, value in data.get("manual_values", {}).items()}}),
                     json_text(physical_reference(result)), fingerprint, actor_id])[0]
-            rows("INSERT INTO public.catalog_series_setup(system_id,org_id,verified_at,verified_by,verified_hash,wizard_step) "
-                "VALUES(%s,%s,now(),%s,%s,5) ON CONFLICT(system_id) DO UPDATE SET "
-                "verified_at=now(),verified_by=EXCLUDED.verified_by,verified_hash=EXCLUDED.verified_hash,wizard_step=5 RETURNING system_id",
+            rows("INSERT INTO public.catalog_series_setup(system_id,org_id,verified_at,verified_by,verified_hash,wizard_step,progress_revision) "
+                "VALUES(%s,%s,now(),%s,%s,5,2) ON CONFLICT(system_id) DO UPDATE SET "
+                "verified_at=now(),verified_by=EXCLUDED.verified_by,verified_hash=EXCLUDED.verified_hash,wizard_step=5,"
+                "progress_revision=catalog_series_setup.progress_revision+1 RETURNING system_id",
                 [system_id, org_id, actor_id, fingerprint])
         return {**saved, "system_id": system_id, "technical_hash": fingerprint}
 

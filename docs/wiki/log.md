@@ -2345,3 +2345,19 @@ Véase [catálogo](product/catalog-authority.md) y [evidencia](../redesign/captu
   ensayos comprueban extremos y accesibilidad. Frontend completo: 1.209 PASS.
 - Se actualizaron catálogo, estado y evidencia seleccionada. P03 sigue en curso:
   falta el asistente y la aceptación integral, sin adelantar las fusiones de P02.
+
+## 2026-10-22 · P03h: alta reanudable y serie de la primera obra
+
+Verificado en `gpt/dk2-p03h-asistente-reanudable`: cinco pasos con escrituras
+de progreso serializadas y recuperación explícita de conflictos. Las revisiones
+y archivos no publicados sobreviven al cambio de paso. La publicación conserva
+la identidad exacta y el permiso del dueño para los costos. La obra nueva
+valida y persiste su serie inicial en la misma inserción, sin modificar empresa.
+
+Tres E2E reales/extremos aprobados a 1440/390/320 y texto al 200 %, con axe.
+El recorrido corrige 1206 → 1208 mm, guarda el caso inmutable, comprueba las
+capacidades de cotizar/fabricar y hereda la serie en el primer editor. Los datos
+son sintéticos y las lecturas del modelo están simuladas. Frontend 1.218,
+backend 1.702 y motor 1.086 PASS; dos xfail previos, 16 integraciones y bytes
+dorados intactos. P03a se fusionó y el resto sigue sus gates en orden. Véase
+[catálogo](product/catalog-authority.md) y [evidencia](../redesign/captures/dk2-p03h/aceptacion.md).

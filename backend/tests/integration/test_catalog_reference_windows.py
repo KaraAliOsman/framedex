@@ -176,6 +176,28 @@ def test_progress_is_tenant_scoped_resumable_and_optimistic(documentary_tenant):
             windows.progress(org, sheet["id"], {"step": 2, "revision": previous["revision"], "state": {}})
 
 
+@pytest.mark.parametrize("saved_progress", [False, True])
+def test_verification_invalidates_older_progress_without_losing_saved_state(documentary_tenant, saved_progress):
+    org, _, users, _ = documentary_tenant
+    actor = users["OWNER"]
+    with as_user(actor):
+        sheet = priced_series(org, actor)
+        previous = windows.progress(org, sheet["id"])
+        if saved_progress:
+            previous = windows.progress(org, sheet["id"], {"step": 4, "revision": previous["revision"],
+                "state": {"prices_file_name": "precios.xlsx"}})
+        trial = windows.trial(org, sheet["id"], request_data())
+        windows.verify(org, sheet["id"], actor, {**request_data(), "revision": sheet["revision"],
+            "calculation_token": trial["calculation_token"], "confirmed": True, "confirm_suggested": True})
+        current = windows.progress(org, sheet["id"])
+        assert current["step"] == 5 and current["revision"] == previous["revision"] + 1
+        assert current["state"] == previous["state"]
+        with pytest.raises(ContractAPIException) as raised:
+            windows.progress(org, sheet["id"], {"step": 2, "revision": previous["revision"], "state": {}})
+        assert raised.value.contract_code == "catalog_progress_stale"
+        assert windows.progress(org, sheet["id"]) == current
+
+
 def test_api_enforces_role_and_does_not_accept_client_expected_output(documentary_tenant):
     org, _, users, _ = documentary_tenant
     with as_user(users["OWNER"]):

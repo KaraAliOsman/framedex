@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
@@ -106,11 +106,13 @@ export function SupplierPriceImport({
   initialSupplier = "",
   onApplied,
   onBusyChange,
+  onDirtyChange,
 }: {
   orgId: string;
   initialSupplier?: string;
   onApplied?: (receipt: PriceImportReceipt) => void;
   onBusyChange?: (busy: boolean) => void;
+  onDirtyChange?: (dirty: boolean) => void;
 }): JSX.Element {
   const client = useQueryClient();
   const queryKey = ["supplier-price-lists", orgId];
@@ -126,6 +128,10 @@ export function SupplierPriceImport({
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const lock = useRef(false);
+  useEffect(
+    () => onDirtyChange?.((!!file && !receipt) || creating),
+    [file, receipt, creating, onDirtyChange],
+  );
   const lists = useQuery({
     queryKey,
     queryFn: async ({ signal }) => {
