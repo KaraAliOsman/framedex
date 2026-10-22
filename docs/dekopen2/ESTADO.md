@@ -226,3 +226,10 @@ a P03; P01 deja preparado su contrato y su bloqueo.
   lint SQL aprobado en la base sintética aislada, sin tocar REVIEW.
 - API regenerada y reproducción OpenAPI/orval aprobada. La conexión visual y
   el glosario se entregarán después; P02 continúa en curso.
+- El CI de P02b detectó que el comparador de migración D08 no admitía el
+  ordinal nuevo. El gate permite exclusivamente esa columna, exige BIGINT
+  identity no nulo, ordinal positivo y único, y conserva la comparación exacta
+  de todos los campos y el conjunto de eventos históricos. Catorce regresiones
+  rechazan cambios de monto, actor, motivo, fecha, registros y ordinal previo;
+  también eventos borrados/agregados y columnas desconocidas. La migración
+  completa poblada de PostgreSQL 16 se vuelve a ejercitar.
