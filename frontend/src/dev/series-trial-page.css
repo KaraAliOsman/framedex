@@ -1,0 +1,6 @@
+/* Review chrome stays compact when the component's root text size is doubled. */
+.series-trial-page__modes .ui-button {
+  font-size: 13px;
+  min-height: 32px;
+  padding: 4px 8px;
+}

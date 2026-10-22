@@ -4,6 +4,10 @@ from projects.thermal_views import ThermalCatalogView, ThermalReviewView
 from catalogs import views
 from catalogs.glass_views import GlassPreviewView, GlassRulesView, GlassVariantView
 from catalogs.reference_views import ReferenceSeriesView
+from catalogs.trial_views import (
+    SeriesTrialView, SeriesTrialProposalsView, SeriesTrialVerifyView,
+    SeriesReferencesView, SeriesSetupProgressView,
+)
 from catalogs.series_views import (
     FamilyTemplatesView, SeriesCellsView, SeriesConfirmView, SeriesCreateView,
     SeriesHistoryView, SeriesSheetView, SeriesPricesView, SeriesPriceHistoryView,
@@ -12,6 +16,11 @@ from catalogs.series_views import (
 urlpatterns = [
     path("family-templates/", FamilyTemplatesView.as_view(), name="catalog-family-templates"),
     path("series/", SeriesCreateView.as_view(), name="catalog-series-create"),
+    path("series/<uuid:system_id>/trial/", SeriesTrialView.as_view(), name="catalog-series-trial"),
+    path("series/<uuid:system_id>/trial/proposals/", SeriesTrialProposalsView.as_view(), name="catalog-series-trial-proposals"),
+    path("series/<uuid:system_id>/trial/verify/", SeriesTrialVerifyView.as_view(), name="catalog-series-trial-verify"),
+    path("series/<uuid:system_id>/references/", SeriesReferencesView.as_view(), name="catalog-series-references"),
+    path("series/<uuid:system_id>/setup/", SeriesSetupProgressView.as_view(), name="catalog-series-setup"),
     path("series/<uuid:system_id>/", SeriesSheetView.as_view(), name="catalog-series-sheet"),
     path("series/<uuid:system_id>/cells/", SeriesCellsView.as_view(), name="catalog-series-cells"),
     path("series/<uuid:system_id>/confirm/", SeriesConfirmView.as_view(), name="catalog-series-confirm"),
