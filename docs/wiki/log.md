@@ -2286,6 +2286,82 @@ gpt/dk2-p03a-prueba-motor: 1.086 pruebas del motor y goldens anteriores idéntic
 P02 sigue pendiente de CI/fusiones; P03 aún no persiste ni publica verificación.
 Véanse product/catalog-authority.md y docs/dekopen2/ESTADO.md.
 
+## 2026-10-21 · Preparación P03b: caso del taller y revisión de cambios
+
+Entrada/salida del motor inmutables por empresa, RLS, progreso optimista y
+revisión exacta antes del commit para ficha, CRUD e importaciones. Verificado
+en gpt/dk2-p03b-verificacion-serie con 25 integraciones dirigidas y 23 pgTAP.
+La suite del backend detectó cinco rutas nuevas fuera de su inventario explícito;
+se añadieron sin retirar las aserciones de seguridad. P03 aún requiere UI,
+doble lectura y precios. Véanse product/catalog-authority.md y ESTADO.md.
+
+## 2026-10-21 · Preparación P03c: doble lectura
+
+Dos extracciones independientes alineadas por identidad, ambas citas/auditorías
+por celda y publicación humana. La elección citada confirma el origen documental;
+corregir libremente conserva origen del taller. La integración detectó y corrigió
+el enlace de evidencias a campos anidados de corte/refuerzo. Las propuestas de
+calibración también respetan los rangos de almacenamiento. P03 sigue pendiente
+de mapeo de precios e interfaz; véase product/catalog-authority.md.
+
+## 2026-10-21 · Preparación P03d: precios mapeados
+
+Inspección de XLSX/CSV, sugerencias de columnas y muestra de diez filas. Una
+confirmación ligada al archivo completo aplica costos del taller con auditoría
+y sin sobrescritura implícita. Verificado con 44 unitarias y ocho integraciones
+PostgreSQL; la interfaz del asistente sigue pendiente. El CI de P03b detectó
+tres grupos sin traducción; el glosario se completó conservando su guarda.
+Véase product/catalog-authority.md.
+
+## 2026-10-22 · Preparación P03e: prueba visible y cambios protegidos
+
+La comparación de cortes utiliza las APIs del motor, propone alternativas
+exactas y exige confirmación humana. Un conflicto de ventana verificada abre
+el antes/después; cancelar conserva el borrador y aceptar reintenta únicamente
+la misma mutación/empresa con su token. El ensayo móvil detectó y corrigió la
+exposición del fondo de los diálogos al lector de pantalla. Suite frontend:
+1.188 pruebas; cinco E2E de flujo real/extremos aprobados. P02c se fusionó tras
+sus cuatro controles; P02d/e siguen pendientes y P03 no está completa. Véase
+product/catalog-authority.md y la evidencia de dk2-p03e.
+
+## 2026-10-22 · Preparación P03f: precios mapeados en pantalla
+
+La ficha conecta inspección, lista de destino, mapeo de cuatro columnas,
+revisión completa y confirmación con token. Crear una lista vacía requiere
+su propio clic; revisar no guarda precios. Cualquier cambio de archivo,
+mapeo, separador o lista descarta la revisión previa. La recuperación de red
+conserva el archivo y permite volver a leerlo. El E2E con XLSX sintético
+comprueba 12 filas, códigos con ceros y cuatro decimales en PostgreSQL.
+Los ensayos de 0/1/500 precios pasan a 1440/390/320 y texto al 200 %, con axe
+y montos completos. P03 conserva pendiente el asistente integral.
+Véase [catálogo](product/catalog-authority.md) y [evidencia](../redesign/captures/dk2-p03f/aceptacion.md).
+
+## 2026-10-22 · P03g: diferencias del manual con ambas citas
+
+- Verificado en `gpt/dk2-p03g-asistente-serie`: revisión centrada en diferencias,
+  con elección citada, corrección del taller y acuerdos como propuestas.
+- Los enlaces documentales cargan solo la fuente requerida. Dos E2E usan
+  lecturas simuladas y publicación/almacenamiento/PostgreSQL reales; tres
+  ensayos comprueban extremos y accesibilidad. Frontend completo: 1.209 PASS.
+- Se actualizaron catálogo, estado y evidencia seleccionada. P03 sigue en curso:
+  falta el asistente y la aceptación integral, sin adelantar las fusiones de P02.
+
+## 2026-10-22 · P03h: alta reanudable y serie de la primera obra
+
+Verificado en `gpt/dk2-p03h-asistente-reanudable`: cinco pasos con escrituras
+de progreso serializadas y recuperación explícita de conflictos. Las revisiones
+y archivos no publicados sobreviven al cambio de paso. La publicación conserva
+la identidad exacta y el permiso del dueño para los costos. La obra nueva
+valida y persiste su serie inicial en la misma inserción, sin modificar empresa.
+
+Tres E2E reales/extremos aprobados a 1440/390/320 y texto al 200 %, con axe.
+El recorrido corrige 1206 → 1208 mm, guarda el caso inmutable, comprueba las
+capacidades de cotizar/fabricar y hereda la serie en el primer editor. Los datos
+son sintéticos y las lecturas del modelo están simuladas. Frontend 1.218,
+backend 1.702 y motor 1.086 PASS; dos xfail previos, 16 integraciones y bytes
+dorados intactos. P03a se fusionó y el resto sigue sus gates en orden. Véase
+[catálogo](product/catalog-authority.md) y [evidencia](../redesign/captures/dk2-p03h/aceptacion.md).
+
 ## 2026-10-22 · P04a: precio simple en el motor
 
 Sobre `6c3c013d`, la rama `gpt/dk2-p04a-precio-motor` añade servicios por m²

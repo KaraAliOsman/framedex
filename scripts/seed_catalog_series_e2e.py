@@ -38,6 +38,12 @@ with transaction.atomic():
         service.update(service.SYSTEMS, org, sheet["id"], {"name": "PRO6004 · ensayo sintético"},
             expected_revision='"' + current["revision"] + '"', actor_id=actor)
         sheet = series.series_sheet(org, sheet["id"])
+        if "--unpriced" in sys.argv[3:]:
+            from pricing.repository import admin_write, rows
+
+            for price_list in rows("SELECT id FROM public.cost_lists WHERE org_id=%s", [org]):
+                admin_write("cost-lists", org, {"is_active": False},
+                    "Synthetic setup starts without active purchase prices", price_list["id"])
         fields = ("sash_overlap_mm", "glass_clearance_white_mm", "glass_clearance_foil_mm",
             "rebate_depth_mm", "end_milling_overlap_mm")
         values = {item["field"]: item["value"] for item in sheet["cells"] if item["resource"] == "systems"}
@@ -52,13 +58,17 @@ with transaction.atomic():
             "role": "FRAME" if index == 0 else "SASH" if index == 1 else "GLAZING_BEAD",
             "face_width_mm": "60.00",
             "commercial_length_mm": "6500.00", "weight_kg_m": "1.2345",
-        } for index in range(300)]
+        } for index in range(0 if "--light" in sys.argv[3:] else 300)]
         stress = create(org, actor, name="300 perfiles · ensayo sintético",
-            profiles=stress_profiles[:200], glazing=[], hardware=[])
+            profiles=stress_profiles[:200], glazing=[], hardware=[]) if stress_profiles else sheet
         for profile in stress_profiles[200:]:
             validator = service.ARTICLES.serializer(data={**profile, "system_id": stress["id"]})
             assert validator.is_valid(), validator.errors
             service.create(service.ARTICLES, org, validator.validated_data, actor_id=actor)
         result = {"systemId": str(sheet["id"]), "stressId": str(stress["id"]),
             "pasteValues": [values[field] for field in fields]}
+        if "--double-read" in sys.argv[3:]:
+            from scripts.catalog_double_read_e2e import seed_manual
+
+            result.update(seed_manual(org, actor, sheet))
 print(json.dumps(result, ensure_ascii=False))
