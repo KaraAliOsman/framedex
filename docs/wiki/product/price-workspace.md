@@ -17,7 +17,31 @@ sources:
 
 # Precio del proyecto y confianza en el número
 
-## Comportamiento verificado
+## Precio simple de DEKOPEN 2 · P04a
+
+Verificado el 22-10-2026 en `gpt/dk2-p04a-precio-motor`, sobre `6c3c013d`.
+Esta primera entrega incorpora aritmética pura; todavía no activa una política
+persistida ni el precio automático del borrador.
+
+`simple_pricing.py` recibe costos de materiales ya resueltos por el motor,
+área y una política explícita. Mano de obra e instalación admiten m² o ventana.
+El margen conserva el contrato comercial de margen sobre venta:
+`precio = costo / (1 - margen)`. El redondeo sube al múltiplo declarado de la
+moneda para conservar ese margen objetivo. Cantidad e IVA siguen pasando por
+`finish_lines`; una instalación incluida como extra no se cobra dos veces.
+Materiales ausentes se rechazan; un precio cero declarado sigue siendo válido.
+
+Los casos `PRO6004-fija` y `PRO6004-abatible` congelan geometría, consumo de
+barras/refuerzos, vidrio, herrajes, tornillos, tarifas y desglose comercial en
+`engine/tests/golden_simple_pricing.json`. Son datos sintéticos de prueba,
+sin autoridad de fabricante ni precios reales del taller. El generador oficial
+incluye estos casos; los goldens anteriores permanecen idénticos.
+
+La fórmula histórica por m² y el modo avanzado conservan sus resultados.
+Persistencia, proyección de trabajo, emisión y pantalla se entregan en las
+siguientes sub-PR de P04, sin crear operaciones APPLIED para un borrador vivo.
+
+## Comportamiento avanzado verificado previamente
 
 La lectura principal compara el aplicado con una proyección sin guardar.
 La cascada y el Δ son del motor. OWNER y WORKSHOP_MANAGER conservan compra;

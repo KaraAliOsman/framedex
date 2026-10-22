@@ -2285,3 +2285,13 @@ recalculadas y cuatro casos sintéticos congelados. Verificado en la rama
 gpt/dk2-p03a-prueba-motor: 1.086 pruebas del motor y goldens anteriores idénticos.
 P02 sigue pendiente de CI/fusiones; P03 aún no persiste ni publica verificación.
 Véanse product/catalog-authority.md y docs/dekopen2/ESTADO.md.
+
+## 2026-10-22 · P04a: precio simple en el motor
+
+Sobre `6c3c013d`, la rama `gpt/dk2-p04a-precio-motor` añade servicios por m²
+o ventana, margen sobre venta y redondeo hacia arriba. Fija y abatible PRO6004
+sintética congelan consumo y desglose; los goldens históricos no cambian.
+Materiales ausentes se rechazan y una instalación incluida no se duplica.
+La persistencia, el automatismo y la interfaz siguen pendientes de P04.
+P02 ya está fusionada; P03 espera sus fusiones protegidas. Véase
+[precio](product/price-workspace.md).

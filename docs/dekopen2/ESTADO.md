@@ -7,9 +7,9 @@ Producción y precios comerciales requieren autorización aparte.
 | Fase | Alcance | Estado | Rama / PR |
 |---|---|---|---|
 | P01 | Catálogo v2: backend, origen, niveles y plantillas | Hecha | [P01a #164](https://github.com/KaraAliOsman/framedex/pull/164), [P01b #165](https://github.com/KaraAliOsman/framedex/pull/165), [P01c #166](https://github.com/KaraAliOsman/framedex/pull/166), [P01d #167](https://github.com/KaraAliOsman/framedex/pull/167) y [P01e #168](https://github.com/KaraAliOsman/framedex/pull/168) fusionadas |
-| P02 | Ficha de serie editable | En curso | [P02a #169](https://github.com/KaraAliOsman/framedex/pull/169), [P02b #170](https://github.com/KaraAliOsman/framedex/pull/170), [P02c #171](https://github.com/KaraAliOsman/framedex/pull/171); sub-PR ordenadas |
-| P03 | Alta de serie y ventana de prueba | En preparación, pendiente de fusionar P02 | `gpt/dk2-p03a-prueba-motor` |
-| P04 | Precio simple automático | Pendiente | — |
+| P02 | Ficha de serie editable | Hecha | Sub-PR [#169](https://github.com/KaraAliOsman/framedex/pull/169)–[#173](https://github.com/KaraAliOsman/framedex/pull/173) fusionadas |
+| P03 | Alta de serie y ventana de prueba | Implementada; fusiones en curso | [P03a #174](https://github.com/KaraAliOsman/framedex/pull/174) fusionada; [#175](https://github.com/KaraAliOsman/framedex/pull/175)–[#181](https://github.com/KaraAliOsman/framedex/pull/181) pendientes |
+| P04 | Precio simple automático | En curso: motor; persistencia e interfaz pendientes | `gpt/dk2-p04a-precio-motor` |
 | P05 | Navegación, Hoy y Obras | Pendiente | — |
 | P06 | Mesa de la obra y edición directa | Pendiente | — |
 | P07 | Cotización y portal | Pendiente | — |
@@ -17,6 +17,25 @@ Producción y precios comerciales requieren autorización aparte.
 | P09 | Taller e instalación | Pendiente | — |
 | P10 | Onboarding, biblioteca Chile y aceptación Proline | Pendiente | — |
 | P11 | Pulido y cierre | Pendiente | — |
+
+## P04 · Precio simple automático
+
+### P04a · Política pura del motor
+
+- Base `origin/main` en `6c3c013d`, después de fusionar P03a. P02 ya quedó
+  fusionada; P03b–h esperan sus controles y fusiones ordenadas. P04 no se
+  fusionará antes de completar esa cadena.
+- Mano de obra e instalación por m² o por ventana, margen sobre venta y
+  redondeo hacia arriba al múltiplo explícito de la moneda. Materiales sin
+  precio no se convierten en cero; la instalación incluida no se duplica.
+- Nuevos casos dorados de fija y abatible PRO6004 sintética con consumo real
+  del motor y precios de prueba. No certifican Proline ni tarifas de mercado.
+  Los goldens anteriores y el contrato comercial avanzado permanecen iguales.
+- Verificación local: 1.119 pruebas del motor aprobadas y dos xfail previos;
+  33 casos nuevos, mypy (143 archivos), Ruff, goldens de solo lectura y guardas
+  aprobados. Esta subentrega no toca interfaz, API, SQL ni emisión.
+- Pendientes: política por empresa con RLS, precio vigente del borrador,
+  aplicación al emitir, pantalla de configuración, desglose y aceptación E2E.
 
 ## Base y comprobaciones previas
 

@@ -4,10 +4,12 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from decimal import Decimal, ROUND_HALF_UP, localcontext
 from enum import Enum
+from typing import Literal
 
 D = Decimal
 ZERO = D('0')
 ONE = D('1')
+ServiceBasis = Literal['M2', 'WINDOW']
 
 
 class PricingError(ValueError):
@@ -70,8 +72,20 @@ def convert_cost(value: Decimal, source: str, target: str,
                 else value / observed_rate)
 
 
+def service_cost(rate: Decimal, area_m2: Decimal, basis: ServiceBasis) -> Decimal:
+    """A declared rate applies either to the whole window or its nominal area."""
+    number(rate)
+    number(area_m2)
+    if basis not in ('M2', 'WINDOW'):
+        raise PricingError('invalid_service_basis')
+    with localcontext() as context:
+        context.prec = 256
+        return rate * (area_m2 if basis == 'M2' else ONE)
+
+
 def direct_cost(materials: Sequence[Decimal], area_m2: Decimal, waste: Decimal,
-                labor: Decimal, installation: Decimal) -> Decimal:
+                labor: Decimal, installation: Decimal, *,
+                labor_basis: ServiceBasis = 'M2', installation_basis: ServiceBasis = 'M2') -> Decimal:
     for value in (*materials, area_m2, waste, labor, installation):
         number(value)
     with localcontext() as context:
@@ -79,7 +93,12 @@ def direct_cost(materials: Sequence[Decimal], area_m2: Decimal, waste: Decimal,
         # their finite authority intact when regrouping waste and process;
         # selling division/rounding retains the established currency rules.
         context.prec = 256
-        return sum(materials, ZERO) * (ONE + waste) + area_m2 * (labor + installation)
+        labor_cost = service_cost(labor, area_m2, labor_basis)
+        installation_cost = service_cost(installation, area_m2, installation_basis)
+        # Retain the historical expression for the established m² contract.
+        services = (area_m2 * (labor + installation) if labor_basis == installation_basis == 'M2'
+                    else labor_cost + installation_cost)
+        return sum(materials, ZERO) * (ONE + waste) + services
 
 
 def matrix_price(width: Decimal, height: Decimal,
