@@ -88,3 +88,6 @@ estos payloads de las búsquedas generales; las rutas explícitas y
 
 - [P05h · Glosario contextual](dk2-p05h/aceptacion.md): catorce superficies,
   28 capturas a 1440/390; mensajes/documentos de servidor aún pendientes.
+
+- [P05i · Mensajes del servidor](dk2-p05i/aceptacion.md): doce capturas de
+  precios, informes, servicios y extremos, sobre respuestas actuales.

@@ -261,7 +261,7 @@ def save_report(org, actor, order_id, data, *, preview=False):
         raise contract_error(
             422,
             "analytics_currency",
-            "Registra los costos en la moneda de la revisión sellada; convierte con una autoridad explícita antes de ingresarlos.",
+            "Registra los costos en la moneda de la revisión emitida; convierte con un tipo de cambio con referencia explícita antes de ingresarlos.",
         )
     for key in ("materials", "labor"):
         ids = [str(row["id"]) for row in data[key]]

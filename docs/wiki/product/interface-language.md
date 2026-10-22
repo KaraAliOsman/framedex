@@ -3,7 +3,7 @@ type: concept
 status: active
 updated: 2026-10-22
 volatility: high
-verified_ref: gpt/dk2-p05h-ventanas
+verified_ref: gpt/dk2-p05i-mensajes-servidor
 sources:
   - docs/research/2026-10-21-competencia/prompts/P05-navegacion-hoy-obras.md
   - docs/design/CONSTITUCION.md
@@ -14,6 +14,11 @@ sources:
   - engine/src/dekopen_engine/thermal.py
   - backend/analytics/today.py
   - backend/projects/ops_registry.py
+  - backend/pricing/service.py
+  - backend/pricing/workspace.py
+  - backend/analytics/metrics.py
+  - backend/search/service.py
+  - docs/redesign/captures/dk2-p05i/aceptacion.md
   - docs/redesign/captures/dk2-p05g/aceptacion.md
 ---
 
@@ -65,8 +70,13 @@ las medidas de fabricación; una manilla tiene ubicación y un punto CNC no es
 una ventana. Los cobros tienen comprobantes; las tareas del asistente, resumen.
 Se corrigen también las etiquetas de espécimen térmico y acciones de Hoy.
 
-Los demás textos generados por backend, motor y documentos requieren la ronda
-P05i y siguientes; el recuento cero de TypeScript no acredita esas respuestas.
+P05i cubre diecinueve módulos de obras, precios, búsqueda e informes del servidor.
+Los errores conservan códigos, monedas, selección y ausencia de precio. La
+proyección actual usa textos humanos; los snapshots antiguos se reproducen sin
+reescribirlos. Consultas SQL, claves y literales numéricos permanecen idénticos.
+
+Los demás textos generados por backend, motor y documentos requieren las rondas
+siguientes; el recuento cero de TypeScript no acredita esas respuestas.
 No se reescribe evidencia emitida ni prosa aportada por clientes para conseguir
 un recuento de cadenas. P05 sigue en curso hasta cerrar esa revisión y sus PR.
 

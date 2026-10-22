@@ -2528,3 +2528,16 @@ de Hoy, las etapas de Obras y la purga global siguen en P05. Se conserva el
 - Se mide una carga de 8,5–10,0 s en ajustes de montaje y 2,1–3,3 s en Comercial;
   queda para P11. P05 continúa con mensajes/documentos de servidor. P04b está
   fusionada; P04c repite controles tras integrar main. P06–P11 pendientes.
+
+## [2026-10-22] DEKOPEN 2 P05i | Mensajes públicos del servidor
+
+- Obras, precios, búsqueda e informes: diecinueve módulos con glosario contextual,
+  códigos de error estables y ausencia explícita. Se evita duplicar la explicación
+  de moneda faltante; la selección y el precio no disponible se conservan.
+- 1.737 unitarias backend y 18 finales aprobadas. Integraciones PostgreSQL de
+  siete dominios; 31 regresiones finales de servicios, acabados y precios pasan.
+  Cuatro E2E recorren catorce superficies y precios/extremos a 1440/390/320,
+  texto al 200 % y axe. [Evidencia P05i](../redesign/captures/dk2-p05i/aceptacion.md).
+- SQL, claves y literales numéricos idénticos; snapshots antiguos sin reescritura.
+  Documentos, diagnósticos del motor y otras respuestas siguen pendientes. P05h
+  se publicó como #196; la cadena se fusiona en orden con cuatro controles verdes.

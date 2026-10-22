@@ -25,17 +25,17 @@ D = Decimal
 # Human es-CL detail per pricing failure code — the HTTP layer renders
 # these so an estimator sees what to fix, never a raw engine code. Codes
 # raised while iterating positions get prefixed with the position label
-# ("Vano 3 · Dormitorio: …") so the blocker names where it lives.
+# ("Ventana 3 · Dormitorio: …") so the blocker names where it lives.
 PRICING_ERROR_DETAILS = {
     'invalid_margin_band': 'revisa mínimo, objetivo y máximo de la banda de margen',
-    'cascade_does_not_close': 'la composición no coincide con su costo; revisa sus autoridades antes de aplicar',
-    'incomplete_repricing_evidence': 'falta una autoridad técnica o comercial congelada; revisa el catálogo y sus costos',
-    'installation_rule_duplicate': 'la instalación está seleccionada por posición y por proyecto; elige una sola regla',
-    'ambiguous_authority': 'hay más de una autoridad de costos vigente para la fecha; revisa las listas de costos',
+    'cascade_does_not_close': 'la composición no coincide con su costo; revisa sus reglas y costos antes de aplicar',
+    'incomplete_repricing_evidence': 'falta un dato de fabricación o precio guardado; revisa el catálogo y sus costos',
+    'installation_rule_duplicate': 'la instalación está seleccionada por ventana y por proyecto; elige una sola regla',
+    'ambiguous_authority': 'hay más de un registro válido; revisa las vigencias de costos, reglas de precio y tipos de cambio',
     'ambiguous_cost_list': 'hay más de una lista de costos vigente; revisa las vigencias en Configuración',
-    'ambiguous_selected_glass': 'usa más de un vidrio distinto y el precio por m² exige un solo vidrio por vano',
+    'ambiguous_selected_glass': 'usa más de un vidrio distinto y el precio por m² exige un solo vidrio por ventana',
     'audit_reason_required': 'indica el motivo del cambio para dejar trazabilidad',
-    'authority_not_found': 'no se encontró la autoridad comercial requerida; revisa la configuración de precios',
+    'authority_not_found': 'falta un dato necesario para calcular el precio; revisa los costos y las reglas de cálculo',
     'commercial_revision_required': 'requiere una nueva revisión antes de cotizar; crea la revisión siguiente desde el proyecto',
     'cost_list_not_found': 'no existe la lista de costos indicada',
     'fx_snapshot_immutable': 'la cotización de moneda ya está cerrada',
@@ -58,7 +58,7 @@ PRICING_ERROR_DETAILS = {
     'unsupported_currency': 'esta moneda no admite cotización; usa CLP o USD en Ajustes',
     'pricing_permission_denied': 'tu rol no permite esta operación comercial',
     'pricing_rules_not_found': 'no hay reglas de precio configuradas para tu taller; registra margen e impuesto en Ajustes → Costos y precios → Reglas comerciales antes de cotizar',
-    'project_has_no_positions': 'el proyecto no tiene vanos para cotizar',
+    'project_has_no_positions': 'el proyecto no tiene ventanas para cotizar',
     'project_not_found': 'no se encontró el proyecto; recarga y vuelve a intentar',
     'stale_pricing_operation': 'los precios cambiaron desde que preparaste la operación; recarga y vuelve a aplicar',
     'target_margin_already_defines_final_price': 'el margen objetivo ya define el precio final y no admite descuento adicional',
@@ -72,7 +72,7 @@ PRICING_ERROR_DETAILS = {
 
 def _position_label(position):
     tag = (position.get('location_tag') or '').strip()
-    return f"Vano {position['position_index']}" + (f" · {tag}" if tag else "")
+    return f"Ventana {position['position_index']}" + (f" · {tag}" if tag else "")
 
 
 def pricing_public_detail(code):
@@ -607,7 +607,7 @@ def design_batch_preview(org_id, _actor, request):
             )
             if not found:
                 items.append({'position_id':position_id,'ok':False,
-                              'error_code':'position_not_found','error':'La posición no existe en este proyecto.'})
+                              'error_code':'position_not_found','error':'La ventana no existe en este proyecto.'})
                 continue
             position = found[0]
             try:

@@ -265,7 +265,7 @@ def _summary(org_id: UUID, project_id: UUID, project: dict) -> dict:
                       "collected": str(m.collected), "remaining": str(m.remaining),
                       "due_on": m.due_on.isoformat() if m.due_on else None,
                       "due_source": m.due_source, "status": m.status} for m in result.milestones],
-        "source": "Total de la revisión emitida menos pagos vigentes; los recibos anulados no se suman. El motor asigna los cobros en el orden del acuerdo sellado.",
+        "source": "Total de la revisión emitida menos pagos vigentes; los comprobantes anulados no se suman. El motor asigna los cobros en el orden del acuerdo emitido.",
         "integrations": integration_status(org_id),
     }
 

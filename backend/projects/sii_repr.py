@@ -46,18 +46,18 @@ def _fields(dte_xml: bytes) -> dict:
     try:
         root = ElementTree.fromstring(dte_xml)
     except ElementTree.ParseError:
-        raise contract_error(500, "sii_dte_xml_unreadable", "El DTE sellado no es XML legible.")
+        raise contract_error(500, "sii_dte_xml_unreadable", "El DTE emitido no es XML legible.")
     doc = _find(root, ".//Documento")
     if doc is None:
-        raise contract_error(500, "sii_dte_xml_unreadable", "El DTE sellado no trae Documento.")
+        raise contract_error(500, "sii_dte_xml_unreadable", "El DTE emitido no trae Documento.")
     ted = _find(doc, "TED")
     if ted is None or _find(ted, "DD") is None:
-        raise contract_error(500, "sii_dte_xml_unreadable", "El DTE sellado no trae TED.")
+        raise contract_error(500, "sii_dte_xml_unreadable", "El DTE emitido no trae TED.")
     iddoc = _find(doc, "Encabezado/IdDoc")
     emisor = _find(doc, "Encabezado/Emisor")
     receptor = _find(doc, "Encabezado/Receptor")
     if iddoc is None or emisor is None or receptor is None:
-        raise contract_error(500, "sii_dte_xml_unreadable", "El DTE sellado está incompleto.")
+        raise contract_error(500, "sii_dte_xml_unreadable", "El DTE emitido está incompleto.")
 
     def text(node, tag):
         return (_find(node, tag).text or "") if _find(node, tag) is not None else ""

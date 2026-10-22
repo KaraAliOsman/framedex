@@ -77,7 +77,7 @@ def typology_label(value):
 
 def entity(row, *, value=None, unit="count", currency=None, label=None, href=None, reason=None):
     return {
-        "code": row.get("code") or row.get("sku") or row.get("label") or "Fuente sin dirección",
+        "code": row.get("code") or row.get("sku") or row.get("label") or "Origen sin referencia",
         "label": label or row.get("name") or row.get("label") or "",
         "href": href or f"/projects/{row['project_id']}?section=quote",
         "value": str(value) if value is not None else None,
@@ -274,7 +274,7 @@ def sales(data, people):
                         for row in cohort
                     ],
                     "Aprobadas ÷ emitidas del grupo; una cotización mixta pertenece a cada tipología, sin duplicarse dentro de una.",
-                    "emissions.sql · pricing.requested_by y positions.typology de la revisión sellada.",
+                    "emissions.sql · pricing.requested_by y positions.typology de la revisión emitida.",
                     reason="Falta declarar el autor o la tipología."
                     if key.startswith("Sin ")
                     else None,
@@ -364,9 +364,9 @@ def sales(data, people):
                     for row, value in zip(cohort, values, strict=True)
                 ],
                 "Suma bruta de la revisión vigente de cada obra emitida en la cohorte, por fase actual y moneda. No son ingresos cobrados.",
-                "emissions.sql · project.total_price_gross sellado; projects.status actual.",
+                "emissions.sql · project.total_price_gross de la emisión; projects.status actual.",
                 currency=currency,
-                reason="Falta moneda o total sellado en al menos una obra; no se suma un subconjunto.",
+                reason="Falta moneda o total emitido en al menos una obra; no se suma un subconjunto.",
                 missing=sum(value is None for value in values),
             )
         )
@@ -407,7 +407,7 @@ def margins(data):
                     delta_margin=None,
                     drivers=[],
                     causes=[
-                        "Falta la OT de una posición de la revisión elegida; no se calcula un margen parcial."
+                        "Falta la OT de una ventana de la revisión elegida; no se calcula un margen parcial."
                     ],
                 )
             if snapshot.get("project", {}).get("currency") not in ("CLP", "USD", "UF"):
@@ -419,7 +419,7 @@ def margins(data):
                     delta_margin=None,
                     drivers=[],
                     causes=[
-                        "Falta declarar la moneda de la revisión sellada; no se mezclan costos de distintas monedas."
+                        "Falta declarar la moneda de la revisión emitida; no se mezclan costos de distintas monedas."
                     ],
                 )
         cause = (
@@ -449,7 +449,7 @@ def margins(data):
                     "code": o["code"],
                     "remake": bool(o["payload_json"].get("remake_of")),
                     "result": reports.report_cost(o, data),
-                    "source": o.get("source") or "Falta fuente de costos.",
+                    "source": o.get("source") or "Falta declarar el origen de los costos.",
                     "href": f"/production?order={o['id']}",
                 }
                 for o in orders
@@ -487,7 +487,7 @@ def margins(data):
                         "money",
                         driver_details(row, orders, data, quote, driver["key"], work["currency"]),
                         "Costo cotizado de la causa − costo real original; reposiciones = −costo real de todas las OT de reposición.",
-                        "Cascada sellada del motor y revisión inmutable de costos por OT. El descuento ya está incluido en el neto.",
+                        "Cálculo del motor guardado al emitir y revisión de costos por OT no editable. El descuento ya está incluido en el neto.",
                         currency=work["currency"],
                     )
                 )
@@ -504,10 +504,10 @@ def margins(data):
                             value=bridge.get("discount"),
                             unit="money",
                             currency=work["currency"],
-                            label="Descuento sellado en la cascada de la revisión elegida",
+                            label="Descuento aplicado a la revisión elegida",
                         )
                     ],
-                    "Descuento sellado, ya incluido en el neto y la utilidad cotizados; no se resta de nuevo en el desvío.",
+                    "Descuento de la emisión, ya incluido en el neto y la utilidad cotizados; no se resta de nuevo en el desvío.",
                     "emissions.sql · pricing.result.workspace.cascade.steps.discount.amount.",
                     currency=work["currency"],
                     reason="La revisión histórica no conserva el descuento en su cascada.",
@@ -561,10 +561,10 @@ def margins(data):
                     entity(row, value=value, unit="money", currency=currency)
                     for (row, _), value in zip(entries, values, strict=True)
                 ],
-                "Suma de (costo cotizado de la posición − costo real de sus OT originales y reposiciones). Cargos globales no se reparten sin autoridad.",
+                "Suma de (costo cotizado de la ventana − costo real de sus OT originales y reposiciones). Cargos globales no se reparten sin una regla declarada.",
                 "emissions.sql · workspace.positions.cascade; orders/materials/steps/remnants.sql ligados a position_id.",
                 currency=currency,
-                reason="Falta la cascada por posición o un cierre de costos; no se omiten las posiciones incompletas.",
+                reason="Falta la cascada por ventana o un cierre de costos; no se omiten las ventanas incompletas.",
                 missing=sum(value is None for value in values),
             )
         )
@@ -830,7 +830,7 @@ def field(data):
                         )
                         for i in incidents
                     ],
-                    "Incidencias registradas en el período, por tipo o tipología sellada de la unidad; una incidencia cuenta una vez.",
+                    "Incidencias registradas en el período, por tipo o tipología guardada de la unidad; una incidencia cuenta una vez.",
                     "incidents.sql · field_incidents.kind, position_id, unit_index; field_visits.context_json.units.",
                 )
             )

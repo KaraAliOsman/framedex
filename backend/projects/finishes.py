@@ -56,7 +56,7 @@ def finish_preview(org_id, data):
     selected = resolve_finish(params, data["color"])
     baseline = resolve_finish(params, data["baseline_color"])
     if selected is None or baseline is None:
-        raise contract_error(422, "finish_authority_missing", "Sin dato: esta serie no declara una carta por caras. Completa el catálogo.")
+        raise contract_error(422, "finish_authority_missing", "Falta completar · esta serie no declara una carta por caras. Completa el catálogo.")
     def description(finish):
         return f"{finish.exterior.name} exterior / {finish.interior.name} interior"
     response = {"delta_price_net": None, "currency": "CLP", "baseline_description": description(baseline),
@@ -66,13 +66,13 @@ def finish_preview(org_id, data):
         response["currency"] = currency
         rules = rows("SELECT * FROM public.pricing_rules WHERE org_id=%s", [org_id])
         if not rules:
-            return {**response, "reason": "Sin dato: completa las reglas de precio en Ajustes."}
+            return {**response, "reason": "Falta completar · completa las reglas de precio en Ajustes."}
         repo = PricingRepository(org_id, datetime.now(ZoneInfo("America/Santiago")).date(), currency, None)
         totals = []
         try:
             mode = PricingMode(rules[0]["pricing_mode"])
             if mode == PricingMode.TARGET_GROSS_MARGIN_PROJECT:
-                return {**response, "reason": "Sin dato por posición: el margen objetivo requiere calcular el proyecto completo en Precios."}
+                return {**response, "reason": "Precio de la ventana por completar · el margen objetivo requiere calcular el proyecto completo en Precios."}
             calculated_rules = {**rules[0], **{field: repo.convert(rules[0][field], currency)
                 for field in ("labor_rate_per_m2", "installation_rate_per_m2")}}
             for code in (data["baseline_color"], data["color"]):
@@ -92,9 +92,9 @@ def finish_preview(org_id, data):
                     raise PricingError("negative_margin")
                 totals.append(price)
         except PricingError as error:
-            return {**response, "reason": "Sin dato: " + pricing_public_detail(error.code)}
+            return {**response, "reason": pricing_public_detail(error.code)}
         response["delta_price_net"] = str(finish_selling_delta(totals[0], totals[1]))
-        response["source"] += "; tarifa y modo predeterminado configurados en Ajustes › Precios; precio neto indicativo por posición, sin descuento, contexto predeterminado"
+        response["source"] += "; tarifa y modo predeterminado configurados en Ajustes › Precios; precio neto indicativo por ventana, sin descuento, contexto predeterminado"
         return response
 
 

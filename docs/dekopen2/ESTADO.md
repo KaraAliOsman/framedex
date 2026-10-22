@@ -20,6 +20,18 @@ Producción y precios comerciales requieren autorización aparte.
 
 ## P05 · Navegación, Hoy y Obras
 
+- P05i `gpt/dk2-p05i-mensajes-servidor`: diecinueve módulos de obras,
+  precios, búsqueda e informes con textos de taller. Backend 1.737 PASS y
+  18 regresiones finales; integraciones PostgreSQL y 31 regresiones finales
+  de servicios/acabados/precios aprobadas. Cuatro E2E pasan catorce superficies,
+  precios exactos, extremos y axe. [12 capturas](../redesign/captures/dk2-p05i/aceptacion.md).
+  Documentos, motor y otras áreas de servidor siguen pendientes en P05.
+
+- P05h publicada en [#196](https://github.com/KaraAliOsman/framedex/pull/196),
+  `b9b98cee`. P05i `gpt/dk2-p05i-mensajes-servidor` revisa los mensajes
+  de obras, precios, búsqueda e informes. Documentos y diagnósticos del motor
+  se mantienen como trabajo posterior de P05; P06–P11 siguen pendientes.
+
 - P05h `gpt/dk2-p05h-ventanas` termina la revisión contextual de la interfaz:
   distingue ventana, medida de obra, paño y coordenada de mecanizado.
   1.254 unitarias frontend, 55 Python dirigidas, ocho integraciones y 21 E2E

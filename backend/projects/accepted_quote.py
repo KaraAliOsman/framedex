@@ -28,7 +28,7 @@ def public_solution(value, chosen, *, detail):
     project = snapshot['project']
     value['accepted_version_id'] = str(chosen['version_id'])
     value['accepted_revision'] = chosen['revision_code']
-    value['accepted_source'] = 'Opción sellada aceptada en el ofrecimiento de revisión ' + chosen['offering_revision'].removeprefix('REV-')
+    value['accepted_source'] = 'Opción emitida aceptada en el ofrecimiento de revisión ' + chosen['offering_revision'].removeprefix('REV-')
     for key in ('total_price_net', 'total_price_tax', 'total_price_gross'):
         value[key] = str(project[key])
     value['currency'] = project['currency']
@@ -43,7 +43,7 @@ def public_solution(value, chosen, *, detail):
                'bom_snapshot': bom[str(source['id'])]}
         item = position_public(row)
         line = quotation_line(quantity=source['quantity'], net=Decimal(str(source['price_net'])), currency=value['currency'])
-        item.update(system_name=source.get('system_name') or 'Serie sellada', system_demo=bool(source.get('is_demo')),
+        item.update(system_name=source.get('system_name') or 'Serie de la cotización · nombre por completar', system_demo=bool(source.get('is_demo')),
             measurements=source.get('measurements'), commercial={'unit_net': str(line.unit_net),
             'line_net': str(line.net), 'source': value['accepted_source']})
         positions.append(item)

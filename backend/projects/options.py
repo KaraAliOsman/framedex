@@ -191,7 +191,7 @@ class DesignOptionsView(APIView):
                     "weight_kg_m2": None if mass is None else str(mass),
                     "compatible": total is not None and total in params.glazing_bead_rules,
                     "review_reason": item.get("review_reason") or "",
-                    "relative_price": relative.get(item["technical_sku"], "Sin dato · falta precio vigente")})
+                    "relative_price": relative.get(item["technical_sku"], "Falta completar · precio vigente")})
             return response(
                 {
                     "advanced_availability": advanced_availability(params),

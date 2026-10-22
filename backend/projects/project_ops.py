@@ -67,13 +67,13 @@ def snapshot(org_id, project_id):
 def _position(after, identity):
     found = next((position for position in after if str(position["id"]) == str(identity)), None)
     if found is None:
-        raise OperationError("position_not_found", "La posición no existe en este proyecto.")
+        raise OperationError("position_not_found", "La ventana no existe en este proyecto.")
     return found
 
 
 def _targets(after, identities):
     if len(set(identities)) != len(identities):
-        raise OperationError("batch_duplicate_targets", "Una posición aparece más de una vez. Revisa la selección.")
+        raise OperationError("batch_duplicate_targets", "Una ventana aparece más de una vez. Revisa la selección.")
     return [_position(after, identity) for identity in identities]
 
 
@@ -215,7 +215,7 @@ def _change_simulation(org_id, change, cache):
     currency = view["price"]["currency"]
     absent = {"product": None, "quantity": 0, "price": {
         "net": str(indicative_line_net(Decimal("0"), 0, currency)), "currency": currency,
-        "source": "Sin posición en este lado de la propuesta."}}
+        "source": "Sin ventana en este lado de la propuesta."}}
     left, right = before or absent, after or absent
     price = right["price"]
     delta = str(finish_selling_delta(Decimal(left["price"]["net"]), Decimal(price["net"]))) if (
@@ -264,7 +264,7 @@ def preview_project_operations(org_id, user_id, project_id, raw_ops):
                     after.remove(target)
             elif name == "reorder_positions":
                 if len(targets) != len(after):
-                    raise OperationError("reorder_incomplete", "Incluye cada posición del proyecto una sola vez para reordenar.")
+                    raise OperationError("reorder_incomplete", "Incluye cada ventana del proyecto una sola vez para reordenar.")
                 after = targets
                 for index, target in enumerate(after, start=1):
                     target["display_order"] = index
@@ -290,16 +290,16 @@ def preview_project_operations(org_id, user_id, project_id, raw_ops):
                       and (not filter_.get("location_contains") or filter_["location_contains"].casefold() in str(position["location_tag"]).casefold())
                       and (not filter_.get("typology") or filter_["typology"].upper() == str(position.get("typology")).upper())]
             if not wanted:
-                raise OperationError("batch_no_targets", "Ninguna posición coincide con el filtro.")
+                raise OperationError("batch_no_targets", "Ninguna ventana coincide con el filtro.")
             for position in wanted:
                 try:
                     _design_edit(org_id, position, op["ops"], design_cache)
                 except OperationError as error:
-                    raise OperationError(error.code, f"Posición {position['position_index']} · {position['location_tag'] or 'Sin ubicación'}: {error}") from error
+                    raise OperationError(error.code, f"Ventana {position['position_index']} · {position['location_tag'] or 'Sin ubicación'}: {error}") from error
         else:
-            raise OperationError("operation_scope_invalid", "Usa operaciones de posición o filtros dentro del proyecto.")
+            raise OperationError("operation_scope_invalid", "Usa operaciones de ventana o filtros dentro del proyecto.")
         if len(after) > MAX_PROJECT_EDITS:
-            raise OperationError("batch_too_large", "Divide el trabajo en lotes de hasta cien posiciones.")
+            raise OperationError("batch_too_large", "Divide el trabajo en lotes de hasta cien ventanas.")
     # Every changed design goes through the canonical save gate before a preview exists.
     original = {p["id"]: p for p in before["positions"]}
     validated_designs = set()
