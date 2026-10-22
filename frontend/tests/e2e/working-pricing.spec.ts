@@ -40,7 +40,7 @@ for (const viewport of [
   { width: 390, height: 844 },
 ]) {
   test.describe(`Precio de trabajo ${viewport.width}`, () => {
-    test.use({ viewport });
+    test.use({ viewport, lightCatalog: true });
     test("shows three automatic prices, reprices a draft and preserves the issued PDF", async ({
       page,
       catalog,

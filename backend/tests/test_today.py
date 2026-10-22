@@ -105,7 +105,7 @@ def test_draft_assembly_blocker_uses_engine_even_when_survey_confirmed(monkeypat
         modules=[],issues=[SimpleNamespace(params={'reason':'frame inset collapsed the glass pocket 6000.00 FRAME'})])
     monkeypatch.setattr(today,'evaluate_assembly_from_api',lambda **kwargs:result)
     action, = today.position_actions(uuid4())
-    assert action['kind']=='position_engine_blocked' and 'autoridad técnica' in action['reason']
+    assert action['kind']=='position_engine_blocked' and 'referencias técnicas' in action['reason']
     assert 'FRAME' not in action['reason'] and '6000.00' not in action['reason']
     assert action['href']==f'/projects/{project}/positions/{position}/edit'
     result.status.value='VALID'

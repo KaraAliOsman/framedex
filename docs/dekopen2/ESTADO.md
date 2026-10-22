@@ -20,6 +20,31 @@ Producción y precios comerciales requieren autorización aparte.
 
 ## P05 · Navegación, Hoy y Obras
 
+- P05g `gpt/dk2-p05g-lenguaje` termina la primera purga global: cero voces
+  prohibidas en los textos de producto con un detector AST activo, sin lista
+  base. Se corrigen también los avisos térmicos y de Hoy en el servidor.
+  1.254 unitarias frontend y 2.858 Python aprobadas (dos xfail previos);
+  bytes dorados intactos. Después de corregir lecturas repetidas de costos
+  DEMO pasan 46 regresiones unitarias, 25 integraciones PostgreSQL y las ocho
+  interacciones del editor, sin aumentar sus tiempos ni cambiar sus cifras.
+  El prefetch pertenece al cálculo y vuelve a leer tarifas en la siguiente
+  consulta; la integración comprueba igualdad exacta y actualización real.
+- Once pantallas a 1440/390 pasan lenguaje, contenido cargado, separación de
+  pestañas y desborde. Se corrigió el solapamiento móvil de etiquetas. Pasan
+  además 16 E2E de navegación/Obras y cuatro de precios con extremos y axe.
+  Lint, tipos, formato, guardas y build aprobados. Carga local 410–1.855 ms.
+  [22 capturas y límites](../redesign/captures/dk2-p05g/aceptacion.md).
+  Falta la revisión contextual de ventana/medida de obra/coordenada en P05h;
+  P05 no está hecha y P06–P11 siguen pendientes.
+- P04a #182 ya está fusionada (`0f399a1c`). P04b #183 espera su Database Gate
+  en el head `8cb2bd2c`. P05a #189 corrige el bloqueo síncrono de su fixture en
+  `ff2b87e2`: sus diez recorridos originales pasan sobre el build de esa rama;
+  CI se repite. Las fusiones continúan en orden con los cuatro controles.
+
+- P05f publicada en [#194](https://github.com/KaraAliOsman/framedex/pull/194),
+  commit `a4e2ca98`. El guardián global y la aceptación de P05g se registran
+  arriba; la API generada conserva sus contratos.
+
 - P05e publicada en [#193](https://github.com/KaraAliOsman/framedex/pull/193).
   P05f `gpt/dk2-p05f-cotizaciones-obras` conecta el índice de servidor y lleva
   las cotizaciones emitidas a Obras. `/quotes` conserva filtros, hash y offset

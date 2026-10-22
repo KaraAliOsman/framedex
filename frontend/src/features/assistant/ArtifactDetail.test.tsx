@@ -61,7 +61,7 @@ it("keeps historical drafts readable with their actual measures and translated s
 
 it("does not manufacture zero prices for absent draft authority", () => {
   render(<ArtifactDetail artifact={{ kind: "quote_draft", payload: { totals: { net: null } } }} />);
-  expect(screen.getByText("Sin dato")).toBeTruthy();
+  expect(screen.getByText("Falta completar")).toBeTruthy();
   expect(screen.getByText(/No hay un precio aplicado\./)).toBeTruthy();
   expect(document.body.textContent).not.toContain("$0");
 });

@@ -782,7 +782,7 @@ export const messages = {
   "pricing.fixInCostLists": "Resolver en Costos y precios →",
   "pricing.fixAskOwner": "Pide al propietario completar este dato en Costos y precios.",
   "pricing.costComposition": "Composición del costo",
-  "pricing.authorities": "Fuentes del precio",
+  "pricing.authorities": "Referencias del precio",
   "pricing.materials": "Materiales",
   "pricing.bom": "Desglose técnico",
   "pricing.wasteShort": "Merma",
@@ -810,7 +810,7 @@ export const messages = {
     "El segmento no admite ese descuento — Particular: 0 %, Arquitecto: 8–12 %, Constructora: 18–25 %.",
   "pricing.errGlass": "La tarifa no define el vidrio base o el vidrio seleccionado en el diseño.",
   "pricing.errRevision":
-    "El proyecto ya tiene precios aplicados o una revisión sellada — retira los precios o revisa la revisión vigente.",
+    "El proyecto ya tiene precios aplicados o una revisión emitida — retira los precios o revisa la revisión vigente.",
   "pricing.errConfig":
     "No existe una configuración de precios para ese modo, contexto y tipología.",
   "pricing.errOwner": "Este descuento requiere aprobación del propietario.",
@@ -838,7 +838,7 @@ export const messages = {
   "pricing.fxRate": "Tipo de cambio observado (sin buffer)",
   "pricing.observedDate": "Fecha observada",
   "pricing.effectiveDate": "Fecha efectiva",
-  "pricing.source": "Fuente del tipo de cambio",
+  "pricing.source": "Origen del tipo de cambio",
   "pricing.lists": "Listas de costo",
   "pricing.items": "Insumos",
   "pricing.rules": "Reglas comerciales",
@@ -1112,7 +1112,7 @@ export const messages = {
   "landing.designAlt": "Editor de posición con cotas y árbol de objeto",
   "landing.quoteTitle": "Cotizar con producto y precio conectados",
   "landing.quoteBody":
-    "La cotización nace del modelo: BOM del motor, revisiones selladas, comparación entre versiones y propuesta online que el cliente puede aprobar. Nada se reescribe a mano.",
+    "La cotización nace del modelo: BOM del motor, revisiones emitidas, comparación entre versiones y propuesta online que el cliente puede aprobar. Nada se reescribe a mano.",
   "landing.quoteAlt": "Propuesta de cotización generada desde el producto",
   "landing.produceTitle": "Producir con piezas comprensibles",
   "landing.produceBody":
@@ -1120,7 +1120,7 @@ export const messages = {
   "landing.produceAlt": "Página real del plan de corte con barras y piezas",
   "landing.deliverTitle": "Controlar cambios y entregas",
   "landing.deliverBody":
-    "Trazabilidad de la pieza a la entrega: órdenes por estación, control de calidad, embalaje, despachos parciales y cobranza — todo sobre la revisión sellada.",
+    "Trazabilidad de la pieza a la entrega: órdenes por estación, control de calidad, embalaje, despachos parciales y cobranza — todo sobre la revisión emitida.",
   "landing.deliverAlt": "Tablero de producción con órdenes por estación",
   "landing.assistantTitle": "Un asistente que dice lo que puede respaldar",
   "landing.assistantBody":
@@ -1343,8 +1343,7 @@ export const messages = {
   "jobs.fail.provider": "El proveedor externo no respondió. Reintenta en unos minutos.",
   "jobs.fail.plan":
     "Tu plan actual no incluye el asistente o la prueba terminó. Todo lo manual sigue disponible.",
-  "jobs.fail.credits":
-    "No quedan créditos de IA para este encargo. Todo lo manual sigue disponible.",
+  "jobs.fail.credits": "No quedan créditos de IA para esta tarea. Todo lo manual sigue disponible.",
   "jobs.fail.aiBudget":
     "La IA alcanzó el presupuesto mensual. El dueño puede ajustarlo en Ajustes › Inteligencia artificial; las funciones manuales siguen disponibles.",
   "jobs.fail.providerQuota":
@@ -2015,7 +2014,7 @@ export const messages = {
   "production.remakeOf": "Reposición de",
   "production.remadeBy": "Reemplazada por",
   "production.optimizeColor": "Color de perfil",
-  "production.optimizeColorSealed": "Color sellado en la orden — no editable",
+  "production.optimizeColorSealed": "Color de la orden — no editable",
   "production.optimizeColorPlaceholder": "WHITE / FOILED",
   "production.optimizeButton": "Optimizar corte",
   "production.optimizeBars": "Barras",
@@ -2753,7 +2752,7 @@ export const messages = {
   "assembly.fittingKind.HINGE": "Bisagra",
   "assembly.fittingKind.LOCK": "Cerradura",
   "assembly.fittingKind.CONNECTOR": "Conector",
-  "assembly.fittingKind.SEAL": "Sellado",
+  "assembly.fittingKind.SEAL": "Junta de cierre",
   "assembly.fittingKind.SUPPORT": "Soporte",
   "assembly.sash": "Hoja",
   "assembly.frame": "Marco",
@@ -2801,7 +2800,7 @@ export const messages = {
     "el perfil no deja espacio para el vidrio — revisa el sistema o la inserción",
   "assembly.reason.handleHeightMigration":
     "la altura de manilla heredada necesita confirmación explícita",
-  "assembly.reason.polishingAuthority": "cada vidrio necesita una fuente de pulido declarada",
+  "assembly.reason.polishingAuthority": "cada vidrio necesita una referencia de pulido declarada",
   "assembly.reason.policyPlacement": "el relleno necesita la política de montaje y su hoja padre",
   "assembly.reason.beadOffsets":
     "la política de montaje necesita los cuatro desplazamientos del junquillo",

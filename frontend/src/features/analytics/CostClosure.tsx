@@ -125,7 +125,7 @@ export function CostClosure({
       setError(
         actionErrorDetail(
           e,
-          "No pudimos preparar el registro. Revisa las cantidades y sus fuentes.",
+          "No pudimos preparar el registro. Revisa las cantidades y sus referencias.",
         ),
       );
     } finally {
@@ -175,7 +175,7 @@ export function CostClosure({
         <DeniedState reason="El dueño y el jefe de taller registran y leen costos reales." />
       ) : order && currency == null ? (
         <BlockedState
-          reason="Falta moneda en la revisión sellada. Crea una revisión con moneda declarada antes de valorar consumos. El registro histórico conserva Sin dato."
+          reason="Falta moneda en la revisión emitida. Crea una revisión con moneda declarada antes de valorar consumos. Ese importe no está registrado en el historial."
           action={
             <Link to={`/projects/${order.project_id}?section=quote`}>
               Abrir revisión de la obra
@@ -186,13 +186,13 @@ export function CostClosure({
         <>
           <p>
             Las cantidades provienen del inventario. Declara el costo neto por su misma unidad y las
-            horas de personas realmente imputadas. Un campo vacío conserva Sin dato.
+            horas de personas realmente imputadas. Los campos vacíos quedan pendientes.
           </p>
           {order.result.cost !== null && !preview && (
             <section className="analytics-ledger">
               <h3>Valor registrado por movimiento y estación</h3>
               <p>
-                Fuente: {order.source}. La parte perdida ya está incluida en el costo del consumo.
+                Origen: {order.source}. La parte perdida ya está incluida en el costo del consumo.
               </p>
               <ul>
                 {order.result.lines.map((line) => {
@@ -268,7 +268,7 @@ export function CostClosure({
               {preview.result.causes.map((c) => (
                 <p key={c}>{c}</p>
               ))}
-              <p>Fuente: {preview.source}</p>
+              <p>Origen: {preview.source}</p>
               <p>Motivo: {preview.reason}</p>
               <p>
                 Registrar conserva esta evidencia. Una corrección agrega otra revisión; no cambia el
@@ -433,7 +433,7 @@ export function CostClosure({
                 </label>
               </details>
               <label>
-                Fuente de las tarifas, horas y mediciones
+                Origen de las tarifas, horas y mediciones
                 <input
                   name="source"
                   required
@@ -452,8 +452,8 @@ export function CostClosure({
                 completos.
               </label>
               <p>
-                Sin esa confirmación puedes conservar evidencia parcial; el margen seguirá mostrando
-                Sin datos suficientes.
+                Sin esa confirmación puedes conservar evidencia parcial; el margen no se podrá
+                calcular.
               </p>
               <Button variant="primary" type="submit" loading={busy}>
                 Revisar registro de costos

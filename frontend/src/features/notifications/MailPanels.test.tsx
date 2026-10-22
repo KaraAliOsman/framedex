@@ -82,7 +82,7 @@ test("missing payment PDF blocks confirmation and never fabricates a receipt", a
   expect(screen.getByRole("button", { name: "Enviar al cliente" })).toBeDisabled();
   fireEvent.click(screen.getByRole("button", { name: "Cerrar vista previa" }));
   fireEvent.click(screen.getByRole("button", { name: "Enviar comprobante por correo" }));
-  expect(await screen.findByRole("link", { name: /Abrir PDF sellado/ })).toHaveAttribute(
+  expect(await screen.findByRole("link", { name: /Abrir PDF emitido/ })).toHaveAttribute(
     "href",
     ready.data.document_url,
   );
@@ -94,14 +94,14 @@ test("lost response reuses the intent and reviewed PDF; another confirmed send u
   vi.mocked(paymentMailSend).mockRejectedValueOnce(new Error("offline"));
   const view = mount();
   fireEvent.click(screen.getByRole("button", { name: "Enviar comprobante por correo" }));
-  await screen.findByRole("link", { name: /Abrir PDF sellado/ });
+  await screen.findByRole("link", { name: /Abrir PDF emitido/ });
   fireEvent.click(screen.getByRole("checkbox"));
   fireEvent.click(screen.getByRole("button", { name: "Enviar al cliente" }));
   await screen.findByRole("alert");
   view.unmount();
   mount();
   fireEvent.click(screen.getByRole("button", { name: "Enviar comprobante por correo" }));
-  await screen.findByRole("link", { name: /Abrir PDF sellado/ });
+  await screen.findByRole("link", { name: /Abrir PDF emitido/ });
   fireEvent.click(screen.getByRole("checkbox"));
   fireEvent.click(screen.getByRole("button", { name: "Enviar al cliente" }));
   await screen.findByText(/Envío registrado/);

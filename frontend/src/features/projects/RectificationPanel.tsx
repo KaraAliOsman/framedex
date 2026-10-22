@@ -119,7 +119,7 @@ export function RectificationPanel({
           <button onClick={() => void query.refetch()}>Reintentar</button>
         </p>
       ) : (query.data?.length ?? 0) === 0 ? (
-        <p>Sin dato: el dueño o encargado debe declarar el montaje en Ajustes.</p>
+        <p>Falta completar: el dueño o encargado debe declarar el montaje en Ajustes.</p>
       ) : (
         <fieldset disabled={busy}>
           {targets.map((target, index) => {
@@ -221,10 +221,10 @@ export function RectificationPanel({
                   {formatMoney(price.delta_net, price.currency!)}
                 </p>
               ) : (
-                <p>Sin dato: {price?.reason ?? "no se pudo calcular la venta"}</p>
+                <p>Falta completar: {price?.reason ?? "no se pudo calcular la venta"}</p>
               )}
               <p>
-                Fuente: reglas de Precios del proyecto, servicios, descuento e impuesto. La medida
+                Origen: reglas de Precios del proyecto, servicios, descuento e impuesto. La medida
                 rectificada requiere confirmación antes de emitir para producción.
               </p>
               <button className="primary-action" onClick={() => void calculate(true)}>

@@ -39,7 +39,7 @@ describe("physical CNC preview", () => {
     expect(container.querySelector(".cnc-mark line")?.getAttribute("x1")).toBe("870");
     fireEvent.click(screen.getByRole("button", { name: /Mecanizado de extremo/ }));
     expect(select).toHaveBeenCalledWith("end");
-    expect(screen.getByText(/la revisión no selló esta sección/)).toBeDefined();
+    expect(screen.getByText(/la revisión no guardó esta sección/)).toBeDefined();
     expect(container.querySelector(".cnc-section-polygon")).toBeNull();
   });
 
@@ -54,7 +54,7 @@ describe("physical CNC preview", () => {
       />,
     );
     expect(container.querySelector(".cnc-mark")).toBeNull();
-    expect(screen.getByText(/falta el largo físico sellado/)).toBeDefined();
-    expect(screen.getByRole("button", { name: /X Sin dato/ })).toBeDefined();
+    expect(screen.getByText(/Falta el largo físico de la orden/)).toBeDefined();
+    expect(screen.getByRole("button", { name: /X Falta completar/ })).toBeDefined();
   });
 });

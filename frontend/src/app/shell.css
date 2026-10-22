@@ -268,6 +268,7 @@
   border-bottom: 2px solid transparent;
   border-radius: 0;
   color: var(--text-secondary);
+  flex: 0 0 auto;
   font-weight: 500;
   padding: var(--space-12px) var(--space-2px);
   text-decoration: none;

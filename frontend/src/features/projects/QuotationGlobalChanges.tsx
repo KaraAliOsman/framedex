@@ -199,8 +199,8 @@ export function QuotationGlobalChanges({
         </p>
       ) : revisionLocked ? (
         <p>
-          La revisión está sellada. Abre una revisión sucesora para cambiar vidrio, acabado, serie o
-          manilla.
+          La revisión ya no admite cambios. Abre una revisión sucesora para cambiar vidrio, acabado,
+          serie o manilla.
         </p>
       ) : project.current_pricing_operation_id ? (
         <p>
@@ -345,7 +345,7 @@ export function QuotationGlobalChanges({
                         .filter((glass) => glass.compatible !== false)
                         .map((glass) => (
                           <option key={glass.sku} value={glass.sku}>
-                            {glass.spec || "Composición sin dato"} · {glass.sku}
+                            {glass.spec || "Composición por completar"} · {glass.sku}
                           </option>
                         ))
                     : kind === "system"
@@ -422,7 +422,7 @@ export function QuotationGlobalChanges({
                             simulation.price.delta_net,
                             simulation.price.currency ?? project.currency,
                           )
-                        : "Sin dato"}
+                        : "Falta completar"}
                     </summary>
                     <SimulationPreview simulation={raw} organizationId={orgId} />
                     <ThermalDelta simulation={raw} />

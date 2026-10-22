@@ -1735,7 +1735,7 @@ function SlidingPlan({
                 y={rowY + 110 + layout.tracks * 64}
                 transform={textTransform(left)}
               >
-                Paños fijos: plano sin dato
+                Paños fijos: plano por completar
               </text>
             )}
           </g>

@@ -103,8 +103,7 @@ export function MeasurementPanel({
       <h4>Medidas para producción</h4>
       {!record ? (
         <p>
-          Sin dato: registra el vano y el montaje en el editor. La producción requiere medidas
-          confirmadas.
+          Registra el vano y el montaje en el editor. La producción requiere medidas confirmadas.
         </p>
       ) : (
         <>

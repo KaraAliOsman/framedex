@@ -2,6 +2,9 @@
 
 ## DEKOPEN 2
 
+- [P05g · Lenguaje global](dk2-p05g/aceptacion.md): guardián de producto,
+  valores pendientes explícitos y veintidós capturas de once pantallas.
+
 - [P05f · Cotizaciones dentro de Obras](dk2-p05f/aceptacion.md): índice del
   servidor, filtros históricos, permisos y dieciséis capturas finales.
 

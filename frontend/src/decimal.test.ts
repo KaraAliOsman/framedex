@@ -37,8 +37,8 @@ describe("Decimal presentation", () => {
     expect(formatMoney("1000000000", "CLP")).toBe("$1.000.000.000");
     expect(formatMoney("1234.5", "USD")).toBe("US$ 1.234,50");
     expect(formatMoney("38.4521", "UF")).toBe("UF 38,4521");
-    expect(formatMoney(null)).toBe("Sin dato");
-    expect(formatDecimal(undefined)).toBe("Sin dato");
+    expect(formatMoney(null)).toBe("Falta completar");
+    expect(formatDecimal(undefined)).toBe("Falta completar");
     expect(formatDecimal("2400")).toBe("2\u2009400");
   });
   it("requires explicit percentage authority", () => {
@@ -49,7 +49,7 @@ describe("Decimal presentation", () => {
   it("pins civil dates and instants to Santiago", () => {
     expect(formatDate("2026-10-04")).toBe("04-10-2026");
     expect(formatDateTime("2026-10-05T02:00:00Z")).toBe("04-10-2026 23:00");
-    expect(formatDate("2026-02-31")).toBe("Sin dato");
+    expect(formatDate("2026-02-31")).toBe("Falta completar");
   });
   it("keeps payload decimals unlocalized and exact", () => {
     expect(decimalInputValue("1050.0000")).toBe("1050");

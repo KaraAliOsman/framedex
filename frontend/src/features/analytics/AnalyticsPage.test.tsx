@@ -88,7 +88,7 @@ it("denies cost readers outside the authorized roles before any request", () => 
 
 it("F6 opens the focused metric with definition and exact source destination", async () => {
   show();
-  const value = await screen.findByRole("button", { name: "Conversión: ver fuente" });
+  const value = await screen.findByRole("button", { name: "Conversión: ver origen" });
   value.focus();
   fireEvent.keyDown(window, { key: "F6" });
   const dialog = await screen.findByRole("dialog", { name: "Conversión" });
@@ -110,7 +110,7 @@ it("keeps missing data and its cause visible, without a zero", async () => {
     },
   } as never);
   show();
-  expect(await screen.findByText("Sin datos suficientes")).toBeTruthy();
+  expect(await screen.findByText("Faltan datos para calcular")).toBeTruthy();
   expect(screen.getByText("Falta la decisión")).toBeTruthy();
   expect(screen.queryByText("0,0 %")).toBeNull();
 });
@@ -120,7 +120,7 @@ it("retains the period when a retry follows a failed read", async () => {
   show();
   await screen.findByText(/No pudimos calcular la analítica/);
   fireEvent.click(screen.getByRole("button", { name: /Reintentar/ }));
-  await screen.findByRole("button", { name: "Conversión: ver fuente" });
+  await screen.findByRole("button", { name: "Conversión: ver origen" });
   expect(analyticsDecisionWorkspace).toHaveBeenCalledTimes(2);
 });
 
@@ -130,7 +130,7 @@ it("shows one action when the selected cohort has no evidence", async () => {
   } as never);
   show();
   expect(await screen.findByRole("link", { name: "Abrir proyectos" })).toBeTruthy();
-  expect(screen.queryByRole("button", { name: "Conversión: ver fuente" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "Conversión: ver origen" })).toBeNull();
 });
 
 it("keeps the applied period when the initial request arrives later", async () => {
@@ -153,7 +153,7 @@ it("keeps the applied period when the initial request arrives later", async () =
   await waitFor(() =>
     expect((screen.getByLabelText("Desde") as HTMLInputElement).value).toBe("2020-01-01"),
   );
-  expect(screen.queryByRole("button", { name: "Conversión: ver fuente" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "Conversión: ver origen" })).toBeNull();
 });
 
 it("requires preview and a second human click to register the immutable cost revision", async () => {
@@ -209,7 +209,7 @@ it("requires preview and a second human click to register the immutable cost rev
   } as never);
   const saved = vi.fn();
   render(<CostClosure orderId="order" onClose={vi.fn()} onSaved={saved} />);
-  const source = await screen.findByLabelText("Fuente de las tarifas, horas y mediciones");
+  const source = await screen.findByLabelText("Origen de las tarifas, horas y mediciones");
   fireEvent.change(source, { target: { value: "Libro de taller" } });
   fireEvent.change(screen.getByLabelText("Motivo de este registro"), {
     target: { value: "Cierre verificado" },

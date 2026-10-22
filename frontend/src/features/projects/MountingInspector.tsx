@@ -299,8 +299,8 @@ export function MountingInspector({
         </p>
       ) : rules.length === 0 ? (
         <p>
-          Sin dato: esta serie no tiene montaje declarado. El dueño o encargado lo configura en{" "}
-          <Link to="/settings/general">Ajustes › Vano y montaje</Link>.
+          Falta completar: esta serie no tiene montaje declarado. El dueño o encargado lo configura
+          en <Link to="/settings/general">Ajustes › Vano y montaje</Link>.
         </p>
       ) : (
         <>
@@ -343,8 +343,7 @@ export function MountingInspector({
                   item.rule.code === survey.rule_code && item.revision !== survey.rule_revision,
               ) && (
                 <p className="mounting-warning">
-                  Las medidas conservan su autoridad anterior. Para recalcular, revisa la regla
-                  actual.{" "}
+                  Las medidas conservan su origen anterior. Para recalcular, revisa la regla actual.{" "}
                   <button
                     onClick={() => {
                       const current = rules.find((item) => item.rule.code === survey.rule_code);
@@ -383,7 +382,7 @@ export function MountingInspector({
                         {w}
                       </p>
                     ))}
-                    <p>Fuente: {item.rule.source}</p>
+                    <p>Origen: {item.rule.source}</p>
                   </div>
                 ))}
               <button
@@ -424,7 +423,7 @@ export function MountingInspector({
                   {fmtMm(evidence.rule.tolerance_mm)} mm.
                 </p>
                 <p>
-                  Fuente: {evidence.rule.source}
+                  Origen: {evidence.rule.source}
                   {evidence.rule.synthetic ? " · DEMO, sin certificación" : ""}
                 </p>
               </details>

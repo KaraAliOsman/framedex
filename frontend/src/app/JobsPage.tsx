@@ -22,7 +22,7 @@ const STATE_KEYS: Record<string, TranslationKey> = {
 };
 
 function duration(value: number | null | undefined): string {
-  if (value == null) return "Sin dato: aún no comenzó";
+  if (value == null) return "Aún no comenzó";
   const seconds = Math.floor(value / 1000);
   return seconds >= 60 ? `${Math.floor(seconds / 60)} min ${seconds % 60} s` : `${seconds} s`;
 }

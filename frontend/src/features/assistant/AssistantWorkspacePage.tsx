@@ -969,9 +969,8 @@ export function AssistantWorkspacePage(): JSX.Element {
                 <div>
                   <h1 className="aiws-hero__title">Actividad del asistente</h1>
                   <p className="aiws-empty">
-                    Aquí quedan los encargos, lo que el asistente guardó y lo que espera tu
-                    decisión. Para pedir algo nuevo, abre el asistente desde la pantalla en la que
-                    trabajas.
+                    Aquí quedan las tareas, lo que el asistente guardó y lo que espera tu decisión.
+                    Para pedir algo nuevo, abre el asistente desde la pantalla en la que trabajas.
                   </p>
                   {aiEntitled ? (
                     <button

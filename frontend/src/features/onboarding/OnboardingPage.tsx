@@ -210,7 +210,7 @@ export function OnboardingPage(): JSX.Element {
         <p className="ui-spec-label">{org?.name}</p>
         <h1 id="onboarding-title">Dibuja tu primera ventana</h1>
         <p className="onboarding-sub">
-          Elige la serie y crea la obra. El editor calcula desde el catálogo y conserva la fuente de
+          Elige la serie y crea la obra. El editor calcula desde el catálogo y conserva el origen de
           cada medida.
         </p>
       </header>

@@ -8,9 +8,10 @@ const root = fileURLToPath(new URL("../../", import.meta.url));
 const forbidden =
   /\b(?:autoridad(?:es)?|sellad[oa]s?|fuentes?|procedencias?|sin datos?)\b|Referencia\s*·\s*no cotizable/iu;
 
-/** Parse actual literals/JSX, including expressions and template spans. Comments,
- * identifiers and contract property names are not interface copy. */
-export function catalogCopyViolations(filename, source, translations = false) {
+/** Parse product literals/JSX, including expressions and template spans. Comments,
+ * identifiers and contract property names are not interface copy. The historical
+ * export name stays stable for the catalog gate's consumers. */
+export function catalogCopyViolations(filename, source) {
   const ast = ts.createSourceFile(
     filename,
     source,
@@ -36,6 +37,20 @@ export function catalogCopyViolations(filename, source, translations = false) {
     return null;
   }
   function visit(node) {
+    if (
+      ts.isJsxAttribute(node) &&
+      [
+        "id",
+        "className",
+        "htmlFor",
+        "data-region",
+        "data-testid",
+        "aria-controls",
+        "aria-labelledby",
+        "aria-describedby",
+      ].includes(node.name.getText(ast))
+    )
+      return;
     if (ts.isPropertyAssignment(node) || ts.isMethodDeclaration(node)) {
       if (ts.isPropertyAssignment(node)) visit(node.initializer);
       else if (node.body) visit(node.body);
@@ -58,18 +73,7 @@ export function catalogCopyViolations(filename, source, translations = false) {
     if (ts.isJsxText(node)) record(node, node.text);
     ts.forEachChild(node, visit);
   }
-  if (translations) {
-    function keys(node) {
-      if (
-        ts.isPropertyAssignment(node) &&
-        ts.isStringLiteral(node.name) &&
-        /^(?:catalog|glass)\./.test(node.name.text)
-      )
-        visit(node.initializer);
-      else ts.forEachChild(node, keys);
-    }
-    keys(ast);
-  } else visit(ast);
+  visit(ast);
   return findings;
 }
 
@@ -96,17 +100,29 @@ export function detectorTests() {
   );
   assert.equal(
     catalogCopyViolations(
-      "es-CL.ts",
-      'const copy = { "pricing.source": "Fuente", "catalog.origin": "Del manual", "glass.value": "Completar" };',
-      true,
+      "sample.tsx",
+      '<section id="fuente" data-region="autoridad-cnc" aria-labelledby="fuente"><p>Del manual</p></section>',
     ).length,
     0,
   );
   assert.equal(
     catalogCopyViolations(
+      "sample.tsx",
+      '<section data-region="autoridad-cnc" aria-label="Autoridad"><p>Fuente</p></section>',
+    ).length,
+    2,
+  );
+  assert.equal(
+    catalogCopyViolations(
+      "es-CL.ts",
+      'const copy = { "pricing.source": "Fuente", "catalog.origin": "Del manual", "glass.value": "Completar" };',
+    ).length,
+    1,
+  );
+  assert.equal(
+    catalogCopyViolations(
       "es-CL.ts",
       'const copy = { "catalog.origin": "Fuente", "glass.empty": "Sin dato" };',
-      true,
     ).length,
     2,
   );
@@ -125,30 +141,19 @@ function files(directory) {
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   detectorTests();
-  const candidates = [
-    ...files(path.join(root, "frontend/src/features/catalogs")),
-    // Shared editors and labels rendered inside catalog surfaces.
-    ...[
-      "frontend/src/features/projects/ExtraDefinitionEditor.tsx",
-      "frontend/src/features/projects/extraModel.ts",
-      "frontend/src/i18n/domainLabels.ts",
-    ].map((name) => path.join(root, name)),
-    path.join(root, "frontend/src/i18n/es-CL.ts"),
-  ];
+  const candidates = files(path.join(root, "frontend/src")).filter(
+    (filename) => !/[\\/](?:generated|dev)[\\/]/.test(filename),
+  );
   let count = 0;
   for (const filename of candidates) {
-    const findings = catalogCopyViolations(
-      filename,
-      readFileSync(filename, "utf8"),
-      filename.endsWith("es-CL.ts"),
-    );
+    const findings = catalogCopyViolations(filename, readFileSync(filename, "utf8"));
     for (const finding of findings) {
       count++;
       console.error(
-        `${path.relative(root, filename)}:${finding.line}: lenguaje de catálogo: ${finding.text}`,
+        `${path.relative(root, filename)}:${finding.line}: lenguaje de interfaz: ${finding.text}`,
       );
     }
   }
   if (count) process.exitCode = 1;
-  else console.info("Catalog interface copy and detector tests PASS");
+  else console.info("Product interface copy and detector tests PASS");
 }

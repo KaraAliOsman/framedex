@@ -87,18 +87,18 @@ function renderFieldValue(
   value: unknown,
   refs?: { costLists?: Row[]; configurations?: Row[]; item?: Row; ruleCurrency?: string },
 ): string {
-  if (value === undefined || value === null || value === "") return "Sin dato";
+  if (value === undefined || value === null || value === "") return "Falta completar";
   const text = String(value);
   // FK references render the authority's human label, never the raw UUID.
   if (field.name === "cost_list_id") {
     const list = refs?.costLists?.find((row) => String(row.id) === text);
-    return list ? `${list.supplier_name} · ${list.currency}` : "Sin dato";
+    return list ? `${list.supplier_name} · ${list.currency}` : "Falta completar";
   }
   if (field.name === "configuration_id") {
     const config = refs?.configurations?.find((row) => String(row.id) === text);
     return config
       ? `${contextLabel(config.context_code)} · ${optionLabel(String(config.typology))}`
-      : "Sin dato";
+      : "Falta completar";
   }
   if (field.type === "date") {
     const match = ISO_DAY.exec(text);
@@ -108,7 +108,7 @@ function renderFieldValue(
   if (["labor_rate_per_m2", "installation_rate_per_m2"].includes(field.name))
     return refs?.ruleCurrency
       ? `${formatMoney(text, refs.ruleCurrency)} / m²`
-      : "Sin dato: falta consultar la moneda de empresa";
+      : "Falta consultar la moneda de empresa";
   if (field.options) return optionLabel(text);
   if (["unit_cost", "catalog_price", "price", "rate_per_m2"].includes(field.name)) {
     const authority =
@@ -119,7 +119,7 @@ function renderFieldValue(
           : refs?.item;
     return typeof authority?.currency === "string"
       ? formatMoney(text, authority.currency)
-      : "Sin dato: moneda de la autoridad";
+      : "Falta la moneda del importe";
   }
   if (field.name === "created_at") return formatDateTime(text);
   if (field.name === "entity") return t(auditEntityLabels[text] ?? "pricing.auditEntity.other");
@@ -526,7 +526,7 @@ function PricingWorkspace({
       {message && <p role="alert">{message}</p>}
       {resource === "rules" && (
         <p className="settings-hint">
-          Las tarifas por m² conservan su moneda base: {ruleCurrency ?? "Sin dato"}.{" "}
+          Las tarifas por m² conservan su moneda base: {ruleCurrency ?? "Falta completar"}.{" "}
           <Link to="/settings/general?section=company">Revisar moneda de empresa</Link>
         </p>
       )}
@@ -823,8 +823,8 @@ function auditRecordLabel(entity: string, record: Record<string, unknown> | null
 }
 
 function auditValue(value: unknown): string {
-  if (value === null || value === undefined || value === "") return "Sin dato";
-  if (typeof value === "object") return "Autoridad registrada";
+  if (value === null || value === undefined || value === "") return "Falta completar";
+  if (typeof value === "object") return "Origen registrado";
   const text = String(value);
   const states: Record<string, string> = {
     PREVIEW: "Propuesta sin aplicar",
@@ -959,7 +959,7 @@ function AuditCard({ item }: { item: Row }): JSX.Element {
         <summary>Detalles técnicos</summary>
         <p>
           Registro: {String(item.entity_id ?? item.id)} · Actor:{" "}
-          {String(item.actor_user_id ?? "Sin dato")}
+          {String(item.actor_user_id ?? "Falta completar")}
         </p>
       </details>
     </article>
@@ -1153,7 +1153,7 @@ function ImportCosts({
                 <td>
                   {previewCurrency
                     ? formatMoney(String(row.unit_cost), previewCurrency)
-                    : "Sin dato: moneda de la lista"}
+                    : "Falta completar: moneda de la lista"}
                 </td>
               </tr>
             ))}

@@ -366,7 +366,7 @@ export function DocumentSettings({
                   />
                   <small>
                     Se propone desde la fecha local de Chile. Puedes cambiarla antes de emitir; las
-                    revisiones selladas conservan su fecha.
+                    revisiones emitidas conservan su fecha.
                   </small>
                 </label>
               </>

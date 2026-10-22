@@ -198,8 +198,8 @@ export function FinishSelector({
         <details className="finish-source">
           <summary>
             {selected.interior.approximate || selected.exterior.approximate
-              ? "Color aproximado · ver restricciones y fuente"
-              : "Restricciones y fuente del acabado"}
+              ? "Color aproximado · ver restricciones y origen"
+              : "Restricciones y origen del acabado"}
           </summary>
           <dl>
             {(["interior", "exterior"] as const).map((face) => (
@@ -207,7 +207,7 @@ export function FinishSelector({
                 <dt>{face === "interior" ? "Cara interior" : "Cara exterior"}</dt>
                 <dd>
                   {selected[face].name} ·{" "}
-                  {processNames[selected[face].kind] ?? "Sin dato de proceso"} ·{" "}
+                  {processNames[selected[face].kind] ?? "Proceso por completar"} ·{" "}
                   {selected[face].manufacturer_code}
                 </dd>
               </div>
@@ -222,7 +222,7 @@ export function FinishSelector({
               <dt>Plazo adicional</dt>
               <dd>
                 {rule?.extra_lead_days == null
-                  ? "Sin dato del proveedor"
+                  ? "Proveedor por completar"
                   : `${rule.extra_lead_days} días`}
               </dd>
             </div>
@@ -243,7 +243,7 @@ export function FinishSelector({
               </dd>
             </div>
             <div>
-              <dt>Fuente</dt>
+              <dt>Origen</dt>
               <dd>{rule?.source}</dd>
             </div>
             <div>
@@ -251,7 +251,7 @@ export function FinishSelector({
               <dd>{price.data?.baseline_description ?? "Acabado base de la carta"}</dd>
             </div>
             <div>
-              <dt>Fuente del precio</dt>
+              <dt>Origen del precio</dt>
               <dd>{price.data?.source ?? rule?.surcharge.source}</dd>
             </div>
           </dl>

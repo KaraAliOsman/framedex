@@ -8,7 +8,12 @@ import { fmtMm } from "../../format";
 
 function PickingRows({ rows }: { rows: HardwarePickingRow[] }): JSX.Element {
   if (!rows.length)
-    return <p>Esta orden no tiene componentes de herraje declarados en su BOM sellado.</p>;
+    return (
+      <p>
+        Esta orden no tiene componentes de herraje declarados en la lista de materiales de esta
+        revisión.
+      </p>
+    );
   return (
     <ul className="production-hardware-rows">
       {rows.map((row, index) => (
@@ -21,11 +26,11 @@ function PickingRows({ rows }: { rows: HardwarePickingRow[] }): JSX.Element {
             </span>
           </div>
           <details>
-            <summary>Destino y fuente</summary>
+            <summary>Destino y origen</summary>
             <p>{row.targets.join(" · ")}</p>
             <p>
               {row.source ??
-                "Contenido histórico de catálogo. Solicita la fuente técnica antes de mecanizar."}
+                "Contenido histórico de catálogo. Solicita la referencia técnica antes de mecanizar."}
             </p>
             <details>
               <summary>Detalles técnicos</summary>
@@ -78,7 +83,7 @@ export function HardwarePicking({
                   {gap.component_name} · {gap.declaration}
                 </strong>
                 <p>
-                  {gap.detail} Completa la fuente del catálogo y emite una nueva revisión antes de
+                  {gap.detail} Completa el origen del catálogo y emite una nueva revisión antes de
                   generar el programa.
                 </p>
                 <p>{gap.source}</p>
@@ -92,7 +97,7 @@ export function HardwarePicking({
           <summary>Picking consolidado de la revisión</summary>
           {revision &&
             (consolidated.isPending ? (
-              <LoadingState label="Cargando componentes sellados" />
+              <LoadingState label="Cargando componentes de la orden" />
             ) : consolidated.isError ? (
               <>
                 <p role="alert">

@@ -8,7 +8,7 @@ describe("horizontal section authority", () => {
     const { container } = render(
       <SectionView bay={null} members={resolveMembers(undefined)} widthMm={2400} />,
     );
-    expect(screen.getByText(/Profundidad del marco: Sin dato/)).toBeTruthy();
+    expect(screen.getByText(/Profundidad del marco: Declara la sección en Catálogo/)).toBeTruthy();
     expect(screen.getByText(/trazo aproximado/)).toBeTruthy();
     expect(container.querySelector(".section-member--approx")).not.toBeNull();
     expect(container.querySelector(".section-dim")).toBeNull();

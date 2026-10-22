@@ -54,7 +54,7 @@ type Send = (visitId: string, body: Omit<Command, "operation_key">) => Promise<v
 const checkLabels = {
   installed: "Instalada",
   levelled: "Nivelada",
-  sealed: "Sellada",
+  sealed: "Emitida",
   adjusted: "Regulada",
   clean: "Limpia",
 };
@@ -442,14 +442,14 @@ function Agenda({
                 <h2>
                   {v.context.project_name ||
                     v.context.project_code ||
-                    "Proyecto Sin dato · abrir visita"}
+                    "Obra sin identificar · abre la visita"}
                 </h2>
                 <p>
                   {labels[v.kind]} · {labels[v.status]}
                 </p>
                 <p>{v.context.address}</p>
                 <p>
-                  {v.team} · {v.vehicle || "Vehículo Sin dato · declarar en la planificación"}
+                  {v.team} · {v.vehicle || "Vehículo pendiente · decláralo en la planificación"}
                 </p>
               </div>
               <button type="button" className="secondary-action" onClick={() => open(v.id)}>
@@ -661,7 +661,7 @@ function Planner({
               setAddress(e.target.value);
               operation.current = undefined;
             }}
-            placeholder="Usar la dirección sellada de la revisión"
+            placeholder="Usar la dirección de la revisión emitida"
             maxLength={1000}
           />
         </label>
@@ -1039,7 +1039,7 @@ function VisitDetail({
         .filter((a) => a.kind === "ACT")
         .map((a) => (
           <section key={a.id}>
-            <p>Acta sellada · inmutable</p>
+            <p>Acta emitida · inmutable</p>
             <AssetButton assetId={a.id} online={online} label="Abrir acta PDF" />
           </section>
         ))}
@@ -1099,7 +1099,7 @@ function Survey({
   function currentSurvey(): object {
     const authority = unit.mounting_rules.find((r) => `${r.rule.code}:${r.revision}` === rule);
     if (!authority || [...widths, ...heights].some((v) => !/^\d+(?:[.,]\d{1,2})?$/.test(v)))
-      throw new Error("Completa tres medidas por eje y el montaje con fuente de este marco.");
+      throw new Error("Completa tres medidas por eje y el montaje con origen de este marco.");
     return {
       module_id: module || null,
       rule_code: authority.rule.code,
@@ -1121,7 +1121,7 @@ function Survey({
         [...widths, ...heights].some((v) => !/^\d+(?:[.,]\d{1,2})?$/.test(v))
       )
         throw new Error(
-          "Completa tres medidas por eje, montaje con fuente y foto de esta posición.",
+          "Completa tres medidas por eje, montaje con origen y foto de esta posición.",
         );
       const all = { ...measured, [module || "single"]: currentSurvey() };
       if (modules && modules.some((m) => !all[m.id]))
@@ -1217,7 +1217,7 @@ function Survey({
         </select>
       </label>
       <label>
-        Montaje con fuente
+        Montaje con origen
         <select value={rule} onChange={(e) => setRule(e.target.value)}>
           <option value="">Elige la regla de la serie</option>
           {unit.mounting_rules.map((r) => (
@@ -1230,8 +1230,8 @@ function Survey({
       </label>
       {unit.mounting_rules.length === 0 && (
         <p>
-          Sin dato · la serie no tiene una regla de montaje. El jefe de taller debe declararla en
-          Vano y montaje.
+          Falta completar · la serie no tiene una regla de montaje. El jefe de taller debe
+          declararla en Vano y montaje.
         </p>
       )}
       <Photo change={setPhoto} />
@@ -1413,11 +1413,11 @@ function Reception({ visit, send }: { visit: Visit; send: Send }): JSX.Element {
           checked={confirmed}
           onChange={(e) => setConfirmed(e.target.checked)}
         />
-        Confirmo que revisé las unidades y autorizo sellar esta recepción.
+        Confirmo que revisé las unidades y autorizo emitir esta recepción.
       </label>
       {error && <p role="alert">{error}</p>}
       <button type="submit" className="primary-action" disabled={busy}>
-        {busy ? "Guardando recepción…" : "Firmar y sellar recepción"}
+        {busy ? "Guardando recepción…" : "Firmar y emitir recepción"}
       </button>
     </ValidatedForm>
   );
@@ -1582,7 +1582,7 @@ function Review({ visit, refresh }: { visit: Visit; refresh: () => Promise<void>
               "La revisión emitida se conserva; la rectificación abre su sucesora."}
           </p>
           {change?.reason ? (
-            <p>Sin dato · {change.reason}</p>
+            <p>Falta completar · {change.reason}</p>
           ) : (
             <p>
               Antes <Money value={change?.before_net} currency={change?.currency} /> · Después{" "}
@@ -1877,7 +1877,7 @@ function Case({
                     disabled={!online}
                     onClick={() => void loadRequirements()}
                   >
-                    Ver requerimientos sellados
+                    Ver requerimientos emitidos
                   </button>
                   <label>
                     Material faltante
@@ -1906,7 +1906,7 @@ function Case({
               )}
               <p>
                 {action === "REMAKE"
-                  ? "Se creará una OT nueva de una unidad, con plan nuevo y fuente conservada."
+                  ? "Se creará una OT nueva de una unidad, con plan nuevo y datos conservados."
                   : "Se conservará la evidencia de la incidencia y su solución."}
               </p>
               <button type="submit" className="primary-action" disabled={busy}>

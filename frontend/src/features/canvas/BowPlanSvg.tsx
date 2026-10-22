@@ -382,7 +382,7 @@ export function BowPlanContent(props: BowPlanSvgProps): JSX.Element {
                 textAnchor="middle"
                 pointerEvents="none"
               >
-                {moduleLabel} · {value ? `${fmtMm(value)} mm` : "Sin dato"}
+                {moduleLabel} · {value ? `${fmtMm(value)} mm` : "Falta completar"}
               </text>
             )}
           </g>

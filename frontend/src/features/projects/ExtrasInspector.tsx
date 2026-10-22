@@ -146,8 +146,8 @@ export function ExtrasInspector({
         </p>
       ) : choices.length === 0 ? (
         <p className="inspector-note">
-          Sin dato: esta versión no declara extras. Elige una serie con accesorios o completa su
-          catálogo.
+          Falta completar: esta versión no declara extras. Elige una serie con accesorios o completa
+          su catálogo.
         </p>
       ) : (
         <>
@@ -163,7 +163,7 @@ export function ExtrasInspector({
               </button>
             </p>
           )}
-          {preview.data?.reason && <p role="alert">Sin dato: {preview.data.reason}</p>}
+          {preview.data?.reason && <p role="alert">Falta completar: {preview.data.reason}</p>}
           {!selections.length && <p className="inspector-note">Todavía no has agregado extras.</p>}
           <p className="inspector-note">
             El palillaje y sus cruces se declaran en Vidrio · Tratamientos, con la tarifa de su
@@ -329,9 +329,9 @@ export function ExtrasInspector({
                     </>
                   )}
                   <details>
-                    <summary>Regla y fuente</summary>
+                    <summary>Regla y origen</summary>
                     <p>
-                      {extraBasisLabels[definition?.basis ?? ""] ?? "Sin dato"} ·{" "}
+                      {extraBasisLabels[definition?.basis ?? ""] ?? "Falta completar"} ·{" "}
                       {definition?.source ?? "Completa el catálogo"}
                       {definition?.synthetic && " · DEMO"}
                     </p>

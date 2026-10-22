@@ -25,14 +25,14 @@ export type WorkshopPiece = {
 /** Display only sealed addresses and engine measurements; no new piece numbers. */
 export function orderPieces(detail: ProductionOrderDetail): WorkshopPiece[] {
   const optimization = detail.payload?.optimization as WorkOrderOptimization | undefined;
-  const position = detail.making?.code ?? "Sin dato · posición sin código";
+  const position = detail.making?.code ?? "Falta completar · posición sin código";
   const rows: WorkshopPiece[] = [];
   for (const bar of optimization?.bars?.workshop_cut_plan ?? []) {
     for (const cut of bar.cuts)
       rows.push({
         id: `${bar.bar_index}:${cut.sequence}:${cut.piece_id}`,
         identity: cut.piece_stable_id,
-        code: cut.piece_code ?? "Sin dato · pieza sin etiqueta",
+        code: cut.piece_code ?? "Falta completar · pieza sin etiqueta",
         position,
         unit: cut.unit_index,
         role: cut.role,
@@ -46,7 +46,7 @@ export function orderPieces(detail: ProductionOrderDetail): WorkshopPiece[] {
       rows.push({
         id: `lamina:${sheet.sheet_index}:${piece.sequence}:${piece.piece_id}`,
         identity: piece.piece_stable_id,
-        code: piece.piece_code ?? "Sin dato · pieza sin etiqueta",
+        code: piece.piece_code ?? "Falta completar · pieza sin etiqueta",
         position,
         unit: piece.unit_index,
         sku: piece.workshop_sku,
@@ -66,7 +66,7 @@ export function pieceMeasure(piece: WorkshopPiece): string {
     ? `${fmtMm(piece.length)} mm`
     : piece.width && piece.height
       ? `${fmtMm(piece.width)} × ${fmtMm(piece.height)} mm`
-      : "Sin dato · faltan medidas selladas";
+      : "Faltan medidas de la orden";
 }
 
 const columns: TableColumn<WorkshopPiece>[] = [
@@ -125,16 +125,16 @@ export function WorkOrderShortages({
       <ul>
         {short.map((item) => (
           <li key={item.sku}>
-            <strong>{item.name ?? item.sku ?? "Sin dato · material sin nombre"}</strong>
+            <strong>{item.name ?? item.sku ?? "Falta completar · material sin nombre"}</strong>
             <span className="ui-value">
               {formatDecimal(item.short)}{" "}
-              {domainLabels[item.unit ?? ""] ?? "Sin dato · unidad no declarada"}
+              {domainLabels[item.unit ?? ""] ?? "Falta completar · unidad no declarada"}
             </span>
             <span>
               Color:{" "}
               {optimization?.color
-                ? (domainLabels[optimization.color] ?? "Sin dato · revisa el acabado sellado")
-                : "Sin dato · color no declarado"}
+                ? (domainLabels[optimization.color] ?? "Revisa el acabado de la orden")
+                : "Falta completar · color no declarado"}
             </span>
           </li>
         ))}
@@ -179,7 +179,7 @@ export function WorkOrderStepper({
             <span>
               {step.status === "READY" && first !== step.id
                 ? "Pendiente"
-                : (domainLabels[step.status] ?? "Sin dato · estado no reconocido")}
+                : (domainLabels[step.status] ?? "Falta completar · estado no reconocido")}
             </span>
           </button>
         </li>
@@ -258,7 +258,7 @@ export function WorkOrderHistory({ detail }: { detail: ProductionOrderDetail }) 
                   {formatDateTime(event.created_at)}
                 </time>
                 <span>
-                  {event.actor_label ?? "Sin dato · autor no registrado"} ·{" "}
+                  {event.actor_label ?? "Falta completar · autor no registrado"} ·{" "}
                   {event.step_code ? stationCodeLabel(event.step_code) + " " : ""}
                   {eventLabels[event.event] ?? "Evento técnico registrado"}
                   {ops !== null ? ` (${formatDecimal(ops)} operaciones)` : ""}
@@ -268,7 +268,7 @@ export function WorkOrderHistory({ detail }: { detail: ProductionOrderDetail }) 
                 ) : qc ? (
                   <p>
                     {qc.item_code ? `${qc.item_code} · ` : ""}
-                    {qc.check} · {domainLabels[qc.result ?? ""] ?? "Sin dato"}
+                    {qc.check} · {domainLabels[qc.result ?? ""] ?? "Falta completar"}
                   </p>
                 ) : null}
                 <TechDetails diagnostic={JSON.stringify(event, null, 2)} />

@@ -164,7 +164,7 @@ export function ProjectPositionLibrary({
                       .filter((value) => value.compatible !== false)
                       .map((value) => (
                         <option key={value.sku} value={value.sku}>
-                          {value.spec || "Composición sin dato"} · {value.sku}
+                          {value.spec || "Composición por completar"} · {value.sku}
                         </option>
                       ))}
                   </select>

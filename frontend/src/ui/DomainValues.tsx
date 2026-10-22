@@ -23,7 +23,7 @@ function Value({
   cause?: string;
   measure?: boolean;
 }): JSX.Element {
-  if (text === "Sin dato") return <UnknownValue cause={cause} />;
+  if (text === "Falta completar") return <UnknownValue cause={cause} />;
   return (
     <span className={measure ? "ui-value ui-value--measure" : "ui-value"}>
       {text}
@@ -59,7 +59,11 @@ export function Dims({
     height = formatDecimal(h, precision);
   return (
     <Value
-      text={width === "Sin dato" || height === "Sin dato" ? "Sin dato" : `${width} × ${height}`}
+      text={
+        width === "Falta completar" || height === "Falta completar"
+          ? "Falta completar"
+          : `${width} × ${height}`
+      }
       unit="mm"
       cause={cause}
       measure
@@ -105,7 +109,7 @@ export function DateOnly({ value }: { value: string | null | undefined }): JSX.E
   return <Value text={formatDate(value)} />;
 }
 export function Timestamp({ value }: { value: string | null | undefined }): JSX.Element {
-  if (!value || formatDateTime(value) === "Sin dato") return <UnknownValue />;
+  if (!value || formatDateTime(value) === "Falta completar") return <UnknownValue />;
   return (
     <time className="ui-value" dateTime={value} title={formatDateTime(value)}>
       {formatRelativeTimestamp(value)}

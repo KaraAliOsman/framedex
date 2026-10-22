@@ -40,8 +40,8 @@ export function OpeningOptionsState({
     );
   return (
     <p className="assembly-hint" role="status">
-      Esta serie no declara aperturas con fuente. Declara sus capacidades en Catálogos › Serie antes
-      de cambiar la apertura.
+      Esta serie no declara aperturas respaldadas por el catálogo. Declara sus capacidades en
+      Catálogos › Serie antes de cambiar la apertura.
     </p>
   );
 }
@@ -175,14 +175,14 @@ export function OpeningPalette({
       </div>
       {!choices.length && (
         <p className="assembly-hint">
-          Sin dato: declara las capacidades con su fuente en Catálogo › Sistema.
+          Declara las capacidades con su origen en Catálogo › Sistema.
         </p>
       )}
       <details className="opening-availability">
-        <summary>Compatibilidad y fuente</summary>
+        <summary>Compatibilidad y origen</summary>
         <p>
           Estas aperturas están respaldadas por las capacidades y los herrajes del catálogo. Una
-          dirección o composición ausente necesita una fuente antes de ofrecerse.
+          dirección o composición ausente necesita una referencia técnica antes de ofrecerse.
         </p>
         <ul>
           {Array.from(new Set(choices.map((choice) => choice.source))).map((source) => (

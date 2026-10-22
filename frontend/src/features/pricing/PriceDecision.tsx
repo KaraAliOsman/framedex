@@ -105,7 +105,7 @@ export function PriceDecision({
       <p className="ui-value">
         {operation.project_code} · {formatRevision(operation.revision_code)}
       </p>
-      <h3>{states[operation.state] ?? "Sin dato · estado sin reconocer"}</h3>
+      <h3>{states[operation.state] ?? "Falta completar · estado sin reconocer"}</h3>
       <p>{operation.reason}</p>
       <p>
         Solicitó {operation.requested_by_email ?? "un integrante del taller"} ·{" "}

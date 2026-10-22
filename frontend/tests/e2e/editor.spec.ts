@@ -480,7 +480,7 @@ test("two tilt-turn leaves 1500×1200 and 4-16-4 take at most six design interac
   ).toContainText("$");
   await page.getByRole("button", { name: "Precio neto indicativo", exact: true }).click();
   await expect(
-    page.getByRole("region", { name: "Fuente del precio indicativo", exact: true }),
+    page.getByRole("region", { name: "Origen del precio indicativo", exact: true }),
   ).toContainText("Motor comercial");
   await page.keyboard.press("Escape");
   await expect(page.getByRole("button", { name: "Guardar", exact: true })).toBeEnabled();
@@ -602,11 +602,11 @@ test("price pending and transport failure hide the previous amount and retry the
     await request.abort("failed");
   });
   await page.getByLabel("Cantidad", { exact: true }).fill("3");
-  await expect(chip).toContainText("Sin dato");
+  await expect(chip).toContainText("Falta completar");
   await expect(chip).not.toContainText("$");
   await chip.click();
   await expect(
-    page.getByRole("region", { name: "Fuente del precio indicativo", exact: true }),
+    page.getByRole("region", { name: "Origen del precio indicativo", exact: true }),
   ).toContainText("No se pudo consultar el precio");
   await page.unroute(route);
   const retriedPrice = waitForIndicativePrice(page, 3, "1400.00", "1400.00");

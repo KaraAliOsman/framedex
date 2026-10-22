@@ -132,7 +132,7 @@ def review_report(org_id, system_id, report_id, actor_id, state):
             "WHERE id=%s AND org_id=%s AND system_id=%s AND review_state=%s RETURNING *",
             [state, actor_id, report_id, org_id, system_id, expected])
     if not found:
-        raise contract_error(409, "thermal_review_conflict", "El informe ya cambió de estado o no pertenece a tu organización. Recarga sus fuentes.")
+        raise contract_error(409, "thermal_review_conflict", "El informe ya cambió de estado o no pertenece a tu organización. Recarga sus referencias.")
     return authority_public(_authority(found[0]), org_id)
 
 
@@ -246,7 +246,7 @@ def project_report(org_id, project_id, *, sealed=True):
             if thermal:
                 return {**thermal, "sealed": True, "updated_at": None}
             return {"inputs": ThermalProjectInput().model_dump(mode="json"), "updated_at": None, "sealed": True,
-                "assessment": {**assess_project(ThermalProjectInput(), []), "causes": ["Esta revisión histórica no contiene un informe térmico sellado. Inicia una revisión para agregarlo."]}}
+                "assessment": {**assess_project(ThermalProjectInput(), []), "causes": ["Esta revisión histórica no contiene un informe térmico emitido. Inicia una revisión para agregarlo."]}}
     inputs, updated_at = project_inputs(org_id, project)
     positions = [position_metric(org_id, position) for position in _live_positions(org_id, project_id)]
     return {"inputs": inputs.model_dump(mode="json"), "updated_at": updated_at, "sealed": False,
@@ -261,14 +261,14 @@ def save_inputs(org_id, project_id, actor_id, values, expected_updated_at):
         versions = rows("SELECT id FROM public.project_versions WHERE project_id=%s AND org_id=%s AND revision_code=%s",
                        [project_id, org_id, project["current_revision"]])
         if versions:
-            raise contract_error(409, "thermal_revision_required", "Inicia una revisión para cambiar el informe térmico sellado.")
+            raise contract_error(409, "thermal_revision_required", "Inicia una revisión para cambiar el informe térmico emitido.")
         _, timestamp = project_inputs(org_id, project)
         if timestamp != expected_updated_at:
             raise contract_error(409, "thermal_inputs_stale", "Otra persona cambió los datos térmicos. Recarga antes de guardar.")
         try:
             inputs = ThermalProjectInput.model_validate_json(json_text(values))
         except ValueError as error:
-            raise contract_error(400, "thermal_inputs_invalid", "Revisa la zona, la fuente y las superficies de muro declaradas.") from error
+            raise contract_error(400, "thermal_inputs_invalid", "Revisa la zona, su referencia oficial y las superficies de muro declaradas.") from error
         ids = {str(p["id"]) for p in _live_positions(org_id, project_id)}
         if not {p.position_id for p in inputs.positions} <= ids:
             raise contract_error(400, "thermal_position_invalid", "Una orientación no corresponde a las posiciones de este proyecto.")

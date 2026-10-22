@@ -43,7 +43,7 @@ export function useThermalReport(projectId: string, orgId: string) {
 }
 
 function value(number: string | null | undefined, unit: string, places = 2) {
-  return number == null ? "Sin dato" : `${formatDecimal(number, places)} ${unit}`;
+  return number == null ? "Falta completar" : `${formatDecimal(number, places)} ${unit}`;
 }
 
 export function ThermalReadout({ metric }: { metric: ThermalMetric }) {
@@ -119,15 +119,15 @@ export function ThermalReadout({ metric }: { metric: ThermalMetric }) {
       <dl className="thermal-classes">
         <div>
           <dt>Aire · 100 Pa</dt>
-          <dd>{metric.air_class == null ? "Sin dato" : `Clase ${metric.air_class}`}</dd>
+          <dd>{metric.air_class == null ? "Falta completar" : `Clase ${metric.air_class}`}</dd>
         </div>
         <div>
           <dt>Agua</dt>
-          <dd>{metric.water_class ?? "Sin dato"}</dd>
+          <dd>{metric.water_class ?? "Falta completar"}</dd>
         </div>
         <div>
           <dt>Viento</dt>
-          <dd>{metric.wind_class ?? "Sin dato"}</dd>
+          <dd>{metric.wind_class ?? "Falta completar"}</dd>
         </div>
       </dl>
       {hasSolarFactor && trace && (
@@ -171,7 +171,7 @@ export function PositionThermal({
   positionId: string;
 }) {
   const query = useThermalReport(projectId, orgId);
-  if (query.isPending) return <Loading label="Calculando Uw con sus fuentes" />;
+  if (query.isPending) return <Loading label="Calculando Uw con sus referencias" />;
   if (query.isError)
     return (
       <p role="alert">
@@ -187,7 +187,7 @@ export function PositionThermal({
       <Link to={`/projects/${projectId}?section=thermal`}>Revisar zona y cumplimiento</Link>
     </section>
   ) : (
-    <p>Uw Sin dato · esta revisión no contiene un informe de la posición.</p>
+    <p>Uw por completar · esta revisión no contiene un informe de la posición.</p>
   );
 }
 
@@ -242,7 +242,7 @@ export function ProjectThermalPanel({
       setError(
         actionErrorDetail(
           cause,
-          "No se pudieron guardar los datos. Revisa las fuentes y superficies, y vuelve a intentar.",
+          "No se pudieron guardar los datos. Revisa las referencias y superficies, y vuelve a intentar.",
         ),
       );
     } finally {
@@ -266,7 +266,7 @@ export function ProjectThermalPanel({
       setError(
         actionErrorDetail(
           cause,
-          "No se pudo comparar el catálogo. Revisa sus fuentes y tarifas antes de reintentar.",
+          "No se pudo comparar el catálogo. Revisa sus referencias y tarifas antes de reintentar.",
         ),
       );
     } finally {
@@ -311,9 +311,9 @@ export function ProjectThermalPanel({
           <h2>Ventanas · reglamentación térmica</h2>
           <p>
             {report.sealed
-              ? "Informe sellado de esta revisión"
+              ? "Informe emitido de esta revisión"
               : "Datos del catálogo vigente y fabricación guardada"}{" "}
-            · {report.inputs.zone ? `Zona ${report.inputs.zone}` : "Zona Sin dato"}
+            · {report.inputs.zone ? `Zona ${report.inputs.zone}` : "Zona por completar"}
           </p>
         </div>
         <strong className="thermal-verdict" data-verdict={assessment.verdict}>
@@ -328,7 +328,7 @@ export function ProjectThermalPanel({
       {!canWrite && (
         <p>
           Solo el dueño o el estimador pueden declarar zona, muros y orientación. Puedes revisar las
-          fuentes.
+          referencias.
         </p>
       )}
       {error && <p role="alert">{error}</p>}
@@ -354,7 +354,7 @@ export function ProjectThermalPanel({
                       change({ zone: (event.target.value || null) as ThermalInputRequest["zone"] })
                     }
                   >
-                    <option value="">Sin dato · elige zona</option>
+                    <option value="">Elige zona</option>
                     {"ABCDEFGHI".split("").map((zone) => (
                       <option key={zone} value={zone}>
                         Zona {zone}
@@ -370,7 +370,7 @@ export function ProjectThermalPanel({
                       change({ use: (event.target.value || null) as ThermalInputRequest["use"] })
                     }
                   >
-                    <option value="">Sin dato · elige uso</option>
+                    <option value="">Elige uso</option>
                     <option value="RESIDENTIAL">Residencial</option>
                     <option value="EDUCATION">Educación</option>
                     <option value="HEALTH">Salud</option>
@@ -378,7 +378,7 @@ export function ProjectThermalPanel({
                   </select>
                 </label>
                 <label className="thermal-wide">
-                  Fuente de la zona
+                  Origen de la zona
                   <input
                     value={current.zone_source ?? ""}
                     onChange={(event) => change({ zone_source: event.target.value })}
@@ -426,7 +426,7 @@ export function ProjectThermalPanel({
                       />
                     </label>
                     <label>
-                      Fuente de las superficies
+                      Origen de las superficies
                       <input
                         value={current.wall_source ?? ""}
                         onChange={(event) => change({ wall_source: event.target.value })}
@@ -485,7 +485,7 @@ export function ProjectThermalPanel({
                   checked={current.include_doc01 ?? false}
                   onChange={(event) => change({ include_doc01: event.target.checked })}
                 />
-                Incluir anexo en DOC-01; imprime únicamente valores autoritativos sellados.
+                Incluir anexo en DOC-01; imprime únicamente valores comprobados de esta revisión.
               </label>
               {editable && draft && (
                 <div className="thermal-actions">
@@ -535,7 +535,7 @@ export function ProjectThermalPanel({
                 <strong>{thermalVerdict[position.verdict]}</strong>
               </header>
               <details open={assessment.positions.length === 1}>
-                <summary>Geometría, orientación y fuentes</summary>
+                <summary>Geometría, orientación y referencias</summary>
                 <div className="thermal-position-body">
                   <ThermalReadout metric={position.thermal} />
                   <div>
@@ -568,7 +568,7 @@ export function ProjectThermalPanel({
                               })
                             }
                           >
-                            <option value="">Sin dato · ubica la ventana</option>
+                            <option value="">Ubica la ventana</option>
                             <option value="WALL">Fachada</option>
                             <option value="ROOF">Techumbre · hasta 60° horizontal</option>
                           </select>
@@ -601,7 +601,7 @@ export function ProjectThermalPanel({
                               })
                             }
                           >
-                            <option value="">Sin dato</option>
+                            <option value="">Falta completar</option>
                             {["N", "E", "S", "W"].map((side) => (
                               <option value={side} key={side}>
                                 {orientationLabel[side]}
@@ -635,11 +635,11 @@ export function ProjectThermalPanel({
                         <span className="thermal-num">
                           ventanas{" "}
                           {position.actual_percentage == null
-                            ? "Sin dato"
+                            ? "Falta completar"
                             : formatPercent(position.actual_percentage, "points")}{" "}
                           · máximo{" "}
                           {position.maximum_percentage == null
-                            ? "Sin dato"
+                            ? "Falta completar"
                             : formatPercent(position.maximum_percentage, "points")}
                         </span>
                         <br />

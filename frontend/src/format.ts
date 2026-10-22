@@ -58,7 +58,7 @@ export function fmtMm(value: string | number | null | undefined): string {
  * An absent/invalid value has no fabricated unit or numeric default. */
 export function formatMillimeters(value: string | number | null | undefined): string {
   const formatted = fmtMm(value);
-  return formatted === "Sin dato" ? formatted : `${formatted} mm`;
+  return formatted === "Falta completar" ? formatted : `${formatted} mm`;
 }
 
 /** Chilean RUT — módulo-11 check digit. Accepts "12.345.678-5", "12345678-5",

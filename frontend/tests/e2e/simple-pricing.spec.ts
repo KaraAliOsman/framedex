@@ -35,7 +35,7 @@ for (const viewport of [
   { width: 390, height: 844 },
 ]) {
   test.describe(`Mis precios ${viewport.width}`, () => {
-    test.use({ viewport });
+    test.use({ viewport, lightCatalog: true });
     test("configures exact services and previews a PRO6004 window without applying", async ({
       page,
       catalog,
@@ -164,7 +164,7 @@ for (const viewport of [
       }
       await page.reload();
       await expect(page.locator(".simple-pricing__total")).toContainText("$");
-      await expect(page.getByText("Sin dato", { exact: true })).toHaveCount(0);
+      await expect(page.getByText("Falta completar", { exact: true })).toHaveCount(0);
       await expect(page.getByRole("textbox", { name: "Mano de obra", exact: true })).toHaveValue(
         "15000,1234",
       );

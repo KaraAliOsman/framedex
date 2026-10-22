@@ -31,7 +31,7 @@ for (const role of [
     { width: 390, height: 844 },
   ]) {
     test.describe(`${role} ${viewport.width}`, () => {
-      test.use({ catalogRole: role, viewport });
+      test.use({ catalogRole: role, lightCatalog: true, viewport });
       test("opens Hoy, filters destinations by role and retains legacy links", async ({
         page,
         catalog,
@@ -73,11 +73,12 @@ for (const role of [
         if (office) {
           if (role !== "WORKSHOP_MANAGER") {
             await page.goto("/quotes?q=ensayo");
+            await expect(page).toHaveURL(/\/projects\?.*view=quotes/);
             await expect(
-              page.getByRole("heading", { name: "Cotizaciones", exact: true, level: 1 }),
+              page.getByRole("heading", { name: "Obras", exact: true, level: 1 }),
             ).toBeVisible();
             await expect(
-              page.getByRole("searchbox", { name: "Buscar proyecto o cliente", exact: true }),
+              page.getByRole("searchbox", { name: "Buscar obra o cliente", exact: true }),
             ).toHaveValue("ensayo");
           }
           await page.goto("/projects");

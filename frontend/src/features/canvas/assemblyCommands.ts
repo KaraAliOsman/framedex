@@ -483,7 +483,7 @@ export const ASSEMBLY_COMMANDS: CommandSpec[] = [
       } catch {
         /* Legacy transport has a human label below. */
       }
-      return `${moduleLabel(args)}: ${OPENING_LABELS[args.opening as Opening] ?? "Apertura sin dato"}`;
+      return `${moduleLabel(args)}: ${OPENING_LABELS[args.opening as Opening] ?? "Apertura por completar"}`;
     },
     ai: {
       op: "set_opening",

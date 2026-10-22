@@ -30,6 +30,7 @@ from dekopen_engine.snapshot import evaluation_response
 from engine_api.adapter import InvalidEngineRequest, UnsupportedEngineContract, evaluate_assembly_from_api, parse_product_model
 from engine_api.repository import SystemParamsRepository
 from pricing.repository import PricingRepository, commercial_backend, json_text, rows
+from pricing.resolved import financial_bundle
 from pricing.serializers import StrictSerializer
 from pricing.service import configured_unit_price, position_cost, pricing_public_detail
 from pricing.views import DecimalJSONParser, ERRORS, scope, validate
@@ -130,7 +131,11 @@ def sale_price(org_id, product, system_id, color, quantity=1):
         if not rules:
             return {"net": None, "currency": currency, "reason": "Completa las reglas de precio en Ajustes."}
         rules = rules[0]
-        repo = PricingRepository(org_id, datetime.now(ZoneInfo("America/Santiago")).date(), currency, None)
+        # One read-only calculation owns this repository. Reuse its exact input
+        # snapshot across components; the next request builds a fresh one.
+        repo = PricingRepository(org_id, datetime.now(ZoneInfo("America/Santiago")).date(), currency, None,
+                                 request_cache=True)
+        repo.preload_costs(financial_bundle(repo))
         def quote(value, count):
             design = design_from_product(value, system_id, color)
             mode = PricingMode(rules["pricing_mode"])

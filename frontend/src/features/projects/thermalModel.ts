@@ -86,7 +86,7 @@ export type ThermalCandidate = {
 export const thermalVerdict = {
   PASS: "Cumple",
   FAIL: "No cumple",
-  UNKNOWN: "Sin datos suficientes",
+  UNKNOWN: "Faltan datos para calcular",
 };
 export const orientationLabel: Record<string, string> = {
   N: "Norte",

@@ -52,7 +52,7 @@ export function AnalyticValue({
   unit: string;
   currency?: string | null;
 }): JSX.Element {
-  if (value === null) return <span>Sin datos suficientes</span>;
+  if (value === null) return <span>Faltan datos para calcular</span>;
   if (unit === "money") return <Money value={value} currency={currency ?? "CLP"} />;
   if (unit === "fraction") return <Percent value={value} kind="fraction" />;
   return (
@@ -78,7 +78,7 @@ function Reading({
           className="analytics-number"
           data-metric={metric.key}
           onClick={() => onOpen(metric)}
-          aria-label={`${metric.label}: ver fuente`}
+          aria-label={`${metric.label}: ver origen`}
         >
           <AnalyticValue value={metric.value} unit={metric.unit} currency={metric.currency} />
         </button>
@@ -101,7 +101,7 @@ function MetricDefinition({
     <Dialog title={metric.label} width="l" onClose={onClose}>
       <p>{metric.formula}</p>
       <p>{sources[metric.group as Group]}</p>
-      {metric.reason && <p role="status">Sin datos suficientes · {metric.reason}</p>}
+      {metric.reason && <p role="status">Faltan datos para calcular · {metric.reason}</p>}
       <p>
         <AnalyticValue value={metric.value} unit={metric.unit} currency={metric.currency} />
       </p>
@@ -181,7 +181,7 @@ function MarginChart({ work, onOpen }: { work: Work; onOpen: (key: string) => vo
             className="analytics-number"
             data-metric={`${line.label === "Real" ? "real" : "quoted"}_margin`}
             onClick={() => onOpen(line.label === "Real" ? "real_margin" : "quoted_margin")}
-            aria-label={`${line.label}: ver fuente`}
+            aria-label={`${line.label}: ver origen`}
           >
             <Percent
               value={line.value}
@@ -228,7 +228,7 @@ function DecisionChart({
             className="analytics-number"
             data-metric={m.key}
             onClick={() => onOpen(m)}
-            aria-label={`${m.label}: ver fuente`}
+            aria-label={`${m.label}: ver origen`}
           >
             <AnalyticValue value={m.value} unit={m.unit} currency={m.currency} />
           </button>
@@ -675,7 +675,7 @@ function WorkCauses({
     <section className="analytics-causes">
       <h3>¿Por qué cambió la utilidad?</h3>
       {work.reason ? (
-        <p>Sin datos suficientes · {work.reason}</p>
+        <p>Faltan datos para calcular · {work.reason}</p>
       ) : (
         <>
           <dl>

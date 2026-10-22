@@ -203,7 +203,7 @@ export function StarterGallery({
                 }
                 onClick={() => setAvailability(item)}
               >
-                {item.label} · {item.available ? "Disponible" : "Sin dato"}
+                {item.label} · {item.available ? "Disponible" : "Falta completar"}
               </button>
             ))}
           </div>

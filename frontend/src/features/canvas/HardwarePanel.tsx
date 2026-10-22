@@ -121,7 +121,10 @@ export function HardwarePanel({
     return (
       <section className="hardware-panel">
         <h5>Herrajes</h5>
-        <p>Sin dato: esta serie no declara herrajes. Completa su catálogo para resolver la hoja.</p>
+        <p>
+          Falta completar: esta serie no declara herrajes. Completa su catálogo para resolver la
+          hoja.
+        </p>
       </section>
     );
   if (query.isPending)
@@ -138,7 +141,7 @@ export function HardwarePanel({
         <p role="alert">
           {query.error instanceof ApiError && query.error.status === 403
             ? "Tu rol no permite consultar esta ingeniería. Solicita acceso a tu organización."
-            : "Sin dato: no se pudo resolver la hoja. Revisa medidas, vidrio y fuentes del catálogo."}
+            : "Falta completar: no se pudo resolver la hoja. Revisa medidas, vidrio y referencias del catálogo."}
         </p>
         <button type="button" disabled={query.isFetching} onClick={() => void query.refetch()}>
           Volver a resolver
@@ -176,7 +179,7 @@ export function HardwarePanel({
                   <p className="hardware-number">
                     Δ herrajes:{" "}
                     {division.delta_net === null
-                      ? "Sin dato de precio comparativo"
+                      ? "Precio comparativo por completar"
                       : `${formatMoney(division.delta_net)} neto`}
                     .
                   </p>
@@ -239,7 +242,7 @@ export function HardwarePanel({
                   recommended.name}
                 {recommended.delta_net !== null
                   ? ` · Δ ${formatMoney(recommended.delta_net)} neto`
-                  : " · Sin dato de precio"}
+                  : " · Precio por completar"}
               </button>
             )}
             {proposed && leaf.editable && (
@@ -255,7 +258,7 @@ export function HardwarePanel({
                 <p className="hardware-number">
                   Δ{" "}
                   {proposed.delta_net === null
-                    ? "Sin dato: completa costos antes de comparar."
+                    ? "Completa costos antes de comparar."
                     : `${formatMoney(proposed.delta_net)} neto por hoja`}
                 </p>
                 <button
@@ -322,7 +325,7 @@ export function HardwarePanel({
                         onCommit={(value) => onPatch({ handle_height_mm: value })}
                       />
                       <p className="hardware-number">
-                        Rango de la fuente: {fmtMm(resolution.handle_minimum_mm)}–
+                        Rango del origen: {fmtMm(resolution.handle_minimum_mm)}–
                         {fmtMm(resolution.handle_maximum_mm)} mm.
                       </p>
                     </>
@@ -391,7 +394,7 @@ export function HardwarePanel({
                     <dt>Peso con herraje</dt>
                     <dd>
                       {resolution.exact_leaf_weight_kg === null
-                        ? "Sin dato"
+                        ? "Falta completar"
                         : `${formatDecimal(resolution.exact_leaf_weight_kg, 1)} kg`}
                     </dd>
                   </div>
@@ -415,7 +418,7 @@ export function HardwarePanel({
                 </dl>
               )}
               <p className="hardware-source">
-                Fuente:{" "}
+                Origen:{" "}
                 {resolution?.source ??
                   "Contenido histórico declarado en el catálogo de esta serie."}
               </p>
@@ -424,7 +427,7 @@ export function HardwarePanel({
                   <summary>Detalles técnicos de la clase</summary>
                   <p>
                     Peso exacto usado al validar:{" "}
-                    <code>{resolution.exact_leaf_weight_kg ?? "Sin dato"}</code> kg.
+                    <code>{resolution.exact_leaf_weight_kg ?? "Falta completar"}</code> kg.
                   </p>
                 </details>
               )}
@@ -442,11 +445,10 @@ export function HardwarePanel({
                         </span>
                       </div>
                       <details>
-                        <summary>Regla y fuente</summary>
+                        <summary>Regla y origen</summary>
                         <p>{component.reason ?? "Cantidad fija declarada por el catálogo."}</p>
                         <p>
-                          {component.source ??
-                            "Sin dato: solicita la fuente técnica del componente."}
+                          {component.source ?? "Solicita la referencia técnica del componente."}
                         </p>
                         {component.machining?.map((declaration, index) => (
                           <p key={index}>
@@ -467,7 +469,8 @@ export function HardwarePanel({
               </ul>
               <p className="hardware-number">
                 Herrajes por hoja:{" "}
-                {selected?.price_net != null ? formatMoney(selected.price_net) : "Sin dato"} neto.
+                {selected?.price_net != null ? formatMoney(selected.price_net) : "Falta completar"}{" "}
+                neto.
               </p>
               {selected?.price_reason && <p>{selected.price_reason}</p>}
               <p className="hardware-source">{query.data!.pricing_basis}</p>

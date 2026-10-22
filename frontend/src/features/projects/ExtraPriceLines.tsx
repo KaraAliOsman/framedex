@@ -37,8 +37,8 @@ export function ExtraPriceLines({
                 </small>
               )}
               <details>
-                <summary>Regla y fuente</summary>
-                <p>{line.source ?? "Sin dato: esta revisión no guardó la fuente."}</p>
+                <summary>Regla y origen</summary>
+                <p>{line.source ?? "Falta completar: esta revisión no guardó el origen."}</p>
               </details>
               {hasRounding(line.rounding) && (
                 <small>

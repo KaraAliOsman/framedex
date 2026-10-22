@@ -558,7 +558,7 @@ function commercialSteps(
           : collected > 0 && payments
             ? formatMoney(payments.collected, payments.currency)
             : approved && !payments
-              ? "Sin dato · consulta los cobros de esta revisión"
+              ? "Falta completar · consulta los cobros de esta revisión"
               : approved && !depositDone
                 ? t("projects.stepBlockedDeposit")
                 : undefined,
@@ -840,9 +840,9 @@ function ProjectHeader({
  * activity, editable from «Datos de la obra y del cliente». */
 function ProjectFacts({ project }: { project: ProjectResponse }): JSX.Element {
   const rows: [string, string][] = [
-    ["Dirección de obra", project.delivery_address || "Sin dato"],
-    ["Correo del cliente", project.client_email || "Sin dato"],
-    ["Teléfono", project.client_phone || "Sin dato"],
+    ["Dirección de obra", project.delivery_address || "Falta completar"],
+    ["Correo del cliente", project.client_email || "Falta completar"],
+    ["Teléfono", project.client_phone || "Falta completar"],
     [
       "Vigencia de la cotización",
       project.quotation_valid_until
@@ -860,7 +860,9 @@ function ProjectFacts({ project }: { project: ProjectResponse }): JSX.Element {
           <div key={label}>
             <dt>{label}</dt>
             <dd
-              className={value === "Sin dato" || value === "Sin notas" ? "is-missing" : undefined}
+              className={
+                value === "Falta completar" || value === "Sin notas" ? "is-missing" : undefined
+              }
             >
               {value}
             </dd>

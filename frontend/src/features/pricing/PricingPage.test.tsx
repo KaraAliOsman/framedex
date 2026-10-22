@@ -105,7 +105,7 @@ it("does not assign a silent currency when company authority fails", async () =>
     data: { items: [{ id: "rule", labor_rate_per_m2: "15000.00" }] },
   });
   render(page(<PricingRulesSettings orgId="tenant-a" />));
-  expect(await screen.findByText("Sin dato: falta consultar la moneda de empresa")).toBeVisible();
+  expect(await screen.findByText("Falta consultar la moneda de empresa")).toBeVisible();
   expect(screen.queryByText("$15.000 / m²")).not.toBeInTheDocument();
   expect(screen.getByRole("link", { name: "Revisar moneda de empresa" })).toHaveAttribute(
     "href",
@@ -182,7 +182,7 @@ const costListRow = {
 it.each([
   ["CLP", "1250", "$1.250"],
   ["USD", "12.5", "US$ 12,50"],
-  [null, "12.5", "Sin dato: moneda de la autoridad"],
+  [null, "12.5", "Falta la moneda del importe"],
 ])("reads each cost in the currency of its authority (%s)", async (currency, value, expected) => {
   vi.mocked(apiMutator).mockImplementation((url) =>
     Promise.resolve({

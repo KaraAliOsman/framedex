@@ -265,7 +265,7 @@ export function DataTable<Row>({
                       ? column.render(row)
                       : column.numeric
                         ? formatDecimal(column.value(row))
-                        : (column.value(row) ?? "Sin dato")}
+                        : (column.value(row) ?? "Falta completar")}
                     {column.unit ? <span className="ui-value__unit"> {column.unit}</span> : null}
                   </td>
                 ))}

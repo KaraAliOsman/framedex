@@ -23,6 +23,18 @@
 > AA, turquesa para acción y naranja/ámbar para atención humana. Las decisiones
 > pendientes sobre vista de obra, agente y tarifas siguen bajo sus banderas.
 
+> **Enmienda 2026-10-22 (DEKOPEN 2, P05).** El glosario del
+> [encargo de navegación](../research/2026-10-21-competencia/prompts/P05-navegacion-hoy-obras.md)
+> se aplica a toda la interfaz de producto, incluidas las funciones avanzadas.
+> Los valores ausentes dicen **Falta completar** o una acción concreta, sin
+> convertirse en cero ni en sugeridos inexistentes. Los documentos se describen
+> como **emitidos**; un precio guardado o una revisión preparada conservan su
+> estado preciso. Las referencias se presentan como **Origen**, **Del manual**,
+> **Del taller** o **Sugerido**, según el dato. Las tareas de IA tienen **Resumen**;
+> los comprobantes financieros conservan su significado. La redacción distingue
+> ventana, medida de obra y coordenada física. Esta enmienda sustituye las voces
+> anteriores en P3, §4 y R15. No modifica contratos, cálculos ni evidencia histórica.
+
 ## 0. Por qué existe este documento
 
 Un modelo de lenguaje, cuando no tiene un punto de vista, entrega **el promedio estadístico de lo que ya existe**: tarjetas redondeadas, sombras suaves, un degradado morado, "¡Bienvenido de nuevo!", un dashboard con cuatro KPI. Se ve terminado en segundos y no resuelve nada. Eso es la **UI zombi**: software desechable, sin coherencia y sin alguien detrás que se haya preocupado.
@@ -82,7 +94,7 @@ La ventana y el documento son los protagonistas y deben parecer trabajo profesio
 |---|---|---|---|
 | P1 | **El dibujo es la interfaz.** | El lienzo ocupa ≥ 60 % del editor; se edita sobre la cota, en el lugar | Formularios de ancho completo con el dibujo como miniatura |
 | P2 | **Un número, una fuente.** | Cada monto, medida o peso abre "¿De dónde sale?" con la traza del motor | Cifras calculadas en el frontend o escritas por la IA |
-| P3 | **Lo desconocido se ve.** | "Sin dato · falta el peso del vidrio · Completar" | `0`, `—` sin causa, o un valor por defecto silencioso |
+| P3 | **Lo desconocido se ve.** | "Falta el peso del vidrio · Completar" | `0`, `—` sin causa, o un valor por defecto silencioso |
 | P4 | **Divulgación progresiva.** | Básico: 6 decisiones. Avanzado: perfiles, refuerzos, herrajes, trazas | Las 40 opciones del sistema en la primera pantalla |
 | P5 | **Nada es arbitrario.** | Cada color, radio, espacio y tamaño sale de un token con un rol | `margin: 13px`, `#3b82f6`, `border-radius: 12px` |
 | P6 | **Hablar como el taller.** | Hoja, marco, junquillo, montante, travesaño, termopanel, manilla | `SASH`, `GLAZING_BEAD`, "ítem", "elemento", "objeto" |
@@ -277,7 +289,7 @@ Diseño a **1440 × 900**. Debe funcionar sin scroll horizontal a 1280 × 800 y 
 | Vano · Medida de fabricación · Holgura | Hueco, tamaño |
 | Cotización · Revisión · Emitir | Presupuesto (salvo preferencia del cliente), versión, publicar |
 | Orden de trabajo (OT) · Estación · Lote | Job, tarea, ticket |
-| Sin dato | N/A, null, —, 0 |
+| Falta completar · Acción concreta | Sin dato, N/A, null, — sin causa, 0 inventado |
 
 ---
 
@@ -423,7 +435,7 @@ Cada superficie debe tener **al menos una** capacidad que vaya más allá de lo 
 | R12 | Foco visible en todo; operable por teclado | Sin foco o anillo azul del navegador |
 | R13 | Movimiento ≤ 280 ms, interrumpible y con origen coherente; reduce-motion respetado | Rebote, fade-up escalonado, shimmer, cifras que bailan |
 | R14 | Una acción principal por región | Varios primarios compitiendo |
-| R15 | Cada número calculado tiene fuente; lo desconocido dice "Sin dato" | Ceros falsos, valores inventados |
+| R15 | Cada número calculado permite consultar su origen; lo desconocido pide completar | Ceros falsos, valores inventados |
 | R16 | **Cero degradados, cero blur, cero brillo, cero morado IA** | Cualquiera = falla automática |
 | R17 | Sin scroll horizontal y nada cortado en los anchos exigidos | Desbordes, textos truncados sin tooltip |
 | R18 | Nada muerto: sin botones sin efecto, sin código viejo paralelo | Botones decorativos, componentes duplicados |

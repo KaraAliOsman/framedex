@@ -59,7 +59,7 @@ export function positionReadiness(position: PositionResponse): {
   return {
     label: "Lista",
     cause:
-      "Fuente: cálculo guardado del motor. Al preparar la emisión se comprueba que cada ventana se pueda fabricar.",
+      "Origen: cálculo guardado del motor. Al preparar la emisión se comprueba que cada ventana se pueda fabricar.",
     tone: "success",
   };
 }
@@ -439,7 +439,7 @@ export function PositionCollection({
           {group !== "none" && (
             <div>
               <dt>{group === "floor" ? "Piso" : group === "room" ? "Recinto" : "Eje"}</dt>
-              <dd>{position.placement?.[group] || "Sin dato"}</dd>
+              <dd>{position.placement?.[group] || "Falta completar"}</dd>
             </div>
           )}
         </dl>

@@ -2495,3 +2495,22 @@ de Hoy, las etapas de Obras y la purga global siguen en P05. Se conserva el
   capturas seleccionadas; carga local caliente 271–304 ms. Sin movimiento nuevo.
 - P03h #181 está fusionada. P04a integró main y repite sus cuatro controles.
   La purga global de lenguaje y P06–P11 siguen pendientes; no se declara P05 hecha.
+
+## [2026-10-22] DEKOPEN 2 P05g | Textos globales y pendientes explícitos
+
+- El detector AST se amplía a todos los textos del producto y valores del
+  diccionario, con pruebas de las fronteras de contratos y accesibilidad.
+  Las cinco voces controladas quedan en cero; no se reescribe historia emitida.
+- Once superficies se ejercitan a 1440/390, con texto final y contenido cargado.
+  Se corrigen avisos térmicos y de Hoy en origen, y etiquetas solapadas en las
+  pestañas móviles. Se conservan 22 capturas en la aceptación P05g.
+- 1.254 unitarias frontend y 2.858 Python pasan, con dos xfail anteriores y
+  bytes dorados intactos. El editor bow descubre lecturas repetidas de costos
+  DEMO: un prefetch propio del cálculo conserva el resultado exacto y recoge
+  tarifas nuevas en la siguiente consulta. Pasan 46 unitarias dirigidas,
+  25 integraciones y las ocho interacciones existentes del editor. Véase
+  [lenguaje de interfaz](product/interface-language.md).
+- Se retroporta a P05a #189 la fixture asíncrona ya probada, con catálogo mínimo
+  en navegación y 300 perfiles conservados en estrés. Sus diez recorridos pasan;
+  el nuevo CI evalúa `ff2b87e2`. P04a #182 está fusionada; P04b espera Database
+  Gate. P05h contextual y P06–P11 siguen pendientes.

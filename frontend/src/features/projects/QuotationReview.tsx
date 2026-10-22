@@ -183,7 +183,7 @@ export function QuotationReview({
             </div>
           </dl>
           <p className="quotation-consequence">
-            Se sellará {formatRevision(preview.revision_code)} y se enviará a {preview.recipient}.
+            Se emitirá {formatRevision(preview.revision_code)} y se enviará a {preview.recipient}.
             {previousRevision
               ? ` La ${formatRevision(previousRevision)} quedará reemplazada y conservará su documento.`
               : " El enlace del PDF se activará al emitir."}
@@ -227,7 +227,7 @@ export function QuotationReview({
             Emitir y enviar al cliente
           </button>
           <p>
-            El envío se registra al sellar. Su entrega se puede seguir en el historial de correo.
+            El envío se registra al emitir. Su entrega se puede seguir en el historial de correo.
           </p>
         </>
       )}

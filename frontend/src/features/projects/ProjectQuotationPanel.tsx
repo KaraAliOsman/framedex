@@ -1236,7 +1236,7 @@ export function ProjectQuotationPanel({
       });
       void queryClient.invalidateQueries({ queryKey: ["mail", orgId] });
       setMessage(
-        `${formatRevision(response.data.revision_code)} sellada. El correo se registró para ${response.data.mail.recipient}; sigue su entrega en el historial.${response.data.production_allowed ? "" : " La fabricación requiere completar y confirmar su evidencia."}`,
+        `${formatRevision(response.data.revision_code)} emitida. El correo se registró para ${response.data.mail.recipient}; sigue su entrega en el historial.${response.data.production_allowed ? "" : " La fabricación requiere completar y confirmar su evidencia."}`,
       );
       await onChanged();
     } catch (error) {
@@ -1245,7 +1245,7 @@ export function ProjectQuotationPanel({
         error instanceof ApiError
           ? (apiDetail(error.payload) ??
               "No se pudo registrar la emisión. Revisa la conexión y recupera el mismo intento.")
-          : "La respuesta de emisión no llegó. Recupera el mismo intento para comprobar el sello y el correo.",
+          : "La respuesta de emisión no llegó. Recupera el mismo intento para comprobar la emisión y el correo.",
       );
       if (error instanceof ApiError && [400, 403, 404, 422].includes(error.status)) {
         sessionStorage.removeItem(pendingKey);
@@ -1267,7 +1267,7 @@ export function ProjectQuotationPanel({
     if (
       !(await confirm({
         title: `¿Regenerar el enlace de ${formatRevision(link.revision_code)}?`,
-        body: "El enlace seleccionado quedará revocado. Se creará uno nuevo para la misma revisión; el PDF sellado y las decisiones anteriores se conservan.",
+        body: "El enlace seleccionado quedará revocado. Se creará uno nuevo para la misma revisión; el PDF emitido y las decisiones anteriores se conservan.",
         confirmLabel: "Revocar y regenerar",
       }))
     )
@@ -1301,7 +1301,7 @@ export function ProjectQuotationPanel({
     if (
       !(await confirm({
         title: `¿Cambiar el acceso de ${formatRevision(link.revision_code)} hasta ${formatDateTime(date)}?`,
-        body: "El vencimiento del enlace cambiará. La vigencia comercial del PDF conserva su fecha sellada.",
+        body: "El vencimiento del enlace cambiará. La vigencia comercial del PDF conserva su fecha original.",
         confirmLabel: "Cambiar vencimiento",
       }))
     )
@@ -1318,7 +1318,7 @@ export function ProjectQuotationPanel({
       if (response.status !== 200) throw new ApiError(response.status, response.data);
       await approvals.refetch();
       setMessage(
-        "Vencimiento del enlace actualizado. El documento sellado conserva su vigencia comercial.",
+        "Vencimiento del enlace actualizado. El documento emitido conserva su vigencia comercial.",
       );
     } catch (error) {
       setMessage(
@@ -1745,7 +1745,7 @@ export function ProjectQuotationPanel({
                   <details>
                     <summary>Comparar revisiones anteriores como alternativas</summary>
                     <p>
-                      Se imprimen completas con su precio sellado y no se incluyen en el total.
+                      Se imprimen completas con su precio emitido y no se incluyen en el total.
                       Puedes elegir hasta tres.
                     </p>
                     {project.versions?.map((version) => (
@@ -1948,7 +1948,7 @@ export function ProjectQuotationPanel({
                                   )}
                                   {requirement.source && (
                                     <span className="handle-bounds">
-                                      Fuente: {requirement.source}
+                                      Origen: {requirement.source}
                                     </span>
                                   )}
                                 </div>

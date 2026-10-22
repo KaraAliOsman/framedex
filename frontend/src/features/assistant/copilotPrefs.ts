@@ -21,7 +21,7 @@ export const AUTONOMY_OPTIONS: { value: AutonomyPolicy; label: string; hint: str
   {
     value: "draft",
     label: "Omitir todo",
-    hint: "Aplica lo reversible del encargo, verifica y muestra el recibo.",
+    hint: "Aplica lo reversible de la tarea, verifica y muestra el resumen.",
   },
 ];
 

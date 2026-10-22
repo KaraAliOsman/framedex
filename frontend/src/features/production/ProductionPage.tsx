@@ -98,8 +98,8 @@ import "./production.css";
 import { Icon } from "../../ui/Icon";
 
 function stockUnitLabel(unit?: string): string {
-  if (!unit) return "Sin dato";
-  return tOptional(`purchasing.unitValue.${unit}.one`) ?? "Sin dato";
+  if (!unit) return "Falta completar";
+  return tOptional(`purchasing.unitValue.${unit}.one`) ?? "Falta completar";
 }
 
 type StepAction = "START" | "COMPLETE" | "BLOCK" | "UNBLOCK" | "NOTE" | "QC_FAIL";
@@ -380,7 +380,7 @@ function ProductionOfficePage(): JSX.Element {
     ? [
         ...new Set(
           orderPieces(detail)
-            .filter((piece) => !piece.code.startsWith("Sin dato"))
+            .filter((piece) => !piece.code.startsWith("Falta completar"))
             .map((piece) => piece.code),
         ),
       ].sort()
@@ -787,7 +787,7 @@ function ProductionOfficePage(): JSX.Element {
   async function rejectWithRemake(orderId: string): Promise<void> {
     const entered = await prompt({
       title: "Rechazar y crear remake",
-      body: "La OT queda bloqueada y se crea una nueva OT con las mismas piezas selladas. Revisa el motivo antes de confirmar.",
+      body: "La OT queda bloqueada y se crea una nueva OT con las mismas piezas de la orden. Revisa el motivo antes de confirmar.",
       input: { label: "Motivo del rechazo" },
       confirmLabel: "Confirmar rechazo y remake",
       danger: true,
@@ -1663,10 +1663,10 @@ function ProductionOfficePage(): JSX.Element {
                   ) : null}
                 </header>
                 <p className="production-detail-context ui-value">
-                  {resolvedOrder?.project_code ?? "Sin dato · obra no vinculada"} ·{" "}
+                  {resolvedOrder?.project_code ?? "Falta completar · obra no vinculada"} ·{" "}
                   {resolvedOrder?.scheduled_date
                     ? `Compromiso ${formatDate(resolvedOrder.scheduled_date)}`
-                    : "Sin dato · agenda de entrega pendiente"}{" "}
+                    : "Falta completar · agenda de entrega pendiente"}{" "}
                   · {detail.steps_done}/{detail.steps_total} pasos
                 </p>
                 <WorkOrderShortages detail={detail} office={canWrite} />
@@ -2329,12 +2329,12 @@ function ProductionOfficePage(): JSX.Element {
                                     <tbody>
                                       {reservations.map((row, index) => (
                                         <tr key={`${row.kind ?? ""}-${row.sku ?? ""}-${index}`}>
-                                          <td>{row.name ?? row.sku ?? "Sin dato"}</td>
+                                          <td>{row.name ?? row.sku ?? "Falta completar"}</td>
                                           <td>
                                             {stockUnitLabel(row.unit)}
                                             <details>
                                               <summary>Detalles técnicos</summary>
-                                              <code>{row.sku ?? "Sin dato"}</code>
+                                              <code>{row.sku ?? "Falta completar"}</code>
                                             </details>
                                           </td>
                                           <td>{fmtMm(row.on_hand)}</td>
@@ -2352,7 +2352,7 @@ function ProductionOfficePage(): JSX.Element {
                                           <td>
                                             {row.consumed_at
                                               ? formatDate(row.consumed_at)
-                                              : "Sin dato"}
+                                              : "Falta completar"}
                                           </td>
                                         </tr>
                                       ))}
@@ -2405,10 +2405,10 @@ function ProductionOfficePage(): JSX.Element {
                                       `${metrics.purchased_bars ?? 0} compra`,
                                       `${metrics.remnant_bars ?? 0} barras retazo`,
                                       metrics.process_waste_mm == null
-                                        ? "Sin dato · falta merma de proceso"
+                                        ? "Falta merma de proceso"
                                         : `${fmtMm(metrics.process_waste_mm)} mm merma de proceso`,
                                       metrics.reusable_remnant_mm == null
-                                        ? "Sin dato · falta retazo reutilizable"
+                                        ? "Falta retazo reutilizable"
                                         : `${fmtMm(metrics.reusable_remnant_mm)} mm retazo reutilizable`,
                                       `${metrics.cuts ?? 0} cortes`,
                                     ].join(" · ")}

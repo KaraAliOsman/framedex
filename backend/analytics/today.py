@@ -416,9 +416,9 @@ def commercial_actions(org_id, today, role):
                             "Revisa el recordatorio de cobro vencido"
                             if overdue
                             else "Gestiona el saldo por cobrar",
-                            "El calendario sellado tiene cuotas vencidas. Revisa el mensaje preparado por la IA antes de enviarlo."
+                            "El calendario acordado tiene cuotas vencidas. Revisa el mensaje preparado por la IA antes de enviarlo."
                             if overdue
-                            else "La venta sellada tiene pagos pendientes. Sin un vencimiento cumplido, no se presenta como vencida.",
+                            else "La venta acordada tiene pagos pendientes. Sin un vencimiento cumplido, no se presenta como vencida.",
                             "Abrir cobranza",
                             f"/projects/{row['id']}?section=payments",
                             amount=balance,
@@ -426,7 +426,7 @@ def commercial_actions(org_id, today, role):
                             balance_total=total,
                             balance_collected=collected,
                             due_on=projection.oldest_due_on if overdue else None,
-                            source="Total sellado de "
+                            source="Total emitido de "
                             + row["current_revision"]
                             + " menos pagos vigentes. No incluye recibos anulados.",
                         )
@@ -512,10 +512,10 @@ def position_actions(org_id):
             reason = (
                 "La geometría o la combinación elegida no es válida. Revisa Qué falta en la posición."
                 if evaluation.status.value == "INVALID"
-                else "Faltan definiciones o autoridad técnica para fabricar el conjunto. Revisa Qué falta en la posición."
+                else "Faltan definiciones o referencias técnicas para fabricar el conjunto. Revisa Qué falta en la ventana."
             )
         except (SystemNotFound, UnsupportedCatalogContract, ValueError):
-            reason = "El diseño guardado requiere revisar su serie y la autoridad técnica vigente."
+            reason = "El diseño guardado requiere revisar su serie y las referencias técnicas vigentes."
         result.append(
             action(
                 "position_engine_blocked",
@@ -645,7 +645,7 @@ def workshop_actions(org_id, role, today):
                     href,
                     due_on=due,
                     blocking=True,
-                    source="Plan sellado de la OT.",
+                    source="Plan de la orden de trabajo.",
                 )
             )
         elif row["status"] == "COMPLETED":
@@ -752,7 +752,7 @@ def field_actions(org_id, today, role):
                                     "Abrir garantía",
                                     "/field?" + urlencode({"visit": visit["id"]}),
                                     due_on=expiry,
-                                    source="Declaración sellada y hecho de inicio; fecha proyectada por el motor.",
+                                    source="Declaración de la orden y registro de inicio; fecha proyectada por el motor.",
                                 )
                             )
         for case in cases:

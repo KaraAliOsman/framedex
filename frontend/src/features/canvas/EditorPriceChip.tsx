@@ -26,7 +26,7 @@ export function EditorPriceChip({
   const priceLoading = pending || calculating;
   return (
     <Popover
-      label="Fuente del precio indicativo"
+      label="Origen del precio indicativo"
       trigger={
         <button type="button" className="editor-price" aria-label="Precio neto indicativo">
           {priceLoading ? (
@@ -42,7 +42,7 @@ export function EditorPriceChip({
               </span>
             </>
           ) : (
-            <span>Precio · Sin dato</span>
+            <span>Precio · Falta completar</span>
           )}
         </button>
       }
@@ -84,7 +84,7 @@ export function EditorPriceChip({
                   {item.net !== null ? (
                     <Money value={item.net} currency={price.currency} />
                   ) : (
-                    <>Sin dato · {item.reason}</>
+                    <>Falta completar · {item.reason}</>
                   )}
                 </dd>
               </div>
@@ -96,7 +96,7 @@ export function EditorPriceChip({
                 price.assembly_adjustment_net !== undefined ? (
                   <Money value={price.assembly_adjustment_net} currency={price.currency} />
                 ) : (
-                  "Sin dato · falta una tarifa por módulo"
+                  "Falta una tarifa por módulo"
                 )}
               </dd>
             </div>

@@ -109,7 +109,7 @@ export function AssemblyPlanPane({
       <div className="assembly-measures">
         {props.measures ? (
           <Popover
-            label="Fuente de las cotas de conjunto"
+            label="Origen de las cotas de conjunto"
             trigger={
               <button type="button" className="assembly-measures-source">
                 <span>
@@ -136,8 +136,8 @@ export function AssemblyPlanPane({
         ) : (
           <p>
             {props.issues.some((issue) => issue.severity === "error")
-              ? "Sin dato · corrige la unión señalada para obtener cotas válidas del motor."
-              : "Sin dato · el catálogo no declara el aporte desarrollado de todos los acoples. Revisa su autoridad."}
+              ? "Corrige la unión señalada para obtener cotas válidas del motor."
+              : "Falta completar · el catálogo no declara el aporte desarrollado de todos los acoples. Revisa su origen."}
           </p>
         )}
       </div>

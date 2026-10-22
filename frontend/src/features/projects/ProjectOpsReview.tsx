@@ -191,7 +191,7 @@ function description(row: Record<string, unknown> | null): string {
   const dimensions =
     design?.nominal_width_mm && design.nominal_height_mm
       ? `${fmtMm(design.nominal_width_mm)} × ${fmtMm(design.nominal_height_mm)} mm`
-      : "Medidas sin dato · abre el editor";
+      : "Medidas por completar · abre el editor";
   return `${row.location_tag || "Sin ubicación"} · ${dimensions} · cantidad ${row.quantity}${
     place
       ? Object.values(place)
@@ -254,11 +254,11 @@ export function ProjectOpsReview({
                           simulation.price.delta_net,
                           simulation.price.currency ?? currency,
                         )
-                      : `Sin dato · ${simulation?.price?.reason ?? "calcula el precio del proyecto"}`}
+                      : `Falta completar · ${simulation?.price?.reason ?? "calcula el precio del proyecto"}`}
                   </span>
                   <ThermalDelta simulation={simulation} />
                   <details>
-                    <summary>Dibujo y fuente del motor</summary>
+                    <summary>Dibujo y origen del motor</summary>
                     <SimulationPreview
                       simulation={proposal.preview.simulations[index]}
                       organizationId={orgId}

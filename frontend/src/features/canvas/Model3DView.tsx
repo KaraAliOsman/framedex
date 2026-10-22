@@ -339,7 +339,7 @@ export default function Model3DView({
               {item.code === "opening_authority_missing"
                 ? String(item.values.what)
                 : item.code === "kit_unknown"
-                  ? "Sin dato de herraje: revise el kit en Catálogo"
+                  ? "Herraje por completar: revise el kit en Catálogo"
                   : item.code === "handle_out_of_range"
                     ? "Manilla fuera de rango: revise la altura"
                     : item.code === "handle_datum_unsupported"

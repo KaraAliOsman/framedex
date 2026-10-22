@@ -182,7 +182,7 @@ export function issueText(
 ): string {
   if (issue.code === "coupler_angle_incompatible") {
     const ordinal = couplings.findIndex((c) => c.id === issue.target.slice("coupling:".length)) + 1;
-    return `Unión ${ordinal}: el acoplador ${issue.params.sku} admite de ${fmtMm(issue.params.min_angle_deg)}° a ${fmtMm(issue.params.max_angle_deg)}°. Con ${fmtMm(issue.params.angle_deg)}°, elige uno compatible o reduce el ángulo. Fuente: ${issue.params.source}.`;
+    return `Unión ${ordinal}: el acoplador ${issue.params.sku} admite de ${fmtMm(issue.params.min_angle_deg)}° a ${fmtMm(issue.params.max_angle_deg)}°. Con ${fmtMm(issue.params.angle_deg)}°, elige uno compatible o reduce el ángulo. Origen: ${issue.params.source}.`;
   }
   const key = ISSUE_KEYS[issue.code];
   // Unmapped engine codes still read as sentences — a chip that shows
@@ -190,7 +190,7 @@ export function issueText(
   let text = key
     ? t(key)
     : (issue.params.reason ?? "Revisa la compatibilidad y los datos del catálogo.");
-  if (issue.params.source) text += " Fuente: " + issue.params.source;
+  if (issue.params.source) text += " Origen: " + issue.params.source;
   for (const [name, value] of Object.entries(issue.params)) {
     if (name === "reason") continue;
     // Engine params arrive as str(Decimal) — "345.00" reads as technical
@@ -966,14 +966,12 @@ function LeafFacts({
         <dl className="editor-leaf-facts">
           <div>
             <dt>Composición</dt>
-            <dd>{glass?.spec ?? bay.glass_spec ?? "Sin dato · elige vidrio"}</dd>
+            <dd>{glass?.spec ?? bay.glass_spec ?? "Elige vidrio"}</dd>
           </div>
           <div>
             <dt>Espesor</dt>
             <dd>
-              {bay.glass_thickness_mm
-                ? `${fmtMm(bay.glass_thickness_mm)} mm`
-                : "Sin dato · elige vidrio"}
+              {bay.glass_thickness_mm ? `${fmtMm(bay.glass_thickness_mm)} mm` : "Elige vidrio"}
             </dd>
           </div>
           {!fixedPane && (
@@ -984,7 +982,7 @@ function LeafFacts({
                   ? `${fmtMm(quantize(leaf?.width_mm ?? resolved?.width_mm, 2))} mm`
                   : visualOpening(bay) === "FIXED"
                     ? "No requiere · paño fijo"
-                    : "Sin dato · calcula el marco"}
+                    : "Calcula el marco"}
               </dd>
             </div>
           )}
@@ -996,7 +994,7 @@ function LeafFacts({
                   ? `${fmtMm(quantize(leaf?.height_mm ?? resolved?.height_mm, 2))} mm`
                   : visualOpening(bay) === "FIXED"
                     ? "No requiere · paño fijo"
-                    : "Sin dato · calcula el marco"}
+                    : "Calcula el marco"}
               </dd>
             </div>
           )}
@@ -1005,9 +1003,7 @@ function LeafFacts({
               <dt>Kit derivado</dt>
               <dd>
                 {kit?.name ??
-                  (visualOpening(bay) === "FIXED"
-                    ? "No requiere · paño fijo"
-                    : "Sin dato · revisa herrajes")}
+                  (visualOpening(bay) === "FIXED" ? "No requiere · paño fijo" : "Revisa herrajes")}
               </dd>
             </div>
           )}
@@ -1023,12 +1019,12 @@ function LeafFacts({
                       : "Cierre superior/inferior"
                   : visualOpening(bay) === "FIXED"
                     ? "No requiere · paño fijo"
-                    : "Sin dato · revisa apertura"}
+                    : "Revisa apertura"}
               </dd>
             </div>
           )}
           <div>
-            <dt>Fuente</dt>
+            <dt>Origen</dt>
             <dd>
               <details className="editor-leaf-facts__source">
                 <SourceSummary />
@@ -1265,7 +1261,7 @@ function BayInspector({
           <p className="assembly-hint">
             Desde el borde inferior de la hoja ·{" "}
             {fmtMm(physicalHandle.minimum_height_from_bottom_mm)}–
-            {fmtMm(physicalHandle.maximum_height_from_bottom_mm)} mm. Fuente:{" "}
+            {fmtMm(physicalHandle.maximum_height_from_bottom_mm)} mm. Origen:{" "}
             {physicalHandle.source}
           </p>
         )}
@@ -1296,7 +1292,7 @@ function BayInspector({
         </details>
       )}
       <details className="inspector-section editor-advanced">
-        <summary>Avanzado · perfiles y procedencia</summary>
+        <summary>Avanzado · perfiles y origen</summary>
         <CatalogLimitNotice options={options} opening={opening} />
         <ProvenanceStrip
           items={[
@@ -1525,9 +1521,7 @@ function TechnicalPanel({
       (article) =>
         [
           article.sku,
-          asGlassProduct(article.product)?.name ??
-            article.spec ??
-            "Sin dato: falta el nombre del vidrio",
+          asGlassProduct(article.product)?.name ?? article.spec ?? "Falta el nombre del vidrio",
         ] as const,
     ),
     ...(options?.panel_choices ?? []).map((article) => [article.sku, article.name] as const),
@@ -1543,7 +1537,7 @@ function TechnicalPanel({
   return (
     <div className="tech-panel">
       <p className="inspector-note">
-        Fuente: cálculo del motor con la versión elegida del catálogo.
+        Origen: cálculo del motor con la versión elegida del catálogo.
       </p>
       {members && widthMm !== undefined && widthMm > 0 && (
         <details className="inspector-section" open>
@@ -1588,7 +1582,7 @@ function TechnicalPanel({
                     {cuts.map((cut, index) => (
                       <tr key={`${cut.sku}-${index}`}>
                         <td title={cut.sku}>
-                          {names.get(cut.sku) ?? "Sin dato: falta el nombre del perfil"}
+                          {names.get(cut.sku) ?? "Falta el nombre del perfil"}
                         </td>
                         <td>{fmtMm(cut.length_mm)}</td>
                         <td>{cut.qty}</td>
@@ -1612,8 +1606,7 @@ function TechnicalPanel({
                     {glasses.map((glass, index) => (
                       <tr key={`${glass.bay_id}-${index}`}>
                         <td title={glass.article_sku ?? undefined}>
-                          {names.get(glass.article_sku ?? "") ??
-                            "Sin dato: falta el nombre del vidrio"}
+                          {names.get(glass.article_sku ?? "") ?? "Falta el nombre del vidrio"}
                         </td>
                         <td>
                           {fmtMm(glass.width_mm)} × {fmtMm(glass.height_mm)} mm
@@ -1638,7 +1631,7 @@ function TechnicalPanel({
                     {panels.map((panel, index) => (
                       <tr key={`${panel.bay_id}-${index}`}>
                         <td title={panel.sku}>
-                          {names.get(panel.sku) ?? "Sin dato: falta el nombre del panel"}
+                          {names.get(panel.sku) ?? "Falta el nombre del panel"}
                         </td>
                         <td>
                           {fmtMm(panel.width_mm)} × {fmtMm(panel.height_mm)} mm
@@ -2020,7 +2013,7 @@ function CouplingInspector({
       <p className="assembly-hint">
         {chosen?.coupling_rule
           ? `Admite ${fmtMm(chosen.coupling_rule.min_angle_deg)}° a ${fmtMm(chosen.coupling_rule.max_angle_deg)}°; aporte neto ${fmtMm(chosen.coupling_rule.development_mm)} mm.`
-          : "Sin dato · elige un acoplador del catálogo que declare su ángulo."}
+          : "Elige un acoplador del catálogo que declare su ángulo."}
       </p>
       {compatible.length === 0 && (
         <p role="alert">
@@ -2028,8 +2021,10 @@ function CouplingInspector({
         </p>
       )}
       <details>
-        <summary>Fuente del acoplador</summary>
-        <p>{chosen?.coupling_rule?.source ?? "Sin dato · el proveedor no declara este dato."}</p>
+        <summary>Origen del acoplador</summary>
+        <p>
+          {chosen?.coupling_rule?.source ?? "Falta completar · el proveedor no declara este dato."}
+        </p>
       </details>
       <Link data-coupler-catalog to={`/catalogs/systems?system=${systemId}&resource=articles`}>
         Revisar el acoplador en Catálogos
@@ -3342,7 +3337,7 @@ export function AssemblyEditor({
               <p className="editor-proposal-price">
                 Δ neto de línea ·{" "}
                 {(proposal.simulation.price as EditorPrice).delta_net == null
-                  ? "Sin dato"
+                  ? "Falta completar"
                   : formatMoney(
                       (proposal.simulation.price as EditorPrice).delta_net,
                       (proposal.simulation.price as EditorPrice).currency,
@@ -3840,7 +3835,7 @@ function CatalogLimitNotice({
   const rule = options.dimensional_limits.find((item) => item.opening_type === opening);
   return (
     <details className="inspector-section">
-      <summary>Límites del sistema y fuente</summary>
+      <summary>Límites del sistema y origen</summary>
       {rule ? (
         <>
           <p>
@@ -3849,13 +3844,15 @@ function CatalogLimitNotice({
           </p>
           <p>
             Peso máximo:{" "}
-            {rule.max_leaf_weight_kg == null ? "Sin dato" : fmtMm(rule.max_leaf_weight_kg) + " kg"}.
-            Relación alto/ancho: {fmtMm(rule.min_aspect_ratio)}–{fmtMm(rule.max_aspect_ratio)}.
+            {rule.max_leaf_weight_kg == null
+              ? "Falta completar"
+              : fmtMm(rule.max_leaf_weight_kg) + " kg"}
+            . Relación alto/ancho: {fmtMm(rule.min_aspect_ratio)}–{fmtMm(rule.max_aspect_ratio)}.
           </p>
-          <p>Fuente: {rule.source}</p>
+          <p>Origen: {rule.source}</p>
         </>
       ) : (
-        <p>Sin dato: declara los límites de esta apertura en Catálogo antes de calcular.</p>
+        <p>Declara los límites de esta apertura en Catálogo antes de calcular.</p>
       )}
     </details>
   );

@@ -70,7 +70,7 @@ export function CollectionReminder({
       ) : (
         <>
           <p>
-            Preparado por la IA · montos y fechas del acuerdo sellado. Revísalo antes de enviarlo.
+            Preparado por la IA · montos y fechas del acuerdo emitido. Revísalo antes de enviarlo.
           </p>
           <p>Para: {query.data.recipient}</p>
           <p>{query.data.reference}</p>

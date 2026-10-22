@@ -86,8 +86,8 @@ export function editLockCause(
     };
   if (project.versions?.some((version) => version.revision_code === project.current_revision))
     return {
-      title: "Revisión sellada: solo lectura",
-      body: "La revisión actual quedó sellada al preparar su emisión. Revisa su estado en Cotización o crea una sucesora.",
+      title: "Revisión preparada: solo lectura",
+      body: "La revisión actual quedó bloqueada al preparar su emisión. Revisa su estado en Cotización o crea una sucesora.",
       action: { label: "Ir a Cotización", section: "quote" },
     };
   if (project.current_pricing_operation_id)
@@ -958,7 +958,7 @@ function PositionWorkspace({
       : `${finish.interior.name} / ${finish.exterior.name}`
     : declaredColors.includes(inputs.color)
       ? tDynamic("projects.color", inputs.color)
-      : "Sin dato";
+      : "Falta completar";
   const positionPanel = (
     <section className="assembly-inspector position-panel" aria-label={t("projects.positionData")}>
       <header className="assembly-inspector__header">

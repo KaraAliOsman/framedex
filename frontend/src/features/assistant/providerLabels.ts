@@ -1,7 +1,7 @@
 export const AI_CAPABILITIES: Record<string, string> = {
   design_assist: "Diseñar ventanas",
   design_alternatives: "Comparar diseños",
-  agent: "Resolver encargos",
+  agent: "Resolver tareas",
   context_assist: "Consultar el proyecto",
   catalog_import: "Leer catálogos",
   catalog_compile: "Leer catálogos",

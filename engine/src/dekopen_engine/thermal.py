@@ -74,7 +74,7 @@ class ThermalAuthority(ThermalModel):
     def complete(self) -> ThermalAuthority:
         for field in ("source_document", "source_url", "source_page", "laboratory", "standard", "applicability"):
             if not getattr(self, field).strip():
-                raise ValueError("El informe necesita fuente, laboratorio, norma y alcance explícitos.")
+                raise ValueError("El informe necesita referencia, laboratorio, norma y alcance explícitos.")
         if not set(self.opening_types) <= {opening.value for opening in BayOpeningType}:
             raise ValueError("Una apertura del alcance no pertenece al contrato físico del motor.")
         if self.min_width_mm > self.max_width_mm or self.min_height_mm > self.max_height_mm:
@@ -307,7 +307,7 @@ class ThermalProjectInput(ThermalModel):
         if len({p.position_id for p in self.positions}) != len(self.positions):
             raise ValueError("No repitas la orientación de una posición.")
         if self.zone and not self.zone_source.strip():
-            raise ValueError("Indica la fuente de la zona elegida; no se infiere por comuna.")
+            raise ValueError("Indica la referencia oficial de la zona elegida; no se infiere por comuna.")
         if self.walls_m2 and not self.wall_source.strip():
             raise ValueError("Indica de qué plano o medición provienen los muros.")
         return self
@@ -327,7 +327,7 @@ def _assess_project(inputs: ThermalProjectInput, positions: list[dict[str, Any]]
     contexts = {p.position_id: p for p in inputs.positions}
     general = []
     if zone is None:
-        general.append("Elige la zona térmica A–I y registra su fuente oficial.")
+        general.append("Elige la zona térmica A–I y registra su referencia oficial.")
     if inputs.use is None:
         general.append("Declara el uso de la unidad térmica.")
     if not inputs.regulatory_scope_confirmed:
@@ -349,10 +349,10 @@ def _assess_project(inputs: ThermalProjectInput, positions: list[dict[str, Any]]
         context = contexts.get(position["position_id"])
         metric = position["thermal"]
         if metric["uw"] is None:
-            item["causes"].append("Uw Sin dato: completa sus informes y la geometría antes de evaluar cumplimiento.")
+            item["causes"].append("Falta calcular Uw: completa sus informes y la geometría antes de evaluar cumplimiento.")
         if zone and AIR_MINIMUM[zone] is not None:
             if metric["air_class"] is None:
-                item["causes"].append("Clase de aire Sin dato: falta el ensayo vigente a 100 Pa (NCh3296/3297).")
+                item["causes"].append("Falta la clase de aire: agrega el ensayo vigente a 100 Pa (NCh3296/3297).")
             elif metric["air_class"] < AIR_MINIMUM[zone]:
                 item["verdict"] = "FAIL"
                 item["causes"].append("La clase de permeabilidad al aire no alcanza el mínimo de la zona a 100 Pa.")
@@ -394,7 +394,7 @@ def _assess_project(inputs: ThermalProjectInput, positions: list[dict[str, Any]]
             elif allowed is None:
                 member["causes"].append("Uw está fuera de la tabla oficial; no se extrapola el porcentaje permitido.")
             if wall is None:
-                member["causes"].append("Superficie de muro Sin dato: ingrésala desde el plano, incluyendo vanos y medianeros.")
+                member["causes"].append("Falta la superficie de muro: ingrésala desde el plano, incluyendo aberturas de obra y medianeros.")
             elif area is None:
                 member["causes"].append("Falta el área exacta de otra ventana del grupo.")
             elif area > wall:
