@@ -387,3 +387,19 @@ falta o cambió el contenido, se revierte la transacción con un diff nuevo.
 Aceptar el cambio no reescribe el caso original ni conserva la verificación
 de fabricación. Las pruebas son `test_catalog_reference_windows.py` y
 `252_catalog_reference_windows.test.sql`; la interfaz se integra después.
+
+## Doble lectura del manual · preparación P03c
+
+Verificado el 21-10-2026 en `gpt/dk2-p03c-doble-lectura`: dos invocaciones
+independientes conservan auditorías y citas por celda. El acuerdo requiere dos
+lecturas HIGH con respaldo literal y una identidad completa y única; códigos
+como `001` y `1` permanecen distintos. Las discrepancias quedan vacías hasta
+la elección humana. Publicar una lectura citada puede confirmar MANUAL;
+una corrección arbitraria mantiene WORKSHOP. Extraer nunca publica datos.
+
+`test_catalog_double_read_publication.py` comprueba ese límite en Postgres y
+la evidencia de campos anidados de corte. `test_catalog_double_read.py` cubre
+orden, duplicados, ausencia, soporte, claves idempotentes y números inexactos.
+Las propuestas de calibración pasan además por el serializer real del catálogo:
+una solución matemática que no pueda almacenarse no se ofrece al usuario.
+La integración visual y el mapeo de precios siguen pendientes de P03.
