@@ -48,18 +48,25 @@ class SimplePolicyExampleRequestSerializer(StrictSerializer):
     position_id = serializers.UUIDField(required=False)
 
 
+class PlainAmountField(serializers.CharField):
+    """Exact engine decimals in the UI's plain-decimal contract, including 0E-80."""
+
+    def to_representation(self, value):
+        return format(Decimal(str(value)), 'f')
+
+
 class SimplePriceBreakdownSerializer(serializers.Serializer):
-    materials = serializers.CharField()
-    waste = serializers.CharField()
-    labor = serializers.CharField()
-    installation = serializers.CharField()
-    direct_cost = serializers.CharField()
-    exact_unit_price = serializers.CharField()
-    unit_net = serializers.CharField()
-    rounding = serializers.CharField()
-    profit = serializers.CharField()
-    extras_cost = serializers.CharField()
-    extras_net = serializers.CharField()
+    materials = PlainAmountField()
+    waste = PlainAmountField()
+    labor = PlainAmountField()
+    installation = PlainAmountField()
+    direct_cost = PlainAmountField()
+    exact_unit_price = PlainAmountField()
+    unit_net = PlainAmountField()
+    rounding = PlainAmountField()
+    profit = PlainAmountField()
+    extras_cost = PlainAmountField()
+    extras_net = PlainAmountField()
 
 
 class SimplePolicyExampleResponseSerializer(serializers.Serializer):
@@ -67,9 +74,9 @@ class SimplePolicyExampleResponseSerializer(serializers.Serializer):
     position_index = serializers.IntegerField(allow_null=True)
     currency = serializers.ChoiceField(choices=['CLP', 'USD'])
     breakdown = SimplePriceBreakdownSerializer(allow_null=True)
-    project_net = serializers.CharField(allow_null=True)
-    project_tax = serializers.CharField(allow_null=True)
-    project_gross = serializers.CharField(allow_null=True)
+    project_net = PlainAmountField(allow_null=True)
+    project_tax = PlainAmountField(allow_null=True)
+    project_gross = PlainAmountField(allow_null=True)
     assumptions = serializers.JSONField()
     detail = serializers.CharField()
 
@@ -82,9 +89,9 @@ class WorkingPriceErrorSerializer(serializers.Serializer):
 class WorkingPriceLineSerializer(serializers.Serializer):
     position_index = serializers.IntegerField()
     quantity = serializers.IntegerField()
-    unit_price = serializers.CharField()
-    discount_pct = serializers.CharField()
-    line_net = serializers.CharField()
+    unit_price = PlainAmountField()
+    discount_pct = PlainAmountField()
+    line_net = PlainAmountField()
     breakdown = SimplePriceBreakdownSerializer(required=False, allow_null=True)
     catalog_use = serializers.JSONField(required=False, allow_null=True)
 
@@ -95,7 +102,7 @@ class WorkingPriceSerializer(serializers.Serializer):
     policy_revision = serializers.IntegerField()
     computed_at = serializers.DateTimeField()
     error = WorkingPriceErrorSerializer(allow_null=True)
-    project_net = serializers.CharField(allow_null=True)
-    project_tax = serializers.CharField(allow_null=True)
-    project_gross = serializers.CharField(allow_null=True)
+    project_net = PlainAmountField(allow_null=True)
+    project_tax = PlainAmountField(allow_null=True)
+    project_gross = PlainAmountField(allow_null=True)
     lines = WorkingPriceLineSerializer(many=True)

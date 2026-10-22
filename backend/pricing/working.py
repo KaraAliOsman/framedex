@@ -141,6 +141,8 @@ def refresh_working(org_id, actor, project_id):
 
 def working_public(record, role):
     """Sale allowlist for estimators; private BOM/cost authority stays in the cache."""
+    from pricing.simple_serializers import SimplePriceBreakdownSerializer
+
     result = decoded(record['result'])
     public = {key: record[key] for key in ('state', 'currency', 'policy_revision', 'computed_at')}
     public['error'] = result.get('error')
@@ -150,6 +152,10 @@ def working_public(record, role):
         | {'line_net': str(dict(result.get('lines', []))[item['position_index']])}
         | ({'breakdown': item.get('breakdown'), 'catalog_use': item.get('catalog_use')} if role == 'OWNER' else {})
         for item in result.get('line_detail', [])]
+    if role == 'OWNER':
+        for line in public['lines']:
+            if line.get('breakdown') is not None:
+                line['breakdown'] = SimplePriceBreakdownSerializer(line['breakdown']).data
     return public
 
 

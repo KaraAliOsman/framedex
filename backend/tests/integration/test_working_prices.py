@@ -37,6 +37,7 @@ def test_three_windows_get_a_working_total_and_policy_change_never_applies_it(co
         assert public['state'] == 'READY'
         assert D(public['project_net']) == D('1470') and D(public['project_gross']) == D('1749')
         assert len(public['lines']) == 3 and all(D(item['unit_price']) == D('490') for item in public['lines'])
+        assert all('e' not in amount.lower() for item in public['lines'] for amount in item['breakdown'].values())
         assert editable(org, project)['id'] == project
         assert first['policy_revision'] == 1
         save_policy(org, policy_values(margin='.50'), 1, 'Margen nuevo')

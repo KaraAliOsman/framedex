@@ -208,6 +208,8 @@ def test_example_http_is_one_read_snapshot_and_owner_only(committed_commercial_r
         result = pending.result(timeout=15)
     assert result.status_code == 200, result.content
     assert D(result.json()['breakdown']['materials']) == fixture_materials()
+    assert D(result.json()['breakdown']['waste']) == 0
+    assert all('e' not in amount.lower() for amount in result.json()['breakdown'].values())
     assert D(result.json()['project_net']) == D('490')
     assert owner_client(users['ESTIMATOR']).post('/api/v1/pricing/simple-policy/example/', payload, format='json').status_code == 403
     assert rows('SELECT id FROM public.pricing_operations WHERE org_id=%s', [org]) == []

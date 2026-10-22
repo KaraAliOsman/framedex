@@ -2,6 +2,9 @@
 
 ## DEKOPEN 2
 
+- [P04f · precios de empresa](dk2-p04f/aceptacion.md): pantalla simple,
+  ejemplo del motor, importes extremos y texto ampliado en diez capturas.
+
 - [P03h · alta reanudable](dk2-p03h/aceptacion.md): cinco pasos, conservación
   de borradores, corrección exacta y primera obra con la serie seleccionada.
 

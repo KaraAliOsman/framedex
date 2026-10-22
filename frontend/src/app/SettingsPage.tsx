@@ -46,7 +46,7 @@ import {
   QuotationNumberingCard,
   DocumentPreview,
 } from "../features/settings/AdminSections";
-import { PricingRulesSettings } from "../features/pricing/PricingPage";
+import { SimplePricingSettings } from "../features/pricing/SimplePricingSettings";
 import { ProductionSettings } from "../features/settings/ProductionSettings";
 import { AnalyticsPreferences } from "../features/analytics/AnalyticsPreferences";
 import type { OrgBrandingWriteRequest, DocumentPreferences } from "../api/generated/models";
@@ -807,6 +807,7 @@ const SETTINGS_SECTIONS = [
   ["account", "Cuenta"],
   ["company", "Empresa"],
   ["design", "Valores habituales"],
+  ["prices", "Cómo calculo mis precios"],
   ["users", "Usuarios y roles"],
   ["commercial", "Comercial"],
   ["documents", "Documentos"],
@@ -931,6 +932,7 @@ export function SettingsPage(): JSX.Element {
             </div>
           )}
           {section === "design" && <CompanyDesignDefaults orgId={org.id} canEdit={commercial} />}
+          {section === "prices" && <SimplePricingSettings orgId={org.id} owner={owner} />}
           {section === "users" && <UsersCard orgId={org.id} canEdit={owner} />}
           {section === "commercial" && (
             <div className="settings-with-preview">
@@ -944,11 +946,6 @@ export function SettingsPage(): JSX.Element {
                   />
                 ) : (
                   <DeniedState reason="El dueño o estimador configura condiciones comerciales." />
-                )}
-                {owner ? (
-                  <PricingRulesSettings orgId={org.id} />
-                ) : (
-                  <DeniedState reason="El dueño configura IVA, bandas de margen y aprobación de descuentos." />
                 )}
                 <ExtraPolicyEditor orgId={org.id} canWrite={owner} />
               </div>
