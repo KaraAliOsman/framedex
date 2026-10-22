@@ -7247,6 +7247,145 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/catalogs/series/{system_id}/prices/:
+    patch:
+      operationId: catalog_series_edit_prices
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: system_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - catalogs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSeriesPriceEditRequest'
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeriesSheet'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/catalogs/series/{system_id}/prices/{price_id}/history/:
+    get:
+      operationId: catalog_series_price_history
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: price_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: system_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - catalogs
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceHistory'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/catalogs/systems/:
     get:
       operationId: catalog_system_list
@@ -7258,6 +7397,18 @@ paths:
           format: uuid
         description: Active organization; validated against the JWT user's active
           memberships.
+      - in: query
+        name: is_demo
+        schema:
+          type: boolean
+        description: Optional example filter, applied before calculating exact use
+          levels.
+      - in: query
+        name: owned_only
+        schema:
+          type: boolean
+        description: Limit discovery to the active organization's own series; global
+          library is separate.
       - in: query
         name: summary
         schema:
@@ -30469,10 +30620,14 @@ components:
         set_by:
           type: string
           format: uuid
+        actor_name:
+          type: string
+          nullable: true
         set_at:
           type: string
           format: date-time
       required:
+      - actor_name
       - id
       - origin
       - previous_id
@@ -43464,6 +43619,20 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CellChangeRequest'
+    PatchedSeriesPriceEditRequest:
+      type: object
+      properties:
+        revision:
+          type: string
+          minLength: 1
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        changes:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeriesPriceChangeRequest'
     PatchedSystemWriteRequest:
       type: object
       properties:
@@ -45016,6 +45185,47 @@ components:
       - design
       - location_tag
       - quantity
+    PriceHistory:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PriceHistoryRow'
+      required:
+      - items
+    PriceHistoryRow:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        previous_value:
+          type: string
+          nullable: true
+        value:
+          type: string
+          nullable: true
+        set_by:
+          type: string
+          format: uuid
+          nullable: true
+        actor_name:
+          type: string
+          nullable: true
+        set_at:
+          type: string
+          format: date-time
+        reason:
+          type: string
+      required:
+      - actor_name
+      - id
+      - previous_value
+      - reason
+      - set_at
+      - set_by
+      - value
     PriceRequestRequest:
       type: object
       properties:
@@ -48929,6 +49139,9 @@ components:
           type: string
           format: uuid
           nullable: true
+        actor_name:
+          type: string
+          nullable: true
         set_at:
           type: string
           format: date-time
@@ -48938,6 +49151,7 @@ components:
           format: uuid
           nullable: true
       required:
+      - actor_name
       - field
       - origin
       - resource
@@ -49047,6 +49261,24 @@ components:
       - unit_cost
       - valid_from
       - valid_to
+    SeriesPriceChangeRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        previous_unit_cost:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,4})?$
+        unit_cost:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,4})?$
+      required:
+      - id
+      - previous_unit_cost
+      - unit_cost
     SeriesPricesTab:
       type: object
       properties:

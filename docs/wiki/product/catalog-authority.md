@@ -3,7 +3,7 @@ type: concept
 status: active
 updated: 2026-10-21
 volatility: medium
-verified_ref: gpt/dk2-p01e-niveles-y-bloqueos
+verified_ref: gpt/dk2-p02a-tabla-editable
 sources:
   - engine/src/dekopen_engine/catalog_rules.py
   - engine/tests/test_gold_cases_catalog_families.py
@@ -24,6 +24,21 @@ sources:
 
 # Autoridad de catálogo por familia
 
+## DEKOPEN 2 · Tabla editable de P02a · 21-10-2026
+
+P01 terminó en el merge `9f711d53` (#168), con los cuatro controles de CI
+aprobados. P02a añade `frontend/src/ui/EditableTable.tsx`: conserva lexemas
+decimales, aplica validación por columna/celda y envía lotes a su consumidor.
+Deshacer una edición guardada solicita otra escritura; no elimina historia.
+Los conflictos conservan el borrador y evitan revertir cambios ajenos.
+
+La ruta `/dev/tabla` permite revisar vacío, una fila, nombres de 80 caracteres
+y 300 perfiles. Trece pruebas unitarias y cuatro E2E verifican pegado, teclado,
+precisión y accesibilidad a dos tamaños. Las capturas y límites de rendimiento
+están en [la aceptación](../../redesign/captures/dk2-p02a/aceptacion.md).
+El build excluye la ruta de desarrollo. Esta entrega prepara la ficha: todavía
+no conecta el catálogo ni implementa la verificación humana de P03.
+
 ## DEKOPEN 2 · Traza de sugeridos · 21-10-2026
 
 Verificado en `gpt/dk2-p01b-traza-sugeridos`: el motor acepta
@@ -39,6 +54,35 @@ Los serializadores omiten los campos aditivos ausentes en contratos históricos;
 `python -m engine.scripts.regenerate_golden --check` verifica los mismos bytes.
 El historial de autoridades descrito abajo sigue siendo aplicable a los
 contratos existentes.
+
+### Preparación P02b: descubrir y editar sin perder precisión
+
+Verificación local posterior a P02a: `is_demo` y `owned_only` filtran antes de
+resolver los niveles exactos. El inicio de Catálogo pide únicamente series
+propias no sintéticas; ejemplos y biblioteca tienen consultas separadas. La
+API sin filtros conserva su contrato anterior y las políticas RLS.
+
+La resolución de orígenes y evidencia usa índices por tabla, fila y campo,
+comparando siempre el valor vigente. Los metadatos se agrupan por petición;
+no hay caché entre empresas. Dieciocho unitarias verifican paridad y el caso
+de 300 perfiles. El perfilado local de 51 versiones pasó de 8,647 s/2.336
+consultas a 2,421 s/383 al filtrar ejemplos e indexar. El navegador que pide
+solo las series propias carga en torno a 1,5 s; son mediciones sintéticas.
+
+Los endpoints `series/{id}/prices/` y `prices/{price_id}/history/` permiten al
+dueño editar costos exactos y consultar su historia. El lote comprueba revisión,
+pertenencia y valor previo, con rollback y auditoría. Revertir añade otro evento.
+`price_audit_logs.event_order` desempata fechas transaccionales iguales sin
+modificar valores ni actores. En historia previa solo ofrece un orden estable;
+no reconstruye una cronología que no se registró. Las integraciones cubren
+aislamiento, roles, conflictos y cero explícito; nueve aserciones pgTAP cubren
+orden e inmutabilidad. Los nombres de actores se resuelven entre miembros
+activos del mismo tenant; la identidad histórica permanece aunque no haya nombre.
+
+La validación fallida de un lote añade recurso/fila y mantiene el diagnóstico
+por campo para situarlo en la celda. La transacción conserva tanto las reglas
+como su historia cuando otra fila falla. P02 sigue en curso: estos contratos
+no implementan la verificación de P03 ni cambian fórmulas del motor.
 
 ### Origen por celda y datos de plantilla
 

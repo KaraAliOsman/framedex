@@ -21,6 +21,8 @@ export interface SeriesCell {
   /** @nullable */
   set_by: string | null;
   /** @nullable */
+  actor_name: string | null;
+  /** @nullable */
   set_at: string | null;
   /** @nullable */
   version_id: string | null;

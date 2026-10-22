@@ -19,5 +19,7 @@ export interface CellHistoryRow {
   origin: CatalogOriginEnum;
   source_ref: string;
   set_by: string;
+  /** @nullable */
+  actor_name: string | null;
   set_at: string;
 }
