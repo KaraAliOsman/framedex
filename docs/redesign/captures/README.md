@@ -1,4 +1,11 @@
-# Evidencia de DEKOPEN v1
+# Evidencia de DEKOPEN
+
+## DEKOPEN 2
+
+- [P02a · tabla editable](dk2-p02a/aceptacion.md): diez capturas seleccionadas
+  de escritorio/móvil, extremos, accesibilidad y alcance del componente.
+
+## DEKOPEN v1
 
 La aceptación vigente está en [el informe final](../acceptance-2026-10-12.md).
 `aceptacion-final/` conserva íntegros sus 2,185 archivos:
