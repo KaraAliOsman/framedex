@@ -125,7 +125,7 @@ La ventana y el documento son los protagonistas y deben parecer trabajo profesio
 | g-500 | `#737373` | Texto atenuado grande, guías |
 | g-400 | `#A3A3A3` | Placeholder y deshabilitado |
 | g-300 | `#D4D4D4` | Borde fuerte, íconos de la píldora |
-| g-200 | `#E5E5E5` | Borde por defecto, puntos del lienzo |
+| g-200 | `#E5E5E5` | Borde por defecto |
 | g-100 | `#F5F5F5` | Relleno inset, hover |
 | g-50 | `#FAFAFA` | Fondo del visor 3D |
 | paper | `#FFFFFF` | Página, paneles, hoja de dibujo y documento |
@@ -147,7 +147,7 @@ La ventana y el documento son los protagonistas y deben parecer trabajo profesio
 
 **Roles funcionales:** `bg-app` paper · `surface-panel` paper · `surface-card` g-100 · `surface-hover` g-100 · `surface-active` g-200 · `surface-selected` cobalt-50 · `border-subtle` `#EDEDED` · `border-default` g-200 · `border-control` `#8A8A8A` (≥ 3:1) · `border-focus` cobalt-600 · `text-primary` g-950 · `text-secondary` `#525252` · `text-small-muted` `#5C5C5C` · `interactive` cobalt-700 · `interactive-fill` g-950 (hover `#262626`, presionado `#000`) · `mark` cobalt-600. La prueba de roles AA de `tokens.test.ts` es la autoridad.
 
-**Lienzo:** fondo de puntos g-200 cada 20 px sobre paper · perfil g-950 · cotas `#525252` en Geist Mono · vidrio `rgba(31,69,224,.05)` con trazo cobalt-600 · selección cobalt-700 + 8 % de relleno solo sobre el miembro elegido · manija y vista previa cobalt-600 · ajuste verde discontinuo · inválido = color de bloqueo + achurado.
+**Lienzo:** paper liso (sin degradados; una retícula futura se dibuja dentro del SVG del lienzo) · perfil g-950 · cotas `#525252` en Geist Mono · vidrio `rgba(31,69,224,.05)` con trazo cobalt-600 · selección cobalt-700 + 8 % de relleno solo sobre el miembro elegido · manija y vista previa cobalt-600 · ajuste verde discontinuo · inválido = color de bloqueo + achurado.
 
 ### 3.2 Tipografía: Inter y Geist Mono
 
@@ -201,7 +201,7 @@ Reglas:
 | Barra superior | 56 |
 | Densidad objetivo | El inspector muestra **≥ 7 campos sin scroll** a 768 px de alto |
 
-**Radios por función:** `r-0` 0 (lienzo, papel, celdas, geometría) · `r-1` 6 px (campos, botones, chips) · `r-2` 8 px (paneles puntuales, menús, popovers, tarjetas de colección) · `r-3` 12 px (diálogos y paneles flotantes) · `r-pill` solo para puntos de estado y el compañero IA. No se redondea todo por decoración; no hay botones píldora como estilo universal.
+**Radios por función:** `r-0` 0 (lienzo, papel, celdas, geometría) · `r-1` 8 px (campos, botones, chips) · `r-2` 12 px (paneles puntuales, menús, popovers, píldora de herramientas) · `r-3` 16 px (inspector-tarjeta, diálogos y paneles flotantes) · `r-pill` solo para puntos de estado y el compañero IA. No se redondea todo por decoración; no hay botones píldora como estilo universal.
 
 **La esquina en inglete** (catetos de 8 px, arriba a la derecha) es opcional en la hoja del lienzo y en la marca; no se usa en controles ni se repite.
 
@@ -312,7 +312,7 @@ siguen a un clic para operario e instalador.
 Cabecera compacta: nombre, cliente, estado comercial y **una** acción principal, con el selector textual **Mesa de obra · Estudio** (preferencia por usuario y organización; Mesa por defecto; `?view=mesa|estudio&position=<id>`). Cuatro destinos: **Ventanas · Cotización · Materiales y corte · Actividad**. En **Mesa**, la colección de ventanas es el contenido principal, con dibujo real, ambiente/nombre, medidas, cantidad, acabado y precio, en galería o tabla (formatos locales de la colección, no las vistas). Selección múltiple con alcance visible, cambios en lote y diff antes de aplicar. En **Estudio**, franja de posiciones plegable, dibujo predominante e inspector manual de la misma sesión de edición. Cambiar de vista no guarda, no recalcula y conserva selección, borrador y deshacer.
 
 ### 5.4 Editor (canvas-first)
-El dibujo ocupa dos tercios o más del área de trabajo sobre un **lienzo de puntos**. Desde 1024 px las herramientas frecuentes viven en **una píldora oscura flotante**, centrada abajo sobre el dibujo: solo íconos con nombre accesible y tooltip; la activa en cobalto. No hay columna de herramientas. El inspector contextual es **una tarjeta** a la derecha (320 px, radio 16, E2; drawer bajo 1280 px), dedicado a la selección, que **cambia según el objeto elegido**, con lo más usado primero y «Avanzado» plegado. Zoom abajo a la izquierda; avisos con corrección sobre la píldora. El asistente se acopla como panel lateral y no desplaza el inspector. Cotas encadenadas editables en el lugar. Atajos de teclado según el estudio de interacción (`V`, `H`, `F`, `Shift+1`, `Ctrl+K`, etc.).
+El dibujo ocupa dos tercios o más del área de trabajo sobre papel blanco liso. Desde 1024 px las herramientas frecuentes viven en **una píldora oscura flotante**, centrada abajo sobre el dibujo: solo íconos con nombre accesible y tooltip; la activa en cobalto. No hay columna de herramientas. El inspector contextual es **una tarjeta** a la derecha (320 px, radio 16, E2; drawer bajo 1280 px), dedicado a la selección, que **cambia según el objeto elegido**, con lo más usado primero y «Avanzado» plegado. Zoom abajo a la izquierda; avisos con corrección sobre la píldora. El asistente se acopla como panel lateral y no desplaza el inspector. Cotas encadenadas editables en el lugar. Atajos de teclado según el estudio de interacción (`V`, `H`, `F`, `Shift+1`, `Ctrl+K`, etc.).
 
 ### 5.5 Tablas
 Reglas finas, **sin cebra**, encabezado fijo con etiqueta en frase, números alineados a la derecha con cifras tabulares (Mono solo en medidas y códigos), orden y filtro, selección con barra de acciones en lote, virtualización sobre 200 filas, estados vacío/carga/error.

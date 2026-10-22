@@ -1,6 +1,6 @@
 /* Dirección Luz (Constitution §3, 22-10-2026): the drawing is the page. From
    tablet width up the tools float over it as one dark pill and the inspector
-   is a card beside it. Selectors repeat their class to outrank the density
+   is a card beside it, on plain paper. Selectors repeat their class to outrank the density
    layers (`[data-simple]`) whatever order the route loads its stylesheets. */
 @media (min-width: 1024px) {
   .assembly-editor.assembly-editor,
@@ -11,9 +11,7 @@
     container: assembly-editor / inline-size;
   }
   .assembly-editor.assembly-editor .assembly-canvas {
-    background:
-      radial-gradient(var(--g-200) 1px, transparent 1px) 0 0 / 20px 20px,
-      var(--paper);
+    background: var(--paper);
   }
   .assembly-editor.assembly-editor .assembly-tools.assembly-tools {
     grid-area: auto;
