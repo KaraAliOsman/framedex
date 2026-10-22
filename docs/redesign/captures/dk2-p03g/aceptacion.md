@@ -55,14 +55,16 @@ Los tres ensayos de navegador cubren 1440×900, 390×844 y 320×844, texto al
 contraste insuficiente en la fecha heredada del importador; se cambió al token
 de texto secundario. No se añadieron transiciones ni movimiento a las cifras.
 
-El montaje local DEV quedó entre 638 y 765 ms; cambiar los conjuntos tardó
-entre 32 y 197 ms, incluyendo elegir e incluir una lectura cuando correspondía.
-El enlace del manual con sesión ya iniciada abrió en 1.142 ms a 1440 px.
+El montaje local DEV quedó entre 704 y 750 ms; cambiar los conjuntos tardó
+entre 28 y 220 ms, incluyendo elegir e incluir una lectura cuando correspondía.
+El enlace con sesión iniciada abrió en 1.112 ms a 1440 px y 1.085 ms a 390 px.
 Son mediciones locales de Playwright; no se atribuyen a CWV de producción.
 
 Validación final: 1.209 pruebas frontend, 19 dirigidas de la revisión y su ruta,
 dos E2E de publicación real y tres ensayos de extremos aprobados. ESLint,
 TypeScript, Prettier, Ruff de las fixtures, guardas de fuente y build aprobados.
+Las medidas se presentan con coma decimal sin alterar la cadena elegida; las
+citas y los códigos conservan su texto literal.
 
 ## Límites
 

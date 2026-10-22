@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { CatalogTemplateSheet } from "../../api/generated/models";
 import { Button } from "../../ui";
+import { formatDecimal } from "../../format";
 import { SourceHighlight } from "./CatalogProvenance";
 import {
   doubleReadFields,
@@ -83,6 +84,9 @@ export function CatalogDoubleReadReview({
               const evidence = row.fields[field]!;
               const label = column?.label ?? "Campo por revisar";
               const value = row.values[field];
+              const numeric = ["decimal", "positive", "integer", "count", "angle"].includes(
+                column?.kind ?? "",
+              );
               const structured =
                 column?.kind === "json" ||
                 evidence.readings?.some(
@@ -101,7 +105,7 @@ export function CatalogDoubleReadReview({
                       return (
                         <div className="catalog-double-read__reading" key={index}>
                           <h6>Lectura {index + 1}</h6>
-                          <ReadingValue value={reading?.value} />
+                          <ReadingValue value={reading?.value} numeric={numeric} />
                           <p>{reading?.ref || "Sin página citada"}</p>
                           {reading?.quote ? (
                             <SourceHighlight quote={reading.quote} literal={reading.literal} />
@@ -173,7 +177,7 @@ export function CatalogDoubleReadReview({
                   )}
                   {value != null && (
                     <div className="catalog-double-read__chosen">
-                      Valor revisado: <ReadingValue value={value} />
+                      Valor revisado: <ReadingValue value={value} numeric={numeric} />
                     </div>
                   )}
                 </fieldset>
@@ -209,7 +213,13 @@ export function CatalogDoubleReadReview({
   );
 }
 
-function ReadingValue({ value }: { value: unknown }): JSX.Element {
+function ReadingValue({
+  value,
+  numeric = false,
+}: {
+  value: unknown;
+  numeric?: boolean;
+}): JSX.Element {
   if (Array.isArray(value))
     return (
       <ul>
@@ -233,5 +243,11 @@ function ReadingValue({ value }: { value: unknown }): JSX.Element {
         ))}
       </dl>
     );
-  return <span className="catalog-double-read__value">{readingText(value)}</span>;
+  const text = readingText(value);
+  const digits = text.split(".")[1]?.length ?? 0;
+  return (
+    <span className="catalog-double-read__value">
+      {numeric && /^-?\d+(\.\d+)?$/.test(text) && digits <= 12 ? formatDecimal(text, digits) : text}
+    </span>
+  );
 }

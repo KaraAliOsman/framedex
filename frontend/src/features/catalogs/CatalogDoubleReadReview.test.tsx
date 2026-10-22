@@ -86,6 +86,7 @@ describe("CatalogDoubleReadReview", () => {
     expect(include).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: "Usar lectura 2" }));
     expect(screen.getByRole("textbox")).toHaveValue("62.00");
+    expect(screen.getAllByText("62,00")).toHaveLength(2);
     expect(screen.getByRole("button", { name: "Lectura 2 elegida" })).toHaveAttribute(
       "aria-pressed",
       "true",

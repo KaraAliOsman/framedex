@@ -433,4 +433,5 @@ a P03; P01 deja preparado su contrato y su bloqueo.
   No se añadió movimiento. Se corrigió el contraste de la fecha de importación.
 - P03 no termina aquí: faltan el asistente reanudable, la primera obra con serie
   preseleccionada y la aceptación integral desde plantilla. P02e espera su gate
-  de base; P03f requiere corregir el formato del detector del build señalado por CI.
+  de base; el formato de P03f señalado por CI se corrigió en `488dc936` y vuelve
+  a ejecutar sus cuatro controles.
