@@ -178,3 +178,8 @@ a P03; P01 deja preparado su contrato y su bloqueo.
   26 pruebas de precio y 24 unitarias de catálogo/onboarding aprobadas;
   regresión E2E dirigida aprobada en 49,4 segundos con el límite original de
   respuesta del catálogo. CI final de #168 pendiente.
+- El último gate aprobó 618 integraciones, pgTAP y 17 de 18 E2E. La prueba
+  de reapertura comparaba el resumen nuevo con el diagnóstico histórico de
+  la respuesta de edición. Ahora compara todos los campos persistidos, los
+  niveles v2 completos y el alias de cotización; mantiene las comprobaciones
+  de perfiles, junquillos, teclado, permisos y persistencia. CI reejecutado.
