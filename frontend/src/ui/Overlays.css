@@ -26,6 +26,9 @@
 .ui-dialog--l {
   width: 48rem;
 }
+.ui-dialog--xl {
+  width: 70rem;
+}
 .ui-dialog__header,
 .ui-dialog__footer {
   display: flex;
@@ -39,7 +42,12 @@
 }
 .ui-dialog__footer {
   justify-content: flex-end;
+  flex-wrap: wrap;
   border-top: 1px solid var(--border-subtle);
+}
+.ui-dialog__footer .ui-button {
+  max-width: 100%;
+  white-space: normal;
 }
 .ui-dialog__title {
   margin: 0;

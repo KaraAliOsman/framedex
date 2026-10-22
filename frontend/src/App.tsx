@@ -74,6 +74,9 @@ export const DEV_ONLY_ROUTE_PATHS = import.meta.env.DEV
       "/dev/marca",
       "/dev/correos",
       "/dev/tabla",
+      "/dev/prueba-serie",
+      "/dev/precios-proveedor",
+      "/dev/lectura-manual",
     ] as const)
   : [];
 
@@ -172,6 +175,17 @@ const MailExamplesPage = import.meta.env.DEV
 const EditableTablePage = import.meta.env.DEV
   ? lazy(async () => ({ default: (await import("./dev/EditableTablePage")).EditableTablePage }))
   : null;
+const SeriesTrialPage = import.meta.env.DEV
+  ? lazy(async () => ({ default: (await import("./dev/SeriesTrialPage")).SeriesTrialPage }))
+  : null;
+const SupplierPricesPage = import.meta.env.DEV
+  ? lazy(async () => ({ default: (await import("./dev/SupplierPricesPage")).SupplierPricesPage }))
+  : null;
+const CatalogDoubleReadPage = import.meta.env.DEV
+  ? lazy(async () => ({
+      default: (await import("./dev/CatalogDoubleReadPage")).CatalogDoubleReadPage,
+    }))
+  : null;
 
 function HomeRedirect(): JSX.Element {
   const auth = useAuthSession();
@@ -249,6 +263,36 @@ export function AppRoutes(): JSX.Element {
         />
         {import.meta.env.DEV && visibleDevOnlyRoutePaths().length > 0 && (
           <>
+            {CatalogDoubleReadPage ? (
+              <Route
+                path="/dev/lectura-manual"
+                element={
+                  <Suspense fallback={<Loading label="Cargando las lecturas" />}>
+                    <CatalogDoubleReadPage />
+                  </Suspense>
+                }
+              />
+            ) : null}
+            {SupplierPricesPage ? (
+              <Route
+                path="/dev/precios-proveedor"
+                element={
+                  <Suspense fallback={<Loading label="Cargando precios" />}>
+                    <SupplierPricesPage />
+                  </Suspense>
+                }
+              />
+            ) : null}
+            {SeriesTrialPage ? (
+              <Route
+                path="/dev/prueba-serie"
+                element={
+                  <Suspense fallback={<Loading label="Cargando el despiece" />}>
+                    <SeriesTrialPage />
+                  </Suspense>
+                }
+              />
+            ) : null}
             {EditableTablePage ? (
               <Route
                 path="/dev/tabla"

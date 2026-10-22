@@ -13,6 +13,9 @@ type CatalogFixture = {
   pasteValues: (string | null)[];
   organizationId: string;
   projects?: { issued: string; draft: string };
+  manualImportId?: string;
+  manualArticleId?: string;
+  manualSku?: string;
 };
 
 function required(name: string): string {
@@ -31,11 +34,20 @@ export const test = base.extend<{
   catalog: CatalogFixture;
   catalogRole: MembershipRoleEnum;
   catalogProjects: boolean;
+  doubleReadManual: boolean;
+  lightCatalog: boolean;
+  unpricedCatalog: boolean;
 }>({
   catalogRole: ["OWNER", { option: true }],
   catalogProjects: [false, { option: true }],
+  doubleReadManual: [false, { option: true }],
+  lightCatalog: [false, { option: true }],
+  unpricedCatalog: [false, { option: true }],
   catalog: [
-    async ({ page, catalogRole, catalogProjects }, use) => {
+    async (
+      { page, catalogRole, catalogProjects, doubleReadManual, lightCatalog, unpricedCatalog },
+      use,
+    ) => {
       const supabaseUrl = local("SUPABASE_URL");
       const mailpit = local("MAILPIT_URL");
       const serviceKey = required("SUPABASE_SERVICE_ROLE_KEY");
@@ -82,7 +94,14 @@ export const test = base.extend<{
         // Magic Link + real TOTP credentials ever enter the browser.
         const output = execFileSync(
           environment("PYTHON") ?? "python",
-          ["scripts/seed_catalog_series_e2e.py", organizationId, userId],
+          [
+            "scripts/seed_catalog_series_e2e.py",
+            organizationId,
+            userId,
+            ...(doubleReadManual ? ["--double-read"] : []),
+            ...(lightCatalog ? ["--light"] : []),
+            ...(unpricedCatalog ? ["--unpriced"] : []),
+          ],
           {
             cwd: fileURLToPath(new URL("../../../../", import.meta.url)),
             encoding: "utf8",

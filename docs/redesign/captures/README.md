@@ -11,6 +11,18 @@
 - [P04f · precios de empresa](dk2-p04f/aceptacion.md): pantalla simple,
   ejemplo del motor, importes extremos y texto ampliado en diez capturas.
 
+- [P03h · alta reanudable](dk2-p03h/aceptacion.md): cinco pasos, conservación
+  de borradores, corrección exacta y primera obra con la serie seleccionada.
+
+- [P03g · doble lectura visible](dk2-p03g/aceptacion.md): diferencias, ambas
+  citas, elección humana, publicación real y extremos de 0/1/500 filas.
+
+- [P03f · precios del proveedor](dk2-p03f/aceptacion.md): mapeo, revisión del
+  archivo completo, confirmación explícita y extremos de precios exactos.
+
+- [P03e · ventana de prueba](dk2-p03e/aceptacion.md): comparación exacta,
+  ajustes, verificación humana, edición protegida y extremos de 0/1/500 piezas.
+
 - [P02a · tabla editable](dk2-p02a/aceptacion.md): diez capturas seleccionadas
   de escritorio/móvil, extremos, accesibilidad y alcance del componente.
 

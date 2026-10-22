@@ -146,12 +146,14 @@ for (const viewport of [
       const calculated = page.waitForResponse(
         (response) =>
           response.request().method() === "POST" &&
-          new URL(response.url()).pathname === "/api/v1/engine/calculate/",
+          new URL(response.url()).pathname === `/api/v1/catalogs/series/${catalog.systemId}/trial/`,
       );
       await trial.getByRole("button", { name: "Calcular ventana", exact: true }).click();
       expect((await calculated).status()).toBe(200);
-      await expect(trial.getByRole("heading", { name: "Despiece calculado" })).toBeVisible();
-      await expect(trial.getByText(/PRO-F:/).first()).toBeVisible();
+      await expect(
+        trial.getByRole("region", { name: "Despiece de la ventana de prueba" }),
+      ).toBeVisible();
+      await expect(trial.getByRole("rowheader").filter({ hasText: "PRO-F" }).first()).toBeVisible();
       await capture(page, info, "ventana-prueba");
       await trial.getByRole("button", { name: "Cerrar", exact: true }).click();
 
@@ -191,6 +193,17 @@ for (const viewport of [
         .getByRole("combobox", { name: "Plantilla", exact: true })
         .selectOption("pvc-casement-60-70");
       await adding.getByRole("button", { name: "Crear serie", exact: true }).click();
+      const setup = page.getByRole("dialog", { name: "Preparar mi serie", exact: true });
+      await expect(setup).toBeVisible();
+      await expect(
+        setup
+          .locator(".series-setup__identity")
+          .getByText("Mi nueva serie de ensayo", { exact: true }),
+      ).toBeVisible();
+      const backToSheet = setup.getByRole("button", { name: "Volver a la ficha", exact: true });
+      await expect(backToSheet).toBeEnabled();
+      await backToSheet.click();
+      await expect(setup).toHaveCount(0);
       await expect(
         page.getByRole("heading", { name: "Mi nueva serie de ensayo", exact: true }),
       ).toBeVisible();
