@@ -2,6 +2,9 @@
 
 ## DEKOPEN 2
 
+- [P06a · Mesa de la obra](dk2-p06a/aceptacion.md): sesión única propuesta,
+  inspector móvil, cotas cancelables y precio guardado con su desglose.
+
 - [P05k · Diagnósticos y servidor](dk2-p05k/aceptacion.md): glosario contextual,
   compatibilidad de intercambio y revisión textual de nueve avisos dorados.
 

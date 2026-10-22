@@ -23,6 +23,7 @@ import { ShellLeafContext } from "./shellLeaf";
 import { roleLabel } from "./shellUtils";
 import { areaFor, homeFor, navigationFor, paletteNavigationFor } from "./navigation";
 import { ShortcutHelp } from "./ShortcutHelp";
+import { obraVistaUnica } from "./productFeatures";
 
 /** The product shell (constitution §5.1): Hoy, Obras, Taller, Catálogo and Empresa,
  * a 56 px top bar with search, notices and the assistant, and the area's own
@@ -116,7 +117,12 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
   const parts = location.pathname.split("/").filter(Boolean);
   const projectId = parts[0] === "projects" && parts[1] !== undefined ? parts[1] : null;
   const isStudio = parts[0] === "projects" && parts[2] === "positions" && parts.length >= 4;
-  const compact = isStudio || collapsed;
+  const isWorkbench =
+    obraVistaUnica() &&
+    projectId !== null &&
+    (role === "OWNER" || role === "ESTIMATOR") &&
+    !new URLSearchParams(location.search).get("section");
+  const compact = isStudio || isWorkbench || collapsed;
   const areas = navigationFor(role);
   const everyday = areas.filter((area) => area.id !== "company");
   const company = areas.find((area) => area.id === "company");

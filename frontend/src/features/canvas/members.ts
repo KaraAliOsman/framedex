@@ -134,6 +134,7 @@ export function resolveMembers(
   const rebate = Number(options?.rebate_depth_mm);
   const sashOverlap = Number(options?.sash_overlap_mm);
   const base: MemberGeometry = {
+    viewFace: face,
     profileFor(role) {
       return options?.profiles.some((profile) => profile.role === role)
         ? member(options, role, FALLBACK.sash)

@@ -2572,3 +2572,19 @@ de Hoy, las etapas de Obras y la purga global siguen en P05. Se conserva el
   de bytes aprobados. Encabezados y marcadores históricos conservados.
 - P05j actualiza dos expectativas antiguas en `4beeb8d1`, con 95 pruebas verdes.
   P04d aún espera Database Gate sobre `f79926de`; no se adelantan sus fusiones.
+
+## [2026-10-22] DEKOPEN 2 P06a | Mesa e inspector móvil
+
+- La propuesta bajo `VITE_OBRA_VISTA_UNICA` reúne lista, dibujo e inspector;
+  2D/3D y cara comparten el lienzo. La edición desde 390 px pasa por el servidor.
+  La colección conserva sus lotes en «Más → Organizar ventanas».
+- Guardar refresca la obra antes de seleccionar la ventana nueva. Las visitas
+  a secciones conservan la identidad del borrador; Escape cancela sin simular.
+  Precio guardado y desglose comparten la proyección comercial de P04.
+- Suite completa del frontend: 1.257 PASS (cuatro workers); 89 regresiones dirigidas.
+  No se debilita un guardián; dos expresiones se reescriben para evitar que su
+  detector léxico interprete operadores TypeScript como exclamaciones de texto.
+- [Aceptación](../redesign/captures/dk2-p06a/aceptacion.md) mantiene pendientes
+  los avisos con corrección, precio vivo simple, respuesta menor de 100 ms y
+  extremos de la lista. P06 sigue en curso. Las fusiones esperan cuatro controles
+  verdes sobre cada head actual; las correcciones heredadas se propagan sin force.

@@ -9,6 +9,9 @@ import { ConfirmProvider } from "./ui";
 // Compile the real lazy destination during test setup. The route assertion
 // verifies navigation/rendering, independently of concurrent Vite transforms.
 import "./features/projects/WorksPage";
+import "./features/landing/LandingPage";
+import "./app/AppShell";
+import "./app/DashboardPage";
 vi.mock("./api/generated/dekopen", () => ({
   projectsList: vi.fn().mockResolvedValue({ status: 200, data: { items: [] } }),
   projectsWorks: vi.fn().mockResolvedValue({

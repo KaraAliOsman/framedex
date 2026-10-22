@@ -98,8 +98,11 @@ for (const viewport of [
         client_email: "quotation-working@example.test",
         delivery_address: "Obra sintética; no despachar",
       });
+      // The table's batch and price traces remain in Más → Organizar ventanas.
+      // P06's default drawing flow is covered separately in workbench.spec.ts.
       const path = `/projects/${project.id}`;
-      await page.goto(path);
+      const tablePath = `${path}?section=collection`;
+      await page.goto(tablePath);
       await capture(page, info, "01-empty");
       for (const location of ["Living", "Dormitorio principal", "Cocina"]) {
         await api(`projects/${project.id}/positions/`, "POST", {
@@ -167,7 +170,7 @@ for (const viewport of [
       const repriced = await api(`projects/${project.id}/`);
       expect(repriced.working_price.project_gross).not.toBe(current.working_price.project_gross);
       expect(repriced.pricing_current).toBe(false);
-      await page.goto(path);
+      await page.goto(tablePath);
       await expect(total).toHaveText(
         formatMoney(repriced.working_price.project_gross, repriced.working_price.currency),
       );
@@ -253,7 +256,7 @@ for (const viewport of [
       const access = await api(`documents/artifacts/${issued.artifact_id}/access/`, "POST");
       const unchanged = await page.request.get(access.signed_url);
       expect(await unchanged.body()).toEqual(bytes);
-      await page.goto(path);
+      await page.goto(tablePath);
       await expect(total).toHaveText(formatMoney(frozen.total_price_gross, frozen.currency));
       await expect(source).toHaveText(
         formatMoney(repriced.positions[0].commercial.line_net, frozen.currency),
@@ -286,7 +289,7 @@ for (const viewport of [
         (route) => route.fulfill({ json: stress }),
       );
       const stressStarted = Date.now();
-      await page.goto(path);
+      await page.goto(tablePath);
       await expect(page.locator(".project-positions-count")).toHaveText("500", { timeout: 15_000 });
       expect(await page.locator(".position-row").count()).toBeLessThan(40);
       console.log(

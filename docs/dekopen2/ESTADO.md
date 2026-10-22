@@ -11,12 +11,28 @@ Producción y precios comerciales requieren autorización aparte.
 | P03  | Alta de serie y ventana de prueba                  | Hecha                                | #174–#181 fusionadas; [P03h #181](https://github.com/KaraAliOsman/framedex/pull/181) fusionada el 22-10-2026                                                                                                                                                                                                                               |
 | P04  | Precio simple automático                           | Implementada; CI y fusiones en curso | [#182](https://github.com/KaraAliOsman/framedex/pull/182)–[#187](https://github.com/KaraAliOsman/framedex/pull/187), [#188](https://github.com/KaraAliOsman/framedex/pull/188)                                                                                                                                                             |
 | P05  | Navegación, Hoy y Obras                            | En curso                             | [P05a #189](https://github.com/KaraAliOsman/framedex/pull/189), [P05b #190](https://github.com/KaraAliOsman/framedex/pull/190); P05c `gpt/dk2-p05c-hoy`                                                                                                                                                                                    |
-| P06  | Mesa de la obra y edición directa                  | Pendiente                            | —                                                                                                                                                                                                                                                                                                                                          |
+| P06  | Mesa de la obra y edición directa                  | En curso                             | —                                                                                                                                                                                                                                                                                                                                          |
 | P07  | Cotización y portal                                | Pendiente                            | —                                                                                                                                                                                                                                                                                                                                          |
 | P08  | Agente v2                                          | Pendiente                            | —                                                                                                                                                                                                                                                                                                                                          |
 | P09  | Taller e instalación                               | Pendiente                            | —                                                                                                                                                                                                                                                                                                                                          |
 | P10  | Onboarding, biblioteca Chile y aceptación Proline  | Pendiente                            | —                                                                                                                                                                                                                                                                                                                                          |
 | P11  | Pulido y cierre                                    | Pendiente                            | —                                                                                                                                                                                                                                                                                                                                          |
+
+## P06 · Mesa de la obra
+
+- P06a `gpt/dk2-p06a-obra-unica`, sobre P05k #199 (`1e1ead31`), reúne lista,
+  dibujo e inspector bajo `VITE_OBRA_VISTA_UNICA` (activa; `false` recupera las
+  vistas anteriores). Edición y guardado desde 390 px, 2D/3D en el lienzo,
+  precio guardado con desglose y Escape sin operación; la sesión y el historial
+  sobreviven a las secciones. La colección de lotes sigue en Más.
+- 1.257 unitarias frontend (cuatro workers) y 89 regresiones dirigidas pasan; lint, tipos,
+  guardianes y build aprobados. [Aceptación y límites](../redesign/captures/dk2-p06a/aceptacion.md).
+  P06 sigue en curso: P06b integra precio simple vivo, respuesta menor de
+  100 ms, chips de corrección y extremos de 120/500 ventanas.
+- La pila conserva sus dependencias y espera fusiones en orden hacia main
+  con cuatro controles sobre cada head actual. P04d #185 está fusionada;
+  P04e #186 repite Database Gate sobre `5e653f8e`. La corrección de las pruebas
+  de Obras se integró sin force en P05g `2c9fb423` y se propagó hasta P05k.
 
 ## P05 · Navegación, Hoy y Obras
 

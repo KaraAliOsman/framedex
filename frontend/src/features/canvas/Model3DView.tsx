@@ -66,6 +66,9 @@ export default function Model3DView({
   const [preset, setPreset] = useState<CameraPreset>(
     members.viewFace === "exterior" ? "exterior" : "interior",
   );
+  useEffect(() => {
+    setPreset(members.viewFace === "exterior" ? "exterior" : "interior");
+  }, [members.viewFace]);
   const [states, setStates] = useState<States>({});
   const [clip, setClip] = useState(false),
     [explode, setExplode] = useState(false),

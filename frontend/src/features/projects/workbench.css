@@ -1,0 +1,355 @@
+/* The work's existing editor/session owns the center and inspector. This
+ * composition only adds the persistent window list and compact work header. */
+.projects-page[data-workbench] > .project-chrome {
+  padding: var(--space-12px) var(--space-24px);
+}
+.projects-page[data-workbench] .project-head {
+  margin: 0;
+}
+.projects-page[data-workbench] .project-head__total strong,
+.work-price .editor-price > span {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.projects-page[data-workbench] .project-tabs-row,
+.projects-page[data-workbench] .commercial-track {
+  display: none;
+}
+.work-backlink {
+  align-items: center;
+  color: var(--text-secondary);
+  display: inline-flex;
+  flex-shrink: 0;
+  gap: var(--space-4px);
+  min-height: 44px;
+  text-decoration: none;
+}
+.projects-page[data-workbench] .project-studio {
+  grid-template-columns: 230px minmax(0, 1fr);
+}
+.work-window-list {
+  padding: var(--space-16px) var(--space-12px);
+  width: auto;
+}
+.work-window-list .studio-strip__head {
+  padding: 0 var(--space-8px);
+}
+.work-window-list .studio-strip__head strong {
+  color: var(--text-secondary);
+}
+.work-window-list .studio-strip__item {
+  gap: var(--space-12px);
+  padding: var(--space-8px);
+}
+.work-window-list .studio-strip__text strong {
+  font-size: var(--type-label);
+}
+.work-window-list .studio-strip__dims {
+  font-family: var(--font-mono);
+  font-size: var(--type-dense);
+  overflow-wrap: anywhere;
+}
+.position-editor[data-simple] .position-strip {
+  gap: var(--space-8px);
+}
+.position-editor[data-simple] .editor-save {
+  background: var(--surface-panel);
+  border-color: var(--border-control);
+  color: var(--text-primary);
+  display: inline-flex;
+}
+.position-editor[data-simple] .position-strip .editor-history {
+  display: inline-flex;
+  min-height: 44px;
+  min-width: 36px;
+}
+.position-editor[data-simple] .position-strip .editor-save-state {
+  display: block;
+}
+@media (min-width: 701px) and (max-width: 1023px) {
+  .assembly-editor[data-simple] {
+    grid-template-areas: "tools canvas" "tools status";
+    grid-template-columns: 48px minmax(0, 1fr);
+  }
+  .assembly-editor[data-simple] .assembly-tools {
+    display: flex;
+  }
+  .assembly-editor[data-simple] .editor-library {
+    display: block;
+  }
+}
+.position-editor[data-simple] .work-properties {
+  display: grid;
+  gap: var(--space-12px);
+}
+.work-property,
+.work-properties .editor-quantity {
+  align-items: center;
+  display: flex;
+  gap: var(--space-12px);
+  justify-content: space-between;
+}
+.work-property > span,
+.work-properties .editor-quantity > span {
+  color: var(--text-secondary);
+  font-size: var(--type-label);
+}
+.work-property .editor-chip {
+  border: 1px solid var(--border-control);
+  border-radius: var(--r-1);
+  max-width: 210px;
+  min-height: 36px;
+  white-space: normal;
+}
+.work-properties .editor-quantity input {
+  min-height: 36px;
+  text-align: right;
+  width: 80px;
+}
+.work-price {
+  gap: var(--space-12px);
+  flex-shrink: 0;
+  margin-top: auto;
+}
+.editor-inspector-content {
+  display: contents;
+}
+.assembly-editor[data-simple] .editor-inspector-content {
+  display: block;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.assembly-editor[data-simple] .assembly-side {
+  gap: 0;
+  overflow: hidden;
+}
+.studio-strip__quantity {
+  color: var(--text-secondary);
+  font-size: var(--type-dense);
+}
+.work-detail-options {
+  padding: var(--space-12px);
+}
+.work-price .editor-price {
+  align-items: stretch;
+  border: 0;
+  display: flex;
+  font-size: var(--type-subtitle);
+  justify-content: space-between;
+  min-height: 44px;
+  width: 100%;
+}
+.work-price > a {
+  align-content: center;
+  min-height: 44px;
+}
+.work-price__saved {
+  display: grid;
+  gap: var(--space-4px);
+}
+.work-price__saved > span {
+  color: var(--text-secondary);
+  font-size: var(--type-label);
+}
+.work-price__saved .position-price {
+  font-family: var(--font-mono);
+  font-size: var(--type-subtitle);
+  text-align: left;
+}
+.assembly-editor[data-simple] .assembly-inspector__header h4 {
+  font-size: var(--type-body);
+}
+.assembly-editor[data-simple] .detail-levels {
+  margin-top: 0;
+}
+.assembly-editor[data-simple] .assembly-canvas[data-presentation="3d"] .canvas-viewport {
+  display: none;
+}
+.work-model3d {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+.work-model3d .model3d-view {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+}
+.assembly-editor[data-simple] .assembly-view-choices {
+  flex-wrap: wrap;
+  position: relative;
+  right: auto;
+  top: auto;
+}
+.assembly-editor[data-simple] .assembly-view-choices button {
+  min-height: 36px;
+}
+.work-window-list .studio-strip__add {
+  border-style: dashed;
+  min-height: 44px;
+}
+.projects-page[data-workbench] .editor-project-link {
+  display: none;
+}
+@media (max-width: 1100px) {
+  .projects-page[data-workbench] .project-studio {
+    grid-template-columns: 210px minmax(0, 1fr);
+  }
+  .work-window-list .studio-strip__list,
+  .work-window-list .studio-strip__head strong,
+  .work-window-list .studio-strip__add span {
+    display: flex;
+  }
+  .work-window-list {
+    align-items: stretch;
+  }
+}
+@media (max-width: 700px) {
+  .workspace:has(.projects-page[data-workbench]) {
+    overflow-y: auto;
+  }
+  .projects-page[data-workbench] {
+    flex: 0 0 auto;
+    min-height: 100%;
+  }
+  .projects-page[data-workbench] > .project-chrome {
+    padding: var(--space-12px) var(--space-16px);
+  }
+  .projects-page[data-workbench] .project-head__row {
+    display: grid;
+    gap: var(--space-8px);
+    grid-template-areas: "back identity" "actions actions";
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .projects-page[data-workbench] .work-backlink {
+    align-self: start;
+    grid-area: back;
+    min-height: 36px;
+  }
+  .projects-page[data-workbench] .project-head__identity {
+    grid-area: identity;
+  }
+  .projects-page[data-workbench] .project-head__title {
+    font-size: var(--type-body);
+    line-height: var(--line-body);
+  }
+  .projects-page[data-workbench] .ui-inline-edit {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+  .projects-page[data-workbench] .project-head__meta {
+    font-size: var(--type-dense);
+    gap: var(--space-8px);
+    margin-top: var(--space-4px);
+  }
+  .projects-page[data-workbench] :is(.project-head__code, .project-head__revision) {
+    display: none;
+  }
+  .projects-page[data-workbench] .project-head__side {
+    display: grid;
+    gap: var(--space-8px);
+    grid-area: actions;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+  }
+  .projects-page[data-workbench] .project-head__total {
+    justify-items: start;
+    margin: 0;
+  }
+  .projects-page[data-workbench] .project-head__side > button {
+    font-size: var(--type-dense);
+    padding-inline: var(--space-8px);
+  }
+  .projects-page[data-workbench] .project-studio {
+    display: flex;
+    flex: none;
+    flex-direction: column;
+    overflow: visible;
+  }
+  .work-window-list {
+    border-bottom: 1px solid var(--border-subtle);
+    border-right: 0;
+    flex-shrink: 0;
+    height: 190px;
+    max-height: 230px;
+  }
+  .work-window-list .studio-strip__list {
+    min-height: 70px;
+  }
+  .projects-page[data-workbench] .project-studio__editor {
+    flex: none;
+    min-height: 640px;
+  }
+  .assembly-editor[data-simple] {
+    grid-template-areas: "tools" "canvas" "status";
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(360px, 1fr) auto;
+    min-height: 500px;
+  }
+  .assembly-editor[data-simple] .assembly-tools {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: var(--space-4px);
+  }
+  .assembly-editor[data-simple] .assembly-tools .tool-button {
+    justify-content: center;
+    min-height: 44px;
+    width: 44px;
+  }
+  .assembly-editor[data-simple]
+    .assembly-tools
+    :is(.assembly-tools__divider, .assembly-tools__spacer),
+  .assembly-editor[data-simple]
+    .tool-button:is(
+      [aria-label="Dividir vertical"],
+      [aria-label="Dividir horizontal"],
+      [aria-label="Acoplar"],
+      [aria-label="Árbol del conjunto"],
+      [aria-label="Atajos del editor"]
+    ) {
+    display: none;
+  }
+  .assembly-editor[data-simple] .assembly-side.is-open {
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-2) var(--r-2) 0 0;
+    bottom: 0;
+    box-shadow: var(--e2);
+    height: min(72dvh, 640px);
+    left: 0;
+    max-height: 72dvh;
+    position: fixed;
+    right: 0;
+    top: auto;
+    width: auto;
+  }
+  .assembly-editor[data-simple] .editor-inspector-header {
+    background: var(--surface-panel);
+    position: sticky;
+    top: 0;
+    z-index: var(--z-sticky);
+  }
+  .assembly-editor[data-simple] .editor-inspector-header button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  .assembly-editor[data-simple] .editor-library {
+    display: block;
+    inset: 0;
+    max-height: 100%;
+    width: auto;
+  }
+  .position-editor[data-simple] .position-strip {
+    flex-wrap: wrap;
+  }
+  .position-editor[data-simple] .editor-location {
+    flex: 1 1 130px;
+    min-width: 0;
+  }
+  .position-editor[data-simple] .editor-save-state {
+    flex: 1 1 100%;
+    order: 2;
+  }
+}

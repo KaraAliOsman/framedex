@@ -3,10 +3,12 @@ import { ValidatedForm } from "../../ui/FormValidation";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import { ApiError } from "../../api/apiMutator";
 import { UnsavedChangesGuard } from "../../app/UnsavedChangesGuard";
+import { obraVistaUnica } from "../../app/productFeatures";
+import { useCopilot } from "../assistant/copilotBridge";
 import {
   clientsList,
   documentsCompareVersions,
@@ -50,11 +52,12 @@ import { PositionCollection, positionReadiness } from "./PositionCollection";
 import { ProjectBom } from "./ProjectPositionEditor";
 import { ProjectQuotationPanel } from "./ProjectQuotationPanel";
 import { QuotationDocument } from "./QuotationDocument";
-import { PositionEditorHost } from "./ProjectPositionEditor";
+import { editLockCause, PositionEditorHost } from "./ProjectPositionEditor";
 import { StudioStrip, WorkViewSwitch } from "./StudioStrip";
 import { useProjectWorkspaceState } from "./ProjectWorkspaceState";
 import { newCreationId } from "./positionDraft";
 import "./studio.css";
+import "./workbench.css";
 import { ProjectImportsPanel } from "./ProjectImportsPanel";
 import { ProjectPaymentsPanel } from "./ProjectPaymentsPanel";
 import { ProjectServicesPanel } from "./ProjectServicesPanel";
@@ -345,6 +348,7 @@ function ProjectMetadataForm({
 /* ------------------------------------------------------------------ */
 
 export type FactsSection =
+  | "collection"
   | "thermal"
   | "quote"
   | "pricing"
@@ -662,6 +666,7 @@ function ProjectHeader({
   onRename,
   onEditDetails,
   menu = [],
+  unified = false,
 }: {
   project: ProjectResponse;
   orgId: string;
@@ -671,7 +676,9 @@ function ProjectHeader({
   onRename?: (name: string) => void;
   onEditDetails?: () => void;
   menu?: MenuItem[];
+  unified?: boolean;
 }): JSX.Element {
+  const copilot = useCopilot();
   const payments = useQuery({
     queryKey: ["projects", "payments-summary", orgId, project.id],
     queryFn: async ({ signal }) => {
@@ -739,6 +746,12 @@ function ProjectHeader({
   return (
     <div className="project-head">
       <div className="project-head__row">
+        {unified && (
+          <Link className="work-backlink" to="/projects">
+            <Icon name="chevronLeft" size={16} />
+            Obras
+          </Link>
+        )}
         <div className="project-head__identity">
           <h1 className="project-head__title">
             {canWrite && onRename ? (
@@ -785,7 +798,7 @@ function ProjectHeader({
         <div className="project-head__side">
           {price ? (
             <div className="project-head__total">
-              <span>{price.ready ? "Total con IVA" : "Total por aprobar"}</span>
+              <span>{price.ready ? "Total IVA incluido" : "Total por aprobar"}</span>
               <strong>{formatMoney(price.gross, price.currency)}</strong>
             </div>
           ) : (project.position_count ?? 0) > 0 ? (
@@ -796,14 +809,48 @@ function ProjectHeader({
               </span>
             </div>
           ) : null}
-          {canWrite && project.status === "DRAFT" && (project.position_count ?? 0) > 0 ? (
+          {unified && project.position_count === 0 ? (
+            <div className="project-head__total is-pending">
+              <span>Total IVA incluido</span>
+              <span className="project-head__pending">Añade la primera ventana</span>
+            </div>
+          ) : null}
+          {unified && copilot.available ? (
+            <button
+              type="button"
+              className="ui-button"
+              onClick={() =>
+                copilot.delegate({ mode: "work", text: "", refs: { project_id: project.id } })
+              }
+            >
+              Pedir a DEKOPEN
+            </button>
+          ) : null}
+          {!unified &&
+          canWrite &&
+          project.status === "DRAFT" &&
+          (project.position_count ?? 0) > 0 ? (
             <QuickPdfMenu projectId={project.id} orgId={orgId} />
-          ) : (canWrite || canRelease) && (project.position_count ?? 0) > 0 ? (
+          ) : !unified && (canWrite || canRelease) && (project.position_count ?? 0) > 0 ? (
             <Link className="ui-button" to={`/projects/${project.id}?section=production&tab=cut`}>
               <Icon name="cut" size={16} /> Orden de corte
             </Link>
           ) : null}
-          {action && actionLabel ? (
+          {unified ? (
+            <button
+              type="button"
+              className="ui-button ui-button--primary"
+              disabled={project.position_count === 0}
+              title={
+                project.position_count === 0
+                  ? "Añade una ventana antes de preparar la cotización"
+                  : undefined
+              }
+              onClick={() => onOpenSection("quote")}
+            >
+              Enviar cotización
+            </button>
+          ) : action && actionLabel ? (
             action.to ? (
               <Link className="ui-button ui-button--primary" to={action.to}>
                 {actionLabel}
@@ -1341,6 +1388,12 @@ function ProjectWorkspace({
   function setOpenSection(section: FactsSection | null): void {
     setSectionState(section);
     setVisited((current) => new Set([...current, section ?? "positions"]));
+    if (unified && work.editorRoute?.kind === "edit") {
+      navigate(work.workPath({ section, position: work.editorRoute.positionId }), {
+        replace: true,
+      });
+      return;
+    }
     setParams(
       (current) => {
         const next = new URLSearchParams(current);
@@ -1357,11 +1410,11 @@ function ProjectWorkspace({
   const [mustReload, setMustReload] = useState(false);
   const lifetime = useRef<AbortController | null>(null);
   const locked = useRef(false);
-  const routeLocation = useLocation();
 
   useEffect(() => {
     const requested = params.get("correo") === "cotizacion" ? "quote" : params.get("section");
     const allowed: FactsSection[] = [
+      "collection",
       "thermal",
       "quote",
       "pricing",
@@ -1405,17 +1458,21 @@ function ProjectWorkspace({
     refetchOnReconnect: false,
   });
   const query = id ? detailQuery : listQuery;
+  const unified = obraVistaUnica() && canWrite && !editLockCause(detailQuery.data?.project);
   const work = useProjectWorkspaceState({
     userId: identity.split(":")[0]!,
     orgId,
     project: id ? (detailQuery.data?.project ?? null) : null,
     section: openSection,
+    unified,
   });
   // A creation keeps one stable id while its route is open (draft identity).
+  const creationCopy = params.get("copy");
+  const creationSystem = params.get("system");
   const creationId = useMemo(
     () => newCreationId(),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [work.editorRoute?.kind, routeLocation.key],
+    [id, work.editorRoute?.kind, creationCopy, creationSystem],
   );
   /** Navigations that keep the same work and editing session pass the
    * guards silently; leaving the work or switching the edited position asks. */
@@ -1427,18 +1484,24 @@ function ProjectWorkspace({
       const session = work.sessionId;
       const edit = /\/positions\/([^/]+)\/edit$/.exec(next.pathname);
       if (edit) return !session || edit[1] === session;
-      // From Mesa/Estudio, «/positions/new» widens the same unsaved window;
-      // from the new-window editor itself it starts another one, so it asks.
-      if (next.pathname.endsWith("/positions/new"))
+      // Section changes retain the same new window. A different copy or
+      // requested series identifies another creation and must pass the guard.
+      if (next.pathname.endsWith("/positions/new")) {
+        const nextParams = new URLSearchParams(next.search);
         return (
-          !session || (session === "new" && !routeLocation.pathname.endsWith("/positions/new"))
+          !session ||
+          (session === "new" &&
+            (nextParams.get("copy") ?? null) === creationCopy &&
+            (nextParams.get("system") ?? null) === creationSystem)
         );
+      }
       const nextParams = new URLSearchParams(next.search);
-      const studio = nextParams.get("view") === "estudio" && !nextParams.get("section");
+      const studio =
+        (unified || nextParams.get("view") === "estudio") && !nextParams.get("section");
       const position = nextParams.get("position");
       return !studio || !session || !position || position === session;
     },
-    [id, work.sessionId, routeLocation.pathname],
+    [id, work.sessionId, unified, creationCopy, creationSystem],
   );
 
   // Workspace-first pattern (same as /clients and /production): land on the
@@ -1679,7 +1742,11 @@ function ProjectWorkspace({
   const editable = canWrite && project?.status === "DRAFT" && !project.pricing_current;
 
   return (
-    <section className="projects-page" aria-busy={busy || query.isFetching}>
+    <section
+      className="projects-page"
+      data-workbench={(unified && openSection === null) || undefined}
+      aria-busy={busy || query.isFetching}
+    >
       <UnsavedChangesGuard
         dirty={draft !== null || quotationDirty || paymentsDirty || importsDirty || thermalDirty}
         message={t("projects.leaveUnsaved")}
@@ -1696,6 +1763,7 @@ function ProjectWorkspace({
       <div className="project-chrome" hidden={work.presentation === "expanded"}>
         {project ? (
           <ProjectHeader
+            unified={unified && openSection === null}
             canWrite={canWrite}
             canRelease={canSendEnvio}
             orgId={orgId}
@@ -1710,6 +1778,25 @@ function ProjectWorkspace({
                 : undefined
             }
             menu={[
+              ...(unified
+                ? [
+                    {
+                      id: "organize",
+                      label: "Organizar ventanas",
+                      onSelect: () => setOpenSection("collection"),
+                    },
+                    {
+                      id: "materials",
+                      label: "Ver despiece y materiales",
+                      onSelect: () => setOpenSection("production"),
+                    },
+                    {
+                      id: "activity",
+                      label: "Actividad de la obra",
+                      onSelect: () => setOpenSection("activity"),
+                    },
+                  ]
+                : []),
               ...(editable
                 ? [
                     {
@@ -1788,7 +1875,7 @@ function ProjectWorkspace({
                   { id: "activity", label: "Actividad" },
                 ]}
               />
-              <WorkViewSwitch view={work.view} onChange={work.setView} />
+              {!unified && <WorkViewSwitch view={work.view} onChange={work.setView} />}
             </div>
             {VIEW_PARTS[viewOf(openSection)].length > 1 ? (
               <div className="project-subviews ui-segmented" role="radiogroup" aria-label="Sección">
@@ -1805,7 +1892,20 @@ function ProjectWorkspace({
                 ))}
               </div>
             ) : null}
-            <div hidden={openSection !== null || work.view === "estudio"}>
+            <div
+              hidden={
+                openSection !== "collection" &&
+                (unified || openSection !== null || work.view === "estudio")
+              }
+            >
+              {unified && (
+                <div className="project-positions-toolbar">
+                  <h2>Organizar ventanas</h2>
+                  <button type="button" className="ui-button" onClick={() => setOpenSection(null)}>
+                    Volver al dibujo
+                  </button>
+                </div>
+              )}
               {canWrite && !editable && (
                 <p className="project-locked" role="status">
                   {t(
@@ -1999,13 +2099,16 @@ function ProjectWorkspace({
             <StudioStrip
               project={project}
               activeId={work.sessionId === "new" ? null : work.activeId}
-              canAdd={editable}
+              canAdd={editable && work.sessionId !== "new"}
+              unified={unified}
               onSelect={(positionId) => work.setActiveId(positionId)}
             />
           ) : null}
-          {work.presentation === "studio" && (project.positions?.length ?? 0) === 0 ? (
+          {work.presentation === "studio" &&
+          !work.sessionId &&
+          (project.positions?.length ?? 0) === 0 ? (
             <div className="ui-empty studio-empty">
-              <p className="ui-empty__title">La obra todavía no tiene ventanas</p>
+              <h2 className="ui-empty__title">La obra todavía no tiene ventanas</h2>
               <p className="ui-empty__body">
                 Añade la primera ventana para diseñarla en el lienzo amplio.
               </p>
@@ -2013,7 +2116,7 @@ function ProjectWorkspace({
                 <div className="ui-empty__action">
                   <Link
                     className="ui-button ui-button--primary"
-                    to={`/projects/${project.id}/positions/new?view=estudio`}
+                    to={`/projects/${project.id}/positions/new${unified ? "" : "?view=estudio"}`}
                   >
                     Añadir ventana
                   </Link>
@@ -2032,9 +2135,11 @@ function ProjectWorkspace({
                 presentation={work.presentation}
                 allowNavigation={sameSession}
                 onBack={() =>
-                  work.presentation === "studio"
-                    ? work.setView("mesa")
-                    : navigate(work.workPath({ section: null }))
+                  unified
+                    ? navigate(work.workPath({ section: null }))
+                    : work.presentation === "studio"
+                      ? work.setView("mesa")
+                      : navigate(work.workPath({ section: null }))
                 }
                 onOpenSection={(section) => {
                   if (work.presentation === "expanded") navigate(work.workPath({ section }));
@@ -2048,14 +2153,16 @@ function ProjectWorkspace({
                     : work.setActiveId(positionId)
                 }
                 onCreated={(created) =>
-                  work.presentation === "expanded"
-                    ? navigate(
-                        `/projects/${project.id}/positions/${created}/edit?view=${work.view}`,
-                        {
-                          replace: true,
-                        },
-                      )
-                    : work.setActiveId(created)
+                  unified
+                    ? navigate(`/projects/${project.id}?position=${created}`, { replace: true })
+                    : work.presentation === "expanded"
+                      ? navigate(
+                          `/projects/${project.id}/positions/${created}/edit?view=${work.view}`,
+                          {
+                            replace: true,
+                          },
+                        )
+                      : work.setActiveId(created)
                 }
               />
             </div>

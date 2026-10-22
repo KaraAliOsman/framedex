@@ -96,6 +96,7 @@ function SvgDim({
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   const [invalid, setInvalid] = useState(false);
+  const cancelled = useRef(false);
   useEffect(() => {
     if (!editing) {
       setDraft(value);
@@ -168,6 +169,13 @@ function SvgDim({
         }}
         onFocus={(event) => event.target.select()}
         onBlur={() => {
+          if (cancelled.current) {
+            cancelled.current = false;
+            setDraft(value);
+            setInvalid(false);
+            setEditing(false);
+            return;
+          }
           const normalized = normalizeDimension(draft);
           if (normalized === null) {
             // Reject like Enter does — flag the editor and stay open so a
@@ -190,7 +198,7 @@ function SvgDim({
             }
           }
           if (event.key === "Escape") {
-            setDraft(value);
+            cancelled.current = true;
             event.currentTarget.blur();
           }
         }}
