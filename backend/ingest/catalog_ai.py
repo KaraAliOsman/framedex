@@ -32,6 +32,16 @@ def parse_response(output: object, *, tagged: list[tuple[str, str]], file_name: 
         payload = json.loads(text, parse_float=Decimal)
     else:
         payload = output
+    def exact_numbers(value):
+        if isinstance(value, float) or isinstance(value, Decimal) and not value.is_finite():
+            raise ValueError("La lectura contiene un número inexacto o no finito.")
+        if isinstance(value, dict):
+            for child in value.values():
+                exact_numbers(child)
+        elif isinstance(value, list):
+            for child in value:
+                exact_numbers(child)
+    exact_numbers(payload)
     if not isinstance(payload, dict) or set(payload) != {"records"} or not isinstance(payload["records"], list):
         raise ValueError("La IA no devolvió registros de catálogo tipados.")
     if len(payload["records"]) > MAX_ROWS:
@@ -77,14 +87,12 @@ def compile_catalog_pages(*, org_id, actor_id, import_id, file_name, tagged, chu
     provider (scanned/mixed pages also as images). Citations are verified
     against the server-extracted text of the whole document, so a value is
     HIGH only when its quote exists on the page it cites."""
-    from ai_gateway.service import invoke
-    result = invoke(org_id=org_id, user_id=actor_id, capability="catalog_import",
-        operation_key=f"catalog:{import_id}:p{chunk['first']}-{chunk['last']}:typed-v2", input_payload={
+    return _double_extract(org_id=org_id, actor_id=actor_id, file_name=file_name, tagged=tagged,
+        operation_key=f"catalog:{import_id}:p{chunk['first']}-{chunk['last']}", input_payload={
             "file_name": file_name, "kind": "PDF", "source": {"kind": "catalog_import", "id": str(import_id)},
             "schema": public_schema(),
             "page_range": {"first": chunk["first"], "last": chunk["last"], "visual": chunk.get("visual_pages", [])},
-        }, provider_options={"system": SYSTEM + BATCH_NOTE, "json_output": True})
-    return parse_response(result["output"], tagged=tagged, file_name=file_name), result["audit_id"]
+        }, batch_note=BATCH_NOTE)
 
 
 BATCH_NOTE = """
@@ -96,13 +104,36 @@ cita es «página N» tal como la recibes.
 
 
 def compile_catalog(*, org_id, actor_id, import_id, kind, file_name, tagged):
-    from ai_gateway.service import invoke
     source_lines = [{"text": text, "ref": ref} for text, ref in tagged]
     if sum(len(line["text"]) for line in source_lines) > 100_000:
         raise ValueError("El documento de texto supera el límite. Súbelo como PDF para procesarlo por partes.")
-    result = invoke(org_id=org_id, user_id=actor_id, capability="catalog_import",
-        operation_key=f"catalog:{import_id}:typed-v1", input_payload={
+    return _double_extract(org_id=org_id, actor_id=actor_id, file_name=file_name, tagged=tagged,
+        operation_key=f"catalog:{import_id}", input_payload={
             "file_name": file_name, "kind": kind, "source": {"kind": "catalog_import", "id": str(import_id)},
             "schema": public_schema(), "source_lines": source_lines,
-        }, provider_options={"system": SYSTEM, "json_output": True})
-    return parse_response(result["output"], tagged=tagged, file_name=file_name), result["audit_id"]
+        })
+
+
+READ_STRATEGIES = (
+    "Lee tabla por tabla, siguiendo sus encabezados. Identifica primero los códigos y copia solo los valores explícitos de cada fila.",
+    "Haz una lectura independiente por parámetro: busca cada campo del esquema en las notas y tablas, contrasta su unidad y vuelve a identificar el código al que pertenece. No deduzcas ningún valor.",
+)
+
+
+def _double_extract(*, org_id, actor_id, file_name, tagged, operation_key, input_payload, batch_note=""):
+    from ai_gateway.service import invoke
+    from ingest.catalog_double_read import compare_reads
+
+    parsed, audit_ids = [], []
+    for number, strategy in enumerate(READ_STRATEGIES, 1):
+        # No result from the first read is supplied to the second. Distinct,
+        # stable keys keep billing/retries idempotent for each provider call.
+        payload = {**input_payload}
+        if number == 2 and "source_lines" in payload:
+            payload["source_lines"] = list(reversed(payload["source_lines"]))
+        result = invoke(org_id=org_id, user_id=actor_id, capability="catalog_import",
+            operation_key=f"{operation_key}:double-v1:read{number}", input_payload=payload,
+            provider_options={"system": SYSTEM + batch_note + "\n" + strategy, "json_output": True})
+        parsed.append(parse_response(result["output"], tagged=tagged, file_name=file_name))
+        audit_ids.append(result["audit_id"])
+    return compare_reads(*parsed, file_name=file_name, audit_ids=audit_ids), audit_ids[0]

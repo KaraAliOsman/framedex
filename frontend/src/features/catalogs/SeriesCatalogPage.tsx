@@ -21,6 +21,12 @@ import { SeriesTrialDialog } from "./SeriesTrialDialog";
 const AdvancedCatalog = lazy(async () => ({
   default: (await import("./CatalogPage")).CatalogPage,
 }));
+const ImportReviewPage = lazy(async () => ({
+  default: (await import("./CatalogImportReviewPage")).CatalogImportReviewPage,
+}));
+const SetupWizard = lazy(async () => ({
+  default: (await import("./SeriesSetupWizard")).SeriesSetupWizard,
+}));
 
 function manufacturerKey(value: string | null | undefined): string {
   return (value ?? "").trim().replace(/\s+/g, " ").toLocaleLowerCase("es-CL");
@@ -56,6 +62,17 @@ export function SeriesCatalogPage(): JSX.Element {
   if (status !== "ready") return <Loading label="Cargando el catálogo" />;
   if (!organization || !["OWNER", "WORKSHOP_MANAGER", "ESTIMATOR"].includes(organization.role))
     return <DeniedState reason="Tu rol no permite abrir el catálogo." />;
+  if (params.has("import") && params.get("advanced") !== "1")
+    return (
+      <Suspense fallback={<Loading label="Cargando la revisión del manual" />}>
+        <ImportReviewPage
+          key={`${session?.user.id}:${organization.id}:${params.get("import")}`}
+          orgId={organization.id}
+          importId={params.get("import")!}
+          canWrite={organization.role !== "ESTIMATOR"}
+        />
+      </Suspense>
+    );
   if (
     params.get("advanced") !== "1" &&
     ["import", "reference", "record", "resource", "shelf", "create"].some((key) => params.has(key))
@@ -75,11 +92,20 @@ export function SeriesCatalogPage(): JSX.Element {
       key={`${session?.user.id}:${organization.id}`}
       orgId={organization.id}
       canEdit={organization.role !== "ESTIMATOR"}
+      isOwner={organization.role === "OWNER"}
     />
   );
 }
 
-function SeriesCatalogHome({ orgId, canEdit }: { orgId: string; canEdit: boolean }): JSX.Element {
+function SeriesCatalogHome({
+  orgId,
+  canEdit,
+  isOwner,
+}: {
+  orgId: string;
+  canEdit: boolean;
+  isOwner: boolean;
+}): JSX.Element {
   const [params, setParams] = useSearchParams();
   const queryClient = useQueryClient();
   const queryKey = ["catalog-home", orgId];
@@ -171,7 +197,7 @@ function SeriesCatalogHome({ orgId, canEdit }: { orgId: string; canEdit: boolean
       changed(response.data);
       queryClient.setQueryData(["series-sheet", orgId, response.data.id], response.data);
       setAdding(null);
-      setParams({ system: response.data.id });
+      setParams({ system: response.data.id, setup: "1" });
     } catch {
       setFailure("No se pudo agregar la serie. Revisa sus datos y vuelve a intentarlo.");
     } finally {
@@ -191,7 +217,19 @@ function SeriesCatalogHome({ orgId, canEdit }: { orgId: string; canEdit: boolean
           onChanged={changed}
           onAdvanced={advanced}
           onTrial={setTrial}
+          onSetup={canEdit ? () => setParams({ system: selected, setup: "1" }) : undefined}
         />
+        {params.get("setup") === "1" && canEdit && (
+          <Suspense fallback={<Loading label="Cargando el alta" />}>
+            <SetupWizard
+              key={`${orgId}:${selected}`}
+              orgId={orgId}
+              systemId={selected}
+              isOwner={isOwner}
+              onClose={() => setParams({ system: selected })}
+            />
+          </Suspense>
+        )}
         {trial && (
           <SeriesTrialDialog
             orgId={orgId}

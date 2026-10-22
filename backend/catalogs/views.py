@@ -30,6 +30,7 @@ from authentication.tenancy import (
 )
 from authentication.views import verified_request_token
 from catalogs import evidence, service
+from catalogs.reference_serializers import ReferenceChangeErrorSerializer
 from catalogs.serializers import (
     EvidenceInputSerializer,
     EvidenceListSerializer,
@@ -116,13 +117,19 @@ def catalog_scope(request, *, roles=WRITE_ROLES):
                     "catalog_permission_denied",
                     "catalogs.errors.permission",
                 )
-            yield tenant.active_organization.organization_id
+            from catalogs.reference_protection import protect_changes
+            with protect_changes(tenant.active_organization.organization_id, request.headers.get("X-Catalog-Review")):
+                yield tenant.active_organization.organization_id
     except DatabaseError as error:
         _reraise_catalog_error(error)
 
 
 ERRORS = {code: OpenApiResponse(ErrorResponseSerializer) for code in (400, 401, 403, 404, 409, 503)}
-HEADERS = [ACTIVE_ORGANIZATION_HEADER]
+ERRORS[409] = OpenApiResponse(ReferenceChangeErrorSerializer)
+HEADERS = [ACTIVE_ORGANIZATION_HEADER, OpenApiParameter(
+    "X-Catalog-Review", OpenApiTypes.STR, OpenApiParameter.HEADER, required=False,
+    description="Signed review token returned when a write changes a confirmed reference window.",
+)]
 WRITE_HEADERS = [*HEADERS, OpenApiParameter(
     "If-Match", OpenApiTypes.STR, OpenApiParameter.HEADER, required=True,
     description="Quoted revision from the most recently read catalog entity.",

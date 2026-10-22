@@ -1,9 +1,9 @@
 ---
 type: concept
 status: active
-updated: 2026-10-21
+updated: 2026-10-22
 volatility: medium
-verified_ref: gpt/dk2-p02a-tabla-editable
+verified_ref: gpt/dk2-p03h-asistente-reanudable
 sources:
   - engine/src/dekopen_engine/catalog_rules.py
   - engine/tests/test_gold_cases_catalog_families.py
@@ -20,6 +20,12 @@ sources:
   - backend/catalogs/frozen_use.py
   - backend/tests/integration/test_catalog_use_levels.py
   - supabase/migrations/20270204000000_quote_without_workshop_policies.sql
+  - frontend/src/features/catalogs/SupplierPriceImport.tsx
+  - frontend/tests/e2e/catalog-prices.spec.ts
+  - docs/redesign/captures/dk2-p03f/aceptacion.md
+  - frontend/src/features/catalogs/SeriesSetupWizard.tsx
+  - frontend/tests/e2e/catalog-setup.spec.ts
+  - backend/tests/integration/test_new_project_series.py
 ---
 
 # Autoridad de catálogo por familia
@@ -369,3 +375,137 @@ paso de corte impide la coincidencia. Los cuatro casos de
 los casos dorados anteriores conservan sus bytes. Esta base pura todavía
 no persiste verificación ni protege ediciones del catálogo: corresponde a las
 sub-PR siguientes de P03. Véase [estado](../../dekopen2/ESTADO.md).
+
+## Caso del taller y edición protegida · preparación P03b
+
+Verificado el 21-10-2026 en `gpt/dk2-p03b-verificacion-serie`, aún dependiente
+de P02/P03a. `catalog_reference_windows` conserva entrada y salida completa del
+motor sin las anotaciones de origen, para que confirmar un dato no parezca un
+cambio físico. Los casos son inmutables y tienen org/RLS. La confirmación del
+servidor comprueba token, medidas comparadas y catálogo vigente bajo el lock de
+serie; la salida esperada nunca viene del cliente.
+
+`reference_protection.py` compara antes/después al cerrar el lote de escritura.
+El CRUD común protege llamadas directas; ficha e importaciones comparten un
+contexto exterior para comparar el resultado final, incluidos los cambios
+compensados del lote. Un token temporal liga revisión y mutación exacta; si
+falta o cambió el contenido, se revierte la transacción con un diff nuevo.
+Aceptar el cambio no reescribe el caso original ni conserva la verificación
+de fabricación. Las pruebas son `test_catalog_reference_windows.py` y
+`252_catalog_reference_windows.test.sql`; la interfaz se integra después.
+
+## Doble lectura del manual · preparación P03c
+
+Verificado el 21-10-2026 en `gpt/dk2-p03c-doble-lectura`: dos invocaciones
+independientes conservan auditorías y citas por celda. El acuerdo requiere dos
+lecturas HIGH con respaldo literal y una identidad completa y única; códigos
+como `001` y `1` permanecen distintos. Las discrepancias quedan vacías hasta
+la elección humana. Publicar una lectura citada puede confirmar MANUAL;
+una corrección arbitraria mantiene WORKSHOP. Extraer nunca publica datos.
+
+`test_catalog_double_read_publication.py` comprueba ese límite en Postgres y
+la evidencia de campos anidados de corte. `test_catalog_double_read.py` cubre
+orden, duplicados, ausencia, soporte, claves idempotentes y números inexactos.
+Las propuestas de calibración pasan además por el serializer real del catálogo:
+una solución matemática que no pueda almacenarse no se ofrece al usuario.
+La integración visual y el mapeo de precios siguen pendientes de P03.
+
+## Precios mapeados · preparación P03d
+
+Verificado el 21-10-2026 en `gpt/dk2-p03d-precios-mapeados`: inspección de
+XLSX/CSV y mapeo asistido por encabezados, sin inferir unidades ni precios.
+El XML conserva los lexemas numéricos del Excel; el CSV exige separador
+decimal explícito. Los códigos conservan sus ceros y KG se rechaza, sin
+convertirlo en metros. La revisión muestra diez filas y valida todo el archivo.
+
+El token de confirmación liga archivo, mapeo, motivo, lista y empresa. Solo
+el dueño aplica el archivo íntegro, con auditoría y transacción; un duplicado
+existente exige usar otra lista o editar el precio actual. No se atribuyen
+estos precios al fabricante: su origen es el taller. Las ocho integraciones
+de `test_supplier_price_import.py` verifican revisión, exactitud, permisos,
+aislamiento y rechazos sin escrituras parciales. La UI se incorpora después.
+
+## Comparación visible y revisión humana · preparación P03e
+
+Verificado el 22-10-2026 en `gpt/dk2-p03e-prueba-ui`: la ventana llama a las
+APIs de prueba/propuestas/verificación. Todas las medidas y diferencias vienen
+del motor; la UI mantiene entradas decimales de texto y no resuelve reglas.
+El taller elige una propuesta y confirma explícitamente el despiece y los
+valores sugeridos. Un resultado vacío o una comparación fallida no reutiliza
+la confirmación previa.
+
+`CatalogChangeReview` presenta las referencias afectadas antes de reintentar
+la mutación. La cancelación devuelve el conflicto al editor conservando su
+borrador. La aceptación utiliza el mismo cuerpo, URL y empresa, con el token
+exacto una sola vez; `apiMutator` vuelve a comprobar el contexto de empresa.
+Además de medidas/cantidades, la revisión expone ángulos y diferencias de toda
+la salida física. Los códigos numéricos mantienen sus ceros iniciales.
+
+El E2E real verifica y luego cambia una regla: cancelar mantiene fabricación;
+aceptar guarda el cambio y exige verificar de nuevo. Los casos dorados
+originales no se reescriben. El ensayo móvil detectó un problema del diálogo
+compartido, corregido aislando el fondo para teclado y lector de pantalla.
+La [aceptación](../../redesign/captures/dk2-p03e/aceptacion.md) conserva pruebas,
+capturas y límites. Faltan los otros pasos del alta; P03 no está completa.
+
+## Importación visual de precios · preparación P03f
+
+Verificado el 22-10-2026 en `gpt/dk2-p03f-precios-ui`: la pestaña Precios
+permite al dueño elegir un XLSX/CSV, revisar las cuatro columnas y confirmar
+la lista completa con su token. Crear una lista vacía exige un clic distinto;
+inspeccionar o revisar no escribe costos. Cambiar el archivo, columnas,
+separador o lista descarta la revisión anterior. Un fallo de lectura conserva
+el archivo y ofrece reintento. La ficha recarga sus precios después de guardar.
+
+La muestra tiene hasta diez filas y conserva códigos como `001` y cuatro
+decimales mediante cadenas. El E2E con 12 precios sintéticos consulta la API
+con la sesión real y comprueba el límite de publicación y la exactitud de
+PostgreSQL. Los extremos de 0/1/500 precios, nombres largos, Unicode y montos
+grandes se ejercitan a 1440/390/320 px y texto al 200 %, con scroll accesible.
+El asistente completo y la aceptación integral de P03 siguen pendientes.
+
+## Revisión visible de doble lectura · preparación P03g
+
+Verificado el 22-10-2026 en `gpt/dk2-p03g-asistente-serie`: las diferencias
+abren la revisión; los acuerdos quedan como propuestas sin confirmación por
+celda. Se muestran ambas citas y valores. Elegir una lectura no incluye la fila
+ni publica; una corrección libre o una lectura dudosa se identifica como dato
+del taller. La comparación real conserva su token y la publicación exige clic.
+
+El enlace de una fuente carga solo esa importación y su esquema/historial,
+sin las cuatro colecciones completas del catálogo. Los cambios invalidan las
+fichas y el inicio del catálogo de esa empresa. Los borradores mantienen la
+edición completa a un clic y las diferencias se paginan por diez filas.
+
+La [aceptación](../../redesign/captures/dk2-p03g/aceptacion.md) distingue las
+dos respuestas simuladas del modelo de las APIs, almacenamiento y PostgreSQL
+reales. Comprueba el límite humano de escritura y el origen MANUAL de una
+lectura citada. El asistente y la primera obra siguen pendientes; no se declara
+una aceptación de datos reales del fabricante ni de rendimiento en producción.
+
+## Alta reanudable y primera obra · P03h
+
+Verificado el 22-10-2026 en `gpt/dk2-p03h-asistente-reanudable`: cinco pasos
+comparten las APIs ya descritas. Las escrituras de progreso se serializan
+usando la revisión devuelta por su predecesora; un conflicto detiene la cola
+y exige recuperar el progreso vigente. Reabrir espera ese estado, sin mostrar
+un paso antiguo de caché. Verificar también incrementa la revisión y preserva
+el estado previo. Los costos siguen fuera del progreso técnico compartido.
+
+Los módulos visitados permanecen montados y ocultos al cambiar de paso: el
+File de precios y las decisiones del manual no se pierden. Cerrar/recuperar
+advierte del descarte de borradores sin publicar. Dentro del alta solo se
+incluyen filas documentales con el código exacto de esta serie; no se reasignan
+identidades dudosas. Las publicaciones y la verificación requieren sus clics.
+
+La obra nueva recibe `design_defaults.system_id`; `create_project` lo valida
+y persiste en la misma inserción. No modifica preferencias de empresa.
+La integración rechaza una serie de otra empresa sin crear una obra parcial.
+La acción final exige capacidad QUOTABLE y ningún borrador pendiente; visitar
+ese paso nunca verifica la fabricación. Las capacidades son independientes:
+MACHINE_READY no sustituye la comprobación de precios para cotizar.
+
+La [evidencia](../../redesign/captures/dk2-p03h/aceptacion.md) distingue los
+precios/perfiles sintéticos y respuestas documentales simuladas de la base,
+autenticación y almacenamiento reales. El precio automático y una aceptación
+con los datos reales del dueño corresponden a P04 y P10 respectivamente.

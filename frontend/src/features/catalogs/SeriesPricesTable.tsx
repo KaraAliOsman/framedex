@@ -6,8 +6,10 @@ import { catalogSeriesEditPrices, catalogSeriesPriceHistory } from "../../api/ge
 import type { SeriesSheet } from "../../api/generated/models";
 import { ApiError } from "../../api/apiMutator";
 import { formatDate, formatDateTime } from "../../format";
-import { Dialog, Loading } from "../../ui";
+import { Button, Dialog, Loading } from "../../ui";
 import { EditableTable, type TableChange } from "../../ui/EditableTable";
+import { catalogSeriesSheet } from "../../api/generated/dekopen";
+import { SupplierPriceImport } from "./SupplierPriceImport";
 
 export function SeriesPricesTable({
   orgId,
@@ -21,6 +23,24 @@ export function SeriesPricesTable({
   onDirtyChange: (dirty: boolean) => void;
 }): JSX.Element {
   const [historyId, setHistoryId] = useState<string | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importBusy, setImportBusy] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const [refreshError, setRefreshError] = useState("");
+  async function refresh() {
+    setRefreshError("");
+    try {
+      const response = await catalogSeriesSheet(sheet.id, {
+        headers: { "X-Organization-ID": orgId },
+      });
+      if (response.status !== 200) throw new Error("sheet");
+      onSaved(response.data);
+    } catch {
+      setRefreshError(
+        "Los precios se guardaron. No pudimos actualizar la ficha; vuelve a cargarla.",
+      );
+    }
+  }
   const history = useQuery({
     queryKey: ["series-price-history", orgId, sheet.id, historyId, sheet.tabs.prices.items],
     enabled: !!historyId,
@@ -96,10 +116,44 @@ export function SeriesPricesTable({
           after: <span>Taller · vigente desde {formatDate(item.valid_from)}</span>,
         }))}
         onSave={save}
-        onDirtyChange={onDirtyChange}
+        onDirtyChange={(value) => {
+          setDirty(value);
+          onDirtyChange(value);
+        }}
         onHistory={(row) => setHistoryId(row)}
       />
-      <Link to="/pricing/cost-lists">Agregar precios del proveedor</Link>
+      <Button
+        disabled={dirty}
+        disabledReason="Guarda o descarta tus cambios antes de importar precios."
+        onClick={() => setImporting(true)}
+      >
+        Importar precios del proveedor
+      </Button>
+      {refreshError && (
+        <p role="alert">
+          {refreshError} <Button onClick={() => void refresh()}>Actualizar ficha</Button>
+        </p>
+      )}
+      {importing && (
+        <Dialog
+          title="Precios del proveedor"
+          width="xl"
+          onClose={() => {
+            if (!importBusy) setImporting(false);
+          }}
+        >
+          <SupplierPriceImport
+            key={`${orgId}:${sheet.id}`}
+            orgId={orgId}
+            initialSupplier={sheet.tabs.rules.manufacturer ?? ""}
+            onBusyChange={setImportBusy}
+            onApplied={() => void refresh()}
+          />
+          <Button disabled={importBusy} onClick={() => setImporting(false)}>
+            Volver a la serie
+          </Button>
+        </Dialog>
+      )}
       {historyId && (
         <Dialog title="Historial del precio" onClose={() => setHistoryId(null)}>
           {history.isPending ? (

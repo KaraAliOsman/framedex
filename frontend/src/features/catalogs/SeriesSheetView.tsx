@@ -72,6 +72,7 @@ export function SeriesSheetView({
   onChanged,
   onAdvanced,
   onTrial,
+  onSetup,
 }: {
   orgId: string;
   systemId: string;
@@ -80,6 +81,7 @@ export function SeriesSheetView({
   onChanged: (sheet: SeriesSheet) => void;
   onAdvanced: (cell?: SeriesCell) => void;
   onTrial: (sheet: SeriesSheet) => void;
+  onSetup?: () => void;
 }): JSX.Element {
   const queryClient = useQueryClient();
   const queryKey = ["series-sheet", orgId, systemId];
@@ -252,6 +254,11 @@ export function SeriesSheetView({
           </p>
         </div>
         <span className="series-sheet__level">{usageLabel(sheet.usage)}</span>
+        {writable && onSetup && (
+          <Button disabled={dirty || busy} onClick={onSetup}>
+            Continuar alta
+          </Button>
+        )}
         <Button variant="primary" disabled={dirty || busy} onClick={() => onTrial(sheet)}>
           Ventana de prueba
         </Button>
