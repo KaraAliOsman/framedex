@@ -147,6 +147,7 @@ SPECTACULAR_SETTINGS = {
         "CatalogUseLevelEnum": ["DRAWABLE", "QUOTABLE", "MANUFACTURABLE", "MACHINE_READY"],
         "CatalogCellResourceEnum": ["systems", "articles", "glazing", "hardware-kits"],
         "CurrencyEnum": ["CLP", "USD"],
+        "ProjectResponseStatusEnum": ["DRAFT", "QUOTED", "APPROVED", "IN_PRODUCTION", "COMPLETED", "CANCELLED"],
         "ServiceBasisEnum": ["M2", "WINDOW"],
         "QuotationTemplateEnum": ["ESENCIAL", "PROYECTO", "ALTERNATIVAS"],
         "QuotationBlockEnum": ["intro", "client", "hero", "summary", "positions", "alternatives", "commercial", "terms", "services", "acceptance", "closing"],

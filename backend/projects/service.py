@@ -340,12 +340,16 @@ def _bulk_pricing_authorities(org_id, project_ids):
     return result
 
 
-def list_projects(org_id):
+def list_projects(org_id, *, project_ids=None, progress=None):
+    if project_ids is not None and not project_ids:
+        return []
     project_rows = rows(
         f"SELECT {','.join(PROJECT_COLUMNS)}, pricing_reset_at "
-        "FROM public.projects WHERE org_id=%s ORDER BY updated_at DESC,id "
-        "LIMIT 500",
-        [org_id],
+        "FROM public.projects WHERE org_id=%s "
+        + ("AND id=ANY(%s) " if project_ids is not None else "")
+        + "ORDER BY updated_at DESC,id "
+        + ("LIMIT 500" if project_ids is None else ""),
+        [org_id, project_ids] if project_ids is not None else [org_id],
     )
     if not project_rows:
         return []
@@ -377,7 +381,8 @@ def list_projects(org_id):
             continue
         authorities[candidate["project_id"]] = candidate
     from projects.progress import project_progress
-    progress = project_progress(org_id, project_ids)
+    if progress is None:
+        progress = project_progress(org_id, project_ids)
     return [
         {**project_public(
             org_id, row,

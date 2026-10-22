@@ -114,7 +114,7 @@ def quote_public(row, today):
     }
 
 
-def quotations(org_id, *, query="", attention="", phase="", currency="", offset=0, limit=50):
+def matching_quotations(org_id, *, query="", attention="", phase="", currency=""):
     today = local_today(org_id)
     items = [quote_public(row, today) for row in quotation_rows(org_id)]
     needle = query.strip().casefold()
@@ -138,6 +138,12 @@ def quotations(org_id, *, query="", attention="", phase="", currency="", offset=
             for item in items
             if item["currency"] == (None if currency == "unknown" else currency)
         ]
+    return today, items
+
+
+def quotations(org_id, *, query="", attention="", phase="", currency="", offset=0, limit=50):
+    today, items = matching_quotations(org_id, query=query, attention=attention,
+                                     phase=phase, currency=currency)
     return {
         "items": items[offset : offset + limit],
         "total": len(items),

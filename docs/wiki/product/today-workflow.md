@@ -70,6 +70,15 @@ el parámetro histórico `status` sigue filtrando exactamente su estado guardado
 Seis E2E de tres roles autorizados ejercitan obras reales y 500 casos extremos
 en 1440/390, 320 px y texto al 200 %; [aceptación P05d](../../redesign/captures/dk2-p05d/aceptacion.md).
 
+En `gpt/dk2-p05e-indice-obras`, el nuevo endpoint de lectura
+`/api/v1/projects/works/` obtiene recuentos antes del filtro de etapa y pagina
+sin truncar a 500. Carga los detalles públicos de esa página, sin consultas
+por fila. La vista comercial reutiliza selección, orden y filtros de
+`analytics/quotations`; el jefe de taller no puede solicitarla, ni siquiera
+mediante un filtro de moneda o seguimiento. Una edición entre las lecturas
+de selección y detalle produce 409 para volver a consultar. La pantalla y
+la redirección de `/quotes` aún no consumen este endpoint en esta sub-PR.
+
 El motor ordena compromisos vencidos, bloqueos, trabajo del día y seguimiento.
 El backend lee bajo RLS revisión actual, solicitudes/recibos de precio, ledger
 de cobros, reservas de cada OT y agenda. No modifica autoridad sellada. Saldos

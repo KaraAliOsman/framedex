@@ -20,6 +20,20 @@ Producción y precios comerciales requieren autorización aparte.
 
 ## P05 · Navegación, Hoy y Obras
 
+- P05d se publica en [#192](https://github.com/KaraAliOsman/framedex/pull/192)
+  con los seis recorridos integrados aprobados y doce capturas seleccionadas.
+  P05e `gpt/dk2-p05e-indice-obras` añade el índice de servidor sin límite de
+  500 obras, con páginas y recuentos por etapa. Reutiliza los filtros exactos
+  del índice anterior de cotizaciones, incluido su orden de emisión y offsets.
+  El seguimiento sigue restringido al dueño/vendedor; taller consulta Obras.
+  Una edición entre selección y detalle exige recargar, sin mezclar revisiones.
+  La conexión de este índice a la pantalla y la redirección de `/quotes`
+  corresponden a la siguiente sub-PR; la pantalla actual conserva su límite.
+  Veinticuatro integraciones PostgreSQL y setenta unitarias dirigidas pasan;
+  contrato OpenAPI/orval reproducible, lint, tipos, formato, guardas y build
+  aprobados. El recorrido completo backend pasó 1.735 pruebas y detectó la
+  ruta nueva en la allowlist; corregida explícitamente y comprobada de nuevo.
+
 - P05c se publica en [#191](https://github.com/KaraAliOsman/framedex/pull/191).
   P05d `gpt/dk2-p05d-obras` conecta etapas reales, búsqueda, recuentos y páginas
   de 50 filas con enlaces completos. Conserva los filtros históricos de estado

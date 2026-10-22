@@ -2464,3 +2464,21 @@ de Hoy, las etapas de Obras y la purga global siguen en P05. Se conserva el
 - Las dependencias completas P03h se integran mediante merges en P04/P05;
   se regenera OpenAPI/orval en el conflicto de rutas y se comprueba paridad.
   Los cuatro gates se vuelven a exigir en cada nuevo head.
+
+## [2026-10-22] DEKOPEN 2 P05e | Índice de Obras sin truncar cotizaciones
+
+- Nuevo endpoint de solo lectura con recuentos por etapa y detalles de una
+  página. Consulta las obras que coinciden, sin truncar a las 500 recientes.
+  La proyección de etapas sigue usando el motor para saldos reales.
+- Comparte filtros y orden con el índice histórico de cotizaciones. Conserva
+  offsets arbitrarios, búsqueda por revisión y pertenencia comercial exacta;
+  una sucesora deja de pertenecer. Los permisos se mantienen por rol y RLS.
+- La comprobación final de revisión, estado y actividad impide combinar una
+  edición nueva con el precio proyectado antes de ella. Devuelve 409 y pide
+  recargar. No se escribe estado ni se altera una oferta emitida.
+- P05d se publica con seis E2E integrados y doce capturas en #192. La conexión
+  de la pantalla al índice nuevo y la redirección de `/quotes` siguen pendientes.
+- Veinticuatro integraciones PostgreSQL y setenta unitarias dirigidas aprobadas,
+  API reproducible, Ruff/ESLint/tipos, formato, guardas y build aprobados. El
+  recorrido completo backend detectó únicamente la allowlist de la ruta nueva;
+  se añade esa ruta concreta y su control vuelve a pasar. Sin reducir guardas.
