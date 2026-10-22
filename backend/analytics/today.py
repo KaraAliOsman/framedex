@@ -91,7 +91,7 @@ def quote_public(row, today):
         else "unshared"
         if row["shared_at"] is None
         else "link_expired"
-        if row["expires_at"] < datetime.now(timezone.utc)
+        if row["expires_at"] is not None and row["expires_at"] < datetime.now(timezone.utc)
         else "pending"
     )
     return {
