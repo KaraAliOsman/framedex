@@ -104,7 +104,7 @@ export function ExtraDefinitionEditor({
             onChange={(e) => patch({ scope: e.target.value as ExtraDefinition["scope"] })}
           >
             <option value="PROJECT">Proyecto</option>
-            <option value="POSITION">Cada posición</option>
+            <option value="POSITION">Cada ventana</option>
           </select>
         </label>
       )}
@@ -265,7 +265,7 @@ export function ExtraDefinitionEditor({
               <option value="NONE">No sugerir</option>
               <option value="WINDOW">Hay una ventana</option>
               <option value="MOVING_LEAF">Hay una hoja móvil compatible</option>
-              <option value="OPENING_GAP">El vano de obra excede el marco</option>
+              <option value="OPENING_GAP">La abertura de obra excede el marco</option>
             </select>
           </label>
         </details>

@@ -73,7 +73,7 @@ def catalog_reports(org_id, system_id):
             "SELECT DISTINCT ON(sku) sku,name,role FROM public.profile_articles WHERE system_id=%s "
             "AND (org_id=%s OR org_id IS NULL) ORDER BY sku,org_id NULLS LAST", [system_id, org_id])],
         "glasses": glasses,
-        "specimens": [{"id": str(r["id"]), "label": f'{r["code"]} · posición {r["position_index"]} · {r["location_tag"]}'}
+        "specimens": [{"id": str(r["id"]), "label": f'{r["code"]} · ventana {r["position_index"]} · {r["location_tag"]}'}
             for r in rows("SELECT p.id,p.position_index,p.location_tag,j.code FROM public.project_positions p "
                 "JOIN public.projects j ON j.id=p.project_id AND j.org_id=p.org_id "
                 "WHERE p.org_id=%s AND p.system_id=%s ORDER BY p.updated_at DESC,p.id LIMIT 200", [org_id,system_id])],
@@ -89,7 +89,7 @@ def declare_report(org_id, system_id, actor_id, values):
                "synthetic": bool(values.get("synthetic") or system["is_demo"] or system["data_provenance"] == "SEED_SYNTHETIC")}
     if values["kind"] == "PERFORMANCE":
         if not specimen_id:
-            raise contract_error(422, "thermal_specimen_required", "Elige la posición que reproduce exactamente el producto ensayado.")
+            raise contract_error(422, "thermal_specimen_required", "Elige la ventana que reproduce exactamente el producto ensayado.")
         specimen = service.position_row(org_id, specimen_id)
         geometry, reason = _position_geometry(org_id, specimen, params=params)
         if str(specimen["system_id"]) != str(system_id) or geometry is None or geometry.reasons:
@@ -271,7 +271,7 @@ def save_inputs(org_id, project_id, actor_id, values, expected_updated_at):
             raise contract_error(400, "thermal_inputs_invalid", "Revisa la zona, su referencia oficial y las superficies de muro declaradas.") from error
         ids = {str(p["id"]) for p in _live_positions(org_id, project_id)}
         if not {p.position_id for p in inputs.positions} <= ids:
-            raise contract_error(400, "thermal_position_invalid", "Una orientación no corresponde a las posiciones de este proyecto.")
+            raise contract_error(400, "thermal_position_invalid", "Una orientación no corresponde a las ventanas de este proyecto.")
         rows("INSERT INTO public.project_thermal_inputs(org_id,project_id,revision_code,inputs,declared_by) VALUES(%s,%s,%s,%s::jsonb,%s) "
             "ON CONFLICT(project_id,revision_code) DO UPDATE SET inputs=EXCLUDED.inputs,declared_by=EXCLUDED.declared_by,updated_at=clock_timestamp() RETURNING id",
             [org_id, project_id, project["current_revision"], inputs.model_dump_json(), actor_id])

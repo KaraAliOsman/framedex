@@ -2405,7 +2405,7 @@ export function buildScene3D(
             code: "opening_authority_missing",
             owner: `${module.id}/${leaf.node.id}`,
             values: {
-              what: "Falta la evaluación de las hojas. Evalúa el vano o solicita la revisión al fabricante.",
+              what: "Falta la evaluación de las hojas. Evalúa la ventana o solicita la revisión al fabricante.",
             },
           });
         } else {

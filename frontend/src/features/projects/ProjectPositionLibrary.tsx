@@ -70,12 +70,12 @@ export function ProjectPositionLibrary({
           quantity: 1,
         },
       ],
-      "Agregar posición desde la biblioteca",
+      "Agregar ventana desde la biblioteca",
     );
     if (prepared) onClose();
   }
   return (
-    <EditorFlyout title="Biblioteca de posiciones" onClose={onClose} className="project-library">
+    <EditorFlyout title="Biblioteca de ventanas" onClose={onClose} className="project-library">
       <fieldset disabled={busy} className="project-library-fields">
         <label>
           Serie
@@ -197,7 +197,7 @@ export function ProjectPositionLibrary({
                   disabled={!w || !h || !glass || !color || busy}
                   onClick={() => void propose()}
                 >
-                  Revisar posición con el motor
+                  Revisar ventana con el motor
                 </button>
               </>
             )}

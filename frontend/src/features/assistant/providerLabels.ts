@@ -20,7 +20,7 @@ export const AI_PHASES: Record<string, string> = {
 export const AI_TOOLS: Record<string, string> = {
   validate_operations: "Validar las medidas de prueba con el motor",
   get_project: "Consultar el proyecto",
-  get_position: "Consultar la posición",
+  get_position: "Consultar la ventana",
   get_dashboard: "Consultar el trabajo del día",
   get_context: "Consultar el contexto autorizado",
   search_entities: "Buscar proyectos",
@@ -38,11 +38,11 @@ export const AI_TOOLS: Record<string, string> = {
   get_catalog_imports: "Consultar las importaciones de catálogo",
   calculate_position: "Calcular la ventana",
   validate_position: "Validar el diseño",
-  price_position: "Consultar la venta de la posición",
+  price_position: "Consultar la venta de la ventana",
   price_project: "Consultar la venta del proyecto",
   explain_price_delta: "Comparar la diferencia de venta",
   list_catalog_options: "Consultar opciones del catálogo",
   get_blockers: "Revisar lo que falta",
   simulate_ops: "Simular cambios con el motor",
-  preview_project_operations: "Simular cambios de posiciones",
+  preview_project_operations: "Simular cambios de ventanas",
 };

@@ -306,7 +306,7 @@ export function ThermalCatalogPanel({ systemId }: { systemId: string }) {
               {draft.kind === "PERFORMANCE" && (
                 <>
                   <label className="thermal-wide">
-                    Producto ensayado · posición que reproduce el informe
+                    Producto ensayado · ventana que reproduce el informe
                     <select
                       value={draft.source_position_id ?? ""}
                       onChange={(event) =>

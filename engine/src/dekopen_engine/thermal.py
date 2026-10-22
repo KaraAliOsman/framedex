@@ -299,13 +299,13 @@ class ThermalProjectInput(ThermalModel):
     @model_validator(mode="after")
     def valid_areas(self) -> ThermalProjectInput:
         if any(value <= 0 or not value.is_finite() for value in self.walls_m2.values()):
-            raise ValueError("Ingresa superficies interiores de muro positivas, incluyendo vanos y medianeros.")
+            raise ValueError("Ingresa superficies interiores de muro positivas, incluyendo aberturas de obra y medianeros.")
         if "OGT" in self.walls_m2:
             raise ValueError("OGT se deriva del total de muros; declara Norte, Oriente, Sur y Poniente.")
         if self.exposed_wall_area_m2 is not None and self.exposed_wall_area_m2 > sum(self.walls_m2.values(), D(0)):
             raise ValueError("La superficie expuesta no puede superar el total de muros perimetrales.")
         if len({p.position_id for p in self.positions}) != len(self.positions):
-            raise ValueError("No repitas la orientación de una posición.")
+            raise ValueError("No repitas la orientación de una ventana.")
         if self.zone and not self.zone_source.strip():
             raise ValueError("Indica la referencia oficial de la zona elegida; no se infiere por comuna.")
         if self.walls_m2 and not self.wall_source.strip():
@@ -339,7 +339,7 @@ def _assess_project(inputs: ThermalProjectInput, positions: list[dict[str, Any]]
     if inputs.use == "RESIDENTIAL" and ogt is None:
         general.append("Ingresa la superficie de muros y su parte expuesta; el motor determinará si corresponde OGT.")
     if any(p["position_id"] not in contexts or contexts[p["position_id"]].surface is None for p in positions):
-        general.append("Ubica todas las ventanas en la envolvente; una posición sin ubicación puede alterar cualquier grupo.")
+        general.append("Ubica todas las ventanas en la envolvente; una ventana sin ubicación puede alterar cualquier grupo.")
     groups: dict[str, list[dict[str, Any]]] = {}
     output = []
     for position in positions:
@@ -357,7 +357,7 @@ def _assess_project(inputs: ThermalProjectInput, positions: list[dict[str, Any]]
                 item["verdict"] = "FAIL"
                 item["causes"].append("La clase de permeabilidad al aire no alcanza el mínimo de la zona a 100 Pa.")
         if context is None or context.surface is None:
-            item["causes"].append("Declara si la posición está en fachada o techumbre y su orientación.")
+            item["causes"].append("Declara si la ventana está en fachada o techumbre y su orientación.")
         elif context.surface == "ROOF":
             item["group"] = "ROOF"
             if zone and zone != "A":

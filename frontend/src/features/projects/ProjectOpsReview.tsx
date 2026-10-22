@@ -61,7 +61,7 @@ export function useProjectOperations(
         setError(
           actionErrorDetail(
             cause,
-            "El motor no pudo preparar el cambio. Revisa las posiciones y vuelve a intentar.",
+            "El motor no pudo preparar el cambio. Revisa las ventanas y vuelve a intentar.",
           ),
         );
       return false;
@@ -114,7 +114,7 @@ export function useProjectOperations(
       if (result.status !== 200) throw new ApiError(result.status, result.data);
       if (controller.signal.aborted) return;
       setUndoId("");
-      setNotice("Cambio deshecho. Se restauraron posiciones, orden y preparación anteriores.");
+      setNotice("Cambio deshecho. Se restauraron ventanas, orden y preparación anteriores.");
       await onChanged();
     } catch (cause) {
       if (!controller.signal.aborted)
@@ -184,7 +184,7 @@ type Change = {
   after: Record<string, unknown> | null;
 };
 function description(row: Record<string, unknown> | null): string {
-  if (!row) return "Sin posición";
+  if (!row) return "Sin ventana";
   const place = row.placement as Record<string, string> | undefined;
   const design = row.design as
     { nominal_width_mm?: string; nominal_height_mm?: string } | undefined;
@@ -225,7 +225,7 @@ export function ProjectOpsReview({
         <section aria-label="Revisar cambios antes de aplicar">
           <h3>{proposal.title}</h3>
           <p>
-            {proposal.preview.diff.length} posiciones afectadas. Revisa el antes y después; la
+            {proposal.preview.diff.length} ventanas afectadas. Revisa el antes y después; la
             propuesta todavía no se ha aplicado.
           </p>
           <ol className="project-ops-diff">
@@ -237,7 +237,7 @@ export function ProjectOpsReview({
               return (
                 <li key={String(change.after?.id ?? change.before?.id)}>
                   <strong>
-                    Posición {change.index} ·{" "}
+                    Ventana {change.index} ·{" "}
                     {change.kind === "add"
                       ? "Agregar"
                       : change.kind === "remove"

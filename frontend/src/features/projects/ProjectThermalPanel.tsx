@@ -187,7 +187,7 @@ export function PositionThermal({
       <Link to={`/projects/${projectId}?section=thermal`}>Revisar zona y cumplimiento</Link>
     </section>
   ) : (
-    <p>Uw por completar · esta revisión no contiene un informe de la posición.</p>
+    <p>Uw por completar · esta revisión no contiene un informe de la ventana.</p>
   );
 }
 
@@ -393,8 +393,8 @@ export function ProjectThermalPanel({
                 <>
                   <h3>Muros perimetrales · superficie interior</h3>
                   <p>
-                    Incluye vanos y muros medianeros. Todas las ventanas de Oriente y Poniente se
-                    evalúan por separado.
+                    Incluye aberturas de obra y muros medianeros. Todas las ventanas de Oriente y
+                    Poniente se evalúan por separado.
                   </p>
                   <div className="thermal-fields">
                     {["N", "E", "S", "W"].map((side) => (
@@ -465,7 +465,7 @@ export function ProjectThermalPanel({
                   }
                 />
                 <small>
-                  Referencia o URL del documento que coteja el método y todas las posiciones.
+                  Referencia o URL del documento que coteja el método y todas las ventanas.
                 </small>
               </label>
               <label className="thermal-check">
@@ -520,8 +520,8 @@ export function ProjectThermalPanel({
       {assessment.positions.length === 0 ? (
         <EmptyState
           title="No hay ventanas evaluables"
-          body="Agrega una posición al proyecto para calcular su desempeño."
-          action={<Link to={`/projects/${project.id}/positions/new`}>Agregar posición</Link>}
+          body="Agrega una ventana al proyecto para calcular su desempeño."
+          action={<Link to={`/projects/${project.id}/positions/new`}>Agregar ventana</Link>}
         />
       ) : (
         <div className="thermal-positions">
@@ -529,7 +529,7 @@ export function ProjectThermalPanel({
             <article key={position.position_id} className="thermal-position">
               <header>
                 <Link to={`/projects/${project.id}/positions/${position.position_id}/edit`}>
-                  Posición {position.position_index} · {position.location_tag || "Sin ubicación"}
+                  Ventana {position.position_index} · {position.location_tag || "Sin ubicación"}
                 </Link>
                 <span className="thermal-num">Uw {value(position.thermal.uw, "W/m²K")}</span>
                 <strong>{thermalVerdict[position.verdict]}</strong>
@@ -675,7 +675,7 @@ export function ProjectThermalPanel({
         <section className="thermal-alternative" aria-label="Alternativa que cumple">
           <h3>Menor precio que cumple · {candidate.system_name}</h3>
           <p>
-            Posición {candidate.assessment.position_index} · {candidate.assessment.location_tag}.
+            Ventana {candidate.assessment.position_index} · {candidate.assessment.location_tag}.
             Conserva medidas, apertura, color y cantidad.
           </p>
           <ThermalReadout metric={candidate.assessment.thermal} />

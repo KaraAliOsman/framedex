@@ -781,7 +781,7 @@ function PositionWorkspace({
   // A disabled Guardar must name the first real blocker ("la hoja queda bajo
   // el ancho mínimo del herraje"), not a generic "revisa los parámetros".
   const saveBlockReason = mountingChanged
-    ? "La fabricación cambió: recalcula y aplica Vano y montaje antes de guardar."
+    ? "La fabricación cambió: recalcula y aplica Medidas de obra y montaje antes de guardar."
     : quantityInvalid
       ? t("projects.qtyInvalid")
       : colorUndeclared
@@ -904,13 +904,13 @@ function PositionWorkspace({
   if (!loaded)
     return message ? (
       <ErrorState
-        title="No se pudo abrir la posición"
+        title="No se pudo abrir la ventana"
         titleAs="h1"
-        body="No se recibió el diseño guardado. Vuelve a consultar para abrir esta posición."
+        body="No se recibió el diseño guardado. Vuelve a consultar para abrir esta ventana."
         onRetry={() => setLoadAttempt((attempt) => attempt + 1)}
       />
     ) : (
-      <LoadingState label="Cargando la posición" />
+      <LoadingState label="Cargando la ventana" />
     );
   const dirty = isDirty;
   const restoreDraft = (draft: PositionDraft) => {
@@ -1321,7 +1321,7 @@ function PositionWorkspace({
       <div className="position-body">
         <div className="position-workspace" role="region" aria-labelledby="position-design-title">
           <h2 id="position-design-title" className="visually-hidden">
-            Diseño de la posición
+            Diseño de la ventana
           </h2>
           <AssemblyEditor
             organizationId={orgId}

@@ -129,7 +129,7 @@ export function QuotationGlobalChanges({
       setError(
         actionErrorDetail(
           error,
-          "El motor no pudo revisar este cambio. Revisa las posiciones y vuelve a simular.",
+          "El motor no pudo revisar este cambio. Revisa las ventanas y vuelve a simular.",
         ),
       );
     } finally {
@@ -191,10 +191,10 @@ export function QuotationGlobalChanges({
       open={open}
       onToggle={(event) => setOpen(event.currentTarget.open)}
     >
-      <summary>Cambios globales de las posiciones</summary>
+      <summary>Cambios globales de las ventanas</summary>
       {!canWrite ? (
         <p>
-          Solo un estimador o propietario puede cambiar las posiciones. Solicita acceso al
+          Solo un estimador o propietario puede cambiar las ventanas. Solicita acceso al
           propietario.
         </p>
       ) : revisionLocked ? (
@@ -208,8 +208,8 @@ export function QuotationGlobalChanges({
         </p>
       ) : (project.positions?.length ?? 0) === 0 ? (
         <p>
-          Agrega la primera posición para preparar un cambio global.{" "}
-          <Link to={`/projects/${project.id}/positions/new`}>Agregar posición</Link>
+          Agrega la primera ventana para preparar un cambio global.{" "}
+          <Link to={`/projects/${project.id}/positions/new`}>Agregar ventana</Link>
         </p>
       ) : (
         <>
@@ -224,7 +224,7 @@ export function QuotationGlobalChanges({
                   clear();
                 }}
               />
-              Todas las posiciones
+              Todas las ventanas
             </label>
             {!all ? (
               <div className="quotation-global-selection">
@@ -242,7 +242,7 @@ export function QuotationGlobalChanges({
                         clear();
                       }}
                     />
-                    Posición {position.position_index} · {position.location_tag || "Sin ubicación"}
+                    Ventana {position.position_index} · {position.location_tag || "Sin ubicación"}
                   </label>
                 ))}
               </div>
@@ -402,11 +402,11 @@ export function QuotationGlobalChanges({
         <section className="quotation-global-preview">
           <h4>Impacto antes de aplicar</h4>
           {preview.diff.length === 0 ? (
-            <p>Sin cambios: las posiciones ya tienen el valor elegido o no poseen manilla.</p>
+            <p>Sin cambios: las ventanas ya tienen el valor elegido o no poseen manilla.</p>
           ) : (
             <>
               <p>
-                Se modificarán {preview.diff.length} posiciones. Precio indicativo por posición,
+                Se modificarán {preview.diff.length} ventanas. Precio indicativo por ventana,
                 incluida su cantidad; la emisión usará el precio aplicado.
               </p>
               {preview.simulations.map((raw, index) => {
@@ -415,7 +415,7 @@ export function QuotationGlobalChanges({
                 return (
                   <details key={simulation.position_id}>
                     <summary>
-                      Posición {position?.position_index ?? index + 1} ·{" "}
+                      Ventana {position?.position_index ?? index + 1} ·{" "}
                       {position?.location_tag || "Sin ubicación"} · Δ neto{" "}
                       {simulation.price?.delta_net != null
                         ? formatMoney(
@@ -435,7 +435,7 @@ export function QuotationGlobalChanges({
                 disabled={busy || !editable}
                 onClick={() => void apply()}
               >
-                Aplicar cambio a {preview.diff.length} posiciones
+                Aplicar cambio a {preview.diff.length} ventanas
               </button>
             </>
           )}

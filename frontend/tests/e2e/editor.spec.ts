@@ -484,11 +484,11 @@ test("two tilt-turn leaves 1500×1200 and 4-16-4 take at most six design interac
   ).toContainText("Motor comercial");
   await page.keyboard.press("Escape");
   await expect(page.getByRole("button", { name: "Guardar", exact: true })).toBeEnabled();
-  await page.getByLabel("Ubicación del vano", { exact: true }).fill("Dormitorio DEMO");
+  await page.getByLabel("Ubicación de la ventana", { exact: true }).fill("Dormitorio DEMO");
   await page.getByRole("button", { name: "Guardar", exact: true }).click();
   await expect(page).toHaveURL(/\/positions\/[^/]+\/edit([?]view=[a-z]+)?$/);
   await page.reload();
-  await expect(page.getByLabel("Ubicación del vano", { exact: true })).toHaveValue(
+  await expect(page.getByLabel("Ubicación de la ventana", { exact: true })).toHaveValue(
     "Dormitorio DEMO",
   );
   await expect(page.locator(".viewport-status")).toHaveText("1\u2009500 × 1\u2009200 mm");
@@ -719,7 +719,7 @@ test("tablet opening choices stay compatible and mobile blocks editing and save 
   await expect(
     page.getByText("Vista de lectura · edición disponible desde 1024 px.", { exact: true }),
   ).toBeVisible();
-  await expect(page.getByLabel("Ubicación del vano", { exact: true })).toBeDisabled();
+  await expect(page.getByLabel("Ubicación de la ventana", { exact: true })).toBeDisabled();
   await expect(page.getByLabel("Cantidad", { exact: true })).toBeDisabled();
   await expect(page.getByRole("toolbar", { name: "Herramientas", exact: true })).toBeHidden();
   await expect(page.locator("[data-testid='assembly-sheet']")).toBeVisible();

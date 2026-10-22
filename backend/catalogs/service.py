@@ -676,10 +676,18 @@ def process_profile_options(org_id):
     """Process authorities visible to this org — global rows and its own —
     for the system→profile binding picker. Bounded deliberately: this feeds
     a select, not a bulk export."""
-    return _rows_dicts(
+    options = _rows_dicts(
         "SELECT id,org_id,code,version,label,material,product_kind "
         "FROM public.manufacturing_process_profiles "
         "WHERE org_id IS NULL OR org_id = %s "
         "ORDER BY org_id NULLS FIRST,code,version DESC LIMIT 200",
         [org_id],
     )
+    # Display the built-in fallback in workshop language without rewriting its
+    # immutable catalog record or any workshop-authored route name.
+    return [
+        {**option, "label": "Genérico · proceso por completar"}
+        if option["org_id"] is None and option["code"] == "GENERIC_LEGACY"
+        else option
+        for option in options
+    ]

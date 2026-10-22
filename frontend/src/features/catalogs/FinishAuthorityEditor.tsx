@@ -376,8 +376,8 @@ export function FinishAuthorityEditor({
                 ).map((field, n) =>
                   input(
                     [
-                      "Ancho máximo de posición (mm)",
-                      "Alto máximo de posición (mm)",
+                      "Ancho máximo de ventana (mm)",
+                      "Alto máximo de ventana (mm)",
                       "Ancho máximo de hoja (mm)",
                       "Alto máximo de hoja (mm)",
                     ][n]!,
@@ -411,7 +411,7 @@ export function FinishAuthorityEditor({
                       NONE: "Sin recargo declarado",
                       PER_M: "Por metro de perfil",
                       PERCENT: "Porcentaje del costo de perfiles",
-                      FIXED: "Fijo por posición",
+                      FIXED: "Fijo por ventana",
                     }).map(([key, label]) => (
                       <option key={key} value={key}>
                         {label}

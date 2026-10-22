@@ -8,7 +8,7 @@ Producción y precios comerciales requieren autorización aparte.
 | ---- | -------------------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | P01  | Catálogo v2: backend, origen, niveles y plantillas | Hecha                                | [P01a #164](https://github.com/KaraAliOsman/framedex/pull/164), [P01b #165](https://github.com/KaraAliOsman/framedex/pull/165), [P01c #166](https://github.com/KaraAliOsman/framedex/pull/166), [P01d #167](https://github.com/KaraAliOsman/framedex/pull/167) y [P01e #168](https://github.com/KaraAliOsman/framedex/pull/168) fusionadas |
 | P02  | Ficha de serie editable                            | Hecha                                | Sub-PR [#169](https://github.com/KaraAliOsman/framedex/pull/169)–[#173](https://github.com/KaraAliOsman/framedex/pull/173) fusionadas                                                                                                                                                                                                      |
-| P03  | Alta de serie y ventana de prueba                  | Hecha | #174–#181 fusionadas; [P03h #181](https://github.com/KaraAliOsman/framedex/pull/181) fusionada el 22-10-2026 |
+| P03  | Alta de serie y ventana de prueba                  | Hecha                                | #174–#181 fusionadas; [P03h #181](https://github.com/KaraAliOsman/framedex/pull/181) fusionada el 22-10-2026                                                                                                                                                                                                                               |
 | P04  | Precio simple automático                           | Implementada; CI y fusiones en curso | [#182](https://github.com/KaraAliOsman/framedex/pull/182)–[#187](https://github.com/KaraAliOsman/framedex/pull/187), [#188](https://github.com/KaraAliOsman/framedex/pull/188)                                                                                                                                                             |
 | P05  | Navegación, Hoy y Obras                            | En curso                             | [P05a #189](https://github.com/KaraAliOsman/framedex/pull/189), [P05b #190](https://github.com/KaraAliOsman/framedex/pull/190); P05c `gpt/dk2-p05c-hoy`                                                                                                                                                                                    |
 | P06  | Mesa de la obra y edición directa                  | Pendiente                            | —                                                                                                                                                                                                                                                                                                                                          |
@@ -19,6 +19,14 @@ Producción y precios comerciales requieren autorización aparte.
 | P11  | Pulido y cierre                                    | Pendiente                            | —                                                                                                                                                                                                                                                                                                                                          |
 
 ## P05 · Navegación, Hoy y Obras
+
+- P05h `gpt/dk2-p05h-ventanas` termina la revisión contextual de la interfaz:
+  distingue ventana, medida de obra, paño y coordenada de mecanizado.
+  1.254 unitarias frontend, 55 Python dirigidas, ocho integraciones y 21 E2E
+  pasan. Contratos, enlaces, sinónimos y datos físicos conservan su significado.
+  [28 capturas y límites](../redesign/captures/dk2-p05h/aceptacion.md).
+  Montaje tarda 8,5–10,0 s y Comercial 2,1–3,3 s; optimización pendiente en P11.
+  La revisión de mensajes y documentos de servidor continuará en P05i.
 
 - P05g `gpt/dk2-p05g-lenguaje` termina la primera purga global: cero voces
   prohibidas en los textos de producto con un detector AST activo, sin lista
@@ -34,10 +42,10 @@ Producción y precios comerciales requieren autorización aparte.
   además 16 E2E de navegación/Obras y cuatro de precios con extremos y axe.
   Lint, tipos, formato, guardas y build aprobados. Carga local 410–1.855 ms.
   [22 capturas y límites](../redesign/captures/dk2-p05g/aceptacion.md).
-  Falta la revisión contextual de ventana/medida de obra/coordenada en P05h;
+  La revisión contextual queda en P05h y los mensajes de servidor siguen pendientes;
   P05 no está hecha y P06–P11 siguen pendientes.
-- P04a #182 ya está fusionada (`0f399a1c`). P04b #183 espera su Database Gate
-  en el head `8cb2bd2c`. P05a #189 corrige el bloqueo síncrono de su fixture en
+- P04a #182 (`0f399a1c`) y P04b #183 (`35682cce`) están fusionadas.
+  P04c #184 integra `main` en `2f638dd5` y repite los cuatro controles. P05a #189 corrige el bloqueo síncrono de su fixture en
   `ff2b87e2`: sus diez recorridos originales pasan sobre el build de esa rama;
   CI se repite. Las fusiones continúan en orden con los cuatro controles.
 

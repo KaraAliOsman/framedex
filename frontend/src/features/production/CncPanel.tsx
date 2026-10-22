@@ -73,7 +73,7 @@ export function GapList({ gaps }: { gaps: CncGap[] }) {
                 <strong>{gap.name ?? gap.declaration ?? opLabel(gap.kind)}</strong>
                 {gap.component_name ? ` · ${gap.component_name}` : ""}
                 {gap.position_index ? (
-                  <span className="cnc-number"> · Posición {gap.position_index}</span>
+                  <span className="cnc-number"> · Ventana {gap.position_index}</span>
                 ) : null}
                 {units.length ? (
                   <span className="cnc-number">
@@ -478,9 +478,9 @@ export function CncPanel({ orderId, canWrite }: { orderId: string; canWrite: boo
                           </div>
                         </dl>
                         <details className="ui-tech">
-                          <summary>Coordenadas del vano y detalles técnicos</summary>
+                          <summary>Coordenadas de la ventana y detalles técnicos</summary>
                           <p>
-                            Estas coordenadas pertenecen al plano del vano; no son Y/Z de
+                            Estas coordenadas pertenecen al plano de la ventana; no son Y/Z de
                             herramienta.
                           </p>
                           <p className="cnc-number">
@@ -593,7 +593,7 @@ export function CncPanel({ orderId, canWrite }: { orderId: string; canWrite: boo
                 {(
                   {
                     machine: "máquina y herramientas",
-                    preview: "sección y posición física",
+                    preview: "sección y ubicación física",
                     identity: "plan y semilla",
                     declared_intent_gaps: "declaraciones pendientes",
                   } as Record<string, string>

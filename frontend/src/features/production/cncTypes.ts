@@ -245,7 +245,7 @@ export function findingText(finding: CncFinding): string {
     member_coordinate_outside: "La coordenada cae fuera del largo de la pieza.",
     member_datum_undeclared: "Falta el origen físico de la operación.",
     transverse_coordinate_undeclared:
-      "Faltan coordenadas de herramienta sobre la sección. Las coordenadas del vano no las reemplazan.",
+      "Faltan coordenadas de herramienta sobre la sección. Las coordenadas de la ventana no las reemplazan.",
     section_undeclared: "Falta completar · esta revisión no guardó una sección de perfil.",
     section_orientation_undeclared:
       "Falta orientación u origen explícito de la sección de la orden.",

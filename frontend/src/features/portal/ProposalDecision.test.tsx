@@ -172,7 +172,7 @@ test("changes point to the selected sealed position and require a comment", asyn
   const button = await screen.findByRole("button", { name: "Solicitar cambios" });
   fireEvent.click(button);
   expect(portalQuoteDecide).not.toHaveBeenCalled();
-  fireEvent.change(screen.getByLabelText("Posición a revisar (opcional)"), {
+  fireEvent.change(screen.getByLabelText("Ventana a revisar (opcional)"), {
     target: { value: "base-position" },
   });
   fireEvent.change(screen.getByLabelText("Comentario"), {

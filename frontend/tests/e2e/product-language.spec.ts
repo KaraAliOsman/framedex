@@ -24,6 +24,9 @@ for (const viewport of [
         ["purchasing", "/purchasing", "main h1"],
         ["analytics", "/analytics", "main h1"],
         ["costs", "/pricing/cost-lists", ".pricing-page"],
+        ["mounting", "/settings/general?section=production", ".mounting-settings"],
+        ["services", "/settings/general?section=commercial", '[aria-label="Extras y servicios"]'],
+        ["onboarding", "/onboarding", "main h1"],
       ] as const;
       for (const [name, href, ready] of screens) {
         const start = Date.now();
@@ -54,7 +57,7 @@ for (const viewport of [
         }
         const text = await page.locator("main").innerText();
         expect(text, name).not.toMatch(
-          /\b(?:sin datos?|sellad[oa]s?|autoridad(?:es)?|fuentes?|procedencias?)\b/iu,
+          /\b(?:sin datos?|sellad[oa]s?|autoridad(?:es)?|fuentes?|procedencias?|posici[oó]n|posiciones|vanos?|encargos?|recibos?)\b/iu,
         );
         expect(
           await page.evaluate(() => document.documentElement.scrollWidth),

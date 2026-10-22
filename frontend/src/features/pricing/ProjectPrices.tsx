@@ -315,7 +315,7 @@ function PriceCascade({
             currency={currency}
             sources={sources}
             trace={reading.traces?.list_net}
-            formula="Suma de precios de lista de posiciones y servicios"
+            formula="Suma de precios de lista de ventanas y servicios"
           />
         </div>
       )}
@@ -579,8 +579,8 @@ export function Projection({
         sources={sources}
         costsVisible={owner && operation.costs_visible}
       />
-      <h3>Posiciones</h3>
-      <div className="price-positions" tabIndex={0} aria-label="Tabla de posiciones">
+      <h3>Ventanas</h3>
+      <div className="price-positions" tabIndex={0} aria-label="Tabla de ventanas">
         <table className="price-position-table">
           <thead>
             <tr>
@@ -602,7 +602,7 @@ export function Projection({
             {value.positions.map((line) => (
               <Fragment key={line.position_index}>
                 <tr className="price-position-reading">
-                  <th data-label="Posición">{line.position_index}</th>
+                  <th data-label="Ventana">{line.position_index}</th>
                   <td data-label="Ubicación y tipología">
                     <span>
                       {line.location || "Sin ubicación"}
@@ -654,7 +654,7 @@ export function Projection({
                         sources={sources}
                         display="fraction"
                         trace={line.traces?.margin}
-                        formula="(Neto de la posición − costo) ÷ neto"
+                        formula="(Neto de la ventana − costo) ÷ neto"
                       />
                     </td>
                   )}
@@ -664,15 +664,15 @@ export function Projection({
                       currency={currency}
                       sources={sources}
                       trace={line.traces?.delta}
-                      formula="Neto propuesto de la posición − neto aplicado"
+                      formula="Neto propuesto de la ventana − neto aplicado"
                     />
                   </td>
                 </tr>
                 <tr>
                   <td colSpan={owner && operation.costs_visible ? 8 : 6}>
                     <details>
-                      <summary>Composición de la posición {line.position_index}</summary>
-                      <p>Descuento de esta posición: {formatPercent(line.discount_pct)}.</p>
+                      <summary>Composición de la ventana {line.position_index}</summary>
+                      <p>Descuento de esta ventana: {formatPercent(line.discount_pct)}.</p>
                       {line.warnings.map((text) => (
                         <p key={text}>{text}</p>
                       ))}
@@ -686,7 +686,7 @@ export function Projection({
                             netOnly
                           />
                           <p>
-                            IVA definitivo por proyecto. Esta lectura llega al neto de la posición.
+                            IVA definitivo por proyecto. Esta lectura llega al neto de la ventana.
                           </p>
                           <table className="price-composition">
                             <thead>
@@ -745,7 +745,7 @@ export function Projection({
                             />
                           )}
                           <p>
-                            La venta de esta posición conserva su importe neto guardado. La
+                            La venta de esta ventana conserva su importe neto guardado. La
                             composición de compra está reservada al dueño y jefe de taller.
                           </p>
                         </>
@@ -1169,7 +1169,7 @@ export function ProjectPrices({
       )}
       {emptyProject && (
         <section className="price-empty">
-          <h2>El proyecto aún no tiene posiciones</h2>
+          <h2>El proyecto aún no tiene ventanas</h2>
           <p>Agrega la primera ventana para calcular su precio y comprobar los costos.</p>
           <Link
             className="ui-button ui-button--primary"

@@ -1464,7 +1464,7 @@ export function ProjectQuotationPanel({
     },
     {
       key: "positions",
-      label: "Posiciones y precios",
+      label: "Ventanas y precios",
       complete:
         canEmit &&
         Boolean(project.position_count) &&
@@ -1655,18 +1655,16 @@ export function ProjectQuotationPanel({
             <div id="quotation-positions" tabIndex={-1}>
               <p>
                 {project.position_count === 0
-                  ? "La obra aún no tiene posiciones."
+                  ? "La obra aún no tiene ventanas."
                   : canEmit
                     ? "El precio está listo. Revisa las ventanas y las condiciones antes del PDF."
                     : project.working_price?.error?.detail ||
                       "Revisa los datos y precios de las ventanas."}
               </p>
               {project.position_count === 0 ? (
-                <Link to={`/projects/${project.id}/positions/new`}>Agregar primera posición</Link>
+                <Link to={`/projects/${project.id}/positions/new`}>Agregar primera ventana</Link>
               ) : canEmit === false ? (
-                <Link to={`/projects/${project.id}/pricing`}>
-                  Revisar precios de las posiciones
-                </Link>
+                <Link to={`/projects/${project.id}/pricing`}>Revisar precios de las ventanas</Link>
               ) : null}
             </div>
             <QuotationGlobalChanges
@@ -1778,7 +1776,7 @@ export function ProjectQuotationPanel({
                 {preparation.positions.map((position, index) => (
                   <details className="quotation-position" key={position.position_id}>
                     <summary>
-                      Posición {index + 1} · {position.location_tag || "Sin ubicación"} ·{" "}
+                      Ventana {index + 1} · {position.location_tag || "Sin ubicación"} ·{" "}
                       {positionFormComplete(position) ? "Preparada" : "Qué falta"}
                     </summary>
                     <fieldset disabled={busy}>
@@ -2396,7 +2394,7 @@ export function ProjectQuotationPanel({
                   ))}
                 {emitMissing.length > 0 && (
                   <div className="quotation-technical-missing">
-                    <h4>Preparación de las posiciones</h4>
+                    <h4>Preparación de las ventanas</h4>
                     <ul>
                       {emitMissing.map((item) => (
                         <li key={item.key}>

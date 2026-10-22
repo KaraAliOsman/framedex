@@ -133,7 +133,7 @@ export function CncMemberDrawing({
             <p>
               {endPlane
                 ? "Trabajo declarado sobre el plano completo del extremo; no representa una trayectoria de herramienta."
-                : "Falta completar · no se declaró Y/Z de herramienta sobre esta sección; se muestra solo la posición longitudinal."}
+                : "Falta completar · no se declaró Y/Z de herramienta sobre esta sección; se muestra solo la coordenada longitudinal."}
             </p>
           ) : null}
         </div>

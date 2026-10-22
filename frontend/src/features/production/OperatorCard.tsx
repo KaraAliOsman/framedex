@@ -236,7 +236,7 @@ function _loc(
 ): string {
   const parts: string[] = [];
   if (piece.bay_id) {
-    parts.push(labels[piece.bay_id] ?? "Falta completar · vano sin código");
+    parts.push(labels[piece.bay_id] ?? "Falta completar · ventana sin código");
   }
   if (piece.leaf_id) {
     parts.push(labels[piece.leaf_id] ?? "Falta completar · hoja sin código");

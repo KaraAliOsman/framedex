@@ -245,7 +245,7 @@ export function ProjectOpsStep({
       ) : null}
       {preview && !preview.valid ? (
         <p role="alert">
-          El proyecto bloquea esta propuesta. Revisa las posiciones y vuelve a simular.
+          El proyecto bloquea esta propuesta. Revisa las ventanas y vuelve a simular.
         </p>
       ) : null}
       {state === "proposed" ? (

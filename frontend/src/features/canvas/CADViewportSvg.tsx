@@ -111,7 +111,7 @@ export function CADViewportSvg({
     <section className="cad-viewport" aria-labelledby="canvas-title">
       <div className="cad-viewport__heading">
         <div>
-          <p className="eyebrow">Vano demo · G1</p>
+          <p className="eyebrow">Ventana demo · G1</p>
           <h1 id="canvas-title">Editor paramétrico 2D</h1>
         </div>
         <span className="canvas-system">{t("catalog.demo")}</span>

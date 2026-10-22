@@ -36,7 +36,7 @@ export function AdvancedPlanPane({
         </button>
       </header>
       <p className="advanced-plan-legend">
-        Línea discontinua: posición cerrada · Línea continua: posición abierta
+        Línea discontinua: hoja cerrada · Línea continua: hoja abierta
       </p>
       {rows.map(({ key, leaves }) => {
         const passageBay = passage && leaves.some((leaf) => leaf.advanced!.pass_open_plan);

@@ -826,7 +826,7 @@ export const ASSEMBLY_COMMANDS: CommandSpec[] = [
         ? copyBaySpec(ctx.product, target.module.id, target.node.id, clipboard.spec)
         : ctx.product;
     },
-    describe: () => "aplicar especificación de vano",
+    describe: () => "aplicar especificación de paño",
   },
   {
     id: "coupling.insert-module",
@@ -936,7 +936,7 @@ export const ASSEMBLY_COMMANDS: CommandSpec[] = [
       const sibling = (parent?.children ?? []).find((child) => child.id !== target.node.id)?.id;
       ctx.select(sibling ? `${target.module.id}/${sibling}` : target.module.id);
     },
-    describe: () => "quitar vano",
+    describe: () => "quitar paño",
   },
   {
     id: "split.remove",

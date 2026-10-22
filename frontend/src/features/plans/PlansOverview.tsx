@@ -53,7 +53,7 @@ export function PlansOverview(): JSX.Element | null {
         <article className="plans-overview__card">
           <h3>Manual completo</h3>
           <p>
-            Cotizador profesional sin IA: catálogos, obras, posiciones y aperturas, Mesa de obra y
+            Cotizador profesional sin IA: catálogos, obras, ventanas y aperturas, Mesa de obra y
             Estudio, motor de cálculo, precios, PDF, cortes, compras, taller y terreno. No depende
             del asistente ni consume créditos.
           </p>

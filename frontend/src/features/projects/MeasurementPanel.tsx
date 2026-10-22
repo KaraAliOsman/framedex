@@ -10,7 +10,7 @@ import "./mounting.css";
 export function AxisBreakdown({ axis, label }: { axis: AxisDerivation; label: string }) {
   return (
     <p className="mounting-number">
-      {label}: vano {fmtMm(axis.opening_mm)}
+      {label}: medida de obra {fmtMm(axis.opening_mm)}
       {[axis.first, axis.second].map((side, i) => (
         <span key={i}>
           {" "}
@@ -28,7 +28,7 @@ export function MountingChip({ evidence }: { evidence: MountingEvidence }) {
   return (
     <p className="mounting-chip">
       <span>
-        Vano{" "}
+        Medida de obra{" "}
         <span className="mounting-number">
           {fmtMm(evidence.result.width.opening_mm)} × {fmtMm(evidence.result.height.opening_mm)} mm
         </span>
@@ -103,7 +103,8 @@ export function MeasurementPanel({
       <h4>Medidas para producción</h4>
       {!record ? (
         <p>
-          Registra el vano y el montaje en el editor. La producción requiere medidas confirmadas.
+          Registra las medidas de obra y el montaje en el editor. La producción requiere medidas
+          confirmadas.
         </p>
       ) : (
         <>

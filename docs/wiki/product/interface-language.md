@@ -3,7 +3,7 @@ type: concept
 status: active
 updated: 2026-10-22
 volatility: high
-verified_ref: gpt/dk2-p05g-lenguaje
+verified_ref: gpt/dk2-p05h-ventanas
 sources:
   - docs/research/2026-10-21-competencia/prompts/P05-navegacion-hoy-obras.md
   - docs/design/CONSTITUCION.md
@@ -55,12 +55,20 @@ tarifas entre consultas. No cambia una fórmula ni introduce una caché global.
 ## Intención y trabajo pendiente
 
 El encargo del dueño exige español de taller en todas las superficies.
-P05g cubre las cinco voces controladas y el lenguaje de tareas de IA.
-La revisión contextual de ventana/medida de obra/coordenada se mantiene aparte:
-reemplazar automáticamente cada «posición» o «vano» confundiría una coordenada
-de mecanizado con una ventana. Los demás textos generados por backend y los datos
-históricos deben revisarse en su origen; no se reescribe evidencia emitida ni
-prosa aportada por clientes para conseguir un recuento de cadenas.
+P05g cubre las cinco voces iniciales y el lenguaje de tareas de IA. P05h amplía
+el guardián a posición/vano, encargo y recibo, con la misma frontera entre texto
+y contrato. Conserva los sinónimos antiguos de búsqueda y los enlaces DOM.
+
+La revisión contextual de P05h distingue la ventana de la obra, el paño de su
+dibujo y la coordenada de mecanizado. Las medidas de obra no se confunden con
+las medidas de fabricación; una manilla tiene ubicación y un punto CNC no es
+una ventana. Los cobros tienen comprobantes; las tareas del asistente, resumen.
+Se corrigen también las etiquetas de espécimen térmico y acciones de Hoy.
+
+Los demás textos generados por backend, motor y documentos requieren la ronda
+P05i y siguientes; el recuento cero de TypeScript no acredita esas respuestas.
+No se reescribe evidencia emitida ni prosa aportada por clientes para conseguir
+un recuento de cadenas. P05 sigue en curso hasta cerrar esa revisión y sus PR.
 
 La enmienda del 22-10 en la constitución registra el glosario global. Las
 capturas de fases anteriores describen sus propios refs y no se regeneran

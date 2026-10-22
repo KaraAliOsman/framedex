@@ -30,7 +30,7 @@ describe("crumbsFor", () => {
       { label: "Proyecto" },
     ]);
     expect(crumbsFor("/projects/p1/positions/x9/edit", null, null)[2]).toEqual({
-      label: "Vano",
+      label: "Ventana",
     });
   });
 

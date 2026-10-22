@@ -603,7 +603,7 @@ export function ProjectPaymentsPanel({
           )}
       </div>
       {message && <p className="form-error">{message}</p>}
-      {paymentsQuery.isPending && <LoadingState label="Consultando el saldo y los recibos" />}
+      {paymentsQuery.isPending && <LoadingState label="Consultando el saldo y los comprobantes" />}
       {paymentsQuery.isError && (
         <ErrorState
           title="No se cargó la cobranza"
@@ -681,7 +681,7 @@ export function ProjectPaymentsPanel({
             <ul>
               {payments.map((payment) => (
                 <li key={payment.id}>
-                  {payment.receipt_code ?? "Recibo por completar"} ·{" "}
+                  {payment.receipt_code ?? "Comprobante por completar"} ·{" "}
                   <Money value={payment.amount} currency={summary.currency} /> ·{" "}
                   {payment.voided_at ? "Anulado · no se suma" : "Vigente"}
                   {payment.simulated ? " · Simulado" : ""}
@@ -818,7 +818,8 @@ export function ProjectPaymentsPanel({
         <DataTable
           rows={payments}
           rowKey={(payment) => payment.id}
-          label="Movimientos y recibos"
+          label="Movimientos y comprobantes"
+          emptyTitle="Todavía no hay movimientos ni comprobantes"
           emptyReason="Todavía no hay pagos registrados en este proyecto."
           columns={[
             {
@@ -881,7 +882,7 @@ export function ProjectPaymentsPanel({
                     {p.receipt_code}
                   </button>
                 ) : (
-                  "Falta completar · recibo histórico"
+                  "Falta completar · comprobante histórico"
                 ),
             },
             ...(canWrite

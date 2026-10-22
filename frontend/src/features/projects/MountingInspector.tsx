@@ -289,7 +289,7 @@ export function MountingInspector({
   }
   return (
     <details className="inspector-section mounting-inspector" open>
-      <summary>Vano y montaje</summary>
+      <summary>Medidas de obra y montaje</summary>
       {query.isPending && inputs.systemId ? (
         <LoadingState label="Cargando reglas de montaje…" />
       ) : query.isError ? (
@@ -300,7 +300,7 @@ export function MountingInspector({
       ) : rules.length === 0 ? (
         <p>
           Falta completar: esta serie no tiene montaje declarado. El dueño o encargado lo configura
-          en <Link to="/settings/general">Ajustes › Vano y montaje</Link>.
+          en <Link to="/settings/general">Ajustes › Medidas de obra y montaje</Link>.
         </p>
       ) : (
         <>

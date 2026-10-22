@@ -95,8 +95,8 @@ export function FlowSimulationPage({ returnMode = false }: { returnMode?: boolea
             )}
             {query.data.status === "PAID" && (
               <p>
-                La confirmación de prueba registró un único movimiento simulado y su recibo. Quien
-                emitió la cotización puede consultarlos en Cobranza.
+                La confirmación de prueba registró un único movimiento simulado y su comprobante.
+                Quien emitió la cotización puede consultarlos en Cobranza.
               </p>
             )}
             {query.data.status === "PENDING" && returnMode && (

@@ -142,7 +142,7 @@ function ProposalState({ quote }: { quote: PortalQuote }): JSX.Element {
       ) : quote.approval_status === "DECLINED" ? (
         <p>Su rechazo quedó registrado. Si necesita otra propuesta, contacte al fabricante.</p>
       ) : (
-        <p>Revise las posiciones, el importe y las condiciones antes de aceptar.</p>
+        <p>Revise las ventanas, el importe y las condiciones antes de aceptar.</p>
       )}
     </section>
   );
@@ -676,7 +676,7 @@ export function PortalQuotePage(): JSX.Element {
                     {candidate.positions[0]?.system_name || "Serie de la cotización"} ·{" "}
                     {candidate.positions[0]?.finish || "Acabado por completar"}
                   </p>
-                  <p>{candidate.positions.length} posiciones</p>
+                  <p>{candidate.positions.length} ventanas</p>
                   <p>
                     <Money value={candidate.display_total_gross} currency={candidate.currency} />{" "}
                     IVA incluido
@@ -712,7 +712,7 @@ export function PortalQuotePage(): JSX.Element {
             {option.price_cause}
           </p>
         )}
-        <section className="portal-section" aria-label="Posiciones de la solución">
+        <section className="portal-section" aria-label="Ventanas de la solución">
           <h2>Lo que usted compra</h2>
           <p>{formatRevision(option.revision_code)} · precios unitarios y de línea IVA incluido.</p>
           <div className="portal-positions">
@@ -720,7 +720,7 @@ export function PortalQuotePage(): JSX.Element {
               <article className="portal-position" key={p.id} id={`posicion-${p.position_index}`}>
                 <header>
                   <h3>
-                    Posición {p.position_index} · {p.location_tag || "Ubicación sin declarar"}
+                    Ventana {p.position_index} · {p.location_tag || "Ubicación sin declarar"}
                   </h3>
                   {p.is_demo && (
                     <DemoBadge source="Catálogo sintético; sin certificación técnica" />
@@ -746,7 +746,7 @@ export function PortalQuotePage(): JSX.Element {
                         <dt>Vidrio</dt>
                         <dd>
                           {p.glass_specs.join(" · ") || (
-                            <UnknownValue cause="No se declaró vidrio en esta posición" />
+                            <UnknownValue cause="No se declaró vidrio en esta ventana" />
                           )}
                         </dd>
                       </div>
@@ -754,7 +754,7 @@ export function PortalQuotePage(): JSX.Element {
                         <dt>Acabado</dt>
                         <dd>
                           {p.finish || (
-                            <UnknownValue cause="No se declaró acabado en esta posición" />
+                            <UnknownValue cause="No se declaró acabado en esta ventana" />
                           )}
                         </dd>
                       </div>
@@ -798,7 +798,7 @@ export function PortalQuotePage(): JSX.Element {
                           document.getElementById("portal-note")?.focus();
                         }}
                       >
-                        Solicitar cambio en posición {p.position_index}
+                        Solicitar cambio en ventana {p.position_index}
                       </button>
                     )}
                   </div>
@@ -808,7 +808,7 @@ export function PortalQuotePage(): JSX.Element {
           </div>
           {!option.positions.length && (
             <p>
-              Sin posiciones · solicite al fabricante una propuesta con el detalle de los vanos.
+              Sin ventanas · solicite al fabricante una propuesta con el detalle de las ventanas.
             </p>
           )}
         </section>
@@ -838,7 +838,7 @@ export function PortalQuotePage(): JSX.Element {
           <p>
             Ajuste de moneda:{" "}
             <Money value={option.rounding_adjustment} currency={option.currency} />. La suma de
-            posiciones, servicios, cargos y este ajuste conserva el total emitido.
+            ventanas, servicios, cargos y este ajuste conserva el total emitido.
           </p>
         )}
         <PriceSource option={option} />
@@ -916,7 +916,7 @@ export function PortalQuotePage(): JSX.Element {
               </button>
               <hr />
               <h3>Cambios o rechazo</h3>
-              <label htmlFor="portal-position">Posición a revisar (opcional)</label>
+              <label htmlFor="portal-position">Ventana a revisar (opcional)</label>
               <select
                 id="portal-position"
                 value={position}
@@ -926,7 +926,7 @@ export function PortalQuotePage(): JSX.Element {
                 <option value="">Propuesta completa</option>
                 {option.positions.map((p) => (
                   <option key={p.id} value={p.id}>
-                    Posición {p.position_index} · {p.location_tag || "Sin ubicación"}
+                    Ventana {p.position_index} · {p.location_tag || "Sin ubicación"}
                   </option>
                 ))}
               </select>

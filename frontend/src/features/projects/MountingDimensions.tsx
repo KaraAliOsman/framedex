@@ -16,7 +16,7 @@ export function MountingDimensions({
   const scale = useViewportScale();
   const fontSize = Math.max(34, 12 / scale);
   return (
-    <g className="mounting-dimensions" aria-label="Cota doble de vano y fabricación">
+    <g className="mounting-dimensions" aria-label="Cota doble de obra y fabricación">
       {evidence.map((item) => {
         const rect = layout.rects.find((r) => r.module.id === item.survey.module_id);
         if (!rect) return null;
@@ -41,7 +41,7 @@ export function MountingDimensions({
               y2={dimensionY + tick}
             />
             <text x={rect.x + rect.w / 2} y={openingLabelY} style={{ fontSize }}>
-              Vano {fmtMm(item.result.width.opening_mm)} × {fmtMm(item.result.height.opening_mm)} mm
+              Obra {fmtMm(item.result.width.opening_mm)} × {fmtMm(item.result.height.opening_mm)} mm
             </text>
             <text x={rect.x + rect.w / 2} y={fabricationLabelY} style={{ fontSize }}>
               Fabricación {fmtMm(rect.module.width_mm)} × {fmtMm(rect.module.height_mm)} mm

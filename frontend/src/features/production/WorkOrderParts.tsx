@@ -25,7 +25,7 @@ export type WorkshopPiece = {
 /** Display only sealed addresses and engine measurements; no new piece numbers. */
 export function orderPieces(detail: ProductionOrderDetail): WorkshopPiece[] {
   const optimization = detail.payload?.optimization as WorkOrderOptimization | undefined;
-  const position = detail.making?.code ?? "Falta completar · posición sin código";
+  const position = detail.making?.code ?? "Falta completar · ventana sin código";
   const rows: WorkshopPiece[] = [];
   for (const bar of optimization?.bars?.workshop_cut_plan ?? []) {
     for (const cut of bar.cuts)
@@ -70,7 +70,7 @@ export function pieceMeasure(piece: WorkshopPiece): string {
 }
 
 const columns: TableColumn<WorkshopPiece>[] = [
-  { id: "position", label: "Posición", value: (p) => p.position },
+  { id: "position", label: "Ventana", value: (p) => p.position },
   { id: "unit", label: "Unidad", value: (p) => p.unit, numeric: true },
   {
     id: "code",

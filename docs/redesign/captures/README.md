@@ -85,3 +85,6 @@ estos payloads de las búsquedas generales; las rutas explícitas y
 
 - [P05a · Navegación por rol](dk2-p05a/aceptacion.md): dieciséis capturas de
   cinco roles en escritorio/móvil; contenido nuevo de Hoy/Obras aún pendiente.
+
+- [P05h · Glosario contextual](dk2-p05h/aceptacion.md): catorce superficies,
+  28 capturas a 1440/390; mensajes/documentos de servidor aún pendientes.

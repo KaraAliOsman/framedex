@@ -4,6 +4,7 @@ import type {
   EngineAssemblyCalculateResponse,
   PositionResponse,
   ProjectResponse,
+  WorksResponse,
 } from "../../src/api/generated/models";
 import { fmtMm } from "../../src/format";
 import { test } from "./support/manual-project-fixture";
@@ -104,10 +105,10 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
       .click();
   const freshRead = () => page.reload();
 
-  const emptyProjects = await responseTo<{ items: ProjectResponse[] }>(
+  const emptyProjects = await responseTo<WorksResponse>(
     page,
     "GET",
-    "/api/v1/projects/",
+    "/api/v1/projects/works/",
     200,
     () => page.goto("/projects"),
   );
@@ -157,11 +158,11 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   });
   await expect(page).toHaveURL(new RegExp(`${projectPath}([?][^/]*)?$`));
   await expect(page.getByRole("heading", { level: 1 })).toContainText(projectName);
-  await expect(page.getByRole("link", { name: "Agregar vanos", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Agregar ventanas", exact: true })).toBeVisible();
   await screenshot(page, info, "01-project-created");
 
-  await page.getByRole("link", { name: "Agregar vanos", exact: true }).click();
-  await page.getByLabel("Ubicación del vano", { exact: true }).fill("Cocina original");
+  await page.getByRole("link", { name: "Agregar ventanas", exact: true }).click();
+  await page.getByLabel("Ubicación de la ventana", { exact: true }).fill("Cocina original");
   await page.getByLabel("Cantidad", { exact: true }).fill("2");
 
   await page.locator(".editor-system-chip").click();
@@ -422,7 +423,7 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
     copyRow.press("Enter"),
   );
   await expect(page.getByText("Guardado", { exact: true })).toBeVisible();
-  await page.getByLabel("Ubicación del vano", { exact: true }).fill("Cocina duplicada");
+  await page.getByLabel("Ubicación de la ventana", { exact: true }).fill("Cocina duplicada");
   await expect(page.getByText("Cambios sin guardar", { exact: true })).toBeVisible();
 
   const duplicate = await responseTo<PositionResponse>(

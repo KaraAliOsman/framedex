@@ -128,7 +128,7 @@ export function QuotationLinkLedger({
                       {link.selected_revision && (
                         <p>
                           Solución elegida: {formatRevision(link.selected_revision)}
-                          {link.position_index ? ` · posición ${link.position_index}` : ""}
+                          {link.position_index ? ` · ventana ${link.position_index}` : ""}
                         </p>
                       )}
                       {link.decided_note ? <blockquote>{link.decided_note}</blockquote> : null}

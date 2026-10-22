@@ -128,8 +128,8 @@ export function MountingRulesSettings({ orgId, canWrite }: { orgId: string; canW
     }
   }
   return (
-    <section className="settings-group mounting-settings" aria-label="Vano y montaje">
-      <h2>Vano y montaje</h2>
+    <section className="settings-group mounting-settings" aria-label="Medidas de obra y montaje">
+      <h2>Medidas de obra y montaje</h2>
       <p>
         Reglas de esta organización por serie. Cada cambio guarda una regla nueva; las medidas ya
         guardadas conservan su regla exacta.
@@ -270,8 +270,8 @@ export function MountingRulesSettings({ orgId, canWrite }: { orgId: string; canW
                   Referencia sintética DEMO, sin certificación
                 </label>
                 <p>
-                  Fabricación = menor medida del vano − holguras − marco − ensanches + traslapes.
-                  Los ceros visibles significan que declaras que ese lado no aplica esa deducción.
+                  Fabricación = menor medida de obra − holguras − marco − ensanches + traslapes. Los
+                  ceros visibles significan que declaras que ese lado no aplica esa deducción.
                 </p>
                 <div className="mounting-rule-sides">
                   {sides.map(([side, label]) => (

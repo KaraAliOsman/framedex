@@ -140,7 +140,7 @@ export function SimulationPreview({
           <figure key={item.label} className="sheet-miter">
             <figcaption>{item.label}</figcaption>
             {!item.product ? (
-              <p>Sin posición</p>
+              <p>Sin ventana</p>
             ) : options[item.system] ? (
               <Drawing
                 product={item.product}

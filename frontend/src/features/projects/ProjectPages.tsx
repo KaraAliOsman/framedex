@@ -1946,7 +1946,7 @@ function ProjectWorkspace({
                 if (!selected) return null;
                 return (
                   <Drawer
-                    title={`Posición ${selected.position_index} · ${selected.location_tag || "Sin ubicación"}`}
+                    title={`Ventana ${selected.position_index} · ${selected.location_tag || "Sin ubicación"}`}
                     onClose={() => setShowPosition(false)}
                   >
                     <PositionThumb design={selected.design} />

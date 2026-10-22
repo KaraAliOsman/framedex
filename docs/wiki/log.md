@@ -2514,3 +2514,17 @@ de Hoy, las etapas de Obras y la purga global siguen en P05. Se conserva el
   en navegación y 300 perfiles conservados en estrés. Sus diez recorridos pasan;
   el nuevo CI evalúa `ff2b87e2`. P04a #182 está fusionada; P04b espera Database
   Gate. P05h contextual y P06–P11 siguen pendientes.
+
+## [2026-10-22] DEKOPEN 2 P05h | Ventana, obra y coordenada
+
+- Revisión contextual del glosario: ventana y paño, medidas de obra y fabricación,
+  ubicación de manilla y coordenada CNC; comprobante financiero y resumen de IA.
+  Guardián ampliado con fronteras de contratos, enlaces y búsqueda probadas.
+- 1.254 unitarias frontend, 55 Python dirigidas, ocho integraciones PostgreSQL
+  y 21 E2E aprobados. Catorce superficies a 1440/390, con 28 capturas en
+  [aceptación P05h](../redesign/captures/dk2-p05h/aceptacion.md). Bytes dorados intactos.
+- El selector del proceso genérico proyecta su etiqueta sin reescribir catálogo
+  ni nombres del taller. La prueba de obra consulta el índice real de P05f.
+- Se mide una carga de 8,5–10,0 s en ajustes de montaje y 2,1–3,3 s en Comercial;
+  queda para P11. P05 continúa con mensajes/documentos de servidor. P04b está
+  fusionada; P04c repite controles tras integrar main. P06–P11 pendientes.

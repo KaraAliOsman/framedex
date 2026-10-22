@@ -155,10 +155,10 @@ export default function Model3DView({
     return (
       <div className="model3d-fallback">
         <p>
-          Sin vano definido.{" "}
+          Sin ventana definida.{" "}
           {audience === "portal"
             ? "Solicite el dibujo al fabricante."
-            : "Agrega una posición para ver su geometría."}
+            : "Agrega una ventana para ver su geometría."}
         </p>
       </div>
     );
@@ -167,7 +167,7 @@ export default function Model3DView({
       <div className="model3d-fallback">
         <p>
           Este equipo no tiene aceleración gráfica para el 3D.{" "}
-          {audience === "portal" ? "Use" : "Usa"} el dibujo técnico de esta posición.
+          {audience === "portal" ? "Use" : "Usa"} el dibujo técnico de esta ventana.
         </p>
       </div>
     );
@@ -279,7 +279,7 @@ export default function Model3DView({
                   return (
                     <div className="model3d-leaf-row" key={`${module.moduleId}/${leaf.leafId}`}>
                       <span>
-                        {scene.modules.length > 1 ? `Vano ${moduleIndex + 1} · ` : ""}
+                        {scene.modules.length > 1 ? `Ventana ${moduleIndex + 1} · ` : ""}
                         {leaf.label ?? "Hoja"}
                       </span>
                       <button

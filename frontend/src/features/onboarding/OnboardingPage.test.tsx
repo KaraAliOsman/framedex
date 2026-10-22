@@ -211,7 +211,7 @@ test("the first project preserves the client's contact for its later sealed quot
   } as Awaited<ReturnType<typeof projectsCreate>>);
   mount();
   fireEvent.click(await screen.findByRole("button", { name: "Crear obra" }));
-  await screen.findByRole("link", { name: "Dibujar primera posición" });
+  await screen.findByRole("link", { name: "Dibujar primera ventana" });
   expect(projectsCreate).toHaveBeenCalledWith(
     expect.objectContaining({
       client_id: clientId,

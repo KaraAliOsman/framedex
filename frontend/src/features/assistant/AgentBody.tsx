@@ -1344,7 +1344,7 @@ export function AgentBody({
                                     {wasUndone
                                       ? "Cambios deshechos"
                                       : applied
-                                        ? "Cambios aplicados en el editor · guarda la posición"
+                                        ? "Cambios aplicados en el editor · guarda la ventana"
                                         : declined
                                           ? "Propuesta descartada"
                                           : "Propuesta preparada · revisa antes de aplicar"}

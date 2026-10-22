@@ -3351,7 +3351,7 @@ export function AssemblyEditor({
                 </p>
                 <p>
                   Operaciones del registro sobre el diseño actual; diferencia exacta de ventas
-                  calculada por el motor. Se conserva la cantidad de la posición.
+                  calculada por el motor. Se conserva la cantidad de la ventana.
                 </p>
               </details>
               {!proposal.simulation.valid && (

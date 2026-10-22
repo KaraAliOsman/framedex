@@ -34,7 +34,7 @@ function start(): void {
 describe("exact sourced recipe authoring", () => {
   it("preserves every intermediate fractional keystroke and all sourced digits on blur", () => {
     start();
-    const input = screen.getByLabelText("Proporción exacta del vano");
+    const input = screen.getByLabelText("Proporción exacta del paño");
     const value = "0.333333333333333333333333333333333333";
     for (let end = 1; end <= value.length; end++) {
       fireEvent.change(input, { target: { value: value.slice(0, end) } });

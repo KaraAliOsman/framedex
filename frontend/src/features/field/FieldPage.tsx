@@ -236,7 +236,7 @@ export function FieldPage({ office = false }: { office?: boolean }): JSX.Element
               ? `${selected.code} · ${selected.context.project_name}`
               : office
                 ? "Agenda entregas e instalaciones y sigue la postventa de cada obra."
-                : "Tu ruta, tus posiciones y sus comprobantes"}
+                : "Tu ruta, tus ventanas y sus comprobantes"}
           </p>
         </div>
         <div className="field-tools">
@@ -667,7 +667,7 @@ function Planner({
         </label>
         <fieldset className="field-checks">
           <legend>
-            {kind === "MEASUREMENT" ? "Posiciones por medir" : "Bultos reales de la revisión"}
+            {kind === "MEASUREMENT" ? "Ventanas por medir" : "Bultos reales de la revisión"}
           </legend>
           {kind === "SERVICE" && (
             <p>Una unidad por servicio: su trabajo, foto y firma quedan juntos.</p>
@@ -747,7 +747,7 @@ function Photo({ change }: { change: (value: string) => void }): JSX.Element {
   return (
     <div>
       <label>
-        Foto de esta posición
+        Foto de esta ventana
         <input
           type="file"
           accept="image/jpeg,image/png"
@@ -776,7 +776,7 @@ function Photo({ change }: { change: (value: string) => void }): JSX.Element {
         <img
           className="field-preview-photo"
           src={preview}
-          alt="Evidencia de esta posición en obra"
+          alt="Evidencia de esta ventana en obra"
         />
       )}
       {error && <p role="alert">{error}</p>}
@@ -900,7 +900,7 @@ function VisitDetail({
       <p>
         {visit.team} · <DateOnly value={visit.planned_on} />
       </p>
-      <nav className="field-tools" aria-label="Posición en obra">
+      <nav className="field-tools" aria-label="Ventana en obra">
         {visit.context.units.map((u, at) => (
           <button
             key={`${u.position_id}:${u.unit_index}`}
@@ -952,7 +952,7 @@ function VisitDetail({
               }}
             >
               <fieldset className="field-checks">
-                <legend>Comprueba la posición</legend>
+                <legend>Comprueba la ventana</legend>
                 {Object.entries(checkLabels).map(([key, label]) => (
                   <label key={key}>
                     <input
@@ -995,7 +995,7 @@ function VisitDetail({
           )}
         {visit.status !== "CANCELLED" && visit.kind !== "DELIVERY" && (
           <details>
-            <summary>Medir y rectificar el vano</summary>
+            <summary>Medir y rectificar la abertura de obra</summary>
             <Survey unit={unit} visit={visit} photo={photo} setPhoto={setPhoto} send={send} />
           </details>
         )}
@@ -1121,7 +1121,7 @@ function Survey({
         [...widths, ...heights].some((v) => !/^\d+(?:[.,]\d{1,2})?$/.test(v))
       )
         throw new Error(
-          "Completa tres medidas por eje, montaje con origen y foto de esta posición.",
+          "Completa tres medidas por eje, montaje con origen y foto de esta ventana.",
         );
       const all = { ...measured, [module || "single"]: currentSurvey() };
       if (modules && modules.some((m) => !all[m.id]))
@@ -1170,7 +1170,7 @@ function Survey({
         </label>
       )}
       <fieldset>
-        <legend>Ancho del vano · mm</legend>
+        <legend>Ancho de obra · mm</legend>
         <div className="field-survey">
           {["Arriba", "Centro", "Abajo"].map((label, i) => (
             <label key={label}>
@@ -1185,7 +1185,7 @@ function Survey({
         </div>
       </fieldset>
       <fieldset>
-        <legend>Alto del vano · mm</legend>
+        <legend>Alto de obra · mm</legend>
         <div className="field-survey">
           {["Izquierda", "Centro", "Derecha"].map((label, i) => (
             <label key={label}>
@@ -1231,7 +1231,7 @@ function Survey({
       {unit.mounting_rules.length === 0 && (
         <p>
           Falta completar · la serie no tiene una regla de montaje. El jefe de taller debe
-          declararla en Vano y montaje.
+          declararla en Medidas de obra y montaje.
         </p>
       )}
       <Photo change={setPhoto} />
@@ -1287,7 +1287,7 @@ function IncidentForm({
     setError("");
     try {
       if (!note.trim() || !photo)
-        throw new Error("Describe la incidencia y toma una foto de esta posición.");
+        throw new Error("Describe la incidencia y toma una foto de esta ventana.");
       await send(visit.id, {
         kind: "INCIDENT",
         position_id: unit.position_id,
@@ -1647,7 +1647,7 @@ function Cases({
       {cases.length === 0 ? (
         <EmptyState
           title="Sin incidencias en este estado"
-          body="Cada reporte de obra conserva posición, unidad y materiales de su revisión."
+          body="Cada reporte de obra conserva ventana, unidad y materiales de su revisión."
           action={
             <button type="button" onClick={() => setFilter("")}>
               Ver todo el historial
@@ -1882,7 +1882,7 @@ function Case({
                   <label>
                     Material faltante
                     <select value={requirement} onChange={(e) => setRequirement(e.target.value)}>
-                      <option value="">Elige el requerimiento de esta posición</option>
+                      <option value="">Elige el requerimiento de esta ventana</option>
                       {requirements.map((r) => (
                         <option value={r.id} key={r.id}>
                           {r.label}

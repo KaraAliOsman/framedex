@@ -6,7 +6,7 @@ import ts from "typescript";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const forbidden =
-  /\b(?:autoridad(?:es)?|sellad[oa]s?|fuentes?|procedencias?|sin datos?)\b|Referencia\s*·\s*no cotizable/iu;
+  /\b(?:autoridad(?:es)?|sellad[oa]s?|fuentes?|procedencias?|sin datos?|posici[oó]n|posiciones|vanos?|encargos?|recibos?)\b|Referencia\s*·\s*no cotizable/iu;
 
 /** Parse product literals/JSX, including expressions and template spans. Comments,
  * identifiers and contract property names are not interface copy. The historical
@@ -43,6 +43,7 @@ export function catalogCopyViolations(filename, source) {
         "id",
         "className",
         "htmlFor",
+        "href",
         "data-region",
         "data-testid",
         "aria-controls",
@@ -52,6 +53,13 @@ export function catalogCopyViolations(filename, source) {
     )
       return;
     if (ts.isPropertyAssignment(node) || ts.isMethodDeclaration(node)) {
+      // Search metadata retains old workshop synonyms for existing queries.
+      // It is not a displayed label; values rendered as text remain checked.
+      if (
+        ts.isPropertyAssignment(node) &&
+        node.name.getText(ast).replace(/["']/g, "") === "keywords"
+      )
+        return;
       if (ts.isPropertyAssignment(node)) visit(node.initializer);
       else if (node.body) visit(node.body);
       return;
@@ -88,6 +96,9 @@ export function detectorTests() {
     'const messages = { bad: "Referencia · no cotizable" };',
     'const title = "Fuen" + "te";',
     "<p>Revisión sellada</p>",
+    '<p aria-label="Nueva posición">Ventana</p>',
+    "<p>Vanos de la obra</p>",
+    "<p>Encargo y recibo</p>",
   ];
   for (const source of samples)
     assert.ok(catalogCopyViolations("sample.tsx", source).length, source);
@@ -125,6 +136,13 @@ export function detectorTests() {
       'const copy = { "catalog.origin": "Fuente", "glass.empty": "Sin dato" };',
     ).length,
     2,
+  );
+  assert.equal(
+    catalogCopyViolations(
+      "sample.tsx",
+      'const command = { keywords: ["vano", "posición"] }; const view = <a href="#posicion-2" id="posicion-2">Ventana</a>;',
+    ).length,
+    0,
   );
 }
 

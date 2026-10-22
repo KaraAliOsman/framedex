@@ -245,7 +245,7 @@ def price_actions(org_id, user_id, role):
             + urlencode({"operation": row["id"]}),
             blocking=row["state"] == "PENDING",
             operation_id=row["id"],
-            source="Operación de precio y recibo del solicitante; " + row["revision_code"],
+            source="Operación de precio y resumen del solicitante; " + row["revision_code"],
         )
         for row in operations
     ]
@@ -428,7 +428,7 @@ def commercial_actions(org_id, today, role):
                             due_on=projection.oldest_due_on if overdue else None,
                             source="Total emitido de "
                             + row["current_revision"]
-                            + " menos pagos vigentes. No incluye recibos anulados.",
+                            + " menos pagos vigentes. No incluye comprobantes anulados.",
                         )
                     )
         for status, currency in sorted(set(by_phase) | set(unknown), key=str):
@@ -474,7 +474,7 @@ def position_actions(org_id):
             row["code"],
             row["name"],
             "Confirma las medidas de fabricación",
-            f"Posición {row['position_index']} · "
+            f"Ventana {row['position_index']} · "
             f"{row['location_tag'] or 'Sin ubicación'}: el levantamiento espera confirmación.",
             "Confirmar medidas",
             f"/projects/{row['project_id']}/positions/{row['id']}/edit",
@@ -510,7 +510,7 @@ def position_actions(org_id):
             # dimensions. The editor owns their positioned, formatted detail;
             # Hoy supplies a business cause and the exact resolver instead.
             reason = (
-                "La geometría o la combinación elegida no es válida. Revisa Qué falta en la posición."
+                "La geometría o la combinación elegida no es válida. Revisa Qué falta en la ventana."
                 if evaluation.status.value == "INVALID"
                 else "Faltan definiciones o referencias técnicas para fabricar el conjunto. Revisa Qué falta en la ventana."
             )
@@ -523,8 +523,8 @@ def position_actions(org_id):
                 row["code"],
                 row["name"],
                 "Completa la definición de fabricación",
-                f"Posición {row['position_index']} · {row['location_tag'] or 'Sin ubicación'}: {reason}",
-                "Revisar posición",
+                f"Ventana {row['position_index']} · {row['location_tag'] or 'Sin ubicación'}: {reason}",
+                "Revisar ventana",
                 f"/projects/{row['project_id']}/positions/{row['id']}/edit",
                 blocking=True,
                 source="Evaluación del motor sobre el diseño guardado y el catálogo visible; no modifica la BOM ni una emisión.",
@@ -718,7 +718,7 @@ def field_actions(org_id, today, role):
         for visit in visits:
             context = decoded(visit["context_json"])
             if visit["status"] in ("SCHEDULED", "ACTIVE") and visit["planned_on"] <= today:
-                verb = "Medir vano" if visit["kind"] == "MEASUREMENT" else "Abrir visita"
+                verb = "Medir abertura de obra" if visit["kind"] == "MEASUREMENT" else "Abrir visita"
                 result.append(
                     action(
                         "field_visit",
