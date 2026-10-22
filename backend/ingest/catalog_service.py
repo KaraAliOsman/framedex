@@ -470,7 +470,7 @@ def extract_catalog_import(*, org_id: UUID, import_id: UUID, actor_id: UUID, pro
             candidates, audit_id = compile_catalog(org_id=org_id, actor_id=actor_id,
                 import_id=import_id, kind=row["kind"], file_name=row["file_name"], tagged=tagged or [])
             if not tagged:
-                warnings.append("La fuente no tiene texto verificable. Revisa cada valor en la imagen o sube un PDF con texto.")
+                warnings.append("La referencia no tiene texto verificable. Revisa cada valor en la imagen o sube un PDF con texto.")
         except Exception as error:
             code = getattr(error, "contract_code", None) or getattr(error, "code", "ai_gateway_error")
             warnings.append(f"No se pudo analizar con IA ({code}). Puedes usar la plantilla manual.")

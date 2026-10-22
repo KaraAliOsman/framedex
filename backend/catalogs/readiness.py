@@ -149,7 +149,7 @@ def catalog_readiness(system_id, org_id) -> dict[str, Any]:
                 fabrication_missing = ["coupler_articles"]
         if fabrication_missing:
             mfg_b.append(_blocker(
-                "fabrication", "autoridad de fabricación (soldadura, refuerzo, masa)",
+                "fabrication", "reglas de fabricación (soldadura, refuerzo, masa)",
                 ", ".join(sorted(set(fabrication_missing))[:8]),
                 "sin datos de fabricación el taller recibiría valores inventados",
                 "declarar soldadura, refuerzo y masa en los artículos afectados"))
@@ -257,7 +257,7 @@ def catalog_readiness(system_id, org_id) -> dict[str, Any]:
         prod_b.append(_blocker(
             "process_profile", "perfil de proceso declarado",
             str(system_id),
-            "sin autoridad de proceso versionada la ruta cae al genérico — ninguna unión real está garantizada",
+            "sin reglas de proceso versionadas la ruta cae al genérico — ninguna unión real está garantizada",
             "vincular un perfil de proceso al sistema"))
 
     stations = (profile or {}).get("stations") or []
