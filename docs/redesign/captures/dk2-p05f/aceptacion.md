@@ -60,3 +60,13 @@ siguen pendientes. La integración no cambia cifras, emisión ni permisos SQL.
 | En taller | [1440](stage-desktop.png) | [390](stage-mobile.png) |
 
 También [320 px con texto 200 %](worst-320-200.png) y [vacío](empty.png).
+
+## Corrección de CI · 22-10-2026
+
+El gate conservaba dos expectativas de la navegación anterior: título
+Cotizaciones en `/quotes` y lectura inicial de `/api/v1/projects/`. Las pruebas
+comprueban ahora la redirección completa a Obras y su índice real tipado,
+conservando búsquedas y las aserciones del flujo de creación. Navegación usa
+el catálogo mínimo; el catálogo de estrés sigue en sus recorridos específicos.
+Once E2E pasan sobre el build propio de P05f (3,8 min): cinco roles a 1440/390
+y el flujo real de obra. Se mantienen los controles de accesibilidad y desborde.
