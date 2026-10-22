@@ -308,3 +308,20 @@ Los cambios de estado de revisión requieren actor técnico correcto; el miembro
 no puede autocertificarse. Originales potencialmente comerciales solo se descargan
 por dueño/jefe de taller; los historiales respetan la visibilidad del import.
 Véase [aceptación P16](../../redesign/P16-ACEPTACION.md).
+
+
+## Ficha editable de DEKOPEN 2 · P02c
+
+Verificación de implementación: 21-10-2026, rama `gpt/dk2-p02c-ficha-hoja`
+sobre API `1b09ceb8`. Los componentes muestran seis pestañas, origen e historia
+por celda, confirmación y precios auditados. Un borrador no cambia de revisión
+al recuperar foco; un rechazo conserva sus valores y señala la coordenada
+concreta. La precisión es propiedad de cada celda, incluso en filas de reglas
+con distintos límites. Guardar y confirmar sustituyen la ficha con la respuesta
+canónica, actualizando nivel y pendientes sin recarga.
+
+Las 31 unitarias y dos E2E integrados pasan. La ruta se activará en P02e;
+la captura integra también componentes pendientes de esa sub-PR. Véanse
+[evidencia](../../redesign/captures/dk2-p02/aceptacion-ficha.md) y
+[estado de fases](../../dekopen2/ESTADO.md). La verificación de fabricación
+continúa pendiente de P03.

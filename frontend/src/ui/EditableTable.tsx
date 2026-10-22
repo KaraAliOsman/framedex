@@ -46,6 +46,15 @@ export type TableChange = {
   previousValue: string | null;
 };
 
+export type TableCellError = { rowId: string; columnId: string; message: string };
+
+/** A rejected batch can point to exact cells, including cross-field checks. */
+export class TableValidationError extends Error {
+  constructor(readonly cells: TableCellError[]) {
+    super("Revisa las celdas indicadas antes de guardar.");
+  }
+}
+
 const cellKey = (row: string, column: string) => JSON.stringify([row, column]);
 const shown = (value: string | null, column: EditableColumn) =>
   column.kind === "decimal" ? (value ?? "").replace(".", ",") : (value ?? "");
@@ -111,6 +120,7 @@ export function EditableTable({
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [failure, setFailure] = useState("");
+  const [cellErrors, setCellErrors] = useState<Record<string, string>>({});
   const [undo, setUndo] = useState<TableChange[] | null>(null);
   const [page, setPage] = useState(0);
   const [active, setActive] = useState<[string, string] | null>(null);
@@ -157,7 +167,7 @@ export function EditableTable({
     ];
   });
   const dirty = changed.length > 0;
-  const invalid = changed.some((item) => item.error);
+  const invalid = changed.some((item) => item.error) || Object.keys(cellErrors).length > 0;
   const safePage = Math.min(page, Math.max(0, Math.ceil(rows.length / pageSize) - 1));
   const visible = rows.slice(safePage * pageSize, (safePage + 1) * pageSize);
   const activeVisible = visible.some((row) => row.id === active?.[0]);
@@ -175,16 +185,24 @@ export function EditableTable({
     locked.current = true;
     setSaving(true);
     setFailure("");
+    setCellErrors({});
     try {
       await onSave(changes);
       if (!mounted.current) return;
       setDrafts({});
       setUndo(reversing ? null : changes);
     } catch (error) {
-      if (mounted.current)
+      if (mounted.current) {
+        if (error instanceof TableValidationError)
+          setCellErrors(
+            Object.fromEntries(
+              error.cells.map((cell) => [cellKey(cell.rowId, cell.columnId), cell.message]),
+            ),
+          );
         setFailure(
           error instanceof Error ? error.message : "No se pudo guardar. Vuelve a intentarlo.",
         );
+      }
     } finally {
       locked.current = false;
       if (mounted.current) setSaving(false);
@@ -241,6 +259,7 @@ export function EditableTable({
       return;
     }
     if (event.key === "Escape") {
+      setCellErrors({});
       const row = rows[rowIndex]!;
       const column = columns[columnIndex]!;
       setDrafts((current) => {
@@ -310,6 +329,7 @@ export function EditableTable({
       }),
     );
     setDrafts(next);
+    setCellErrors({});
     setFailure("");
     setPasteError("");
     return true;
@@ -319,6 +339,7 @@ export function EditableTable({
     if (locked.current || readOnly) return;
     if (dirty) {
       setDrafts({});
+      setCellErrors({});
       setFailure("");
       return;
     }
@@ -447,7 +468,8 @@ export function EditableTable({
                       const column = { ...baseColumn, ...row.cellOptions?.[baseColumn.id] };
                       const key = cellKey(row.id, column.id);
                       const text = drafts[key];
-                      const error = text === undefined ? null : parsed(text, column).error;
+                      const error =
+                        (text === undefined ? null : parsed(text, column).error) ?? cellErrors[key];
                       const selected = active?.[0] === row.id && active[1] === column.id;
                       return (
                         <td
@@ -488,6 +510,7 @@ export function EditableTable({
                             onDoubleClick={() => setEditingText(true)}
                             onChange={(event) => {
                               setDrafts({ ...draftsRef.current, [key]: event.target.value });
+                              setCellErrors({});
                               setFailure("");
                             }}
                             onKeyDown={(event) => {
