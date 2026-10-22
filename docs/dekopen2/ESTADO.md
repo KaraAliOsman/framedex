@@ -271,3 +271,8 @@ a P03; P01 deja preparado su contrato y su bloqueo.
 - Los E2E comerciales existentes activan ejemplos mediante el control nuevo;
   el flujo de precio y emisión de dos revisiones aprobó sin cambiar sus
   comprobaciones de cálculo, documentos ni inmutabilidad.
+- Database Gate detectó que la vista previa de marca usaba la zona predeterminada
+  de Django para la vigencia, distinta del día de Santiago usado al preparar la
+  emisión. La vista previa ahora declara Santiago explícitamente. Dos regresiones
+  con reloj fijo a ambos lados de medianoche comprueban la fecha del PDF, incluso
+  con otra zona activa, y conservan precio, moneda y huella de la revisión.
