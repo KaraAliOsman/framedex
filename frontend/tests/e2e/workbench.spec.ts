@@ -118,8 +118,17 @@ for (const viewport of [
       await expect(dimension).toContainText("1\u2009400");
       await expect(save).toBeEnabled({ timeout: 30_000 });
       await save.click();
-      const changed = await api(`projects/${project.id}/`);
-      expect(changed.working_price.project_gross).not.toBe(saved.working_price.project_gross);
+      // The save and its repricing finish after the click; read once they land.
+      let changed = saved;
+      await expect
+        .poll(
+          async () => {
+            changed = await api(`projects/${project.id}/`);
+            return changed.working_price.project_gross;
+          },
+          { timeout: 30_000 },
+        )
+        .not.toBe(saved.working_price.project_gross);
       await expect(total).toHaveText(formatMoney(changed.working_price.project_gross, "CLP"));
       if (viewport.width < 1280)
         await page.getByRole("button", { name: "Inspector", exact: true }).click();

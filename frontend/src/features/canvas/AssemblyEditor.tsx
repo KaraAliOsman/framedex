@@ -2113,6 +2113,7 @@ export function AssemblyEditor({
   quantity = 1,
   libraryOpen = false,
   onLibraryToggle,
+  onLibraryClose,
   library,
   libraryTitle = "Biblioteca de tipologías",
   issuesOpen = false,
@@ -2138,6 +2139,9 @@ export function AssemblyEditor({
   quantity?: number;
   libraryOpen?: boolean;
   onLibraryToggle?(): void;
+  /** Idempotent close: an outside click and a newer layer may both dismiss
+   * the library in one gesture, and two toggles would reopen it. */
+  onLibraryClose?(): void;
   library?: JSX.Element;
   /** Flyout title: the first decision (series) before the typologies. */
   libraryTitle?: string;
@@ -3031,7 +3035,7 @@ export function AssemblyEditor({
       {libraryOpen && library && (
         <EditorFlyout
           title={libraryTitle}
-          onClose={() => onLibraryToggle?.()}
+          onClose={() => (onLibraryClose ?? onLibraryToggle)?.()}
           className="editor-library"
         >
           {library}
