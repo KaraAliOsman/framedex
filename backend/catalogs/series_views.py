@@ -11,6 +11,7 @@ from catalogs.series_serializers import (
     CellAddressSerializer, CellHistorySerializer, FamilyTemplateListSerializer,
     SeriesBatchConfirmSerializer, SeriesBatchEditSerializer, SeriesCreateSerializer,
     SeriesSheetSerializer,
+    SeriesPriceEditSerializer, PriceHistorySerializer,
 )
 from catalogs.views import (
     CatalogJSONParser, ERRORS, HEADERS, READ_ROLES, _validated, catalog_scope,
@@ -88,3 +89,22 @@ class SeriesHistoryView(APIView):
         with catalog_scope(request, roles=READ_ROLES) as org_id:
             result = series.history(org_id, system_id, _validated(CellAddressSerializer, request.query_params.dict()))
             return Response(CellHistorySerializer(result).data)
+
+
+class SeriesPricesView(APIView):
+    parser_classes = [CatalogJSONParser]
+
+    @extend_schema(operation_id="catalog_series_edit_prices", tags=["catalogs"], parameters=HEADERS,
+        request=SeriesPriceEditSerializer, responses={200: SeriesSheetSerializer, **ERRORS})
+    def patch(self, request, system_id):
+        with catalog_scope(request, roles=("OWNER",)) as org_id:
+            result = series.edit_prices(org_id, system_id, _validated(SeriesPriceEditSerializer, request.data))
+            return Response(SeriesSheetSerializer(result).data)
+
+
+class SeriesPriceHistoryView(APIView):
+    @extend_schema(operation_id="catalog_series_price_history", tags=["catalogs"], parameters=HEADERS,
+        responses={200: PriceHistorySerializer, **ERRORS})
+    def get(self, request, system_id, price_id):
+        with catalog_scope(request, roles=("OWNER",)) as org_id:
+            return Response(PriceHistorySerializer(series.price_history(org_id, system_id, price_id)).data)

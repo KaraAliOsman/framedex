@@ -7,7 +7,7 @@ Producción y precios comerciales requieren autorización aparte.
 | Fase | Alcance | Estado | Rama / PR |
 |---|---|---|---|
 | P01 | Catálogo v2: backend, origen, niveles y plantillas | Hecha | [P01a #164](https://github.com/KaraAliOsman/framedex/pull/164), [P01b #165](https://github.com/KaraAliOsman/framedex/pull/165), [P01c #166](https://github.com/KaraAliOsman/framedex/pull/166), [P01d #167](https://github.com/KaraAliOsman/framedex/pull/167) y [P01e #168](https://github.com/KaraAliOsman/framedex/pull/168) fusionadas |
-| P02 | Ficha de serie editable | En curso | `gpt/dk2-p02a-tabla-editable`; sub-PR ordenadas por tamaño |
+| P02 | Ficha de serie editable | En curso | [P02a #169](https://github.com/KaraAliOsman/framedex/pull/169); sub-PR ordenadas por tamaño |
 | P03 | Alta de serie y ventana de prueba | Pendiente | — |
 | P04 | Precio simple automático | Pendiente | — |
 | P05 | Navegación, Hoy y Obras | Pendiente | — |
@@ -203,3 +203,33 @@ a P03; P01 deja preparado su contrato y su bloqueo.
 - Pendientes del conjunto P02: conectar el inicio y las seis pestañas,
   confirmar sugeridos, precios e historial auditados, glosario y aceptación
   completa del flujo PRO6004. P02a por sí sola no completa la fase.
+
+### P02b · API y rendimiento del catálogo
+
+- La lista permite filtrar ejemplos y series propias antes de calcular niveles.
+  La consulta por defecto conserva compatibilidad y la biblioteca global sigue
+  disponible. Tres integraciones verifican filtros estrictos y aislamiento.
+- El origen se indexa por tabla/fila/campo con comparación exacta y evidencia
+  vigente. El decorador de perfiles agrupa padres, evidencia y revisores por
+  petición. Dieciocho unitarias verifican paridad y metadatos de 300 perfiles.
+- El perfilado sintético pasó de 8,647 s/2.336 consultas a 2,421 s/383 consultas
+  después del filtro y los índices. La lista que solo pide las series propias
+  cargó en navegador entre 1.428 y 1.559 ms; no son métricas de producción.
+- La edición de precios es un lote exclusivo del dueño, con revisión de serie,
+  valor previo, aislamiento y auditoría. Deshacer añade una escritura. El nuevo
+  ordinal inmutable desempata eventos con la misma fecha transaccional; para
+  eventos antiguos aporta estabilidad, sin reconstruir cronología inexistente.
+- Veintiuna integraciones de ficha, niveles, filtros, nombres por tenant, precios exactos, conflictos,
+  permisos, aislamiento y rollback aprobadas. El rechazo de reglas identifica
+  recurso/fila y conserva los errores por campo para señalarlos en la tabla.
+  Nueve aserciones pgTAP del ordinal y las 1.514 anteriores aprobaron por separado;
+  lint SQL aprobado en la base sintética aislada, sin tocar REVIEW.
+- API regenerada y reproducción OpenAPI/orval aprobada. La conexión visual y
+  el glosario se entregarán después; P02 continúa en curso.
+- El CI de P02b detectó que el comparador de migración D08 no admitía el
+  ordinal nuevo. El gate permite exclusivamente esa columna, exige BIGINT
+  identity no nulo, ordinal positivo y único, y conserva la comparación exacta
+  de todos los campos y el conjunto de eventos históricos. Catorce regresiones
+  rechazan cambios de monto, actor, motivo, fecha, registros y ordinal previo;
+  también eventos borrados/agregados y columnas desconocidas. La migración
+  completa poblada de PostgreSQL 16 se vuelve a ejercitar.

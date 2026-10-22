@@ -1,5 +1,7 @@
 """Typed DEKOPEN 2 series sheet, template and atomic cell contracts."""
 
+from decimal import Decimal
+
 from rest_framework import serializers
 
 from catalogs.serializers import (
@@ -87,6 +89,7 @@ class SeriesCellSerializer(serializers.Serializer):
     origin = serializers.ChoiceField(choices=["MANUAL", "WORKSHOP", "SUGGESTED"], allow_null=True)
     source_ref = serializers.CharField(allow_null=True)
     set_by = serializers.UUIDField(allow_null=True)
+    actor_name = serializers.CharField(allow_null=True)
     set_at = serializers.DateTimeField(allow_null=True)
     version_id = serializers.UUIDField(allow_null=True)
 
@@ -167,6 +170,32 @@ class SeriesBatchConfirmSerializer(StrictSerializer):
     cells = CellAddressSerializer(many=True, min_length=1, max_length=5000)
 
 
+class SeriesPriceChangeSerializer(StrictSerializer):
+    id = serializers.UUIDField()
+    previous_unit_cost = serializers.DecimalField(max_digits=14, decimal_places=4, min_value=Decimal("0"))
+    unit_cost = serializers.DecimalField(max_digits=14, decimal_places=4, min_value=Decimal("0"))
+
+
+class SeriesPriceEditSerializer(StrictSerializer):
+    revision = serializers.CharField()
+    reason = serializers.CharField(max_length=1000)
+    changes = SeriesPriceChangeSerializer(many=True, min_length=1, max_length=5000)
+
+
+class PriceHistoryRowSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    previous_value = serializers.CharField(allow_null=True)
+    value = serializers.CharField(allow_null=True)
+    set_by = serializers.UUIDField(allow_null=True)
+    actor_name = serializers.CharField(allow_null=True)
+    set_at = serializers.DateTimeField()
+    reason = serializers.CharField()
+
+
+class PriceHistorySerializer(serializers.Serializer):
+    items = PriceHistoryRowSerializer(many=True)
+
+
 class CellHistoryRowSerializer(serializers.Serializer):
     id = serializers.UUIDField()
     version = serializers.IntegerField()
@@ -176,6 +205,7 @@ class CellHistoryRowSerializer(serializers.Serializer):
     origin = serializers.ChoiceField(choices=["MANUAL", "WORKSHOP", "SUGGESTED"])
     source_ref = serializers.CharField()
     set_by = serializers.UUIDField()
+    actor_name = serializers.CharField(allow_null=True)
     set_at = serializers.DateTimeField()
 
 

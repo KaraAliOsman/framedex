@@ -6,7 +6,7 @@ from catalogs.glass_views import GlassPreviewView, GlassRulesView, GlassVariantV
 from catalogs.reference_views import ReferenceSeriesView
 from catalogs.series_views import (
     FamilyTemplatesView, SeriesCellsView, SeriesConfirmView, SeriesCreateView,
-    SeriesHistoryView, SeriesSheetView,
+    SeriesHistoryView, SeriesSheetView, SeriesPricesView, SeriesPriceHistoryView,
 )
 
 urlpatterns = [
@@ -16,6 +16,8 @@ urlpatterns = [
     path("series/<uuid:system_id>/cells/", SeriesCellsView.as_view(), name="catalog-series-cells"),
     path("series/<uuid:system_id>/confirm/", SeriesConfirmView.as_view(), name="catalog-series-confirm"),
     path("series/<uuid:system_id>/history/", SeriesHistoryView.as_view(), name="catalog-series-history"),
+    path("series/<uuid:system_id>/prices/", SeriesPricesView.as_view(), name="catalog-series-prices"),
+    path("series/<uuid:system_id>/prices/<uuid:price_id>/history/", SeriesPriceHistoryView.as_view(), name="catalog-series-price-history"),
     path("systems/<uuid:system_id>/thermal/", ThermalCatalogView.as_view()),
     path("systems/<uuid:system_id>/thermal/<uuid:report_id>/review/", ThermalReviewView.as_view()),
     path("glass/preview/", GlassPreviewView.as_view(), name="catalog-glass-preview"),

@@ -64,3 +64,31 @@ def test_kit_mass_evidence_does_not_verify_unsourced_component_quantities(monkey
     evidence.append({**attestation, "field_name": "contents", "canonical_value": row["contents"]})
     provenance.decorate(resource, [row], "org")
     assert row["authority_provenance"]["state"] == "VERIFIED"
+
+
+def test_many_profiles_share_parent_and_reviewer_queries_without_sharing_evidence(monkeypatch):
+    resource = SimpleNamespace(table="profile_articles", fields=["face_width_mm"])
+    now = datetime.now(timezone.utc)
+    records = [{"id": str(index), "system_id": "real" if index else "demo",
+        "face_width_mm": Decimal("60"), "data_provenance": "IMPORT",
+        "technical_reviewed_at": now, "technical_reviewed_by": "reviewer", "review_pending": False}
+        for index in range(300)]
+    evidence = {"row_id": "1", "field_name": "face_width_mm", "canonical_value": '"60"',
+        "review_state": "REVIEWED", "source_ref": "Página 1", "extraction_method": "AI"}
+    calls = []
+    def fetch(sql, args):
+        calls.append(sql)
+        if "catalog_parameter_evidence" in sql:
+            return [evidence]
+        if "profile_systems" in sql:
+            assert set(args[0]) == {"real", "demo"}
+            return [{"id": "real", "is_demo": False}, {"id": "demo", "is_demo": True}]
+        assert args == ["reviewer", "org"]
+        return [{"label": "Técnico del taller"}]
+    monkeypatch.setattr(provenance, "rows", fetch)
+    provenance.decorate(resource, records, "org")
+    assert len(calls) == 3
+    assert records[0]["authority_provenance"]["state"] == "DEMO"
+    assert records[1]["authority_provenance"]["state"] == "VERIFIED"
+    assert all(row["authority_provenance"]["state"] == "REVIEWED" for row in records[2:])
+    assert all(row["authority_provenance"]["reviewer"] == "Técnico del taller" for row in records)

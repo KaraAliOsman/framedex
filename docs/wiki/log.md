@@ -2161,6 +2161,17 @@ despiece después de confirmar los sugeridos. Lint SQL y 1.507 aserciones pgTAP
 aprobadas en la base aislada; niveles y bloqueos siguen pendientes. Referencias:
 [catálogo](product/catalog-authority.md), [estado](../dekopen2/ESTADO.md).
 
+## 2026-10-21 · Ordinal de precios y gate de actualización histórica
+
+El Database Gate de #170 detectó una comparación de forma antigua en
+`scripts/check_advanced_opening_upgrade.py`: el ordinal aditivo de P02b era
+la única diferencia. El comparador admite solo `event_order`, valida su tipo
+identity/positividad/unicidad y mantiene intactas todas las comparaciones de
+campos históricos; ahora también rechaza eventos desaparecidos o añadidos.
+Catorce regresiones prueban que montos, actores, fechas, motivos, registros,
+ordinal previo y columnas inesperadas siguen protegidos. Verificación local
+en `gpt/dk2-p02b-api-catalogo`; reejecución PostgreSQL 16 y CI pendientes.
+
 ## 2026-10-21 · DEKOPEN 2 P01e: permisos por dependencia y decisión emitida
 
 La rama `gpt/dk2-p01e-niveles-y-bloqueos` distingue dibujo, cotización,
@@ -2214,3 +2225,15 @@ el consumidor. Trece unitarias y cuatro E2E cubren los estados extremos y axe
 en escritorio/móvil. La ficha real y la aceptación completa de P02 siguen
 pendientes. Véase [catálogo](product/catalog-authority.md) y
 [aceptación P02a](../redesign/captures/dk2-p02a/aceptacion.md).
+
+## 2026-10-21 · P02b: API de precios y catálogo indexado
+
+`gpt/dk2-p02b-api-catalogo` añade filtros de descubrimiento previos al cálculo,
+orígenes indexados y metadatos de perfiles agrupados por petición. El lote de
+precios exige dueño, pertenencia, revisión y valor previo; la historia exacta
+tiene un desempate inmutable y nombres limitados al tenant. Los rechazos de
+reglas identifican su fila sin aceptar escrituras parciales. Veintiuna
+integraciones, dieciocho unitarias de origen/metadatos y nueve aserciones pgTAP
+del ordinal aprobadas; API reproducible, lint y build aprobados. No habilita
+fabricación ni sustituye el flujo de verificación de P03. Referencias:
+[catálogo](product/catalog-authority.md), [estado](../dekopen2/ESTADO.md).

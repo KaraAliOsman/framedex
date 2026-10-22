@@ -167,12 +167,18 @@ def _visibility(resource):
     return visibility_sql(child=resource is not SYSTEMS)
 
 
-def list_rows(resource, org_id, system_id=None, *, summary=False):
+def list_rows(resource, org_id, system_id=None, *, summary=False, is_demo=None, owned_only=False):
     where = _visibility(resource)
     params = [org_id]
     if system_id is not None:
         where += " AND system_id = %s"
         params.append(system_id)
+    if is_demo is not None and resource is SYSTEMS:
+        where += " AND is_demo = %s"
+        params.append(is_demo)
+    if owned_only and resource is SYSTEMS:
+        where += " AND org_id = %s"
+        params.append(org_id)
     values = _fetch(resource, where, params, org_id=org_id)
     if resource is SYSTEMS:
         from catalogs.readiness import catalog_readiness
