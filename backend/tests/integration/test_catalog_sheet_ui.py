@@ -18,6 +18,23 @@ from .test_shot09_documentary import as_user, documentary_tenant as documentary_
 pytestmark = pytest.mark.rls_integration
 
 
+def test_price_sheet_includes_all_calculator_identities_without_requiring_kit_supplier_mapping(documentary_tenant):
+    org, _, users, _ = documentary_tenant
+    actor = users["OWNER"]
+    with as_user(actor):
+        sheet = priced_series(org, actor)
+        prices = series.series_sheet(org, sheet["id"], can_view_prices=True)["tabs"]["prices"]["items"]
+        assert {item["sku"] for item in prices} == {
+            "PRO-F", "PRO-S", "PRO-B", "STEEL-F", "STEEL-S", "GLASS-24", "PRO-TURN", "SCREW-F", "SCREW-S"}
+        kit_price = next(item for item in prices if item["sku"] == "PRO-TURN")
+        response = series.edit_prices(org, sheet["id"], {"revision": sheet["revision"],
+            "reason": "Precio de kit declarado por el taller sintético", "changes": [{"id": kit_price["id"],
+                "previous_unit_cost": Decimal(kit_price["unit_cost"]), "unit_cost": Decimal("1234.5678")}]})
+        assert next(item for item in response["tabs"]["prices"]["items"]
+            if item["sku"] == "PRO-TURN")["unit_cost"] == "1234.5678"
+        assert series.price_history(org, sheet["id"], kit_price["id"])["items"][0]["value"] == "1234.5678"
+
+
 def test_rejected_batch_addresses_the_cross_field_error_and_rolls_back_other_rows(documentary_tenant):
     org, _, users, _ = documentary_tenant
     actor = users["OWNER"]

@@ -278,5 +278,10 @@ a P03; P01 deja preparado su contrato y su bloqueo.
 - Diecinueve capturas seleccionadas e inspeccionadas; axe A/AA/2.1 AA y anchos
   de página correctos. Trescientos perfiles, nombres de 80 caracteres y cuatro
   decimales comprobados. Carga local de ficha 0,85–0,90 s.
+- Revisión final de precios: la ficha usa las identidades de costo que ya
+  comprueba el calculador, incluyendo kits, tornillos y procesos del vidrio.
+  Seis integraciones de ficha/precio pasan; la nueva regresión comprueba los
+  nueve materiales de la serie y edición/historia exactas del kit sin exigir
+  un código de proveedor adicional.
 - P02 espera sus cuatro controles por sub-PR y fusiones ordenadas. P03–P11
   continúan pendientes; no hay activación de producción ni precios comerciales.

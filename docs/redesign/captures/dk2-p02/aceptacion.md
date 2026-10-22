@@ -60,13 +60,18 @@ no mediciones de producción ni Core Web Vitals. El inicio carga solo series
 propias y pospone ejemplos, plantillas y biblioteca hasta necesitarlos.
 
 La validación de fase incluye motor (1.071 aprobadas, dos xfail y goldens
-idénticos), backend (1.642 aprobadas y un inventario de rutas corregido; las
-cinco pruebas de OpenAPI pasan al repetir), frontend completo (1.173 aprobadas),
+idénticos), backend (1.644 aprobadas en la ejecución completa posterior a las
+correcciones de inventario y textos), frontend completo (1.173 aprobadas),
 21 integraciones de catálogo, 18 unitarias de orígenes y 1.514 aserciones pgTAP
 existentes más nueve del ordinal nuevo. Ruff, mypy, Django check, ESLint,
 TypeScript, Prettier, guardas, reproducción API y build aprobados. La copia de
 entrega vuelve a ejecutar frontend completo, tipos, guardas y build antes de
 abrir la PR; CI es el gate obligatorio para cada commit que se fusione.
+
+La revisión final de la consulta de precios añade una regresión real para los
+nueve materiales consumidos por la serie: perfiles, refuerzos, vidrio, kit y
+tornillos. Las seis integraciones de ficha/precio pasan, incluyendo guardar
+1234,5678 en el kit y leer su historia sin un mapeo de proveedor adicional.
 
 Todos los datos de aceptación son sintéticos explícitos. REVIEW conserva su
 estado. Las historias inmutables impiden borrar las empresas sintéticas al
