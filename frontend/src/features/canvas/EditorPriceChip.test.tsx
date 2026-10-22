@@ -102,7 +102,7 @@ it("hides an earlier price and its private breakdown while validating another de
   expect(screen.queryByRole("link")).toBeNull();
 });
 
-it("renders sale without inventing a missing cost breakdown or policy link", () => {
+it("renders sale without inventing a missing cost breakdown", () => {
   vi.mocked(useEditorPrice).mockReturnValue({
     price: { net: "980", unit_net: "490", currency: "CLP", use_advanced: false },
     calculating: false,
@@ -112,7 +112,9 @@ it("renders sale without inventing a missing cost breakdown or policy link", () 
   mount();
   expect(screen.getByText(/guarda la ventana/)).toBeVisible();
   expect(screen.queryByText("Materiales")).toBeNull();
-  expect(screen.queryByRole("link")).toBeNull();
+  // Every role may read how the company prices; only the owner edits it there.
+  expect(screen.getByRole("link", { name: "Cómo calculo mis precios" })).toBeVisible();
+  expect(screen.queryByRole("link", { name: "Revisar reglas de precio" })).toBeNull();
 });
 
 it("recovers the live price after a read failure", () => {

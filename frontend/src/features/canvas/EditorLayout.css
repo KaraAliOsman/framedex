@@ -1077,6 +1077,13 @@
   padding: 0;
   list-style: none;
   transform: translateX(-50%);
+  /* The chips read over the drawing; only their actions take the pointer, so
+     modules and dimensions under a chip stay selectable. */
+  pointer-events: none;
+}
+.editor-issue-chip > button,
+.editor-issue-chips__more {
+  pointer-events: auto;
 }
 .editor-issue-chip {
   display: flex;

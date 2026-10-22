@@ -90,7 +90,7 @@ export function EditorPriceChip({
           La cantidad y el redondeo de moneda se calculan en el motor. Revisa los precios del
           proyecto antes de emitir.
         </p>
-        {!priceLoading && price?.policy && (
+        {!priceLoading && (price?.policy || price?.use_advanced === false) && (
           <Link to="/settings/general?section=prices">Cómo calculo mis precios</Link>
         )}
         {price?.use_advanced && <Link to="/pricing/commercial">Revisar reglas de precio</Link>}
