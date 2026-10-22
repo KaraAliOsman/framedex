@@ -2216,6 +2216,15 @@ regresión de navegador de proyectos pasa en 49,4 segundos con el límite
 original de carga de Catálogo; CI final de #168 pendiente.
 Véase [catálogo](product/catalog-authority.md).
 
+## 2026-10-22 · Vigencia de la vista previa en Santiago
+
+El Database Gate de P02d descubrió una fecha distinta entre la vista previa de
+marca y Preparar emisión cerca de medianoche. La vista previa ahora declara
+`America/Santiago` al calcular el día comercial. La regresión conserva sus
+comprobaciones de marca, papel y revisión sellada y añade dos instantes fijos
+con una zona activa ajena. Ambas variantes aprobaron sobre PostgreSQL local.
+Véase [empresa y clientes](product/company-customers.md).
+
 ## 2026-10-21 · P01 cerrada y tabla editable P02a
 
 P01e #168 se fusionó en `9f711d53` después de aprobar Lint & Typecheck,
