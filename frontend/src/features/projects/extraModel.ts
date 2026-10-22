@@ -81,10 +81,10 @@ export const sideLabels = {
   BOTTOM: "Inferior",
   LEFT: "Izquierdo",
 } as const;
-export const extraUnit = (unit: string) => ({ M: "m", M2: "m²", EA: "un." })[unit] ?? "Sin dato";
+export const extraUnit = (unit: string) => ({ M: "m", M2: "m²", EA: "un." })[unit] ?? "Completar";
 export const extraQuantity = (value: string) => fmtMm(value);
 export const extraTariff = (value: string | undefined, currency = "CLP") =>
-  value === undefined ? "Sin dato" : formatMoney(value, currency);
+  value === undefined ? "Completar" : formatMoney(value, currency);
 export const hasRounding = (value: string | undefined) =>
   Boolean(value && !/^[-+]?0(?:\.0*)?$/.test(value));
 

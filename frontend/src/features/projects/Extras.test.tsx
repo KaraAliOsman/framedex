@@ -168,5 +168,5 @@ it("renders the allocated net from the engine instead of multiplying the display
   expect(screen.getByText("Lista verificada")).toBeInTheDocument();
   expect(screen.getByText("Vierteaguas · DEMO")).toBeInTheDocument();
   expect(screen.getByText("0,72 CLP")).toBeInTheDocument();
-  expect(extraTariff(undefined)).toBe("Sin dato");
+  expect(extraTariff(undefined)).toBe("Completar");
 });
