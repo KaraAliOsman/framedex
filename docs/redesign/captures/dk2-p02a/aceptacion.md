@@ -20,7 +20,7 @@ la página no se desborda. Los controles de ensayo son exclusivos de desarrollo.
 
 Las diez capturas fueron abiertas e inspeccionadas. Playwright aprueba cuatro
 pruebas en ambos tamaños, incluyendo axe WCAG A/AA/2.1 AA y ancho de página.
-Carga local de desarrollo desde navegación hasta tabla visible: 418–831 ms;
+Carga local de desarrollo desde navegación hasta tabla visible: 340–722 ms;
 no es una medición de red móvil ni una promesa de producción.
 
 Trece pruebas unitarias verifican precisión textual de cuatro decimales y enteros
@@ -35,6 +35,8 @@ El build comprueba que la ruta de desarrollo no llega al producto.
 - Jerarquía y siguiente acción claras; una sola acción de guardar por tabla.
 - Campos editables distinguibles, foco global visible y teclado completo.
 - Números como texto exacto: ninguna cifra se calcula en el componente.
+- Las celdas numéricas usan IBM Plex Mono y cifras tabulares; las diez capturas
+  se renovaron después de aplicar esa tipografía.
 - Texto, estructura y tono además del color; contraste AA aprobado con axe.
 - Sin movimiento añadido. La tabla usa los controles y diálogos existentes.
 - Pendiente del conjunto P02: ficha real, precios auditados, confirmación y

@@ -90,6 +90,10 @@
   background: transparent;
 }
 
+.ui-editable-table td.is-number input[data-cell] {
+  font-family: var(--font-mono);
+}
+
 .ui-editable-table input[aria-invalid] {
   border-color: var(--danger-base);
 }
