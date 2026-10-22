@@ -494,5 +494,7 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   await page.getByRole("button", { name: manual.systemName, exact: true }).click();
   await expect(page.getByRole("heading", { name: manual.systemName, exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Guardar cambios", exact: true })).toHaveCount(0);
-  await expect(page.getByRole("grid").locator("input[data-cell]").first()).toHaveAttribute("readonly");
+  await expect(page.getByRole("grid").locator("input[data-cell]").first()).toHaveAttribute(
+    "readonly",
+  );
 });
