@@ -1,0 +1,33 @@
+.editable-table-page {
+  max-width: 1200px;
+  min-width: 0;
+  margin-inline: auto;
+  padding: 28px clamp(16px, 3vw, 40px) 100px;
+}
+
+.editable-table-page h1 {
+  font-size: var(--type-title-l);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.editable-table-page__modes {
+  position: fixed;
+  inset-block-end: 16px;
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  width: max-content;
+  max-width: calc(100% - 32px);
+  padding: 8px;
+  background: var(--surface-panel);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-2);
+}
+
+.editable-table-page__modes [aria-pressed="true"] {
+  background: var(--surface-selected);
+  color: var(--interactive);
+}

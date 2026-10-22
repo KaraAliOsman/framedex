@@ -6,8 +6,8 @@ Producción y precios comerciales requieren autorización aparte.
 
 | Fase | Alcance | Estado | Rama / PR |
 |---|---|---|---|
-| P01 | Catálogo v2: backend, origen, niveles y plantillas | En curso | [P01a #164](https://github.com/KaraAliOsman/framedex/pull/164), [P01b #165](https://github.com/KaraAliOsman/framedex/pull/165), [P01c #166](https://github.com/KaraAliOsman/framedex/pull/166) y [P01d #167](https://github.com/KaraAliOsman/framedex/pull/167) fusionadas; [P01e #168](https://github.com/KaraAliOsman/framedex/pull/168) |
-| P02 | Ficha de serie editable | Pendiente | — |
+| P01 | Catálogo v2: backend, origen, niveles y plantillas | Hecha | [P01a #164](https://github.com/KaraAliOsman/framedex/pull/164), [P01b #165](https://github.com/KaraAliOsman/framedex/pull/165), [P01c #166](https://github.com/KaraAliOsman/framedex/pull/166), [P01d #167](https://github.com/KaraAliOsman/framedex/pull/167) y [P01e #168](https://github.com/KaraAliOsman/framedex/pull/168) fusionadas |
+| P02 | Ficha de serie editable | En curso | `gpt/dk2-p02a-tabla-editable`; sub-PR ordenadas por tamaño |
 | P03 | Alta de serie y ventana de prueba | Pendiente | — |
 | P04 | Precio simple automático | Pendiente | — |
 | P05 | Navegación, Hoy y Obras | Pendiente | — |
@@ -183,3 +183,23 @@ a P03; P01 deja preparado su contrato y su bloqueo.
   la respuesta de edición. Ahora compara todos los campos persistidos, los
   niveles v2 completos y el alias de cotización; mantiene las comprobaciones
   de perfiles, junquillos, teclado, permisos y persistencia. CI reejecutado.
+- P01e #168 quedó fusionada mediante merge commit `9f711d53` con los cuatro
+  controles aprobados en la ejecución `39698605415`. P01 queda completada;
+  la verificación humana de una ventana de prueba sigue correspondiendo a P03.
+
+## P02 · Tabla y ficha editable
+
+### P02a · Componente compartido
+
+- Tabla reutilizable con números como texto exacto, coma decimal, navegación
+  por flechas/Enter/Tab, pegado rectangular, límites por celda, guardado en lote,
+  historial invocable y deshacer mediante una nueva escritura.
+- Trece pruebas unitarias cubren precisión, pegado atómico, validación por fila,
+  conflicto con borrador conservado, cero/vacío, consulta y teclado paginado.
+  Cuatro E2E de la ruta de desarrollo pasan a 1440 × 900 y 390 × 844, con axe
+  A/AA/2.1 AA y 300 perfiles. La ruta queda excluida del build productivo.
+- Las diez capturas seleccionadas y su comparación con el mockup están en
+  [aceptación P02a](../redesign/captures/dk2-p02a/aceptacion.md).
+- Pendientes del conjunto P02: conectar el inicio y las seis pestañas,
+  confirmar sugeridos, precios e historial auditados, glosario y aceptación
+  completa del flujo PRO6004. P02a por sí sola no completa la fase.

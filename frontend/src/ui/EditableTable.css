@@ -1,0 +1,130 @@
+.ui-editable-table {
+  min-width: 0;
+  font-size: var(--type-body);
+}
+
+.ui-editable-table__toolbar,
+.ui-editable-table__pages {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-block: 12px;
+}
+
+.ui-editable-table__status {
+  margin-inline-start: auto;
+  color: var(--text-secondary);
+  font-size: var(--type-dense);
+}
+
+.ui-editable-table__scroll {
+  max-width: 100%;
+  overflow: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-3);
+  background: var(--surface-panel);
+  overscroll-behavior-inline: contain;
+}
+
+.ui-editable-table table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--type-body);
+}
+
+.ui-editable-table th,
+.ui-editable-table td {
+  padding: 8px 12px;
+  border-block-end: 1px solid var(--border-subtle);
+  text-align: start;
+  vertical-align: middle;
+}
+
+.ui-editable-table thead th {
+  color: var(--text-secondary);
+  background: var(--surface-card);
+  font-size: var(--type-dense);
+  font-weight: 500;
+}
+
+.ui-editable-table tbody th {
+  min-width: 180px;
+  max-width: 340px;
+  overflow-wrap: anywhere;
+  font-weight: 400;
+}
+
+.ui-editable-table tbody tr:last-child > * {
+  border-block-end: 0;
+}
+
+.ui-editable-table tr[data-suggested] > * {
+  background: var(--warning-soft);
+}
+
+.ui-editable-table .is-number {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.ui-editable-table input[data-cell] {
+  width: 100%;
+  min-width: 110px;
+  min-height: 32px;
+  box-sizing: border-box;
+  padding: 4px 8px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-1);
+  background: var(--surface-panel);
+  color: var(--text-primary);
+  font: inherit;
+  text-align: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.ui-editable-table input[readonly] {
+  border-color: transparent;
+  background: transparent;
+}
+
+.ui-editable-table input[aria-invalid] {
+  border-color: var(--danger-base);
+}
+
+.ui-editable-table__error {
+  display: block;
+  margin-block: 4px;
+  color: var(--danger-ink);
+  font-size: var(--type-dense);
+  overflow-wrap: anywhere;
+}
+
+.ui-editable-table__after {
+  min-width: 220px;
+}
+
+.ui-editable-table__pages {
+  justify-content: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.ui-editable-table__paste {
+  display: grid;
+  gap: 8px;
+}
+
+.ui-editable-table__paste textarea {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 12px;
+  resize: vertical;
+  font: inherit;
+}
+
+.ui-editable-table__empty {
+  padding-block: 24px;
+  color: var(--text-secondary);
+}

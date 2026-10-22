@@ -2204,3 +2204,13 @@ los mapeos de compra se cargan en lote. Siete integraciones de niveles/resumen,
 regresión de navegador de proyectos pasa en 49,4 segundos con el límite
 original de carga de Catálogo; CI final de #168 pendiente.
 Véase [catálogo](product/catalog-authority.md).
+
+## 2026-10-21 · P01 cerrada y tabla editable P02a
+
+P01e #168 se fusionó en `9f711d53` después de aprobar Lint & Typecheck,
+Test Suite, Frontend Build y Database Gate. P02a prepara una tabla con precisión
+textual, pegado rectangular, límites por celda, teclado y deshacer auditado por
+el consumidor. Trece unitarias y cuatro E2E cubren los estados extremos y axe
+en escritorio/móvil. La ficha real y la aceptación completa de P02 siguen
+pendientes. Véase [catálogo](product/catalog-authority.md) y
+[aceptación P02a](../redesign/captures/dk2-p02a/aceptacion.md).
