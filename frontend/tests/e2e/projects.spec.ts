@@ -60,6 +60,26 @@ async function screenshot(page: Page, info: TestInfo, name: string): Promise<voi
   await info.attach(name, { path, contentType: "image/png" });
 }
 
+/** The project read adds the live engine price to the persisted window. */
+function withWorkingPrice(project: ProjectResponse, position: PositionResponse): PositionResponse {
+  expect(project.working_price?.state).toBe("READY");
+  const line = project.working_price!.lines.find(
+    (item) => item.position_index === position.position_index,
+  );
+  expect(line).toBeDefined();
+  expect(line!.quantity).toBe(position.quantity);
+  return {
+    ...position,
+    commercial: {
+      unit_net: line!.unit_price,
+      line_net: line!.line_net,
+      source: "Precio de trabajo calculado con los datos vigentes.",
+      ...("breakdown" in line! ? { breakdown: line!.breakdown } : {}),
+      ...("catalog_use" in line! ? { catalog_use: line!.catalog_use } : {}),
+    },
+  };
+}
+
 /** Each window card opens the exact physical position in the editor. */
 async function card(page: Page, location: string) {
   return page
@@ -424,13 +444,14 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   await expect(page).toHaveURL(new RegExp(`${projectPath}([?][^/]*)?$`));
   const source = await responseTo<ProjectResponse>(page, "GET", projectApi, 200, freshRead);
   expect(source.position_count).toBe(2);
-  expect(source.positions!.find((item) => item.id === saved.id)).toEqual({
-    ...saved,
-    // Project collection metadata is separate from the persisted design/BOM.
-    system_name: manual.systemName,
-    system_demo: true,
-    commercial: null,
-  });
+  expect(source.positions!.find((item) => item.id === saved.id)).toEqual(
+    withWorkingPrice(source, {
+      ...saved,
+      // Project collection metadata is separate from the persisted design/BOM.
+      system_name: manual.systemName,
+      system_demo: true,
+    }),
+  );
 
   // Work-level actions live in the header's «Más» menu.
   await page.locator(".project-head").getByRole("button", { name: "Más", exact: true }).click();
@@ -462,7 +483,9 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
     200,
     () => page.reload(),
   );
-  expect(reopenedClone.positions).toEqual(clone.positions);
+  expect(reopenedClone.positions).toEqual(
+    clone.positions!.map((position) => withWorkingPrice(reopenedClone, position)),
+  );
   await expect(page.getByRole("list", { name: "Ventanas" }).getByRole("listitem")).toHaveCount(2);
   await page.getByRole("heading", { level: 1 }).scrollIntoViewIfNeeded();
   await screenshot(page, info, "04-reopened-draft-clone");
@@ -470,7 +493,10 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   const unchangedSource = await responseTo<ProjectResponse>(page, "GET", projectApi, 200, () =>
     page.goto(projectPath),
   );
-  expect(unchangedSource).toEqual(source);
+  expect(unchangedSource).toEqual({
+    ...source,
+    working_price: { ...source.working_price, computed_at: expect.any(String) },
+  });
   // The product keeps one light theme (constitution 2026-10): no theme switch.
   await expect(page.getByRole("button", { name: "Cambiar tema", exact: true })).toHaveCount(0);
   // Estimators can browse the catalog (and run supplier imports); structural
