@@ -44,6 +44,7 @@ from projects import design_assist, service as projects_service, ops_registry
 from ai_gateway.engine_tools import EngineTools, TOOLS as ENGINE_TOOLS
 from ai_gateway.contracts import AGENT_SCHEMA
 from ai_gateway import usage
+from ai_gateway import origins as origin_rules
 from dekopen_engine.design_operations import REGISTRY as OPERATIONS, OperationError
 
 CAPABILITY = "agent"
@@ -227,6 +228,22 @@ def _create_project_draft(org_id: UUID, user_id: UUID, step: dict) -> dict:
         "client_linked": bool(project.get("client_id")),
         "client_candidates": candidates,
     }
+
+
+def _origin_labels(org_id: UUID, ops: list) -> dict[str, str]:
+    """Readable names for the series and openings an assumption cites."""
+    from documents.renderers import _COLOR_ES, _TYPOLOGY_ES
+
+    systems = sorted({str(op["system_id"]) for op in ops if isinstance(op, dict) and op.get("system_id")})
+    labels = {**_TYPOLOGY_ES, **_COLOR_ES}
+    if systems:
+        for row in rows(
+            "SELECT id, code, name FROM public.profile_systems WHERE id = ANY(%s::uuid[]) "
+            "AND (org_id = %s OR org_id IS NULL)",
+            [systems, org_id],
+        ):
+            labels[str(row["id"])] = " · ".join(part for part in (row["code"], row["name"]) if part)
+    return labels
 
 
 def _document_layout_step(item: dict, *, refs: dict, context: dict | None, may_draft: bool, rejected: list) -> dict | None:
@@ -938,6 +955,9 @@ def _act(
 
     _report(15)
     context = build_context(org_id, surface, refs)
+    # The texts a new window may cite as its origin: the request, then the
+    # literal text of each attached file (P08).
+    origin_sources = [goal, *(text for text in (attachment_texts or []) if isinstance(text, str))]
     seen_queries = {_query_key(surface, refs)}
     observed_refs = _context_refs(context)
     observations: list[dict] = []
@@ -1116,7 +1136,7 @@ def _act(
         if has_tree:
             calls.extend({"name": "simulate_ops", "arguments": {"ops": step["ops"]}}
                          for step in document.get("steps", []) if isinstance(step, dict) and step.get("kind") == "ops" and isinstance(step.get("ops"), list))
-        calls.extend({"name": "preview_project_operations", "arguments": {"ops": step["ops"]}}
+        calls.extend({"name": "preview_project_operations", "arguments": {"ops": origin_rules.bind(step["ops"], origin_sources)[0]}}
                      for step in document.get("steps", []) if isinstance(step, dict) and step.get("kind") == "project_ops" and isinstance(step.get("ops"), list))
         for call in calls[:MAX_QUERIES]:
             name, arguments = call.get("name"), call.get("arguments", {})
@@ -1307,16 +1327,33 @@ def _act(
         if kind == "query":
             continue  # executed above — `queries` reports them as provenance
         if kind == "project_ops":
+            # A window read from the request must cite its phrase; one whose
+            # measures are not written there is refused, never guessed (P08).
+            sources = origin_sources
+            cited_ops, origins, refused = origin_rules.bind(item.get("ops"), sources)
+            rejected.extend(refused)
+            if isinstance(cited_ops, list) and not cited_ops:
+                continue
             try:
-                simulation, _ = engine_tools.call("preview_project_operations", {"ops": item.get("ops")}, validation=True)
+                simulation, _ = engine_tools.call("preview_project_operations", {"ops": cited_ops}, validation=True)
             except OperationError as error:
                 simulation = {"valid": False, "error": error.code}
             if simulation.get("valid"):
+                cited = {}
+                if origins:
+                    cited = {
+                        "origins": origin_rules.attach(origins, simulation["ops"], simulation),
+                        "assumptions": origin_rules.assumptions(
+                            origins, simulation["ops"], (context or {}).get("usual") or {},
+                            _origin_labels(org_id, simulation["ops"]), " ".join(sources)),
+                        "sources": [{"kind": "request" if index == 0 else "attachment", "text": text[:4000]}
+                                    for index, text in enumerate(sources)],
+                    }
                 steps.append({"kind": "project_ops", "tool": "preview_project_operations", "ops": simulation["ops"],
                               "simulation": simulation, "label": str(item.get("label") or "Cambios de ventanas")[:MAX_LABEL],
                               # The person asked to do it (not a hypothetical): the
                               # server may save it when the run allows drafts.
-                              "apply_requested": item.get("apply") is True})
+                              "apply_requested": item.get("apply") is True, **cited})
                 added = [change["after"] for change in simulation["diff"] if change["kind"] == "add"]
                 if added:
                     project_drafts.append({"kind": "project_draft", "title": "Ventanas propuestas", "payload": {"positions": added},

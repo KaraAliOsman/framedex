@@ -6,6 +6,7 @@ from ai_gateway.copilot_views import (
     AiAttachmentContentView,
     AiAttachmentView,
     AiJobApproveView,
+    AiJobUndoAllView,
     AiThreadAttachmentsView,
     AiThreadCollectionView,
     AiThreadTimelineView,
@@ -59,4 +60,5 @@ urlpatterns = [
     path("attachments/<uuid:attachment_id>/", AiAttachmentView.as_view(), name="ai-attachment"),
     path("attachments/<uuid:attachment_id>/content/", AiAttachmentContentView.as_view(), name="ai-attachment-content"),
     path("jobs/<uuid:job_id>/approve/", AiJobApproveView.as_view(), name="ai-job-approve"),
+    path("jobs/<uuid:job_id>/undo-all/", AiJobUndoAllView.as_view(), name="ai-job-undo-all"),
 ]

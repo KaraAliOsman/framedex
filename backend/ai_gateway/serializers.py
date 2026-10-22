@@ -356,6 +356,22 @@ class AiJobDetailSerializer(AiJobSerializer):
     transcript = serializers.ListField()
 
 
+class AiUndoKeptSerializer(serializers.Serializer):
+    turn_index = serializers.IntegerField()
+    step_index = serializers.IntegerField()
+    operation_id = serializers.UUIDField()
+    project_id = serializers.UUIDField()
+    reason = serializers.CharField()
+
+
+class AiJobUndoAllSerializer(serializers.Serializer):
+    job_id = serializers.UUIDField()
+    undone = serializers.IntegerField(min_value=0)
+    kept = AiUndoKeptSerializer(many=True)
+    created_project = serializers.UUIDField(allow_null=True)
+    project_state = serializers.ChoiceField(choices=["removed", "kept"], allow_null=True)
+
+
 class AiPresenceQuerySerializer(serializers.Serializer):
     surface = serializers.CharField(min_length=2, max_length=80)
     refs = serializers.CharField(max_length=8000, required=False, default="{}")

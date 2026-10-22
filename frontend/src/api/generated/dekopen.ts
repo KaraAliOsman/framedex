@@ -32,6 +32,7 @@ import type {
   AiJobMessageRequest,
   AiJobOutcomeRequest,
   AiJobOutcomeResponse,
+  AiJobUndoAll,
   AiMetrics,
   AiMetricsParams,
   AiMode,
@@ -1738,6 +1739,82 @@ export const aiJobRetry = async (
   options?: Parameters<typeof apiMutator>[1],
 ): Promise<aiJobRetryResponse> => {
   return apiMutator<aiJobRetryResponse>(getAiJobRetryUrl(jobId), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export type aiJobUndoAllResponse200 = {
+  data: AiJobUndoAll;
+  status: 200;
+};
+
+export type aiJobUndoAllResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type aiJobUndoAllResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type aiJobUndoAllResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type aiJobUndoAllResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type aiJobUndoAllResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type aiJobUndoAllResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type aiJobUndoAllResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type aiJobUndoAllResponseSuccess = aiJobUndoAllResponse200 & {
+  headers: Headers;
+};
+export type aiJobUndoAllResponseError = (
+  | aiJobUndoAllResponse400
+  | aiJobUndoAllResponse401
+  | aiJobUndoAllResponse403
+  | aiJobUndoAllResponse404
+  | aiJobUndoAllResponse409
+  | aiJobUndoAllResponse422
+  | aiJobUndoAllResponse503
+) & {
+  headers: Headers;
+};
+
+export type aiJobUndoAllResponse = aiJobUndoAllResponseSuccess | aiJobUndoAllResponseError;
+
+export const getAiJobUndoAllUrl = (jobId: string) => {
+  return `/api/v1/ai/jobs/${jobId}/undo-all/`;
+};
+
+/**
+ * «Deshacer todo»: undoes every reversible change the job saved, newest
+ * first, and removes the draft work it created once empty. Never calls the
+ * model; a later human edit stops the chain and is reported as kept.
+ */
+export const aiJobUndoAll = async (
+  jobId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<aiJobUndoAllResponse> => {
+  return apiMutator<aiJobUndoAllResponse>(getAiJobUndoAllUrl(jobId), {
     ...options,
     method: "POST",
   });
