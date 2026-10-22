@@ -12,7 +12,9 @@ from rest_framework.views import APIView
 from rest_framework import serializers
 
 from authentication.errors import contract_error
-from authentication.serializers import ACTIVE_ORGANIZATION_HEADER
+from catalogs.reference_protection import protect_changes
+from catalogs.views import HEADERS as CATALOG_HEADERS
+from catalogs.reference_serializers import ReferenceChangeErrorSerializer
 from documents.views import ERRORS, documentary_scope, validate
 from ingest import catalog_review, catalog_sources
 from ingest.catalog_service import _get
@@ -26,7 +28,8 @@ from ingest.views import _CATALOG_WRITERS, _READERS, _payload
 from pricing.views import DecimalJSONParser
 from pricing.repository import rows
 
-HEADERS = [ACTIVE_ORGANIZATION_HEADER]
+HEADERS = CATALOG_HEADERS
+ERRORS = {**ERRORS, 409: ReferenceChangeErrorSerializer}
 SCHEMA = {"parameters": HEADERS, "tags": ["catalogs"]}
 FORMAT_PARAMETERS = [*HEADERS,
     OpenApiParameter("format", OpenApiTypes.STR, enum=["xlsx", "csv"], required=False),
@@ -143,8 +146,9 @@ class CatalogImportPublishView(APIView):
         try:
             with documentary_scope(request, _CATALOG_WRITERS) as (token, _, org_id):
                 data = validate(CatalogPublishRequestSerializer, request.data)
-                return _payload(catalog_review.publish(org_id=org_id, actor_id=token.user_id,
-                    import_id=import_id, items=data["items"], review_token=data["review_token"]))
+                with protect_changes(org_id, request.headers.get("X-Catalog-Review")):
+                    return _payload(catalog_review.publish(org_id=org_id, actor_id=token.user_id,
+                        import_id=import_id, items=data["items"], review_token=data["review_token"]))
         except DatabaseError as error:
             if "catalog_authority_referenced" in str(error):
                 raise contract_error(409, "catalog_publish_locked", "Este catálogo ya se usa en un producto guardado. Publica la corrección con un código nuevo.") from error
@@ -158,7 +162,8 @@ class CatalogImportUndoView(APIView):
         try:
             with documentary_scope(request, _CATALOG_WRITERS) as (token, _, org_id):
                 validate(CatalogUndoRequestSerializer, request.data)
-                return _payload(catalog_review.undo_publication(org_id=org_id, actor_id=token.user_id, import_id=import_id))
+                with protect_changes(org_id, request.headers.get("X-Catalog-Review")):
+                    return _payload(catalog_review.undo_publication(org_id=org_id, actor_id=token.user_id, import_id=import_id))
         except DatabaseError as error:
             raise contract_error(409, "catalog_undo_locked", "El catálogo ya se usa en otro registro. Conserva esta configuración y publica una nueva versión para corregirla.") from error
 

@@ -11,6 +11,9 @@ type CatalogFixture = {
   stressId: string;
   pasteValues: (string | null)[];
   organizationId: string;
+  manualImportId?: string;
+  manualArticleId?: string;
+  manualSku?: string;
 };
 
 function required(name: string): string {
@@ -25,9 +28,17 @@ function local(name: string): string {
   return url.origin;
 }
 
-export const test = base.extend<{ catalog: CatalogFixture }>({
+export const test = base.extend<{
+  catalog: CatalogFixture;
+  doubleReadManual: boolean;
+  lightCatalog: boolean;
+  unpricedCatalog: boolean;
+}>({
+  doubleReadManual: [false, { option: true }],
+  lightCatalog: [false, { option: true }],
+  unpricedCatalog: [false, { option: true }],
   catalog: [
-    async ({ page }, use) => {
+    async ({ page, doubleReadManual, lightCatalog, unpricedCatalog }, use) => {
       const supabaseUrl = local("SUPABASE_URL");
       const mailpit = local("MAILPIT_URL");
       const serviceKey = required("SUPABASE_SERVICE_ROLE_KEY");
@@ -74,7 +85,14 @@ export const test = base.extend<{ catalog: CatalogFixture }>({
         // Magic Link + real TOTP credentials ever enter the browser.
         const output = execFileSync(
           environment("PYTHON") ?? "python",
-          ["scripts/seed_catalog_series_e2e.py", organizationId, userId],
+          [
+            "scripts/seed_catalog_series_e2e.py",
+            organizationId,
+            userId,
+            ...(doubleReadManual ? ["--double-read"] : []),
+            ...(lightCatalog ? ["--light"] : []),
+            ...(unpricedCatalog ? ["--unpriced"] : []),
+          ],
           {
             cwd: fileURLToPath(new URL("../../../../", import.meta.url)),
             encoding: "utf8",
