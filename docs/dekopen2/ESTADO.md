@@ -8,7 +8,7 @@ Producción y precios comerciales requieren autorización aparte.
 |---|---|---|---|
 | P01 | Catálogo v2: backend, origen, niveles y plantillas | Hecha | [P01a #164](https://github.com/KaraAliOsman/framedex/pull/164), [P01b #165](https://github.com/KaraAliOsman/framedex/pull/165), [P01c #166](https://github.com/KaraAliOsman/framedex/pull/166), [P01d #167](https://github.com/KaraAliOsman/framedex/pull/167) y [P01e #168](https://github.com/KaraAliOsman/framedex/pull/168) fusionadas |
 | P02 | Ficha de serie editable | En curso | [P02a #169](https://github.com/KaraAliOsman/framedex/pull/169), [P02b #170](https://github.com/KaraAliOsman/framedex/pull/170), [P02c #171](https://github.com/KaraAliOsman/framedex/pull/171); sub-PR ordenadas |
-| P03 | Alta de serie y ventana de prueba | En preparación, pendiente de fusionar P02 | [P03a #174](https://github.com/KaraAliOsman/framedex/pull/174), `gpt/dk2-p03b-verificacion-serie` |
+| P03 | Alta de serie y ventana de prueba | En preparación, pendiente de fusionar P02 | [P03a #174](https://github.com/KaraAliOsman/framedex/pull/174), [P03b #175](https://github.com/KaraAliOsman/framedex/pull/175), `gpt/dk2-p03c-doble-lectura` |
 | P04 | Precio simple automático | Pendiente | — |
 | P05 | Navegación, Hoy y Obras | Pendiente | — |
 | P06 | Mesa de la obra y edición directa | Pendiente | — |
@@ -330,3 +330,23 @@ a P03; P01 deja preparado su contrato y su bloqueo.
   cinco rutas nuevas; corregido ese inventario, sus 17 comprobaciones dirigidas
   pasan. Ruff, guardas, tipos, formato y build aprobados; API regenerada.
 - Falta interfaz, doble lectura y mapeo de precios. Sin activación de producción.
+
+### P03c · Dos lecturas independientes del manual
+
+- Dos llamadas con instrucciones distintas y claves idempotentes separadas. La
+  segunda nunca recibe la respuesta de la primera. Cada celda conserva ambas
+  lecturas, citas, confianza y auditorías; el acuerdo exige soporte literal en
+  ambas y una identidad completa y única, sin depender del orden de las filas.
+- Solo los acuerdos quedan como propuestas. Las diferencias no publican un
+  valor hasta la elección humana. Elegir una lectura citada conserva su origen
+  documental tras publicar; corregir libremente queda como dato del taller.
+  Fallar la segunda lectura no devuelve propuestas de una sola extracción.
+- Se rechazan números binarios y no finitos antes de crear candidatos. La
+  integración comprueba que la base no cambia antes del clic y que la elección
+  citada termina con origen MANUAL, conservando las dos lecturas.
+- Corregido el enlace de evidencias de corte/refuerzo a sus campos anidados:
+  una revisión real ahora confirma el campo correcto, sin reescribir evidencia
+  histórica. Las propuestas de ajuste también validan los rangos del catálogo
+  antes de ofrecerse; el motor puro mantiene sus capacidades originales.
+- Validación: 74 unitarias de ingesta/intercambio y 11 integraciones de
+  publicación, intercambio y ajustes. Faltan el mapeo de precios y la interfaz.

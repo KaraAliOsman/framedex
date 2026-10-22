@@ -81,6 +81,18 @@ def test_rule_correction_recalculates_then_seals_the_exact_new_window(documentar
         assert require_use(org, sheet["id"], "MANUFACTURABLE")["verified"]
 
 
+def test_proposals_also_respect_the_catalog_storage_constraints(documentary_tenant):
+    org, _, users, _ = documentary_tenant
+    actor = users["OWNER"]
+    with as_user(actor):
+        sheet = priced_series(org, actor)
+        trial = windows.trial(org, sheet["id"], request_data())
+        bead = next(row for row in trial["measurements"] if row["role"] == "GLAZING_BEAD")
+        proposals = windows.proposals(org, sheet["id"], {**request_data(), "measurement_key": bead["key"],
+            "target_mm": D(bead["value_mm"]) - D("30")})
+        assert proposals["items"] == []  # The catalog's bead addition cannot be negative.
+
+
 def test_protected_sheet_edit_rolls_back_and_requires_exact_review_token(documentary_tenant):
     org, _, users, _ = documentary_tenant
     actor = users["OWNER"]

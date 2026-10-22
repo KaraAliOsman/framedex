@@ -1,6 +1,7 @@
 """Recalculate and seal human-confirmed reference windows, never client output."""
 
 from decimal import Decimal
+from copy import deepcopy
 import hashlib
 import json
 
@@ -75,6 +76,16 @@ def proposals(org_id, system_id, data):
             Decimal(row["glass_thickness_mm"]) == parameter.glass_thickness_mm)), None)
         if row is None:
             continue
+        path = parameter.field.split(".")
+        values = {path[0]: deepcopy(row.get(path[0]))} if len(path) > 1 else {path[0]: str(proposal.value)}
+        if len(path) > 1:
+            target = values[path[0]]
+            for part in path[1:-1]:
+                target = target[part]
+            target[path[-1]] = str(proposal.value)
+        validator = resource.serializer(instance=row, data=values, partial=True)
+        if not validator.is_valid():
+            continue  # The pure engine may support a wider range than storage.
         output.append({"label": parameter.label, "previous": str(parameter.previous), "value": str(proposal.value),
             "change": {"resource": parameter.resource, "row_id": str(row["id"]), "field": parameter.field,
                 "value": str(proposal.value)}, "measurements": measurement_comparison(proposal.result, {}),

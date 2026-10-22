@@ -138,6 +138,17 @@ def _entries(import_row, items):
         reviewed["method"] = original["method"]
         for field, value in reviewed["values"].items():
             if value != original["values"].get(field):
+                from ingest.catalog_double_read import same_value
+                column = next(column for column in SCHEMAS[original["sheet"]] if column.key == field)
+                supported = [reading for reading in original["fields"].get(field, {}).get("readings", [])
+                    if reading.get("confidence") == "HIGH" and reading.get("value") is not None
+                    and reading.get("quote") and reading.get("ref") and same_value(column, reading["value"], value)]
+                if supported:
+                    # A human chose a literally supported reading. Arbitrary
+                    # corrections still remain workshop values below.
+                    reviewed["fields"][field] = {**reviewed["fields"][field], **supported[0],
+                        "method": "AI", "comparison": "HUMAN_RESOLVED"}
+                    continue
                 reviewed["fields"][field] = {**reviewed["fields"][field],
                     "method": "HUMAN_CORRECTION", "original": original["values"].get(field),
                     "confidence": "HUMAN_REVIEWED"}
@@ -456,8 +467,13 @@ def publish(*, org_id, actor_id, import_id, items, review_token):
                     if value is None:
                         continue
                     source = entry["fields"][field]
+                    stored_field = field
+                    if entry["sheet"] == "Roles y reglas de corte" and field in ProfileCutRuleSerializer().fields:
+                        stored_field = "cut_rule." + field
+                    elif entry["sheet"] == "Refuerzos" and field in ProfileReinforcementRuleSerializer().fields:
+                        stored_field = "reinforcement_rule." + field
                     attestation = evidence.declare_evidence(org_id=org_id, actor_id=actor_id, values={
-                        "authority_table": change.table, "row_id": item["id"], "field_name": field,
+                        "authority_table": change.table, "row_id": item["id"], "field_name": stored_field,
                         "value_text": json_text(value), "canonical_value": value,
                         "source_document": f"{row['file_name']} · {source.get('ref','')}"[:300],
                         "source_import_id": import_id, "source_ref": source.get("ref"),

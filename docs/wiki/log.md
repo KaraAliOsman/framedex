@@ -2285,3 +2285,12 @@ en gpt/dk2-p03b-verificacion-serie con 25 integraciones dirigidas y 23 pgTAP.
 La suite del backend detectó cinco rutas nuevas fuera de su inventario explícito;
 se añadieron sin retirar las aserciones de seguridad. P03 aún requiere UI,
 doble lectura y precios. Véanse product/catalog-authority.md y ESTADO.md.
+
+## 2026-10-21 · Preparación P03c: doble lectura
+
+Dos extracciones independientes alineadas por identidad, ambas citas/auditorías
+por celda y publicación humana. La elección citada confirma el origen documental;
+corregir libremente conserva origen del taller. La integración detectó y corrigió
+el enlace de evidencias a campos anidados de corte/refuerzo. Las propuestas de
+calibración también respetan los rangos de almacenamiento. P03 sigue pendiente
+de mapeo de precios e interfaz; véase product/catalog-authority.md.
