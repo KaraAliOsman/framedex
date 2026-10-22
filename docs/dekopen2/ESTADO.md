@@ -256,3 +256,19 @@ a P03; P01 deja preparado su contrato y su bloqueo.
 - La edición avanzada conserva sus enlaces de regreso y alta desde cero;
   el E2E anterior se mantiene además en `catalog-advanced.spec.ts` para la
   activación posterior de la ficha nueva.
+
+### P02e · Activación e integración
+
+- Inicio por fabricante/serie, búsqueda, alta desde biblioteca/plantilla/cero y
+  ejemplos plegados con carga bajo demanda. Los indicadores excluyen ejemplos.
+- Ruta simple activa, enlaces históricos redirigidos a ajustes y vuelta a ficha.
+  La ventana de prueba preliminar consulta opciones y calcula con el motor.
+- E2E real con Magic Link/TOTP en dos viewports: cinco filas pegadas, dos
+  confirmaciones, cambio de nivel/franja sin recarga, seis pestañas, precios,
+  historial, undo, prueba del motor y creación desde plantilla: aprobado.
+  Edición avanzada conservada y probada. [Aceptación](../redesign/captures/dk2-p02/aceptacion.md).
+- Diecinueve capturas seleccionadas e inspeccionadas; axe A/AA/2.1 AA y anchos
+  de página correctos. Trescientos perfiles, nombres de 80 caracteres y cuatro
+  decimales comprobados. Carga local de ficha 0,85–0,90 s.
+- P02 espera sus cuatro controles por sub-PR y fusiones ordenadas. P03–P11
+  continúan pendientes; no hay activación de producción ni precios comerciales.

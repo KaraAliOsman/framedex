@@ -106,7 +106,7 @@ const ClientsPage = lazy(async () => ({
   default: (await import("./features/projects/ClientsPage")).ClientsPage,
 }));
 const CatalogPage = lazy(async () => ({
-  default: (await import("./features/catalogs/CatalogPage")).CatalogPage,
+  default: (await import("./features/catalogs/SeriesCatalogPage")).SeriesCatalogPage,
 }));
 const FinishSamplesPage = lazy(async () => ({
   default: (await import("./features/catalogs/FinishSamplesPage")).FinishSamplesPage,

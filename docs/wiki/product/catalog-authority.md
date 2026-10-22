@@ -340,3 +340,19 @@ El editor exige activar «Mostrar ejemplos» para ofrecer series sintéticas.
 Una ventana histórica mantiene su selección; los ejemplos no adquieren origen
 manual ni certificación. La edición avanzada conserva sus rutas profundas para
 biblioteca, alta desde cero e inspección, y vuelve a la ficha simple.
+
+
+## Inicio y ficha integrada · P02e
+
+Verificado el 21-10-2026 en `gpt/dk2-p02e-catalogo-integrado`. El inicio consulta
+solo series propias, agrupa versiones por fabricante/código y abre ejemplos,
+plantillas y biblioteca bajo demanda. Las rutas antiguas conservan la edición
+avanzada. El alta por plantilla utiliza su versión real y abre la ficha que
+retorna el servidor, sin rellenar perfiles desconocidos.
+
+Dos E2E reales comprueban pegado de cinco reglas, dos confirmaciones, nivel y
+franja sin recarga, seis pestañas, precio/historia/deshacer, extremos y alta.
+La prueba preliminar llama al motor con opciones compatibles del catálogo;
+no persiste aún verificación. P03 añadirá revisión de cortes y caso dorado.
+La [aceptación integrada](../../redesign/captures/dk2-p02/aceptacion.md) distingue
+las pruebas locales, las 19 capturas y los gates todavía requeridos de CI.
