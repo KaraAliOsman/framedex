@@ -486,7 +486,16 @@ def test_invitation_replay_requires_live_verified_identity_and_owner(people):
     )
 
 
-def test_section_patch_is_consumed_and_preview_keeps_sealed_numbers(people):
+@pytest.mark.parametrize(
+    ("utc_instant", "expected_today"),
+    [
+        ("2026-10-22T02:30:00+00:00", date(2026, 10, 21)),
+        ("2026-10-22T04:30:00+00:00", date(2026, 10, 22)),
+    ],
+)
+def test_section_patch_is_consumed_and_preview_keeps_sealed_numbers(
+    people, monkeypatch, utc_instant, expected_today
+):
     org, _, users, _ = people
     project, _, operation = _seed_project(org, users["OWNER"])
     version = _freeze(org, users["OWNER"], project, operation)
@@ -519,23 +528,33 @@ def test_section_patch_is_consumed_and_preview_keeps_sealed_numbers(people):
                     "document_preferences": {"paper": "A4"},
                 },
             )
-        from documents.service import _prepared_valid_until
+        from documents import service as document_service
 
-        with documentary_backend():
-            from zoneinfo import ZoneInfo
+        instant = datetime.fromisoformat(utc_instant)
 
-            expected_today = datetime.now(ZoneInfo("America/Santiago")).date()
-            assert _prepared_valid_until({}, org) == expected_today + timedelta(days=23)
-        content = company.preview(
-            org,
-            {
-                "version_id": version["id"],
-                "branding": {
-                    "commercial_name": "Marca Maitenes",
-                    "document_preferences": {"quotation_valid_days": 23},
+        class FixedDateTime(datetime):
+            @classmethod
+            def now(cls, tz=None):
+                return instant.astimezone(tz)
+
+        monkeypatch.setattr(timezone, "now", lambda: instant)
+        monkeypatch.setattr(document_service, "datetime", FixedDateTime)
+        # An unrelated active timezone must not change the Chilean business day.
+        with timezone.override("Pacific/Honolulu"):
+            with documentary_backend():
+                assert document_service._prepared_valid_until({}, org) == (
+                    expected_today + timedelta(days=23)
+                )
+            content = company.preview(
+                org,
+                {
+                    "version_id": version["id"],
+                    "branding": {
+                        "commercial_name": "Marca Maitenes",
+                        "document_preferences": {"quotation_valid_days": 23},
+                    },
                 },
-            },
-        )
+            )
     text = "\n".join(page.extract_text() for page in PdfReader(BytesIO(content)).pages)
     assert "Marca Maitenes" in text
     assert "Pie vigente de Maitenes" in text
