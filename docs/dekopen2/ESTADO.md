@@ -256,3 +256,11 @@ a P03; P01 deja preparado su contrato y su bloqueo.
 - La edición avanzada conserva sus enlaces de regreso y alta desde cero;
   el E2E anterior se mantiene además en `catalog-advanced.spec.ts` para la
   activación posterior de la ficha nueva.
+
+- Revisión del lenguaje servido por API: las etiquetas públicas de importación,
+  errores de campos requeridos, metadatos y avisos usan el mismo glosario. Los
+  encabezados del XLSX versionado se conservan para no romper su lectura.
+  Sesenta y seis pruebas de importación, esquema y metadatos pasan.
+- Los E2E comerciales existentes activan ejemplos mediante el control nuevo;
+  el flujo de precio y emisión de dos revisiones aprobó sin cambiar sus
+  comprobaciones de cálculo, documentos ni inmutabilidad.

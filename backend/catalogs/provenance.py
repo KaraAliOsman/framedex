@@ -130,4 +130,4 @@ def decorate(resource, records, org_id):
             "reason": ("Datos sintéticos; sin certificación del fabricante" if synthetic else
                        "Revisión técnica con evidencia vigente" if verified else
                        "La revisión técnica no certifica valores sin evidencia vigente" if reviewed else
-                       "Fuente o revisión técnica pendiente")}
+                       "Documento o revisión del taller pendiente")}

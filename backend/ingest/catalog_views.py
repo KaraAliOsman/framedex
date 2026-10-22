@@ -160,7 +160,7 @@ class CatalogImportUndoView(APIView):
                 validate(CatalogUndoRequestSerializer, request.data)
                 return _payload(catalog_review.undo_publication(org_id=org_id, actor_id=token.user_id, import_id=import_id))
         except DatabaseError as error:
-            raise contract_error(409, "catalog_undo_locked", "El catálogo ya se usa en otro registro. Conserva esta autoridad y publica una nueva versión para corregirla.") from error
+            raise contract_error(409, "catalog_undo_locked", "El catálogo ya se usa en otro registro. Conserva esta configuración y publica una nueva versión para corregirla.") from error
 
 
 class CatalogImportRetryView(APIView):
