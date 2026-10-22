@@ -49,6 +49,7 @@ def prepare(request, project_id: UUID) -> dict:
     from pricing.repository import commercial_backend, rows
     from pricing.serializers import PriceRequestSerializer
     from pricing.service import apply_operation, pricing_public_detail
+    from pricing.simple_policy import read_policy
     from pricing.views import _preview_with_retry, scope as pricing_scope
     from projects import service as projects_service
 
@@ -56,8 +57,16 @@ def prepare(request, project_id: UUID) -> dict:
         with pricing_scope(request, ("OWNER", "ESTIMATOR")) as (_, _, org_id):
             currency = rows("SELECT currency FROM public.tenancy_organizations WHERE id=%s", [str(org_id)])[0]["currency"]
             project = projects_service.project_public(org_id, projects_service.project_row(org_id, project_id))
+            with commercial_backend():
+                simple = not read_policy(org_id)["use_advanced"]
         applied_id = project.get("current_pricing_operation_id")
-        if not applied_id:
+        if simple and not applied_id:
+            # Simple pricing (P04): the working price is automatic. The draft
+            # renders from it; the price is applied only when issuing.
+            working = project.get("working_price") or {}
+            if working.get("state") != "READY":
+                return _blocked(str(working.get("reason") or "El precio de trabajo de la obra aún no está listo."))
+        elif not applied_id:
             serializer = PriceRequestSerializer(data={
                 "project_id": str(project_id),
                 "pricing_mode": "COST_PLUS_MARGIN",
@@ -89,9 +98,11 @@ def prepare(request, project_id: UUID) -> dict:
         if pdf_cause:
             # The price stays applied (reversible: «Retirar precio» with an
             # audit reason); the receipt says both facts, never one.
-            return {"status": "blocked", "operation_id": str(applied_id), "pdf": False,
-                    "cause": f"Precio aplicado con las reglas vigentes; el PDF borrador no se generó: {pdf_cause}"[:240]}
-        return {"status": "applied", "cause": None, "operation_id": str(applied_id), "pdf": True}
+            priced = "Precio aplicado con las reglas vigentes" if applied_id else "Precio de trabajo listo"
+            return {"status": "blocked", "operation_id": str(applied_id) if applied_id else None, "pdf": False,
+                    "cause": f"{priced}; el PDF borrador no se generó: {pdf_cause}"[:240]}
+        return {"status": "applied", "cause": None, "operation_id": str(applied_id) if applied_id else None,
+                "pdf": True}
     except PricingError as error:
         return _blocked(pricing_public_detail(error.code))
     except (ContractAPIException, DocumentaryError) as error:

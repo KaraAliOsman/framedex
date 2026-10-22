@@ -134,13 +134,15 @@ test("a pasted request becomes a cited draft work, nothing is sent and undo remo
     ),
   ).toBe(5);
 
-  // Price and draft PDF with the person's own session; nothing is issued or sent.
-  await copilot.getByRole("button", { name: "Aprobar y aplicar", exact: true }).click();
+  // «Omitir todo» continues with the price and the draft PDF under the
+  // person's own session; nothing is issued or sent.
+  const receipt = copilot.getByRole("region", { name: "Resumen del trabajo" });
+  await expect(
+    receipt.getByRole("listitem").filter({ hasText: "Precio y PDF borrador" }),
+  ).toContainText("Aplicado", { timeout: 60_000 });
   await expect(
     copilot.getByText("Nada se envió: emitir y enviar siguen siendo tuyos."),
-  ).toBeVisible({
-    timeout: 60_000,
-  });
+  ).toBeVisible();
   const priced = await api(`projects/${projectId}/`);
   expect(priced.body.status).toBe("DRAFT");
   expect(priced.body.working_price.state).toBe("READY");
