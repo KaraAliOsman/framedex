@@ -73,8 +73,10 @@ test("a pasted request becomes a cited draft work, nothing is sent and undo remo
   expect(saved.status, JSON.stringify(saved.body)).toBe(200);
 
   await page.goto("/dashboard");
-  await page.keyboard.press("Control+k");
-  await page.getByRole("combobox").fill(REQUEST);
+  await page.getByRole("button", { name: "Buscar o ejecutar un comando", exact: true }).click();
+  await page
+    .getByRole("combobox", { name: "Escribe un comando o busca…", exact: true })
+    .fill(REQUEST);
   await page.getByRole("option", { name: /^Pedir a DEKOPEN/ }).click();
   const copilot = page.getByRole("dialog", { name: "Asistente" });
   await expect(copilot).toHaveClass(/is-docked/);
