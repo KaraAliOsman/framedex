@@ -152,7 +152,7 @@ class JobListCreateView(APIView):
                 # Session assurance is sealed from the verified token only.
                 payload.pop("session_aal", None)
                 if data["type"] == "ai.agent.run":
-                    payload["session_aal"] = token.aal
+                    payload["session_aal"] = getattr(token, "aal", "aal1")
                 job, created = service.enqueue(
                     org_id=org_id,
                     job_type=data["type"],
