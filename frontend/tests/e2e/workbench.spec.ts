@@ -164,7 +164,8 @@ for (const viewport of [
         .getByRole("button", { name: "Vista exterior", exact: true })
         .click();
       const model = page.locator(".work-model3d .model3d-view");
-      await expect(model).toHaveAttribute("data-view", "exterior");
+      // The 3D view is a lazy chunk; a cold dev server may compile it slowly.
+      await expect(model).toHaveAttribute("data-view", "exterior", { timeout: 30_000 });
       const modelCanvas = model.locator(".model3d-canvas");
       await modelCanvas.scrollIntoViewIfNeeded();
       expect((await modelCanvas.boundingBox())!.height).toBeGreaterThanOrEqual(200);
