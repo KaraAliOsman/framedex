@@ -31,7 +31,7 @@ for (const role of [
     { width: 390, height: 844 },
   ]) {
     test.describe(`${role} ${viewport.width}`, () => {
-      test.use({ catalogRole: role, viewport });
+      test.use({ catalogRole: role, viewport, lightCatalog: true });
       test("opens Hoy, filters destinations by role and retains legacy links", async ({
         page,
         catalog,

@@ -60,3 +60,14 @@ las métricas de Hoy/Obras se registran al cerrar sus sub-PR funcionales.
 Validación final: los diez recorridos vuelven a pasar tras comprobar también
 el filtro de búsqueda de `/quotes`; 1.184 pruebas frontend en 108 archivos,
 ESLint, TypeScript, guardas, Prettier y build de producción aprobados.
+
+## Reparación del gate · 22-10-2026
+
+El run `39756078925` detectó sockets cerrados al cambiar la membresía después
+de preparar el catálogo. La fixture ejecuta ahora el seeder de forma asíncrona,
+sin bloquear el bucle de Node ni sus conexiones HTTP. Conserva el error original
+si también falla la limpieza y añade método/ruta a los errores de transporte.
+Navegación usa el catálogo mínimo real; los ensayos de Catálogo conservan los
+300 perfiles de estrés. Se mantienen los diez casos, roles, enlaces y axe.
+Los diez recorridos pasan de nuevo contra el build de esta rama (2,7 minutos),
+con PostgreSQL, Magic Link y TOTP reales. Lint, tipos, formato y build pasan.
