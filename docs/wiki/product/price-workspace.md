@@ -123,6 +123,23 @@ acción para crearla, sin inventar un ejemplo comercial.
 Esta API aún no activa el precio automático ni modifica cotizaciones emitidas.
 El automatismo y la pantalla corresponden a las siguientes subentregas de P04.
 
+## Pantalla simple de Empresa · P04f
+
+Verificado el 22-10-2026 en `gpt/dk2-p04f-empresa-precios`, sobre `332a75ff`.
+`SimplePricingSettings` reúne servicios/unidades, margen sobre venta y redondeo;
+merma/IVA/moneda y reglas avanzadas se revelan al necesitarlos. El ejemplo usa
+el endpoint real con una ventana del borrador; no inventa materiales ni guarda
+al consultar. La entrada porcentual conserva exactitud con strings/BigInt.
+Guardar conserva revisión optimista e invalida consultas de obra de la empresa;
+un conflicto deja el borrador visible hasta recargar. Solo OWNER solicita costos.
+
+La API normaliza la notación Decimal a texto plano en el ejemplo y desglose
+público, sin redondear ni mutar caché/evidencia. La allowlist del estimador no
+agrega campos privados. Regresiones HTTP y de precio público comprueban esta
+frontera. Dos E2E, cinco unitarias UI y 25 integraciones aprueban;
+[aceptación](../../redesign/captures/dk2-p04f/aceptacion.md) conserva capturas y
+límites. Total/popover de obra y flujo UI de emisión siguen pendientes en P04g.
+
 ## Comportamiento avanzado verificado previamente
 
 La aceptación histórica siguiente corresponde a

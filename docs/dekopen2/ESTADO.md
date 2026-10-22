@@ -8,8 +8,8 @@ Producción y precios comerciales requieren autorización aparte.
 | ---- | -------------------------------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | P01  | Catálogo v2: backend, origen, niveles y plantillas | Hecha                                                                                    | [P01a #164](https://github.com/KaraAliOsman/framedex/pull/164), [P01b #165](https://github.com/KaraAliOsman/framedex/pull/165), [P01c #166](https://github.com/KaraAliOsman/framedex/pull/166), [P01d #167](https://github.com/KaraAliOsman/framedex/pull/167) y [P01e #168](https://github.com/KaraAliOsman/framedex/pull/168) fusionadas |
 | P02  | Ficha de serie editable                            | Hecha                                                                                    | Sub-PR [#169](https://github.com/KaraAliOsman/framedex/pull/169)–[#173](https://github.com/KaraAliOsman/framedex/pull/173) fusionadas                                                                                                                                                                                                      |
-| P03  | Alta de serie y ventana de prueba                  | Implementada; fusiones en curso                                                          | [P03a #174](https://github.com/KaraAliOsman/framedex/pull/174) fusionada; [#175](https://github.com/KaraAliOsman/framedex/pull/175)–[#181](https://github.com/KaraAliOsman/framedex/pull/181) pendientes                                                                                                                                   |
-| P04  | Precio simple automático                           | En curso: motor, política, precio de trabajo y emisión implementados; interfaz pendiente | [P04a #182](https://github.com/KaraAliOsman/framedex/pull/182)–[P04d #185](https://github.com/KaraAliOsman/framedex/pull/185), `gpt/dk2-p04e-precio-pdf-revisable`                                                                                                                                                                         |
+| P03 | Alta de serie y ventana de prueba | Implementada; fusiones en curso | [#174](https://github.com/KaraAliOsman/framedex/pull/174)–[#176](https://github.com/KaraAliOsman/framedex/pull/176) fusionadas; #177–#181 pendientes |
+| P04 | Precio simple automático | En curso: configuración de Empresa lista; interfaz de obra pendiente | [#182](https://github.com/KaraAliOsman/framedex/pull/182)–[#186](https://github.com/KaraAliOsman/framedex/pull/186), `gpt/dk2-p04f-empresa-precios` |
 | P05  | Navegación, Hoy y Obras                            | Pendiente                                                                                | —                                                                                                                                                                                                                                                                                                                                          |
 | P06  | Mesa de la obra y edición directa                  | Pendiente                                                                                | —                                                                                                                                                                                                                                                                                                                                          |
 | P07  | Cotización y portal                                | Pendiente                                                                                | —                                                                                                                                                                                                                                                                                                                                          |
@@ -19,6 +19,21 @@ Producción y precios comerciales requieren autorización aparte.
 | P11  | Pulido y cierre                                    | Pendiente                                                                                | —                                                                                                                                                                                                                                                                                                                                          |
 
 ## P04 · Precio simple automático
+
+### P04f · Cómo calculo mis precios
+
+- Pantalla de Empresa con servicios por m²/ventana, margen y redondeo; merma,
+  IVA y moneda plegados. Sugeridos explícitos; reglas avanzadas solo tras
+  guardar su interruptor. El ejemplo consulta una unidad real del borrador y
+  descarta respuestas anteriores. Un 409 conserva los cambios para comparar.
+- Dos E2E con Magic Link/TOTP y serie PRO6004 sintética aprobados, en escritorio
+  y móvil. Cinco unitarias UI, 21 de contrato y 25 integraciones PostgreSQL
+  aprobadas. Lint, tipos, build, guardas y API reproducible aprobados.
+- Se corrigieron transporte científico de cero, importes largos y desborde al
+  200 % de texto. [Aceptación y capturas](../redesign/captures/dk2-p04f/aceptacion.md).
+- P04e publicada en [#186](https://github.com/KaraAliOsman/framedex/pull/186).
+  P04g conserva pendientes el total automático visible de la obra, su desglose
+  y el E2E de emisión; las sub-PR P04 esperan completar P03 y sus cuatro gates.
 
 ### P04e · Revisar y emitir el mismo PDF
 

@@ -4,7 +4,7 @@ from decimal import Decimal as D
 
 import pytest
 
-from pricing.simple_serializers import SimplePolicyValuesSerializer, SimplePolicyExampleRequestSerializer
+from pricing.simple_serializers import SimplePolicyValuesSerializer, SimplePolicyExampleRequestSerializer, PlainAmountField
 
 
 def values(**changes):
@@ -18,6 +18,13 @@ def test_policy_preserves_four_decimal_rates_and_explicit_zero():
     assert serializer.is_valid(), serializer.errors
     assert serializer.validated_data['labor_rate'] == D('15000.1234')
     assert serializer.validated_data['installation_rate'] == D('0')
+
+
+@pytest.mark.parametrize('amount', ['0E-80', '1E-78', '9.12345678901234567890123456789E+20'])
+def test_breakdown_transports_exponent_decimals_without_rounding_or_false_absence(amount):
+    rendered = PlainAmountField().to_representation(D(amount))
+    assert 'E' not in rendered and 'e' not in rendered
+    assert D(rendered) == D(amount)
 
 
 @pytest.mark.parametrize('changes', [

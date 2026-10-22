@@ -2,6 +2,9 @@
 
 ## DEKOPEN 2
 
+- [P04f · precios de empresa](dk2-p04f/aceptacion.md): pantalla simple,
+  ejemplo del motor, importes extremos y texto ampliado en diez capturas.
+
 - [P02a · tabla editable](dk2-p02a/aceptacion.md): diez capturas seleccionadas
   de escritorio/móvil, extremos, accesibilidad y alcance del componente.
 

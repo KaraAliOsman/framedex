@@ -434,4 +434,4 @@ class SimplePolicyExampleView(APIView):
         with public_pricing_errors():
             output = _preview_with_retry(token, token.claims,
                 request.headers.get('X-Organization-ID'), data, example_preview)
-        return Response(json.loads(json_text(output)))
+        return Response(SimplePolicyExampleResponseSerializer(output).data)

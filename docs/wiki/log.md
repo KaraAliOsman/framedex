@@ -2320,3 +2320,11 @@ revisable sin aplicar, emisión exacta y atómica, cambios de autoridad, replay 
 concurrencia. Se mantiene la auditoría de aprobación en la operación inmutable.
 Actualizados product/price-workspace.md y docs/dekopen2/ESTADO.md. La interfaz
 de precios y la aceptación visual de P04 siguen pendientes.
+
+## 2026-10-22 · P04f: precios simples en Empresa
+
+En `gpt/dk2-p04f-empresa-precios` se ejercitó configuración exacta, ejemplo del
+motor y activación avanzada guardada. Dos E2E, cinco unitarias UI, 21 de contrato
+y 25 integraciones aprueban. Se corrigieron cero científico, importes largos,
+porcentaje extremo y texto ampliado. La aceptación conserva diez capturas y
+métricas locales. Total/popover de obra y emisión UI continúan en P04g.
