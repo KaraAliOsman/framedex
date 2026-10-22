@@ -2588,3 +2588,15 @@ de Hoy, las etapas de Obras y la purga global siguen en P05. Se conserva el
   los avisos con corrección, precio vivo simple, respuesta menor de 100 ms y
   extremos de la lista. P06 sigue en curso. Las fusiones esperan cuatro controles
   verdes sobre cada head actual; las correcciones heredadas se propagan sin force.
+
+## [2026-10-22] DEKOPEN 2 P08 | Solicitud a obra con origen y Deshacer todo
+
+- Claude retoma la implementación: la pila #187–#200 se integra en #201 y P06b
+  va en #202. Seis E2E heredados se corrigen en la integración (biblioteca que
+  se reabría al cerrarse dos veces, pruebas móviles, foco del desglose).
+- P08a/b en `claude/dk2-p08-agente`: origen por ventana verificado por el
+  servidor, supuestos no numéricos, `undo-all`, Ctrl K «Pedir a DEKOPEN», panel
+  lateral y tarjeta de origen. Evaluación grabada: 100 % de ventanas correctas,
+  cero medidas inventadas. Pendiente: bandeja en Hoy, planos y fotos, y la
+  decisión sobre `aal2` del trabajador para dueños.
+
