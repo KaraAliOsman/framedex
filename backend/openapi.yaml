@@ -15679,6 +15679,209 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/pricing/simple-policy/:
+    get:
+      operationId: pricing_simple_policy
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - pricing
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimplePolicyResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    put:
+      operationId: pricing_save_simple_policy
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - pricing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimplePolicyWriteRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimplePolicyResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/pricing/simple-policy/example/:
+    post:
+      operationId: pricing_simple_policy_example
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - pricing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimplePolicyExampleRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimplePolicyExampleResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/pricing/workspace/:
     post:
       operationId: pricing_workspace
@@ -49383,6 +49586,14 @@ components:
       required:
       - dimensional_limits
       - opening_capabilities
+    ServiceBasisEnum:
+      enum:
+      - M2
+      - WINDOW
+      type: string
+      description: |-
+        * `M2` - M2
+        * `WINDOW` - WINDOW
     ServiceWindow:
       type: object
       properties:
@@ -49818,6 +50029,210 @@ components:
         * `PENDING` - PENDING
         * `ACCEPTED` - ACCEPTED
         * `REJECTED` - REJECTED
+    SimplePolicyExampleRequestRequest:
+      type: object
+      properties:
+        values:
+          $ref: '#/components/schemas/SimplePolicyValuesRequest'
+        position_id:
+          type: string
+          format: uuid
+      required:
+      - values
+    SimplePolicyExampleResponse:
+      type: object
+      properties:
+        position_id:
+          type: string
+          format: uuid
+          nullable: true
+        position_index:
+          type: integer
+          nullable: true
+        currency:
+          $ref: '#/components/schemas/CurrencyEnum'
+        breakdown:
+          allOf:
+          - $ref: '#/components/schemas/SimplePriceBreakdown'
+          nullable: true
+        project_net:
+          type: string
+          nullable: true
+        project_tax:
+          type: string
+          nullable: true
+        project_gross:
+          type: string
+          nullable: true
+        assumptions: {}
+        detail:
+          type: string
+      required:
+      - assumptions
+      - breakdown
+      - currency
+      - detail
+      - position_id
+      - position_index
+      - project_gross
+      - project_net
+      - project_tax
+    SimplePolicyResponse:
+      type: object
+      properties:
+        currency:
+          $ref: '#/components/schemas/CurrencyEnum'
+        labor_rate:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,4})?$
+        labor_basis:
+          $ref: '#/components/schemas/ServiceBasisEnum'
+        installation_rate:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,4})?$
+        installation_basis:
+          $ref: '#/components/schemas/ServiceBasisEnum'
+        margin:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,4})?$
+        rounding_step:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,4})?$
+        waste:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,4})?$
+        tax_rate:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,4})?$
+        use_advanced:
+          type: boolean
+        revision:
+          type: integer
+          minimum: 0
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+        saved:
+          type: boolean
+        suggested_fields:
+          type: array
+          items:
+            type: string
+      required:
+      - currency
+      - installation_basis
+      - installation_rate
+      - labor_basis
+      - labor_rate
+      - margin
+      - revision
+      - rounding_step
+      - saved
+      - suggested_fields
+      - tax_rate
+      - updated_at
+      - use_advanced
+      - waste
+    SimplePolicyValuesRequest:
+      type: object
+      properties:
+        currency:
+          $ref: '#/components/schemas/CurrencyEnum'
+        labor_rate:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,4})?$
+        labor_basis:
+          $ref: '#/components/schemas/ServiceBasisEnum'
+        installation_rate:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,4})?$
+        installation_basis:
+          $ref: '#/components/schemas/ServiceBasisEnum'
+        margin:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,4})?$
+        rounding_step:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,4})?$
+        waste:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,4})?$
+        tax_rate:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,4})?$
+        use_advanced:
+          type: boolean
+      required:
+      - currency
+      - installation_basis
+      - installation_rate
+      - labor_basis
+      - labor_rate
+      - margin
+      - rounding_step
+      - tax_rate
+      - use_advanced
+      - waste
+    SimplePolicyWriteRequest:
+      type: object
+      properties:
+        values:
+          $ref: '#/components/schemas/SimplePolicyValuesRequest'
+        expected_revision:
+          type: integer
+          minimum: 0
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 1000
+      required:
+      - expected_revision
+      - reason
+      - values
+    SimplePriceBreakdown:
+      type: object
+      properties:
+        materials:
+          type: string
+        waste:
+          type: string
+        labor:
+          type: string
+        installation:
+          type: string
+        direct_cost:
+          type: string
+        exact_unit_price:
+          type: string
+        unit_net:
+          type: string
+        rounding:
+          type: string
+        profit:
+          type: string
+      required:
+      - direct_cost
+      - exact_unit_price
+      - installation
+      - labor
+      - materials
+      - profit
+      - rounding
+      - unit_net
+      - waste
     SimulateOpsRequest:
       type: object
       properties:

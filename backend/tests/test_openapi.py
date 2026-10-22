@@ -11,6 +11,9 @@ OPENAPI = ROOT / "backend" / "openapi.yaml"
 def test_openapi_contains_only_authorized_shot_11_paths_and_bearer_security() -> None:
     schema = yaml.safe_load(OPENAPI.read_text(encoding="utf-8"))
     assert set(schema["paths"]) == {
+        # DEKOPEN 2 P04: owner workshop policy and engine-priced example.
+        "/api/v1/pricing/simple-policy/",
+        "/api/v1/pricing/simple-policy/example/",
         # DEKOPEN 2 P01: templates, complete series sheet and atomic cell batches.
         "/api/v1/catalogs/family-templates/",
         "/api/v1/catalogs/series/",

@@ -35,6 +35,9 @@ from pricing.service import (apply_operation, design_batch_preview, operation_pu
 from pricing.xlsx_import import import_rows, parse_xlsx
 from projects.typology import derive_typology
 from pricing.visibility import price_visibility, batch_visibility
+from pricing.simple_policy import read_policy, save_policy, example_preview
+from pricing.simple_serializers import (SimplePolicyResponseSerializer, SimplePolicyWriteSerializer,
+    SimplePolicyExampleRequestSerializer, SimplePolicyExampleResponseSerializer)
 
 logger = logging.getLogger(__name__)
 ERRORS = {code:OpenApiResponse(ErrorResponseSerializer) for code in (400,401,403,404,409,422,503)}
@@ -116,13 +119,15 @@ def _preview_attempt(token, claims, organization_header, data, service=preview):
         tenant = resolve_tenant_context(MembershipRepository().list_active_for_user(token.user_id),
                                         organization_header)
         enforce_owner_mfa(tenant,token.aal)
-        if tenant.active_organization.role not in ('OWNER','ESTIMATOR'):
+        allowed = ('OWNER',) if service is example_preview else ('OWNER','ESTIMATOR')
+        if tenant.active_organization.role not in allowed:
             raise PricingError('pricing_permission_denied')
         attempt_data = {**data,'_actor_id':token.user_id,'_actor_email':token.email}
         with commercial_backend():
             output = service(tenant.active_organization.organization_id,tenant,attempt_data)
         role = tenant.active_organization.role
-        output = batch_visibility(output,role) if service is design_batch_preview else price_visibility(output,role)
+        if service is not example_preview:
+            output = batch_visibility(output,role) if service is design_batch_preview else price_visibility(output,role)
     return output
 
 
@@ -396,3 +401,37 @@ class ImportView(APIView):
             parsed = parse_xlsx(upload.read(5*1024*1024+1),data['mapping'],data['decimal_separator'])
             output = import_rows(org,data['cost_list_id'],parsed,data['reason'],data['apply'])
         return Response(json.loads(json_text({'items':output})))
+
+
+class SimplePolicyView(APIView):
+    parser_classes = [DecimalJSONParser]
+
+    @extend_schema(operation_id='pricing_simple_policy', parameters=[ACTIVE_ORGANIZATION_HEADER],
+        responses={200: SimplePolicyResponseSerializer, **ERRORS}, tags=['pricing'])
+    def get(self, request):
+        with scope(request) as (_, _, org):
+            output = read_policy(org)
+        return Response(json.loads(json_text(output)))
+
+    @extend_schema(operation_id='pricing_save_simple_policy', parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=SimplePolicyWriteSerializer, responses={200: SimplePolicyResponseSerializer, **ERRORS}, tags=['pricing'])
+    def put(self, request):
+        data = validate(SimplePolicyWriteSerializer, request.data)
+        with scope(request) as (_, _, org):
+            output = save_policy(org, **data)
+        return Response(json.loads(json_text(output)))
+
+
+class SimplePolicyExampleView(APIView):
+    parser_classes = [DecimalJSONParser]
+
+    @extend_schema(operation_id='pricing_simple_policy_example', parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=SimplePolicyExampleRequestSerializer,
+        responses={200: SimplePolicyExampleResponseSerializer, **ERRORS}, tags=['pricing'])
+    def post(self, request):
+        data = validate(SimplePolicyExampleRequestSerializer, request.data)
+        token = verified_request_token(request)
+        with public_pricing_errors():
+            output = _preview_with_retry(token, token.claims,
+                request.headers.get('X-Organization-ID'), data, example_preview)
+        return Response(json.loads(json_text(output)))

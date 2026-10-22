@@ -9,7 +9,7 @@ Producción y precios comerciales requieren autorización aparte.
 | P01 | Catálogo v2: backend, origen, niveles y plantillas | Hecha | [P01a #164](https://github.com/KaraAliOsman/framedex/pull/164), [P01b #165](https://github.com/KaraAliOsman/framedex/pull/165), [P01c #166](https://github.com/KaraAliOsman/framedex/pull/166), [P01d #167](https://github.com/KaraAliOsman/framedex/pull/167) y [P01e #168](https://github.com/KaraAliOsman/framedex/pull/168) fusionadas |
 | P02 | Ficha de serie editable | Hecha | Sub-PR [#169](https://github.com/KaraAliOsman/framedex/pull/169)–[#173](https://github.com/KaraAliOsman/framedex/pull/173) fusionadas |
 | P03 | Alta de serie y ventana de prueba | Implementada; fusiones en curso | [P03a #174](https://github.com/KaraAliOsman/framedex/pull/174) fusionada; [#175](https://github.com/KaraAliOsman/framedex/pull/175)–[#181](https://github.com/KaraAliOsman/framedex/pull/181) pendientes |
-| P04 | Precio simple automático | En curso: motor; persistencia e interfaz pendientes | `gpt/dk2-p04a-precio-motor` |
+| P04 | Precio simple automático | En curso: motor y política por empresa; automatismo e interfaz pendientes | [P04a #182](https://github.com/KaraAliOsman/framedex/pull/182), `gpt/dk2-p04b-politica-empresa` |
 | P05 | Navegación, Hoy y Obras | Pendiente | — |
 | P06 | Mesa de la obra y edición directa | Pendiente | — |
 | P07 | Cotización y portal | Pendiente | — |
@@ -36,6 +36,26 @@ Producción y precios comerciales requieren autorización aparte.
   aprobados. Esta subentrega no toca interfaz, API, SQL ni emisión.
 - Pendientes: política por empresa con RLS, precio vigente del borrador,
   aplicación al emitir, pantalla de configuración, desglose y aceptación E2E.
+
+### P04b · Política por empresa y vista previa
+
+- Política con RLS, costos privados del dueño con MFA, revisión optimista e
+  historial anterior/nuevo en la auditoría inmutable de precios. Las tarifas
+  avanzadas históricas no se reescriben; una lectura no guarda sugeridos.
+- API tipada y cliente generado. La vista previa resuelve una ventana real y
+  todos sus materiales en una transacción repetible, sin crear operación ni
+  modificar precio. Sin ventana informa la acción necesaria sin inventar cifras.
+- 13 integraciones nuevas y las 54 comerciales anteriores aprobadas en
+  PostgreSQL local; 22 aserciones pgTAP y lint SQL aprobados. Incluye concurrencia
+  de primer guardado/edición, aislamiento, MFA, inmutabilidad de aplicado y una
+  lista de costos que cambia durante la consulta de ejemplo.
+- Ruff, Django, tipos, ESLint, Prettier, build y reproducción OpenAPI/orval
+  aprobados. La suite backend aprobó 1.675 casos y detectó que el inventario
+  cerrado de rutas necesitaba incluir los dos endpoints autorizados nuevos;
+  se mantiene la comparación exacta y la seguridad Bearer de todas las rutas.
+  La regresión final de contrato/OpenAPI aprobó sus 49 casos después del ajuste.
+- Pendientes de P04: precio vigente del borrador, aplicación al emitir,
+  configuración y desglose en pantalla, aceptación E2E con tres ventanas.
 
 ## Base y comprobaciones previas
 

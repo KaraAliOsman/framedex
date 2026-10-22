@@ -401,6 +401,10 @@ import type {
   SiiEnvio,
   SiiEnvioAccess,
   SiiEnvioSendRequest,
+  SimplePolicyExampleRequestRequest,
+  SimplePolicyExampleResponse,
+  SimplePolicyResponse,
+  SimplePolicyWriteRequest,
   SimulateOpsRequest,
   Simulation,
   StepTransition,
@@ -17408,6 +17412,241 @@ export const pricingPreview = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(priceRequestRequest),
+  });
+};
+
+export type pricingSimplePolicyResponse200 = {
+  data: SimplePolicyResponse;
+  status: 200;
+};
+
+export type pricingSimplePolicyResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type pricingSimplePolicyResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type pricingSimplePolicyResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type pricingSimplePolicyResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type pricingSimplePolicyResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type pricingSimplePolicyResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type pricingSimplePolicyResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type pricingSimplePolicyResponseSuccess = pricingSimplePolicyResponse200 & {
+  headers: Headers;
+};
+export type pricingSimplePolicyResponseError = (
+  | pricingSimplePolicyResponse400
+  | pricingSimplePolicyResponse401
+  | pricingSimplePolicyResponse403
+  | pricingSimplePolicyResponse404
+  | pricingSimplePolicyResponse409
+  | pricingSimplePolicyResponse422
+  | pricingSimplePolicyResponse503
+) & {
+  headers: Headers;
+};
+
+export type pricingSimplePolicyResponse =
+  pricingSimplePolicyResponseSuccess | pricingSimplePolicyResponseError;
+
+export const getPricingSimplePolicyUrl = () => {
+  return `/api/v1/pricing/simple-policy/`;
+};
+
+export const pricingSimplePolicy = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<pricingSimplePolicyResponse> => {
+  return apiMutator<pricingSimplePolicyResponse>(getPricingSimplePolicyUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type pricingSaveSimplePolicyResponse200 = {
+  data: SimplePolicyResponse;
+  status: 200;
+};
+
+export type pricingSaveSimplePolicyResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type pricingSaveSimplePolicyResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type pricingSaveSimplePolicyResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type pricingSaveSimplePolicyResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type pricingSaveSimplePolicyResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type pricingSaveSimplePolicyResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type pricingSaveSimplePolicyResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type pricingSaveSimplePolicyResponseSuccess = pricingSaveSimplePolicyResponse200 & {
+  headers: Headers;
+};
+export type pricingSaveSimplePolicyResponseError = (
+  | pricingSaveSimplePolicyResponse400
+  | pricingSaveSimplePolicyResponse401
+  | pricingSaveSimplePolicyResponse403
+  | pricingSaveSimplePolicyResponse404
+  | pricingSaveSimplePolicyResponse409
+  | pricingSaveSimplePolicyResponse422
+  | pricingSaveSimplePolicyResponse503
+) & {
+  headers: Headers;
+};
+
+export type pricingSaveSimplePolicyResponse =
+  pricingSaveSimplePolicyResponseSuccess | pricingSaveSimplePolicyResponseError;
+
+export const getPricingSaveSimplePolicyUrl = () => {
+  return `/api/v1/pricing/simple-policy/`;
+};
+
+export const pricingSaveSimplePolicy = async (
+  simplePolicyWriteRequest: SimplePolicyWriteRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<pricingSaveSimplePolicyResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<pricingSaveSimplePolicyResponse>(getPricingSaveSimplePolicyUrl(), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(simplePolicyWriteRequest),
+  });
+};
+
+export type pricingSimplePolicyExampleResponse200 = {
+  data: SimplePolicyExampleResponse;
+  status: 200;
+};
+
+export type pricingSimplePolicyExampleResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type pricingSimplePolicyExampleResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type pricingSimplePolicyExampleResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type pricingSimplePolicyExampleResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type pricingSimplePolicyExampleResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type pricingSimplePolicyExampleResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type pricingSimplePolicyExampleResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type pricingSimplePolicyExampleResponseSuccess = pricingSimplePolicyExampleResponse200 & {
+  headers: Headers;
+};
+export type pricingSimplePolicyExampleResponseError = (
+  | pricingSimplePolicyExampleResponse400
+  | pricingSimplePolicyExampleResponse401
+  | pricingSimplePolicyExampleResponse403
+  | pricingSimplePolicyExampleResponse404
+  | pricingSimplePolicyExampleResponse409
+  | pricingSimplePolicyExampleResponse422
+  | pricingSimplePolicyExampleResponse503
+) & {
+  headers: Headers;
+};
+
+export type pricingSimplePolicyExampleResponse =
+  pricingSimplePolicyExampleResponseSuccess | pricingSimplePolicyExampleResponseError;
+
+export const getPricingSimplePolicyExampleUrl = () => {
+  return `/api/v1/pricing/simple-policy/example/`;
+};
+
+export const pricingSimplePolicyExample = async (
+  simplePolicyExampleRequestRequest: SimplePolicyExampleRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<pricingSimplePolicyExampleResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<pricingSimplePolicyExampleResponse>(getPricingSimplePolicyExampleUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(simplePolicyExampleRequestRequest),
   });
 };
 
