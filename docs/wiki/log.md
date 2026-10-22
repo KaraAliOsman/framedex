@@ -2350,3 +2350,12 @@ la Constitución §5.1/5.2 registra la enmienda del encargo. El contenido nuevo
 de Hoy, las etapas de Obras y la purga global siguen en P05. Se conserva el
 índice anterior de cotizaciones hasta reemplazar sus filtros. Véase
 [trabajo de Hoy](product/today-workflow.md).
+
+## 2026-10-22 · P05b: etapas comprobadas y trabajo preparado
+
+- Se incorpora proyección por revisión elegida, instalación completa y cobros
+  reales calculados por el motor, con lectura en lote para 500 obras.
+- Hoy separa emisión de envío y consulta sugeridos vigentes y cotizaciones
+  preparadas por trabajos verificados del usuario, conservando RLS.
+- Fuentes: `backend/projects/progress.py`, `backend/analytics/prepared.py`,
+  `backend/tests/integration/test_project_progress.py`.

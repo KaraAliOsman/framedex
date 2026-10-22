@@ -45387,6 +45387,35 @@ components:
       - design
       - location_tag
       - quantity
+    PreparedQuotation:
+      type: object
+      properties:
+        project_id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        name:
+          type: string
+        href:
+          type: string
+      required:
+      - code
+      - href
+      - name
+      - project_id
+    PreparedQuotations:
+      type: object
+      properties:
+        count:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PreparedQuotation'
+      required:
+      - count
+      - items
     PriceHistory:
       type: object
       properties:
@@ -47084,6 +47113,24 @@ components:
       - simulated
       - void_reason
       - voided_at
+    ProjectProgress:
+      type: object
+      properties:
+        stage:
+          $ref: '#/components/schemas/StageEnum'
+        reason:
+          type: string
+        quoted_total:
+          type: string
+          nullable: true
+        currency:
+          type: string
+          nullable: true
+      required:
+      - currency
+      - quoted_total
+      - reason
+      - stage
     ProjectResponse:
       type: object
       properties:
@@ -47130,6 +47177,8 @@ components:
           type: string
         design_defaults:
           $ref: '#/components/schemas/DesignDefaults'
+        progress:
+          $ref: '#/components/schemas/ProjectProgress'
         working_price:
           allOf:
           - $ref: '#/components/schemas/WorkingPrice'
@@ -50454,6 +50503,26 @@ components:
       enum:
       - LEFT
       - RIGHT
+    StageEnum:
+      enum:
+      - QUOTING
+      - SENT
+      - ACCEPTED
+      - WORKSHOP
+      - INSTALLED
+      - TO_COLLECT
+      - CLOSED
+      - CANCELLED
+      type: string
+      description: |-
+        * `QUOTING` - QUOTING
+        * `SENT` - SENT
+        * `ACCEPTED` - ACCEPTED
+        * `WORKSHOP` - WORKSHOP
+        * `INSTALLED` - INSTALLED
+        * `TO_COLLECT` - TO_COLLECT
+        * `CLOSED` - CLOSED
+        * `CANCELLED` - CANCELLED
     StepTransition:
       type: object
       properties:
@@ -52050,11 +52119,14 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PipelinePhase'
+        prepared:
+          $ref: '#/components/schemas/PreparedQuotations'
         source:
           type: string
       required:
       - actions
       - pipeline
+      - prepared
       - source
       - today
     ToolsModeEnum:

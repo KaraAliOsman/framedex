@@ -10,7 +10,7 @@ Producción y precios comerciales requieren autorización aparte.
 | P02  | Ficha de serie editable                            | Hecha                                | Sub-PR [#169](https://github.com/KaraAliOsman/framedex/pull/169)–[#173](https://github.com/KaraAliOsman/framedex/pull/173) fusionadas                                                                                                                                                                                                      |
 | P03  | Alta de serie y ventana de prueba                  | Implementada; fusiones en curso      | [#174](https://github.com/KaraAliOsman/framedex/pull/174)–[#178](https://github.com/KaraAliOsman/framedex/pull/178) fusionadas; #179–#181 pendientes                                                                                                                                                                                       |
 | P04  | Precio simple automático                           | Implementada; CI y fusiones en curso | [#182](https://github.com/KaraAliOsman/framedex/pull/182)–[#187](https://github.com/KaraAliOsman/framedex/pull/187), [#188](https://github.com/KaraAliOsman/framedex/pull/188)                                                                                                                                                             |
-| P05  | Navegación, Hoy y Obras                            | En curso                             | `gpt/dk2-p05a-navegacion`                                                                                                                                                                                                                                                                                                                  |
+| P05  | Navegación, Hoy y Obras                            | En curso                             | [P05a #189](https://github.com/KaraAliOsman/framedex/pull/189); `gpt/dk2-p05b-etapas-reales`                                                                                                                                                                                                                                                                                                                  |
 | P06  | Mesa de la obra y edición directa                  | Pendiente                            | —                                                                                                                                                                                                                                                                                                                                          |
 | P07  | Cotización y portal                                | Pendiente                            | —                                                                                                                                                                                                                                                                                                                                          |
 | P08  | Agente v2                                          | Pendiente                            | —                                                                                                                                                                                                                                                                                                                                          |
@@ -19,6 +19,23 @@ Producción y precios comerciales requieren autorización aparte.
 | P11  | Pulido y cierre                                    | Pendiente                            | —                                                                                                                                                                                                                                                                                                                                          |
 
 ## P05 · Navegación, Hoy y Obras
+
+- P05b añade etapas derivadas de la oferta vigente y la solución elegida,
+  órdenes de esa revisión e instalación completa. El motor proyecta el saldo
+  con pagos reales; los anulados y simulados no cierran una obra. Una
+  reposición activa vuelve a Taller; una cancelada no oculta la instalación.
+- La lista de 500 obras obtiene su avance en tres lecturas adicionales, sin
+  recalcular precios por fila ni presentar una caché como precio actual.
+  Los borradores no heredan el importe de una cotización anterior.
+- Hoy distingue el PDF emitido de un enlace compartido/correo entregado y
+  propone revisar y enviar. Sugiere confirmar los valores vigentes de las
+  series usadas en borradores. La tarjeta de IA consulta solo obras con
+  ventanas, guardadas y verificadas por los trabajos del propio usuario.
+- Veinte integraciones PostgreSQL y 24 unitarias aprobadas, incluidos cinco
+  roles, cruce de tenant/usuario, opción elegida, reposiciones, anulación y
+  simulación de pagos, sugeridos confirmados y 500 obras sin N+1.
+- OpenAPI/orval se regeneran desde los serializers. Sin tablas nuevas,
+  escrituras de estado, envíos automáticos ni cambios en fórmulas.
 
 - P05a implementa los destinos y el inicio Hoy para cinco roles. Clientes sigue
   accesible por búsqueda y ruta; Empresa reúne Informes y Funciones avanzadas.

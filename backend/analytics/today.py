@@ -42,7 +42,7 @@ def quotation_rows(org_id):
                    COALESCE(c.kind,a.status) AS response_status,d.kind AS decision_kind,
                    COALESCE(d.evidence->>'note',a.decided_note) AS decided_note,COALESCE(c.decided_at,a.decided_at) AS decided_at,
                    a.view_count,a.last_viewed_at,a.expires_at,
-                   a.created_at AS shared_at
+                   COALESCE(a.created_at,sent.delivered_at) AS shared_at
             FROM public.projects p
             JOIN public.project_versions v ON v.project_id=p.id AND v.org_id=p.org_id
                  AND v.revision_code=p.current_revision
@@ -59,11 +59,18 @@ def quotation_rows(org_id):
                   max(decided_at) AS decided_at,sum(view_count) AS view_count,
                   max(last_viewed_at) AS last_viewed_at,
                   max(private.quote_link_expires_at(ca.id,ca.org_id,ca.expires_at)) AS expires_at,
-                  max(created_at) AS created_at
+                  max(created_at) FILTER (WHERE link_source='SHARE' OR view_count>0) AS created_at
                 FROM public.customer_approvals ca
                 WHERE ca.org_id=p.org_id AND ca.project_id=p.id
                   AND ca.project_version_id=v.id AND ca.status<>'REVOKED'
             ) a ON true
+            LEFT JOIN LATERAL (
+                SELECT max(m.delivered_at) AS delivered_at
+                FROM public.quotation_issues i
+                JOIN public.mail_outbox m ON m.org_id=i.org_id AND m.id=i.mail_id
+                WHERE i.org_id=p.org_id AND i.project_id=p.id
+                  AND i.project_version_id=v.id AND m.state='SENT'
+            ) sent ON true
             WHERE p.org_id=%s AND p.status<>'CANCELLED'
             ORDER BY v.emitted_at DESC,p.code
         """,
@@ -238,11 +245,40 @@ def price_actions(org_id, user_id, role):
     ]
 
 
+def suggested_actions(org_id):
+    from authentication.rls import catalog_backend
+    from catalogs.value_origins import engine_origins
+
+    systems = rows(
+        "SELECT DISTINCT s.id,s.code,s.name FROM public.profile_systems s "
+        "JOIN public.project_positions w ON w.system_id=s.id AND w.org_id=%s "
+        "JOIN public.projects p ON p.id=w.project_id AND p.org_id=w.org_id AND p.status='DRAFT' "
+        "WHERE s.org_id=%s AND EXISTS(SELECT 1 FROM public.catalog_value_history h "
+        "WHERE h.org_id=s.org_id AND h.system_id=s.id AND h.origin='SUGGESTED') ORDER BY s.code,s.id",
+        [org_id, org_id],
+    )
+    with catalog_backend():
+        result = []
+        for system in systems:
+            pending = [value for value in engine_origins(org_id, system['id']) if value.origin == 'SUGGESTED']
+            if pending:
+                result.append(action('catalog_suggested', system['id'], system['code'], system['name'],
+                    'Confirma los valores sugeridos',
+                    'La serie se usa en tus borradores. Puedes cotizar; revisa sus valores antes de fabricar.',
+                    'Revisar sugeridos', '/catalogs/systems?' + urlencode({'system': system['id']}),
+                    source='Valores vigentes de la serie; cada confirmación queda registrada en su historial.'))
+    return result
+
+
 def commercial_actions(org_id, today, role):
     result, pipeline = [], []
     source_rows = quotation_rows(org_id)
     quotes = [quote_public(row, today) for row in source_rows]
     for item in quotes:
+        if item['state'] == 'unshared':
+            result.append(action('quote_send', item['project_id'], item['project_code'],
+                item['project_name'], 'Envía la cotización', 'La revisión está emitida y espera compartirla con el cliente.',
+                'Revisar y enviar', item['href'], source=item['source']))
         if quote_attention(item, "expiring", today):
             result.append(
                 action(
@@ -735,12 +771,14 @@ def field_actions(org_id, today, role):
 
 
 def daily_work(org_id, user_id, role):
+    from analytics.prepared import prepared_quotations
     today = local_today(org_id)
     actions, pipeline = price_actions(org_id, user_id, role), []
     if role in COMMERCIAL_ROLES:
         commercial, pipeline = commercial_actions(org_id, today, role)
         actions.extend(commercial)
         actions.extend(position_actions(org_id))
+        actions.extend(suggested_actions(org_id))
     if role in {"OWNER", "WORKSHOP_MANAGER", "INSTALLER", "OPERATOR"}:
         actions.extend(workshop_actions(org_id, role, today))
     if role in {"OWNER", "WORKSHOP_MANAGER", "ESTIMATOR", "INSTALLER"}:
@@ -756,5 +794,6 @@ def daily_work(org_id, user_id, role):
         "today": today.isoformat(),
         "actions": ordered,
         "pipeline": pipeline,
+        "prepared": prepared_quotations(org_id, user_id, role),
         "source": "Compromisos vencidos, bloqueos, trabajo de hoy y seguimiento; orden determinista del motor.",
     }

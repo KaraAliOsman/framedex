@@ -376,13 +376,15 @@ def list_projects(org_id):
         ):
             continue
         authorities[candidate["project_id"]] = candidate
+    from projects.progress import project_progress
+    progress = project_progress(org_id, project_ids)
     return [
-        project_public(
+        {**project_public(
             org_id, row,
             authority=authorities.get(row["id"]),
             position_count=counts.get(row["id"], 0),
             accepted=accepted.get(str(row['id'])),
-        )
+        ), 'progress': progress[str(row['id'])]}
         for row in project_rows
     ]
 

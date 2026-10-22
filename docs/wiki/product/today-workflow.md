@@ -3,7 +3,7 @@ type: state
 status: active
 updated: 2026-10-22
 volatility: high
-verified_ref: gpt/dk2-p05a-navegacion
+verified_ref: gpt/dk2-p05b-etapas-reales
 sources:
   - docs/redesign/P03-ACEPTACION.md
   - engine/src/dekopen_engine/work_queue.py
@@ -26,6 +26,13 @@ hasta integrar las etapas de la lista única en P05.
 Diez E2E con sesiones reales, cinco roles y 1440/390 px comprueban navegación,
 clientes en la paleta y límites de acceso. Véase la [aceptación P05a](../../redesign/captures/dk2-p05a/aceptacion.md).
 El contenido nuevo de Hoy y las etapas todavía no forman parte de P05a.
+P05b incorpora la proyección de etapas, compartición comprobada y las obras
+que el asistente guardó con ventanas para el usuario que consulta. Un PDF
+con enlace DOCUMENT sin vistas no cuenta como envío. Una sucesora vuelve a
+Cotizando; órdenes y pagos se contrastan con la solución elegida vigente.
+La instalación completa más saldo real pendiente lleva a Por cobrar;
+instalación más saldo cubierto por pagos reales lleva a Cerrada. Sin total
+comprobable queda Instalada. No se modifica el estado persistido al leer.
 
 El motor ordena compromisos vencidos, bloqueos, trabajo del día y seguimiento.
 El backend lee bajo RLS revisión actual, solicitudes/recibos de precio, ledger
