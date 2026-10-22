@@ -960,7 +960,6 @@ _QUERYABLE_WITHOUT_REFS = {
 
 _RECORDED = Path(__file__).with_name("evals") / "recorded"
 _PLACEHOLDER = re.compile(r"^\{\{usual\.(system_id|color|glass_article_sku)\}\}$")
-_OPENING = re.compile(r"^\{\{opening:(.+)\}\}$")
 
 
 @functools.lru_cache(maxsize=1)
@@ -985,14 +984,6 @@ def _recorded_round(input_payload: dict) -> dict | None:
         observation.get("surface") == "create_project" and "project_id" in (observation.get("context") or {})
         for observation in input_payload.get("observations") or [] if isinstance(observation, dict))
     usual = (input_payload.get("context") or {}).get("usual") or {}
-    # Openings the series offers, as the catalog tool reported them.
-    offered = [
-        str(choice.get("label") if isinstance(choice, dict) else choice)
-        for observation in input_payload.get("observations") or [] if isinstance(observation, dict)
-        and observation.get("surface") == "list_catalog_options"
-        for choice in [*((observation.get("context") or {}).get("opening_choices") or []),
-                       *((observation.get("context") or {}).get("openings") or [])]
-    ]
 
     def resolve(node: Any) -> Any:
         if isinstance(node, dict):
@@ -1001,9 +992,6 @@ def _recorded_round(input_payload: dict) -> dict | None:
             return [resolve(value) for value in node]
         if isinstance(node, str) and (match := _PLACEHOLDER.match(node)):
             return str((usual.get(match.group(1)) or {}).get("value") or node)
-        if isinstance(node, str) and (match := _OPENING.match(node)):
-            wanted = [word.casefold() for word in match.group(1).split("|")]
-            return next((label for word in wanted for label in offered if word in label.casefold()), node)
         return node
 
     return resolve(case["rounds"]["project" if created else "start"])

@@ -42,14 +42,21 @@ test("a pasted request becomes a cited draft work, nothing is sent and undo remo
     };
   }
 
-  // «Lo habitual» of the company: the synthetic series, its first glass and finish.
-  const options = await api(`projects/design-options/${catalog.systemId}/`);
+  // «Lo habitual» of the company: a demo casement series of the shared
+  // catalog, its 4-16-4 glass and white finish.
+  const systems = await api("engine/systems/");
+  const series = (systems.body.systems as { id: string; name: string }[]).find((item) =>
+    item.name.startsWith("PVC practicable 60 mm · acoples"),
+  )!;
+  const options = await api(`projects/design-options/${series.id}/`);
   expect(options.status).toBe(200);
   const defaults = await api("organization/design-defaults/", "PUT", {
     values: {
-      system_id: catalog.systemId,
-      color: options.body.colors[0],
-      glass_article_sku: options.body.glass_skus[0],
+      system_id: series.id,
+      color: "WHITE",
+      glass_article_sku: (options.body.glass_skus as string[]).find((sku) =>
+        sku.endsWith("4-16-4"),
+      ),
     },
   });
   expect(defaults.status, JSON.stringify(defaults.body)).toBe(200);

@@ -27,16 +27,7 @@
           ],
           "warnings": [],
           "questions": [],
-          "claims": [],
-          "tool_calls": [
-            {
-              "name": "list_catalog_options",
-              "arguments": {
-                "system_id": "{{usual.system_id}}",
-                "kind": "opening"
-              }
-            }
-          ]
+          "claims": []
         },
         "project": {
           "reply": "Agregué las ventanas del mensaje a la obra y preparé el precio con tus reglas. No envié nada: el envío queda para ti.",
@@ -49,7 +40,7 @@
                 {
                   "op": "add_position",
                   "system_id": "{{usual.system_id}}",
-                  "template": "{{opening:oscilobatiente}}",
+                  "template": "TILT_TURN_LEFT",
                   "dims": {
                     "width_mm": "1200",
                     "height_mm": "1400"
@@ -65,7 +56,7 @@
                 {
                   "op": "add_position",
                   "system_id": "{{usual.system_id}}",
-                  "template": "{{opening:fij|FIXED}}",
+                  "template": "FIXED",
                   "dims": {
                     "width_mm": "600",
                     "height_mm": "600"
@@ -81,7 +72,7 @@
                 {
                   "op": "add_position",
                   "system_id": "{{usual.system_id}}",
-                  "template": "{{opening:oscilobatiente}}",
+                  "template": "TILT_TURN_LEFT",
                   "dims": {
                     "width_mm": "1200",
                     "height_mm": "1000"
@@ -100,7 +91,7 @@
                 {
                   "op": "add_position",
                   "system_id": "{{usual.system_id}}",
-                  "template": "{{opening:fij|FIXED}}",
+                  "template": "FIXED",
                   "dims": {
                     "width_mm": "900",
                     "height_mm": "1100"
