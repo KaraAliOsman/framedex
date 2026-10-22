@@ -142,7 +142,10 @@ async function openProjectPrices(page: Page): Promise<void> {
   // This gate exercises the explicit advanced override and approval history.
   // Normal drafts now use working money and issue without a manual apply.
   const projectUrl = new URL(page.url());
-  await page.getByRole("tab", { name: "Cotización", exact: true }).click();
+  await expect(page.locator(".project-head")).toBeVisible();
+  const send = page.getByRole("button", { name: "Enviar cotización", exact: true });
+  if (await send.isVisible()) await send.click();
+  else await page.getByRole("tab", { name: "Cotización", exact: true }).click();
   await page.getByRole("radio", { name: "Precio y margen", exact: true }).click();
   await page.getByRole("link", { name: "Cómo calculo mis precios", exact: true }).click();
   await page.getByRole("switch", { name: "Usar precios avanzados", exact: true }).check();
@@ -163,7 +166,9 @@ async function openProjectPrices(page: Page): Promise<void> {
     .getByRole("link", { name: "Obras", exact: true })
     .click();
   await page.locator(`a[href="${projectUrl.pathname}"]`).first().click();
-  await page.getByRole("tab", { name: "Cotización", exact: true }).click();
+  await expect(page.locator(".project-head")).toBeVisible();
+  if (await send.isVisible()) await send.click();
+  else await page.getByRole("tab", { name: "Cotización", exact: true }).click();
   await page.getByRole("radio", { name: "Precio y margen", exact: true }).click();
   const advanced = page.locator("details", {
     has: page.locator("summary", { hasText: "Ajustes y aprobaciones avanzadas" }),
@@ -563,9 +568,9 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await expect(page.getByRole("button", { name: "Guardar", exact: true })).toBeEnabled();
   await page.getByRole("button", { name: "Guardar", exact: true }).click();
   await expect(page.getByText("Guardado", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Volver a la obra", exact: true }).click();
-  // Reload the cached project so the next action and price workspace use the
-  // position just persisted, rather than the collection before the save.
+  // Saving selects the persisted window in the same workbench. Reload proves
+  // that the following price/issuance flow reads the stored position.
+  await expect(page).toHaveURL(new RegExp(`/projects/${draft.id}\\?position=`));
   await page.reload();
   // Work and client names are completed from the work when needed.
   await page.locator(".project-head").getByRole("button", { name: "Más", exact: true }).click();
@@ -704,18 +709,15 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await expect(page.getByText("Borrador", { exact: true })).toBeVisible();
   await expect(page.locator(".project-head__revision")).toHaveText("Revisión B");
   await page.getByRole("tab", { name: "Ventanas", exact: true }).click();
-  // The collection opens the exact selected position with Enter.
+  // The persistent window list opens the exact selected position with Enter.
   await page
     .getByRole("list", { name: "Ventanas" })
-    .getByRole("listitem")
-    .filter({ hasText: "Fijo comercial" })
+    .getByRole("button", { name: "Abrir Fijo comercial en el editor", exact: true })
     .press("Enter");
   await page.getByLabel("Cantidad", { exact: true }).fill("3");
   await page.getByRole("button", { name: "Guardar", exact: true }).click();
   await expect(page.getByText("Guardado", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Volver a la obra", exact: true }).click();
-  // Reload the cached project so the next action and price workspace use the
-  // position just persisted, rather than the collection before the save.
+  // The editing session stays mounted; reload verifies persisted quantity.
   await page.reload();
   await openProjectPrices(page);
   await prepareProjectPrice(page, "2026-09-19", "Aplicar cotización de la revisión B");
@@ -828,21 +830,17 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await page.getByRole("button", { name: "Guardar", exact: true }).click();
   const compositePosition = await (await compositeSave).json();
   expect(compositePosition.typology).toBe("COMPOSITE");
-  await page.getByRole("button", { name: "Volver a la obra", exact: true }).click();
   await page.goto(`/projects/${compositeProject.id}`);
   await page
     .getByRole("list", { name: "Ventanas" })
-    .getByRole("listitem")
-    .filter({ hasText: "Fachada compuesta" })
+    .getByRole("button", { name: "Abrir Fachada compuesta en el editor", exact: true })
     .press("Enter");
   // Scoped to the main canvas sheet — inspector previews and alternative
   // thumbnails render their own members on the same page. The bay division
   // draws a real mullion member between the two glass bays.
   await expect(page.locator(".canvas-sheet .member-mullion")).toHaveCount(1);
   await expect(page.locator(".canvas-sheet .module-glass")).toHaveCount(2);
-  await page.getByRole("button", { name: "Volver a la obra", exact: true }).click();
-  // Reload the cached project so the next action and price workspace use the
-  // position just persisted, rather than the collection before the save.
+  // Reopen the persisted drawing before pricing the composed window.
   await page.reload();
   await openProjectPrices(page);
   await prepareProjectPrice(page, "2026-09-19", "Precio de la fachada compuesta");
