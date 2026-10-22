@@ -2371,3 +2371,13 @@ Materiales ausentes se rechazan y una instalación incluida no se duplica.
 La persistencia, el automatismo y la interfaz siguen pendientes de P04.
 P02 ya está fusionada; P03 espera sus fusiones protegidas. Véase
 [precio](product/price-workspace.md).
+
+## 2026-10-22 · P04b: política privada y ejemplo de precio real
+
+La rama `gpt/dk2-p04b-politica-empresa` añade política revisada por empresa,
+RLS, MFA, costos privados e historial inmutable. El ejemplo usa BOM y tarifas
+reales de una ventana del borrador en lectura repetible; no persiste precios ni
+operaciones. Verificación local: 67 integraciones comerciales y 22 aserciones
+pgTAP, con conflictos concurrentes, cambio de costos durante lectura y
+conservación de aplicado. Automatismo e interfaz siguen pendientes de P04.
+Véase [precio](product/price-workspace.md).

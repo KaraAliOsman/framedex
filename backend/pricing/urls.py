@@ -2,9 +2,12 @@ from django.urls import path
 from pricing.supplier_views import SupplierInspectView, SupplierReviewView
 
 from pricing.views import (AdminView, ApplyView, DesignBatchPreviewView, DraftView, ImportView, OperationView,
-                           OperationsView, PreviewView, WithdrawView, WorkspaceView, OptionsView, AcknowledgeView)
+                           OperationsView, PreviewView, WithdrawView, WorkspaceView, OptionsView, AcknowledgeView,
+                           SimplePolicyView, SimplePolicyExampleView)
 
 urlpatterns = [
+    path('simple-policy/', SimplePolicyView.as_view(), name='pricing-simple-policy'),
+    path('simple-policy/example/', SimplePolicyExampleView.as_view(), name='pricing-simple-policy-example'),
     path('supplier-prices/inspect/',SupplierInspectView.as_view(),name='supplier-prices-inspect'),
     path('supplier-prices/review/',SupplierReviewView.as_view(),name='supplier-prices-review'),
     path('admin/<str:resource>/',AdminView.as_view(),name='pricing-admin'),

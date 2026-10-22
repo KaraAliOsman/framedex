@@ -1,10 +1,13 @@
 ---
 type: state
 status: active
-updated: 2026-10-12
+updated: 2026-10-22
 volatility: high
-verified_ref: b8e62295bdcbf04c2427b0420551cbb2c1a30eec
+verified_ref: gpt/dk2-p04b-politica-empresa
 sources:
+  - engine/src/dekopen_engine/simple_pricing.py
+  - backend/pricing/simple_policy.py
+  - supabase/migrations/20270209000000_workshop_pricing_policy.sql
   - engine/src/dekopen_engine/price_workspace.py
   - backend/pricing/workspace.py
   - backend/pricing/resolved.py
@@ -41,7 +44,36 @@ La fórmula histórica por m² y el modo avanzado conservan sus resultados.
 Persistencia, proyección de trabajo, emisión y pantalla se entregan en las
 siguientes sub-PR de P04, sin crear operaciones APPLIED para un borrador vivo.
 
+## Política por empresa · P04b
+
+Verificación local del 22-10-2026 en `gpt/dk2-p04b-politica-empresa`.
+`workshop_pricing_policies` conserva servicios/unidades, margen, redondeo,
+merma, IVA, moneda e interruptor avanzado por organización. El dueño con MFA
+puede configurarla; otros roles no leen sus costos directamente. El rol interno
+del calculador mantiene RLS. Cada escritura incrementa revisión y registra
+actor, motivo y versiones anterior/nueva en el historial inmutable de precios.
+La primera inserción y las actualizaciones concurrentes se serializan;
+una revisión obsoleta responde 409 y no sobrescribe el cambio ganador.
+
+`GET/PUT /api/v1/pricing/simple-policy/` distingue sugeridos de política
+guardada. Leer no confirma sugeridos ni escribe filas. Las reglas avanzadas
+previas aportan los valores iniciales cuando existen y permanecen intactas.
+Los valores de servicios ofrecidos sin reglas son sugerencias editables del
+taller; jamás precios de materiales ni cifras del manual de un fabricante.
+
+`POST /api/v1/pricing/simple-policy/example/` calcula una unidad de una ventana
+en borrador con sus medidas, BOM y costos vigentes. La lectura completa usa
+una transacción repetible y recupera conflictos de serialización. No crea
+operaciones ni modifica precios. Sin ventana devuelve importes ausentes y una
+acción para crearla, sin inventar un ejemplo comercial.
+
+Esta API aún no activa el precio automático ni modifica cotizaciones emitidas.
+El automatismo y la pantalla corresponden a las siguientes subentregas de P04.
+
 ## Comportamiento avanzado verificado previamente
+
+La aceptación histórica siguiente corresponde a
+`b8e62295bdcbf04c2427b0420551cbb2c1a30eec`, del 12-10-2026.
 
 La lectura principal compara el aplicado con una proyección sin guardar.
 La cascada y el Δ son del motor. OWNER y WORKSHOP_MANAGER conservan compra;
