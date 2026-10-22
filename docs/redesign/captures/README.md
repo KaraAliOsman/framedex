@@ -5,6 +5,9 @@
 - [P02a · tabla editable](dk2-p02a/aceptacion.md): diez capturas seleccionadas
   de escritorio/móvil, extremos, accesibilidad y alcance del componente.
 
+- [P02c · ficha de seis pestañas](dk2-p02/aceptacion-ficha.md): doce capturas
+  de integración, comparación visual y límites de la entrega.
+
 ## DEKOPEN v1
 
 La aceptación vigente está en [el informe final](../acceptance-2026-10-12.md).

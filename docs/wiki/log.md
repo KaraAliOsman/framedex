@@ -2226,3 +2226,14 @@ integraciones, dieciocho unitarias de origen/metadatos y nueve aserciones pgTAP
 del ordinal aprobadas; API reproducible, lint y build aprobados. No habilita
 fabricación ni sustituye el flujo de verificación de P03. Referencias:
 [catálogo](product/catalog-authority.md), [estado](../dekopen2/ESTADO.md).
+
+
+## 2026-10-21 · P02c: ficha de seis pestañas
+
+`gpt/dk2-p02c-ficha-hoja` prepara edición exacta, historial por celda,
+confirmación de sugeridos y precios auditados. El modelo conserva límites y
+precisión por fila; los rechazos anidados señalan su celda sin borrar borradores.
+Treinta y una unitarias y dos E2E integrados pasan, con doce capturas revisadas,
+axe y extremos de 300 perfiles. La ruta se conecta en P02e y la verificación
+persistida permanece en P03. Referencias: [catálogo](product/catalog-authority.md),
+[evidencia](../redesign/captures/dk2-p02/aceptacion-ficha.md).

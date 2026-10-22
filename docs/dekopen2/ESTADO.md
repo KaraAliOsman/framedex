@@ -226,3 +226,18 @@ a P03; P01 deja preparado su contrato y su bloqueo.
   lint SQL aprobado en la base sintética aislada, sin tocar REVIEW.
 - API regenerada y reproducción OpenAPI/orval aprobada. La conexión visual y
   el glosario se entregarán después; P02 continúa en curso.
+
+### P02c · Componentes de ficha y precios
+
+- Seis pestañas sobre la tabla compartida, origen por celda, historial,
+  confirmación individual/en lote y navegación al primer sugerido. El guardado
+  refresca nivel y pendientes; los borradores sobreviven a rechazos.
+- Límites y precisión dependen de la celda. Los errores del servidor se asignan
+  a su fila/campo exactos, incluidos valores dentro de tablas anidadas.
+- Precios exactos de cuatro decimales, historial y deshacer por escritura nueva.
+  La API mantiene los costos restringidos al dueño y los permisos de edición.
+- Treinta y una unitarias, ESLint y tipos aprobados. Dos E2E de integración
+  real aprobaron el flujo de seis pestañas en escritorio/móvil, axe y extremos.
+  [Evidencia y límites](../redesign/captures/dk2-p02/aceptacion-ficha.md).
+- P02c no activa la ruta. P02d aporta glosario/selector de ejemplos; P02e conecta
+  inicio, ficha, prueba preliminar y E2E. La verificación persistida sigue en P03.
