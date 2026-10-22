@@ -124,7 +124,7 @@ const CAUSES: { id: string; title: string; effect: string; test(row: Row): boole
   {
     id: "document",
     title: "El PDF las dice distinto en dos lugares",
-    effect: "Elige qué página manda; ambas fuentes se conservan.",
+    effect: "Elige qué página manda; ambas referencias se conservan.",
     test: (row) => (row.warnings ?? []).includes("catalog_conflict_in_document"),
   },
   {
@@ -154,7 +154,7 @@ export function ExceptionGroups({
     <section className="exception-groups" aria-label="Qué revisar">
       <p className="exception-groups__clean">
         <Icon name="check" size={16} />
-        {clean === 1 ? "1 fila consistente" : `${clean} filas consistentes`} con su fuente
+        {clean === 1 ? "1 fila consistente" : `${clean} filas consistentes`} con su referencia
       </p>
       {groups.length === 0 ? (
         <p className="exception-groups__none">No hay excepciones que revisar.</p>
@@ -318,7 +318,7 @@ export function CutTemplatePanel({
         </table>
       ) : null}
       {template.source_notes.length ? (
-        <ul className="cut-template__notes" aria-label="Inconsistencias de la fuente">
+        <ul className="cut-template__notes" aria-label="Inconsistencias de la referencia">
           {template.source_notes.map((note, index) => (
             <li key={index}>
               <Icon name="warning" size={16} />

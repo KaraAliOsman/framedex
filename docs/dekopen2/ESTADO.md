@@ -7,7 +7,7 @@ Producción y precios comerciales requieren autorización aparte.
 | Fase | Alcance | Estado | Rama / PR |
 |---|---|---|---|
 | P01 | Catálogo v2: backend, origen, niveles y plantillas | Hecha | [P01a #164](https://github.com/KaraAliOsman/framedex/pull/164), [P01b #165](https://github.com/KaraAliOsman/framedex/pull/165), [P01c #166](https://github.com/KaraAliOsman/framedex/pull/166), [P01d #167](https://github.com/KaraAliOsman/framedex/pull/167) y [P01e #168](https://github.com/KaraAliOsman/framedex/pull/168) fusionadas |
-| P02 | Ficha de serie editable | En curso | [P02a #169](https://github.com/KaraAliOsman/framedex/pull/169); sub-PR ordenadas por tamaño |
+| P02 | Ficha de serie editable | En curso | [P02a #169](https://github.com/KaraAliOsman/framedex/pull/169), [P02b #170](https://github.com/KaraAliOsman/framedex/pull/170), [P02c #171](https://github.com/KaraAliOsman/framedex/pull/171); sub-PR ordenadas |
 | P03 | Alta de serie y ventana de prueba | Pendiente | — |
 | P04 | Precio simple automático | Pendiente | — |
 | P05 | Navegación, Hoy y Obras | Pendiente | — |
@@ -248,3 +248,31 @@ a P03; P01 deja preparado su contrato y su bloqueo.
   [Evidencia y límites](../redesign/captures/dk2-p02/aceptacion-ficha.md).
 - P02c no activa la ruta. P02d aporta glosario/selector de ejemplos; P02e conecta
   inicio, ficha, prueba preliminar y E2E. La verificación persistida sigue en P03.
+
+### P02d · Lenguaje de taller y ejemplos optativos
+
+- El catálogo, sus ajustes y traducciones compartidas usan el glosario del
+  encargo. Los vacíos piden completar; origen, documentos y revisiones emitidas
+  conservan su significado técnico. La enmienda de Constitución registra esta
+  dirección del dueño, sin modificar invariantes ni permisos.
+- Nueva guarda AST de textos de interfaz, con pruebas del detector para JSX,
+  expresiones, plantillas y concatenaciones. Se integra a `make lint` sin
+  excluir pantallas ni aceptar nuevas infracciones del control de diseño.
+- Los dos selectores del editor ocultan ejemplos hasta activar «Mostrar
+  ejemplos». Una ventana histórica conserva visible su serie seleccionada.
+- La edición avanzada conserva sus enlaces de regreso y alta desde cero;
+  el E2E anterior se mantiene además en `catalog-advanced.spec.ts` para la
+  activación posterior de la ficha nueva.
+
+- Revisión del lenguaje servido por API: las etiquetas públicas de importación,
+  errores de campos requeridos, metadatos y avisos usan el mismo glosario. Los
+  encabezados del XLSX versionado se conservan para no romper su lectura.
+  Sesenta y seis pruebas de importación, esquema y metadatos pasan.
+- Los E2E comerciales existentes activan ejemplos mediante el control nuevo;
+  el flujo de precio y emisión de dos revisiones aprobó sin cambiar sus
+  comprobaciones de cálculo, documentos ni inmutabilidad.
+- Database Gate detectó que la vista previa de marca usaba la zona predeterminada
+  de Django para la vigencia, distinta del día de Santiago usado al preparar la
+  emisión. La vista previa ahora declara Santiago explícitamente. Dos regresiones
+  con reloj fijo a ambos lados de medianoche comprueban la fecha del PDF, incluso
+  con otra zona activa, y conservan precio, moneda y huella de la revisión.

@@ -102,7 +102,7 @@ function SheetFormats({ canWrite }: { canWrite: boolean }): JSX.Element {
       {data && !data.items.length && !draft ? (
         <EmptyState
           title="Aún no hay formatos de lámina"
-          body="Sin formatos, el plan de corte conserva la medida de cada pieza y la marca como no ubicada. Cada formato guarda su fuente; el plan cambia cuando vuelves a optimizar la OT."
+          body="Sin formatos, el plan de corte conserva la medida de cada pieza y la marca como no ubicada. Cada formato guarda su referencia; el plan cambia cuando vuelves a optimizar la OT."
         />
       ) : null}
       {draft && data ? (
@@ -195,7 +195,7 @@ function SheetFormats({ canWrite }: { canWrite: boolean }): JSX.Element {
               </label>
             ))}
             <label>
-              Fuente de las medidas
+              Ficha con las medidas
               <input
                 name="source"
                 required
@@ -230,7 +230,7 @@ function SheetFormats({ canWrite }: { canWrite: boolean }): JSX.Element {
                 <th>Formato mm</th>
                 <th>Despunte mm</th>
                 <th>Proveedor</th>
-                <th>Fuente</th>
+                <th>Documento</th>
               </tr>
             </thead>
             <tbody>
@@ -246,10 +246,8 @@ function SheetFormats({ canWrite }: { canWrite: boolean }): JSX.Element {
                   <td className="ui-value" data-label="Despunte mm">
                     {fmtMm(item.edge_trim_mm)}
                   </td>
-                  <td data-label="Proveedor">
-                    {item.supplier ?? "Sin dato · declaración histórica"}
-                  </td>
-                  <td data-label="Fuente">{item.source ?? "Sin dato · declaración histórica"}</td>
+                  <td data-label="Proveedor">{item.supplier ?? "Falta · declaración histórica"}</td>
+                  <td data-label="Documento">{item.source ?? "Falta · declaración histórica"}</td>
                 </tr>
               ))}
             </tbody>

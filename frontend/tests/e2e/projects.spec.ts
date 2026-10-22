@@ -145,6 +145,7 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   await page.getByLabel("Cantidad", { exact: true }).fill("2");
 
   await page.locator(".editor-system-chip").click();
+  await page.getByRole("checkbox", { name: "Mostrar ejemplos", exact: true }).check();
   await responseTo(page, "GET", `/api/v1/projects/design-options/${manual.systemId}/`, 200, () =>
     page
       .getByRole("combobox", { name: "Serie de perfiles", exact: true })

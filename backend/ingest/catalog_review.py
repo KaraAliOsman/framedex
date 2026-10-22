@@ -25,7 +25,7 @@ from dekopen_engine.hardware import normalize_opening_type
 from dekopen_engine.models import BayOpeningType
 from dekopen_engine.documentary_canonical import documentary_canonical_json_v1
 from documents.repository import documentary_backend
-from ingest.catalog_template import SCHEMAS, candidate
+from ingest.catalog_template import SCHEMAS, candidate, display_label
 from pricing.repository import admin_write, rows, json_text
 from pricing.serializers import CostItemSerializer, CostListSerializer, StrictSerializer
 
@@ -94,14 +94,14 @@ def _validated(serializer, data, key, errors, *, partial=False, instance=None):
             return
         for reason in reasons if isinstance(reasons, list) else [reasons]:
             code = getattr(reason, "code", "invalid")
-            message = {"required": "completa este campo con su fuente", "null": "falta este dato de la fuente",
+            message = {"required": "completa este campo con su referencia", "null": "falta este dato de la referencia",
                 "invalid_choice": "elige una de las opciones del catálogo", "max_decimal_places": "reduce los decimales a la precisión de esta columna",
                 "max_digits": "el número supera la capacidad de esta columna", "min_value": "el valor es menor que el mínimo permitido",
                 "max_value": "el valor supera el máximo permitido"}.get(code)
             if message is None:
                 original = str(reason)
                 message = original if original.startswith(("El ", "La ", "Los ", "Las ", "Falta", "Hay ", "Este ", "Esta ", "Sin dato", "No ")) else "revisa el valor y la compatibilidad de este campo"
-            label = next((column.label for columns in SCHEMAS.values() for column in columns if column.key == field), field)
+            label = next((display_label(column) for columns in SCHEMAS.values() for column in columns if column.key == field), field)
             errors.append(_error(key, field, f"Columna ‘{label}’: {message}."))
     for field, reasons in validator.errors.items():
         describe(field, reasons)
@@ -174,13 +174,13 @@ def _plan(org_id, import_row, entries, *, lock=False):
                 rule = GlassSafetyRule.model_validate_json(json_text(values))
                 rule_entries.append((key, rule.model_dump(mode="json")))
             except ValueError:
-                errors.append(_error(key, "source", "Completa la regla con sus límites, clases admitidas y fuente. No se infieren tablas normativas."))
+                errors.append(_error(key, "source", "Completa la regla con sus límites, clases admitidas y referencia. No se infieren tablas normativas."))
             continue
         code = values["system_code"]
         identity = (sheet, code, values.get("sku"), values.get("opening_type"),
                     values.get("finish"), values.get("version"), values.get("list_code"))
         if identity in seen:
-            errors.append(_error(key, "system_code", "Hay dos filas para la misma autoridad. Excluye la duplicada antes de publicar."))
+            errors.append(_error(key, "system_code", "Hay dos filas para la misma configuración. Excluye la duplicada antes de publicar."))
             continue
         seen.add(identity)
         before = None
@@ -240,7 +240,7 @@ def _plan(org_id, import_row, entries, *, lock=False):
                 if (current.get(("system", code)) or {}).get("finish_authority"):
                     for name in ("manufacturer_name", "stock_color", "cutting_profile_id", "binding_version", "purchase_unit"):
                         if color_data.get(name) is None:
-                            errors.append(_error(key, name, "Completa la autoridad de stock para esta combinación de la carta."))
+                            errors.append(_error(key, name, "Completa los datos de stock para esta combinación de la carta."))
                 data = _validated(ColorSkuSerializer, color_data, key, errors)
         elif sheet == "Límites":
             before = current.get(("system", code))
@@ -334,7 +334,7 @@ def _plan(org_id, import_row, entries, *, lock=False):
             try:
                 recipe = glass_catalog.recipe_payload(values, synthetic=bool(values.get("synthetic")))
             except ValueError:
-                errors.append(_error(key, "glass_spec", "Revisa composición, propiedades y límites con su fuente."))
+                errors.append(_error(key, "glass_spec", "Revisa composición, propiedades y límites con su referencia."))
                 continue
             existing = rows("SELECT id FROM public.catalog_glass_compositions WHERE mapping_id=%s", [row_id]) if before else []
             recipe_data = {"system_id": systems[code], "mapping_id": row_id, **recipe}

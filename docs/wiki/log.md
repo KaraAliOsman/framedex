@@ -2216,6 +2216,15 @@ regresión de navegador de proyectos pasa en 49,4 segundos con el límite
 original de carga de Catálogo; CI final de #168 pendiente.
 Véase [catálogo](product/catalog-authority.md).
 
+## 2026-10-22 · Vigencia de la vista previa en Santiago
+
+El Database Gate de P02d descubrió una fecha distinta entre la vista previa de
+marca y Preparar emisión cerca de medianoche. La vista previa ahora declara
+`America/Santiago` al calcular el día comercial. La regresión conserva sus
+comprobaciones de marca, papel y revisión sellada y añade dos instantes fijos
+con una zona activa ajena. Ambas variantes aprobaron sobre PostgreSQL local.
+Véase [empresa y clientes](product/company-customers.md).
+
 ## 2026-10-21 · P01 cerrada y tabla editable P02a
 
 P01e #168 se fusionó en `9f711d53` después de aprobar Lint & Typecheck,
@@ -2248,3 +2257,13 @@ Treinta y una unitarias y dos E2E integrados pasan, con doce capturas revisadas,
 axe y extremos de 300 perfiles. La ruta se conecta en P02e y la verificación
 persistida permanece en P03. Referencias: [catálogo](product/catalog-authority.md),
 [evidencia](../redesign/captures/dk2-p02/aceptacion-ficha.md).
+
+
+## 2026-10-21 · P02d: glosario y ejemplos optativos
+
+El catálogo aplica el lenguaje de taller y una guarda AST con pruebas impide
+reintroducir términos prohibidos en sus textos y traducciones. Los selectores
+del editor requieren «Mostrar ejemplos»; las ventanas históricas conservan su
+serie. La edición avanzada mantiene rutas profundas y regresión de navegador.
+La enmienda de Constitución registra el encargo actual sin cambiar permisos.
+Véase [catálogo](product/catalog-authority.md).

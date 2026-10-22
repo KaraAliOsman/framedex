@@ -1,5 +1,6 @@
 import { ValidatedForm } from "../../ui/FormValidation";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { Link } from "react-router-dom";
 import { ApiError } from "../../api/apiMutator";
 import { UnsavedChangesGuard } from "../../app/UnsavedChangesGuard";
 import { useAssistantSurface } from "../assistant/assistantContext";
@@ -197,7 +198,10 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
     requested.get("resource") === "articles" ? "records" : "workspace",
   );
   const [editor, setEditor] = useState<{ resource: Resource; id?: string; field?: string } | null>(
-    null,
+    () =>
+      requested.get("create") === "systems" && ["OWNER", "WORKSHOP_MANAGER"].includes(role)
+        ? { resource: "systems" }
+        : null,
   );
   const requestedRecord = useRef(requested.get("record"));
   const [importExpanded, setImportExpanded] = useState(false);
@@ -206,7 +210,7 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
   const [shelf, setShelf] = useState<"brands" | "lab">(() =>
     requested.get("shelf") === "lab" ? "lab" : "brands",
   );
-  const [selectedRef, setSelectedRef] = useState<string | null>(null);
+  const [selectedRef, setSelectedRef] = useState<string | null>(() => requested.get("reference"));
   const [seed, setSeed] = useState<Record<string, string> | null>(null);
   const references = useQuery({
     queryKey: ["catalog-references", orgId],
@@ -375,6 +379,17 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
 
   return (
     <section className="catalog" aria-busy={loading}>
+      {requested.get("advanced") === "1" && (
+        <Link
+          to={
+            selected
+              ? `/catalogs/systems?system=${encodeURIComponent(selected)}`
+              : "/catalogs/systems"
+          }
+        >
+          {selected ? "‹ Volver a la ficha de la serie" : "‹ Catálogo"}
+        </Link>
+      )}
       <PageHeader
         actions={
           canEdit ? (
@@ -594,7 +609,7 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
                             </span>
                             <small>
                               {ref.capabilities.reference
-                                ? "Referencia con fuente · no cotizable"
+                                ? "Completar serie para cotizar"
                                 : "Identidad sin resolver"}
                             </small>
                           </button>
@@ -904,9 +919,7 @@ function CatalogEditor({
       })
       .catch(() => {
         if (!controller.signal.aborted)
-          setEvidenceError(
-            "No se pudo consultar la procedencia. Reintenta para revisar su fuente.",
-          );
+          setEvidenceError("No se pudo consultar el origen. Reintenta para revisar su referencia.");
       });
     return () => controller.abort();
   }, [api, row, evidenceSystem, evidenceReload]);
@@ -1234,7 +1247,7 @@ function CatalogEditor({
         <>
           <p role="alert">{evidenceError}</p>
           <button type="button" onClick={() => setEvidenceReload((value) => value + 1)}>
-            Reintentar procedencia
+            Reintentar origen
           </button>
         </>
       ) : null}
@@ -1276,10 +1289,7 @@ function CatalogEditor({
                 Declarar {ct(`group.${kind}`).toLowerCase()}
               </label>
             ))}
-            <p>
-              Una regla sin declarar queda Sin dato; el motor no autoriza fabricar con una
-              suposición.
-            </p>
+            <p>Completa las reglas que faltan; el motor no autoriza fabricar con una suposición.</p>
           </div>
         )}
         {groupsFor(resource, draft).map((group) => (
@@ -1643,7 +1653,7 @@ function CatalogEditor({
               />
             ) : (
               <p>
-                Sección: Sin dato. Importa el dibujo o declara sus coordenadas con la fuente del
+                Falta la sección. Importa el dibujo o declara sus coordenadas con la referencia del
                 proveedor.
               </p>
             )}

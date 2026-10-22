@@ -128,7 +128,7 @@ export function ThermalCatalogPanel({ systemId }: { systemId: string }) {
       body:
         state === "REVIEWED"
           ? "Declaro que cotejé los valores con el documento original, la inscripción vigente del laboratorio, vigencia, norma y alcance exacto. La revisión no certifica datos DEMO."
-          : "El informe deja de servir para cálculos nuevos. Las revisiones emitidas conservan su evidencia sellada.",
+          : "El informe deja de servir para cálculos nuevos. Las revisiones emitidas conservan los documentos que se usaron al emitir.",
       confirmLabel:
         state === "REVIEWED"
           ? "Confirmar revisión"
@@ -209,8 +209,8 @@ export function ThermalCatalogPanel({ systemId }: { systemId: string }) {
         <div>
           <h3>Informes térmicos y prestaciones</h3>
           <p>
-            La fuente es inmutable. Cada corrección se registra como un informe nuevo; la revisión
-            estampa al actor en el servidor.
+            El informe original no se puede cambiar. Cada corrección se registra como un informe
+            nuevo; la revisión estampa al actor en el servidor.
           </p>
         </div>
         {canManage && !draft && (
@@ -300,7 +300,7 @@ export function ThermalCatalogPanel({ systemId }: { systemId: string }) {
                       ? "Aluminio"
                       : draft.spacer_code === "NONE"
                         ? "Sin cámara"
-                        : "Sin dato · completa la composición del vidrio"}
+                        : "Falta · completa la composición del vidrio"}
                 </p>
               )}
               {draft.kind === "PERFORMANCE" && (
@@ -340,7 +340,7 @@ export function ThermalCatalogPanel({ systemId }: { systemId: string }) {
                         })
                       }
                     >
-                      <option value="">Sin dato</option>
+                      <option value="">Completar</option>
                       {[0, 1, 2, 3, 4].map((value) => (
                         <option key={value} value={value}>
                           Clase {value}
@@ -391,7 +391,7 @@ export function ThermalCatalogPanel({ systemId }: { systemId: string }) {
                 />
               </label>
               <label>
-                Vigente hasta · fuente explícita
+                Vigente hasta · referencia explícita
                 <input
                   type="date"
                   value={draft.valid_until}
@@ -563,8 +563,10 @@ export function ThermalCatalogPanel({ systemId }: { systemId: string }) {
           </p>
           <p>{report.applicability}</p>
           <p>
-            {report.reviewer_label ? `Revisó ${report.reviewer_label}` : "Revisor Sin dato"} ·{" "}
-            {report.reviewed_at ? formatDate(report.reviewed_at) : "Pendiente"}
+            {report.reviewer_label
+              ? `Revisó ${report.reviewer_label}`
+              : "Falta indicar quién revisó"}{" "}
+            · {report.reviewed_at ? formatDate(report.reviewed_at) : "Pendiente"}
           </p>
           <details>
             <summary>Combinación y aperturas</summary>

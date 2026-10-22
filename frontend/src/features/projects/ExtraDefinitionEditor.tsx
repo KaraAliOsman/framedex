@@ -51,7 +51,7 @@ export function ExtraDefinitionEditor({
       {label}
       <input
         value={decimal ? decimalInputValue(current ?? "") : (current ?? "")}
-        placeholder="Sin dato"
+        placeholder="Completar"
         inputMode={decimal ? "decimal" : undefined}
         onChange={(e) => edit(decimal ? e.target.value.replace(",", ".") : e.target.value)}
       />
@@ -145,14 +145,14 @@ export function ExtraDefinitionEditor({
           )}
         </>
       )}
-      {text("Fuente y condiciones de la tarifa", value.source, (source) => patch({ source }))}
+      {text("Documento y condiciones de la tarifa", value.source, (source) => patch({ source }))}
       <label>
         <input
           type="checkbox"
           checked={value.synthetic}
           onChange={(e) => patch({ synthetic: e.target.checked })}
         />
-        Autoridad sintética · DEMO
+        Datos sintéticos · DEMO
       </label>
       {value.kind === "SERVICE" && (
         <label>
@@ -345,7 +345,7 @@ export function ExtraImport<T extends { schema_version: 1 }>({
   const [error, setError] = useState("");
   return (
     <details className="extra-import">
-      <summary>Importar desde una fuente · JSON</summary>
+      <summary>Importar desde un documento · JSON</summary>
       <p>Las medidas y tarifas se validan al guardar. Revisa la propuesta antes de incorporarla.</p>
       <button
         type="button"
@@ -354,15 +354,15 @@ export function ExtraImport<T extends { schema_version: 1 }>({
           const url = URL.createObjectURL(blob);
           const link = document.createElement("a");
           link.href = url;
-          link.download = "autoridad-extras.json";
+          link.download = "configuracion-extras.json";
           link.click();
           URL.revokeObjectURL(url);
         }}
       >
-        Descargar autoridad actual
+        Descargar configuración actual
       </button>
       <label>
-        Archivo de autoridad
+        Archivo de configuración
         <input
           type="file"
           accept=".json,application/json"
@@ -374,7 +374,7 @@ export function ExtraImport<T extends { schema_version: 1 }>({
         />
       </label>
       <label>
-        Contenido de la fuente
+        Contenido del documento
         <textarea
           value={text}
           onChange={(e) => {
@@ -391,7 +391,9 @@ export function ExtraImport<T extends { schema_version: 1 }>({
             setProposed(parse(JSON.parse(text)));
             setError("");
           } catch {
-            setError("El archivo no declara una autoridad válida. Revisa su estructura y versión.");
+            setError(
+              "El archivo no declara una configuración válida. Revisa su estructura y versión.",
+            );
           }
         }}
       >
@@ -455,7 +457,7 @@ export function ExtraAuthorityEditor({
 }): JSX.Element {
   return (
     <fieldset className="catalog-group">
-      <legend>Accesorios y extras con autoridad</legend>
+      <legend>Accesorios y extras del catálogo</legend>
       {!costsVisible && (
         <p>
           Los costos de compra son confidenciales. El dueño o jefe de taller puede consultarlos.
@@ -467,18 +469,18 @@ export function ExtraAuthorityEditor({
       </p>
       {!value ? (
         <>
-          <p>Sin autoridad de extras para esta versión.</p>
+          <p>Completa los extras de esta versión.</p>
           <button
             type="button"
             onClick={() => onChange({ schema_version: 1, source: "", definitions: [] })}
           >
-            Declarar accesorios desde una fuente
+            Agregar accesorios desde un documento
           </button>
         </>
       ) : (
         <>
           <label>
-            Fuente de la autoridad
+            Documento de los accesorios
             <input
               value={value.source}
               onChange={(e) => onChange({ ...value, source: e.target.value })}

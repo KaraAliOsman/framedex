@@ -1,10 +1,11 @@
 ---
 type: concept
 status: active
-updated: 2026-10-11
+updated: 2026-10-22
 volatility: medium
 verified_ref: e317edb9b76b4346e33aa3b60b4783b4cc2f0a99
 sources:
+  - P02d gpt/dk2-p02d-lenguaje-ejemplos, corrección de vigencia de la vista previa, 2026-10-22
   - P22 PR https://github.com/KaraAliOsman/framedex/pull/148, CI 4/4 sobre f55db702b6f24b39da3f6b279a895833758461a4, squash e317edb9b76b4346e33aa3b60b4783b4cc2f0a99, 2026-10-11
   - P22 revisión a3bffc10c4ea43f9bec221a47ecaaefbe2b15bfa, gates completos y tres recorridos reales, 2026-10-11
   - backend/projects/clients.py
@@ -60,6 +61,10 @@ común. Cambiar marca, papel, pie, vigencia y condiciones conserva el precio
 y moneda sellados; esa preparación no modifica el artefacto histórico. Sin
 obra o revisión hay una causa y destino para resolverla. Guardar identidad
 comparte su revisión con Marca antes de anunciar éxito y conserva su borrador.
+La vigencia propuesta en la vista previa usa explícitamente el día de
+`America/Santiago`, igual que Preparar emisión, independientemente de la zona
+activa de Django. Dos regresiones con reloj fijo a ambos lados de medianoche
+verifican el PDF real sin cambiar la revisión sellada.
 
 El dueño siempre exige segundo factor. La preferencia adicional exige MFA
 a los demás y se aplica en API y RLS, manteniendo el bootstrap mínimo para
