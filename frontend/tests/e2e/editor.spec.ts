@@ -761,10 +761,11 @@ test("tablet choices stay compatible and mobile edits and saves through the same
   for (const name of await choices.getByRole("button").allTextContents())
     expect(name.trim().length).toBeGreaterThan(4);
   await expect(page.locator(".assembly-side")).toBeVisible();
-  // Escape closes one layer at a time: the opening choices, then the inspector.
+  // Escape closes only the top layer (the opening choices); the inspector
+  // stays open until its own close control.
   await page.keyboard.press("Escape");
   await expect(choices).toHaveCount(0);
-  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "Cerrar inspector", exact: true }).click();
   await expect(page.getByRole("button", { name: "Inspector", exact: true })).toHaveAttribute(
     "aria-expanded",
     "false",
