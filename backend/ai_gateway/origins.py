@@ -137,7 +137,8 @@ def _reason(value: Any) -> str:
     return "" if re.search(r"\d", text) else text
 
 
-_SEGMENT = re.compile(r"[^\n.;!?]+(?:[.;!?](?=\s|$))?")
+# A sentence: a dot ends it only before a space («1.800» stays one number).
+_SEGMENT = re.compile(r"(?:[^\n.;!?]|\.(?!\s|$))+(?:[.;!?](?=\s|$))?")
 
 
 # A clause boundary: a comma not between digits, a semicolon or « y ».

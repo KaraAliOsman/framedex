@@ -1,0 +1,85 @@
+# P08 · request → windows. Synthetic requests written for DEKOPEN (no real
+# client data). Each case records what a model proposed («proposed») and the
+# windows the server must accept («expected») or refuse («refused»). The
+# score is the share of expected windows accepted with exact measures and
+# quantity, plus zero accepted measures that the request does not state.
+cases:
+  - id: Q01
+    request: "2 ventanas para el living de 1,20 x 1,50 y una de baño 60x60 fija"
+    proposed:
+      - {location: Living, width_mm: "1200", height_mm: "1500", quantity: 2}
+      - {location: Baño, width_mm: "600", height_mm: "600", quantity: 1}
+    expected: [Living, Baño]
+    refused: []
+  - id: Q02
+    request: "Necesito tres correderas de 1.800 por 1.200 para el segundo piso"
+    proposed:
+      - {location: Segundo piso, width_mm: "1800", height_mm: "1200", quantity: 3}
+    expected: [Segundo piso]
+    refused: []
+  - id: Q03
+    request: "Cocina: ventana de 900 mm de ancho por 1100 mm de alto, oscilobatiente"
+    proposed:
+      - {location: Cocina, width_mm: "900", height_mm: "1100", quantity: 1}
+    expected: [Cocina]
+    refused: []
+  - id: Q04
+    request: "Dormitorio principal 150 x 120 cm abatible. Dormitorio chico 100 x 100 cm"
+    proposed:
+      - {location: Dormitorio principal, width_mm: "1500", height_mm: "1200", quantity: 1}
+      - {location: Dormitorio chico, width_mm: "1000", height_mm: "1000", quantity: 1}
+    expected: [Dormitorio principal, Dormitorio chico]
+    refused: []
+  - id: Q05
+    request: "La puerta de la cocina mide como 90 de ancho"
+    proposed:
+      - {location: Puerta cocina, width_mm: "900", height_mm: "2100", quantity: 1}
+    expected: []
+    refused: [Puerta cocina]
+  - id: Q06
+    request: "Cuatro ventanas iguales de 1 x 1,2 m para las salas"
+    proposed:
+      - {location: Salas, width_mm: "1000", height_mm: "1200", quantity: 4}
+    expected: [Salas]
+    refused: []
+  - id: Q07
+    request: "Living 2,40 x 2,10 corredera; baño 50 x 70 proyectante"
+    proposed:
+      - {location: Living, width_mm: "2400", height_mm: "2100", quantity: 1}
+      - {location: Baño, width_mm: "500", height_mm: "700", quantity: 1}
+    expected: [Living, Baño]
+    refused: []
+  - id: Q08
+    request: "Dos ventanas de 1,20 x 1,00 en el estar"
+    proposed:
+      - {location: Estar, width_mm: "1200", height_mm: "1000", quantity: 3}
+    expected: []
+    refused: [Estar]
+  - id: Q09
+    request: "Ventanal fijo del comedor de 3000 x 2200"
+    proposed:
+      - {location: Comedor, width_mm: "3000", height_mm: "2200", quantity: 1}
+      - {location: Terraza, width_mm: "1500", height_mm: "2200", quantity: 1}
+    expected: [Comedor]
+    refused: [Terraza]
+  - id: Q10
+    request: "Hola, para la oficina: 6 ventanas de 120x120 y una puerta de 100x210"
+    proposed:
+      - {location: Oficina, width_mm: "1200", height_mm: "1200", quantity: 6}
+      - {location: Puerta oficina, width_mm: "1000", height_mm: "2100", quantity: 1}
+    expected: [Oficina, Puerta oficina]
+    refused: []
+  - id: Q11
+    request: "Baño 60 x 60, cocina 80 x 100 y lavadero 60 x 80, todas abatibles"
+    proposed:
+      - {location: Baño, width_mm: "600", height_mm: "600", quantity: 1}
+      - {location: Cocina, width_mm: "800", height_mm: "1000", quantity: 1}
+      - {location: Lavadero, width_mm: "600", height_mm: "800", quantity: 1}
+    expected: [Baño, Cocina, Lavadero]
+    refused: []
+  - id: Q12
+    request: "Quiero cotizar las ventanas de la casa, después te mando las medidas"
+    proposed:
+      - {location: Casa, width_mm: "1200", height_mm: "1200", quantity: 1}
+    expected: []
+    refused: [Casa]
