@@ -86,12 +86,24 @@ def prepare(request, project_id: UUID) -> dict:
                     apply_operation(org_id, token.user_id, tenant.active_organization.role,
                                     UUID(str(operation["id"])), REASON, False)
             applied_id = operation["id"]
+        content, pdf_cause = b"", None
         try:
             with documentary_scope(request, ("OWNER", "ESTIMATOR")) as (token, _, org_id):
                 content = issuance.draft_preview(org_id=org_id, actor_id=token.user_id, project_id=project_id)
-            pdf_cause = None if content.startswith(b"%PDF") else "El borrador no se pudo generar."
         except (ContractAPIException, DocumentaryError) as error:
-            pdf_cause = _document_cause(error)
+            if (getattr(error, "contract_code", None) or getattr(error, "code", None)) != "project_documentary_inputs_required":
+                pdf_cause = _document_cause(error)
+            else:
+                # Commercial conditions stay the person's decision: the quick
+                # draft renders with them «Por definir» and stores nothing.
+                from documents import quick_drafts
+
+                try:
+                    content, _ = quick_drafts.render(request, project_id, "QUOTE")
+                except (ContractAPIException, DocumentaryError) as quick_error:
+                    pdf_cause = _document_cause(quick_error)
+        if pdf_cause is None and not content.startswith(b"%PDF"):
+            pdf_cause = "El borrador no se pudo generar."
         if pdf_cause:
             # The price stays applied (reversible: «Retirar precio» with an
             # audit reason); the receipt says both facts, never one.
