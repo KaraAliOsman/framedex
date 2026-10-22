@@ -1,5 +1,6 @@
 {
   "PRO6004-abatible": {
+    "extras": [],
     "input": {
       "children": [],
       "door_handedness": null,
@@ -187,6 +188,8 @@
     "price": {
       "direct_cost": "89822.4738461538461538461538461538461538461538461538461538461538461538461538461538",
       "exact_unit_price": "138188.42130177514792899408284023668639053254437869822485207100591715976331360947",
+      "extras_cost": "0",
+      "extras_net": "0",
       "installation": "6600.00",
       "labor": "20000",
       "materials": "63222.4738461538461538461538461538461538461538461538461538461538461538461538461538",
@@ -196,9 +199,21 @@
       "waste": "0E-76"
     },
     "source": "Synthetic workshop fixture; not manufacturer data",
-    "system_code": "PRO6004-SYNTHETIC"
+    "system_code": "PRO6004-SYNTHETIC",
+    "three_units": {
+      "cost_lines": [
+        [
+          1,
+          "269467.4215384615384615384615384615384615384615384615384615384615384615384615384614"
+        ]
+      ],
+      "gross": "496230",
+      "net": "417000",
+      "tax": "79230"
+    }
   },
   "PRO6004-fija": {
+    "extras": [],
     "input": {
       "children": [],
       "door_handedness": null,
@@ -322,6 +337,8 @@
     "price": {
       "direct_cost": "69972.7179487179487179487179487179487179487179487179487179487179487179487179487179",
       "exact_unit_price": "107650.33530571992110453648915187376725838264299802761341222879684418145956607495",
+      "extras_cost": "0",
+      "extras_net": "0",
       "installation": "10000",
       "labor": "19800.00",
       "materials": "40172.7179487179487179487179487179487179487179487179487179487179487179487179487179",
@@ -331,6 +348,189 @@
       "waste": "0E-76"
     },
     "source": "Synthetic workshop fixture; not manufacturer data",
-    "system_code": "PRO6004-SYNTHETIC"
+    "system_code": "PRO6004-SYNTHETIC",
+    "three_units": {
+      "cost_lines": [
+        [
+          1,
+          "209918.1538461538461538461538461538461538461538461538461538461538461538461538461537"
+        ]
+      ],
+      "gross": "385560",
+      "net": "324000",
+      "tax": "61560"
+    }
+  },
+  "PRO6004-fija-instalacion": {
+    "extras": [
+      {
+        "bay_id": null,
+        "code": "INSTALL",
+        "cost_rate": "10000",
+        "currency": "CLP",
+        "height_mm": null,
+        "installation": true,
+        "kind": "SERVICE",
+        "leaf_id": null,
+        "name": "Synthetic installation",
+        "quantity": "1",
+        "scope": "POSITION",
+        "selling_rate": "15000",
+        "sku": null,
+        "source": "Synthetic workshop fixture; not manufacturer data",
+        "synthetic": true,
+        "total_cost": "10000",
+        "total_price": "15000",
+        "unit": "EA",
+        "width_mm": null,
+        "zone": null
+      }
+    ],
+    "input": {
+      "children": [],
+      "door_handedness": null,
+      "glass_article_sku": "GLASS-24",
+      "glass_processing": null,
+      "glass_product": null,
+      "glass_spec": "4-16-4",
+      "glass_thickness_mm": "24",
+      "handle_height_mm": null,
+      "hardware_set_sku": null,
+      "height_mm": "1100",
+      "id": "trial",
+      "is_sidelight": false,
+      "mullion_profile_sku": null,
+      "opening_type": "FIXED",
+      "panel_article_sku": null,
+      "sill_height_mm": null,
+      "sliding_layout": null,
+      "split_offset_mm": null,
+      "type": "BAY",
+      "width_mm": "1200"
+    },
+    "materials": [
+      {
+        "amount": "4452.9230769230769230769230769230769230769230769230769230769230769230769230769231",
+        "kind": "PROFILE",
+        "length_mm": "1206",
+        "quantity": 2,
+        "rate": "12000",
+        "sku": "PRO-F",
+        "stock_length_mm": "6500",
+        "unit": "BAR"
+      },
+      {
+        "amount": "4083.6923076923076923076923076923076923076923076923076923076923076923076923076923",
+        "kind": "PROFILE",
+        "length_mm": "1106",
+        "quantity": 2,
+        "rate": "12000",
+        "sku": "PRO-F",
+        "stock_length_mm": "6500",
+        "unit": "BAR"
+      },
+      {
+        "amount": "1692.3076923076923076923076923076923076923076923076923076923076923076923076923077",
+        "kind": "PROFILE",
+        "length_mm": "1100",
+        "quantity": 2,
+        "rate": "5000",
+        "sku": "PRO-B",
+        "stock_length_mm": "6500",
+        "unit": "BAR"
+      },
+      {
+        "amount": "1538.4615384615384615384615384615384615384615384615384615384615384615384615384615",
+        "kind": "PROFILE",
+        "length_mm": "1000",
+        "quantity": 2,
+        "rate": "5000",
+        "sku": "PRO-B",
+        "stock_length_mm": "6500",
+        "unit": "BAR"
+      },
+      {
+        "amount": "3136",
+        "kind": "REINFORCEMENT",
+        "length_mm": "1176",
+        "quantity": 2,
+        "rate": "8000",
+        "sku": "STEEL-F",
+        "stock_length_mm": "6000",
+        "unit": "BAR"
+      },
+      {
+        "amount": "2869.3333333333333333333333333333333333333333333333333333333333333333333333333333",
+        "kind": "REINFORCEMENT",
+        "length_mm": "1076",
+        "quantity": 2,
+        "rate": "8000",
+        "sku": "STEEL-F",
+        "stock_length_mm": "6000",
+        "unit": "BAR"
+      },
+      {
+        "amount": "22000.0",
+        "height_mm": "1000",
+        "kind": "GLASS",
+        "quantity": "1.1",
+        "rate": "20000",
+        "sku": "GLASS-24",
+        "unit": "M2",
+        "width_mm": "1100"
+      },
+      {
+        "amount": "200",
+        "kind": "FITTING",
+        "quantity": 10,
+        "rate": "20",
+        "sku": "SCREW-F",
+        "unit": "EA"
+      },
+      {
+        "amount": "200",
+        "kind": "FITTING",
+        "quantity": 10,
+        "rate": "20",
+        "sku": "SCREW-F",
+        "unit": "EA"
+      }
+    ],
+    "policy": {
+      "currency": "CLP",
+      "installation_basis": "WINDOW",
+      "installation_rate": "10000",
+      "labor_basis": "M2",
+      "labor_rate": "15000",
+      "margin": "0.35",
+      "rounding_step": "1000",
+      "waste": "0.08"
+    },
+    "price": {
+      "direct_cost": "73186.535384615384615384615384615384615384615384615384615384615384615384615384615332",
+      "exact_unit_price": "112210.05443786982248520710059171597633136094674556213017751479289940828402366864",
+      "extras_cost": "10000",
+      "extras_net": "15000",
+      "installation": "0",
+      "labor": "19800.00",
+      "materials": "40172.7179487179487179487179487179487179487179487179487179487179487179487179487179",
+      "profit": "39813.464615384615384615384615384615384615384615384615384615384615384615384615384668",
+      "rounding": "789.94556213017751479289940828402366863905325443786982248520710059171597633136",
+      "unit_net": "113000",
+      "waste": "3213.817435897435897435897435897435897435897435897435897435897435897435897435897432"
+    },
+    "source": "Synthetic workshop fixture; not manufacturer data",
+    "system_code": "PRO6004-SYNTHETIC",
+    "three_units": {
+      "cost_lines": [
+        [
+          1,
+          "219559.606153846153846153846153846153846153846153846153846153846153846153846153845996"
+        ]
+      ],
+      "gross": "403410",
+      "net": "339000",
+      "tax": "64410"
+    }
   }
 }

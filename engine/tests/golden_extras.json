@@ -460,6 +460,24 @@
       }
     ]
   },
+  "explicit-free-partition": {
+    "base_net": "0",
+    "sublines": [
+      {
+        "code": "SILL",
+        "height_mm": "1400",
+        "name": "Vierteaguas",
+        "net": "0",
+        "quantity": "3.12",
+        "rounding": "0.00",
+        "source": "Accesorios sintéticos DEKOPEN v6; semilla 20270103; sin certificación",
+        "synthetic": true,
+        "unit": "M",
+        "unit_price": "0",
+        "width_mm": "1500"
+      }
+    ]
+  },
   "extra-members": [
     {
       "angle_left": "90.0",

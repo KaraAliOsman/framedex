@@ -2381,3 +2381,13 @@ operaciones. Verificación local: 67 integraciones comerciales y 22 aserciones
 pgTAP, con conflictos concurrentes, cambio de costos durante lectura y
 conservación de aplicado. Automatismo e interfaz siguen pendientes de P04.
 Véase [precio](product/price-workspace.md).
+
+## 2026-10-22 · P04c: proyección privada del borrador
+
+En `gpt/dk2-p04c-precio-vigente`, el calculador guarda una proyección mutable
+por revisión sin operación APPLIED. Tres ventanas y cambio de margen mantienen
+la edición; costos ausentes limpian el total anterior. Los cinco modos avanzados,
+RLS, privacidad y conservación de aplicado se verificaron en PostgreSQL local.
+El motor incorpora extras y servicios sin duplicar instalación ni merma, con
+casos dorados nuevos. Hooks, HTTP y emisión siguen pendientes. Véase
+[precio](product/price-workspace.md).

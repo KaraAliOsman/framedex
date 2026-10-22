@@ -57,6 +57,22 @@ Producción y precios comerciales requieren autorización aparte.
 - Pendientes de P04: precio vigente del borrador, aplicación al emitir,
   configuración y desglose en pantalla, aceptación E2E con tres ventanas.
 
+### P04c · Proyección privada del borrador
+
+- Proyección mutable por revisión, con RLS y guardas que exigen un borrador
+  editable. No escribe precios comerciales, no aplica una operación y no
+  bloquea la edición. Un costo ausente elimina el total anterior de la proyección
+  y devuelve una causa concreta. El precio aplicado o emitido se conserva.
+- El motor compone cantidades, IVA y servicios. Los extras conservan su tarifa;
+  no reciben merma dos veces ni se cobra dos veces una instalación explícita.
+  Nuevos goldens cubren extras, servicio de obra y distribución de precio cero.
+- 25 integraciones de política y precio de trabajo, ocho aserciones pgTAP,
+  63 casos dirigidos del motor, Ruff y mypy aprobados. Se ejercitaron tres
+  ventanas, cambio de margen, los cinco modos avanzados, privacidad de costos,
+  permisos, aislamiento y conservación del diseño al faltar un costo.
+- Esta subentrega todavía no conecta los hooks ni expone la proyección por HTTP.
+  Siguen pendientes el automatismo público, la aplicación al emitir y la interfaz.
+
 ## Base y comprobaciones previas
 
 - Base inicial de aplicación: `origin/main` en `0207763c`, con dirección desde
