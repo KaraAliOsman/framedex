@@ -7,8 +7,8 @@ Producción y precios comerciales requieren autorización aparte.
 | Fase | Alcance | Estado | Rama / PR |
 |---|---|---|---|
 | P01 | Catálogo v2: backend, origen, niveles y plantillas | Hecha | [P01a #164](https://github.com/KaraAliOsman/framedex/pull/164), [P01b #165](https://github.com/KaraAliOsman/framedex/pull/165), [P01c #166](https://github.com/KaraAliOsman/framedex/pull/166), [P01d #167](https://github.com/KaraAliOsman/framedex/pull/167) y [P01e #168](https://github.com/KaraAliOsman/framedex/pull/168) fusionadas |
-| P02 | Ficha de serie editable | En curso | [P02a #169](https://github.com/KaraAliOsman/framedex/pull/169), [P02b #170](https://github.com/KaraAliOsman/framedex/pull/170), [P02c #171](https://github.com/KaraAliOsman/framedex/pull/171); sub-PR ordenadas |
-| P03 | Alta de serie y ventana de prueba | En preparación, pendiente de fusionar P02 | [P03a #174](https://github.com/KaraAliOsman/framedex/pull/174), [P03b #175](https://github.com/KaraAliOsman/framedex/pull/175), `gpt/dk2-p03c-doble-lectura` |
+| P02 | Ficha de serie editable | En curso | [P02a #169](https://github.com/KaraAliOsman/framedex/pull/169), [P02b #170](https://github.com/KaraAliOsman/framedex/pull/170) y [P02c #171](https://github.com/KaraAliOsman/framedex/pull/171) fusionadas; [P02d #172](https://github.com/KaraAliOsman/framedex/pull/172) y [P02e #173](https://github.com/KaraAliOsman/framedex/pull/173) pendientes |
+| P03 | Alta de serie y ventana de prueba | En preparación, pendiente de fusionar P02 | [P03a #174](https://github.com/KaraAliOsman/framedex/pull/174), [P03b #175](https://github.com/KaraAliOsman/framedex/pull/175), [P03c #176](https://github.com/KaraAliOsman/framedex/pull/176), [P03d #177](https://github.com/KaraAliOsman/framedex/pull/177); interfaz `gpt/dk2-p03e-prueba-ui` |
 | P04 | Precio simple automático | Pendiente | — |
 | P05 | Navegación, Hoy y Obras | Pendiente | — |
 | P06 | Mesa de la obra y edición directa | Pendiente | — |
@@ -371,3 +371,24 @@ a P03; P01 deja preparado su contrato y su bloqueo.
   API/OpenAPI regenerados. La interfaz del asistente se conecta a continuación.
 - El CI de P03b detectó tres grupos nuevos sin traducción. Se añadieron al
   glosario sin debilitar su prueba exhaustiva: 211 comprobaciones aprobadas.
+
+### P03e · Ventana de prueba y revisión de ediciones
+
+- Comparación editable con cortes, refuerzos, vidrios, cantidades y ángulos del
+  motor. El taller elige entre ajustes exactos, revisa las piezas afectadas y
+  aplica/recalcula. Confirmar exige revisar el despiece y aceptar expresamente
+  los valores sugeridos. Un cálculo vacío o fallido no permite verificar.
+- Ediciones protegidas muestran antes/después y todos los cambios físicos,
+  incluidos ángulos y componentes. Cancelar conserva el borrador; aceptar
+  reenvía una sola vez la misma mutación y el token del cambio exacto. Un cambio
+  de empresa impide reintentar la escritura con otra empresa.
+- El ensayo móvil detectó contenido del fondo expuesto al lector de pantalla.
+  El diálogo compartido ahora aísla y restaura el fondo, incluidos otros
+  diálogos y portales. La tabla usa scroll local accesible y páginas de 50 filas.
+- Validación local: 1.188 pruebas de frontend aprobadas; cinco E2E reales/de
+  extremos aprobados, con Magic Link y TOTP, a 1440/390 y 320 px, texto al 200 %,
+  0/1/500 piezas, códigos largos y números grandes. ESLint, TypeScript, formato,
+  guardas y build aprobados. [Evidencia](../redesign/captures/dk2-p03e/aceptacion.md).
+- Faltan el asistente completo de cinco pasos, su lectura documental integrada,
+  la UI de precios mapeados y la aceptación del alta desde plantilla. P03 sigue
+  en curso; ninguna de sus sub-PR se fusionará antes de completar P02.

@@ -4,13 +4,14 @@ import { createPortal } from "react-dom";
 import { t } from "../i18n/es-CL";
 import { useFloatingLayer } from "./floatingLayer";
 import { Icon } from "./Icon";
+import { isolateDialog, isTopDialog } from "./modalIsolation";
 
 export type DialogProps = PropsWithChildren<{
   title: string;
   onClose: () => void;
   /** Optional footer actions (buttons). Enter triggers the first primary action. */
   footer?: React.ReactNode;
-  width?: "s" | "m" | "l";
+  width?: "s" | "m" | "l" | "xl";
   surface?: "dialog" | "drawer" | "palette";
 }>;
 
@@ -35,13 +36,17 @@ export function Dialog({
   useEffect(() => {
     previousFocus.current = document.activeElement;
     panelRef.current?.focus();
+    const overlay = panelRef.current?.parentElement;
+    const restore = overlay ? isolateDialog(overlay) : undefined;
     return () => {
+      restore?.();
       (previousFocus.current as HTMLElement | null)?.focus?.();
     };
   }, []);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent): void {
+      if (!isTopDialog(panelRef.current?.parentElement)) return;
       if (event.key === "Escape") {
         event.stopPropagation();
         onClose();
