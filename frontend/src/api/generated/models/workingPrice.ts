@@ -6,11 +6,14 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { CurrencyEnum } from "./currencyEnum";
+import type { SimplePolicyResponse } from "./simplePolicyResponse";
 import type { WorkingPriceError } from "./workingPriceError";
 import type { WorkingPriceLine } from "./workingPriceLine";
 import type { WorkingPriceStateEnum } from "./workingPriceStateEnum";
 
 export interface WorkingPrice {
+  use_advanced: boolean;
+  policy?: SimplePolicyResponse;
   state: WorkingPriceStateEnum;
   currency: CurrencyEnum;
   policy_revision: number;

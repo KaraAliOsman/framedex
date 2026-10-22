@@ -239,10 +239,14 @@ def test_cloned_draft_has_independent_inputs_and_no_shared_history(manual_pair):
         changed = position_data(system, "1500.00")
         changed["expected_updated_at"] = clone_position["updated_at"]
         service.save_position(org, copied["id"], changed, position_id=clone_position["id"])
-        assert (
-            service.project_public(org, service.project_row(org, project_id), detail=True)
-            == original
-        )
+        reread = service.project_public(org, service.project_row(org, project_id), detail=True)
+        # Reading a draft refreshes its working projection. Only that clock may
+        # advance; cloning/editing the copy must preserve every original input,
+        # calculated amount, error, stored total and history field.
+        previous_calculation = original['working_price'].pop('computed_at')
+        next_calculation = reread['working_price'].pop('computed_at')
+        assert next_calculation >= previous_calculation
+        assert reread == original
         assert (
             rows("SELECT id FROM public.project_versions WHERE project_id=%s", [copied["id"]]) == []
         )

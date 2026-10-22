@@ -2,6 +2,7 @@
    primary action; the work's details live with its activity. */
 .project-head {
   display: grid;
+  min-width: 0;
   gap: var(--space-16px);
   margin-bottom: var(--space-24px);
 }
@@ -22,6 +23,7 @@
   letter-spacing: -0.02em;
   line-height: var(--line-display);
   margin: 0;
+  overflow-wrap: anywhere;
 }
 .project-head__title .ui-inline-edit {
   background: transparent;
@@ -49,6 +51,11 @@
   font-size: var(--type-title-m);
   gap: var(--space-12px);
   margin: var(--space-8px) 0 0;
+  overflow-wrap: anywhere;
+}
+.project-head__meta > span {
+  min-width: 0;
+  max-width: 100%;
 }
 .project-head__add {
   align-items: center;
@@ -64,7 +71,7 @@
   color: var(--text-muted);
 }
 .project-head__code {
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-family: var(--font-mono);
   font-size: var(--type-micro);
 }
@@ -73,11 +80,16 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-12px);
+  min-width: 0;
+  max-width: 100%;
 }
 .project-head__total {
   display: grid;
   justify-items: end;
   margin-inline-end: var(--space-8px);
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 .project-head__total span {
   color: var(--text-secondary);
@@ -88,6 +100,11 @@
   font-variant-numeric: tabular-nums;
   font-weight: 600;
   line-height: var(--line-subtitle);
+}
+@media (max-width: 640px) {
+  .project-head__total strong {
+    font-size: clamp(var(--type-title-m), 6vw, var(--type-title-l));
+  }
 }
 .commercial-track {
   align-items: center;
@@ -100,7 +117,7 @@
 }
 .commercial-step {
   align-items: center;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   display: inline-flex;
   font-size: var(--type-dense);
   gap: var(--space-6px);
@@ -112,7 +129,7 @@
   width: 10px;
 }
 .commercial-step__detail {
-  color: var(--text-muted);
+  color: var(--text-secondary);
 }
 .commercial-step__detail::before {
   content: "· ";

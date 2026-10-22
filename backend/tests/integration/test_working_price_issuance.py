@@ -65,6 +65,11 @@ def test_freeze_without_manual_apply_is_atomic_idempotent_and_immutable(document
     issued = client.post(endpoint, {'confirmed': True}, format='json')
     assert issued.status_code == 201, issued.content
     version = issued.json()
+    issued_project = client.get(f'/api/v1/projects/{project}/').json()
+    sale = issued_project['positions'][0]['commercial']
+    assert set(sale) == {'unit_net', 'line_net', 'source'}
+    for key in ('unit_net', 'line_net'):
+        assert D(sale[key]) == D(projected.json()['positions'][0]['commercial'][key])
     with as_user(users['OWNER']):
         _, before = revision_snapshot(version['id'], org)
         assert before['pricing']['input_snapshot']['workshop_policy']['revision'] == 1
@@ -72,6 +77,7 @@ def test_freeze_without_manual_apply_is_atomic_idempotent_and_immutable(document
         save_policy(org, policy_values(margin='.50'), 1, 'Solo borradores')
         _, after = revision_snapshot(version['id'], org)
         assert after == before
+    assert client.get(f'/api/v1/projects/{project}/').json()['positions'][0]['commercial'] == sale
     replay = client.post(endpoint, {'confirmed': True}, format='json')
     assert replay.status_code == 200 and replay.json()['id'] == version['id'], replay.content
     applied = rows("SELECT id FROM pricing_operations WHERE project_id=%s AND state='APPLIED'", [project])
@@ -88,3 +94,23 @@ def test_failed_freeze_rolls_back_the_automatic_application(documentary_committe
     assert one('SELECT total_price_net FROM projects WHERE id=%s', [project])['total_price_net'] == 0
     with as_user(users['OWNER']):
         assert service.editable(org, project)['id'] == project
+
+
+def test_draft_currency_follows_working_policy_without_relabeling_saved_totals(commercial_rows):
+    org, _, users = commercial_rows
+    project = commercial_tests.seed_commercial_project(org, users['OWNER'])
+    position = one('SELECT id FROM project_positions WHERE project_id=%s', [project])['id']
+    with as_user(users['OWNER']):
+        row = service.position_row(org, position)
+        service.save_position(org, project, {'design': {'system_id': row['system_id'],
+            'nominal_width_mm': row['width_mm'], 'nominal_height_mm': row['height_mm'],
+            'color': row['color_interior'], 'parametric_tree': service.decoded(row['parametric_tree'])},
+            'quantity': row['quantity'], 'location_tag': 'USD test',
+            'expected_updated_at': row['updated_at']}, position_id=position)
+    before = one('SELECT * FROM projects WHERE id=%s', [project])
+    with as_user(users['OWNER']):
+        save_policy(org, policy_values(currency='USD', rounding_step='.01'), 0, 'Precios en USD')
+        public = service.project_public(org, service.project_row(org, project), detail=True)
+        assert public['currency'] == public['working_price']['currency'] == 'USD'
+        assert public['pricing_current'] is False
+    assert one('SELECT * FROM projects WHERE id=%s', [project]) == before

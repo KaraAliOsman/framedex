@@ -27,6 +27,7 @@ def working_request(project_id, policy, effective_date):
     return {'project_id': project_id, 'pricing_mode': 'COST_PLUS_MARGIN', 'currency': policy['currency'],
         'effective_date': effective_date, 'context_code': 'DEFAULT', 'discount_pct': D('0'),
         'target_margin': policy['margin'], 'segment': 'RETAIL', 'confirmed': False,
+        'use_advanced': policy['use_advanced'],
         'reason': 'Precio vigente del borrador', 'simple_policy_revision': policy['revision']}
 
 
@@ -141,10 +142,11 @@ def refresh_working(org_id, actor, project_id):
 
 def working_public(record, role):
     """Sale allowlist for estimators; private BOM/cost authority stays in the cache."""
-    from pricing.simple_serializers import SimplePriceBreakdownSerializer
+    from pricing.simple_serializers import SimplePriceBreakdownSerializer, SimplePolicyResponseSerializer
 
     result = decoded(record['result'])
     public = {key: record[key] for key in ('state', 'currency', 'policy_revision', 'computed_at')}
+    public['use_advanced'] = bool(decoded(record['request']).get('use_advanced', False))
     public['error'] = result.get('error')
     for key in ('project_net', 'project_tax', 'project_gross'):
         public[key] = str(result[key]) if key in result else None
@@ -153,6 +155,9 @@ def working_public(record, role):
         | ({'breakdown': item.get('breakdown'), 'catalog_use': item.get('catalog_use')} if role == 'OWNER' else {})
         for item in result.get('line_detail', [])]
     if role == 'OWNER':
+        policy = decoded(record['input_snapshot']).get('workshop_policy')
+        if policy:
+            public['policy'] = SimplePolicyResponseSerializer(policy).data
         for line in public['lines']:
             if line.get('breakdown') is not None:
                 line['breakdown'] = SimplePriceBreakdownSerializer(line['breakdown']).data

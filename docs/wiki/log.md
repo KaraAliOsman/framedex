@@ -2328,3 +2328,15 @@ motor y activación avanzada guardada. Dos E2E, cinco unitarias UI, 21 de contra
 y 25 integraciones aprueban. Se corrigieron cero científico, importes largos,
 porcentaje extremo y texto ampliado. La aceptación conserva diez capturas y
 métricas locales. Total/popover de obra y emisión UI continúan en P04g.
+
+## 2026-10-22 · P04g: precio automático visible y emisión desde el borrador
+
+En `gpt/dk2-p04g-precio-obra`, cabecera/colección/Precio leen cifras del motor;
+el dueño abre su desglose y el vendedor conserva solo venta. Cotización admite
+precio READY sin aplicar y pendientes explícitos de fabricación, conservando
+las confirmaciones humanas. Dos E2E verifican tres PRO6004 sintéticas, margen,
+PDF revisado, emisión y conservación de total/versión/bytes. La revisión visual
+de 500 ventanas detectó contraste, columnas y texto largo; los extremos y
+texto al 200 % pasan. Corregida la lectura de líneas simples emitidas y el
+reloj mutable en la regresión de clonación (`9223078d`, propagado a P04d–f).
+La fase espera CI/fusión. Véase [precio](product/price-workspace.md).

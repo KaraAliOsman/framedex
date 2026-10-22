@@ -31,7 +31,7 @@
   margin: 0;
 }
 .project-positions-count {
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-size: var(--type-body);
   font-variant-numeric: tabular-nums;
   font-weight: 500;
@@ -205,7 +205,7 @@
   width: 16px;
 }
 .position-row__index {
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-size: var(--type-micro);
   font-variant-numeric: tabular-nums;
 }
@@ -318,7 +318,7 @@
   border-radius: 0;
   border-width: 0 0 1px;
   grid-template-areas: "check thumb identity specs state actions";
-  grid-template-columns: 3.25rem 4.5rem minmax(12rem, 1.2fr) minmax(22rem, 2fr) 9rem 4.5rem;
+  grid-template-columns: 2.5rem 3.5rem minmax(0, 1.2fr) minmax(0, 2fr) auto auto;
   padding: var(--space-8px) var(--space-12px);
 }
 .project-position-row-group[data-view="list"]:first-child .position-row {
@@ -333,7 +333,8 @@
 }
 .project-position-row-group[data-view="list"] .position-row__specs {
   border-top: 0;
-  grid-template-columns: 1.2fr 1fr 4rem 7rem;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 0.5fr) minmax(0, 1.2fr);
   padding-top: 0;
 }
 .project-position-row-group[data-view="list"] .position-row__specs dt {
@@ -345,6 +346,10 @@
 }
 .project-position-row-group[data-view="list"] .position-row__specs dd:is(.is-numeric) {
   text-align: right;
+}
+.position-row__specs .ui-popover-anchor {
+  min-width: 0;
+  max-width: 100%;
 }
 .project-position-row-group[data-view="list"] .position-row__name {
   font-size: var(--type-body);
@@ -428,16 +433,25 @@
 @media (max-width: 640px) {
   .project-position-row-group[data-view="list"] .position-row {
     grid-template-areas:
-      "check identity actions"
+      "check identity identity"
       "specs specs specs"
-      "state state state";
-    grid-template-columns: auto minmax(0, 1fr) auto;
+      "state state state"
+      "actions actions actions";
+    grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr);
   }
   .project-position-row-group[data-view="list"] .position-row__thumb {
     display: none;
   }
   .project-position-row-group[data-view="list"] .position-row__specs {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .project-position-row-group[data-view="list"] .position-row__actions {
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+  .project-position-row-group[data-view="list"] .position-row__open {
+    min-width: 0;
+    white-space: normal;
   }
   .project-positions-filters select {
     max-width: 100%;

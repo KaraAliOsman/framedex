@@ -2,6 +2,9 @@
 
 ## DEKOPEN 2
 
+- [P04g · precio automático en obra](dk2-p04g/aceptacion.md): total, desglose,
+  emisión sin aplicar, PDF conservado y extremos de 500 ventanas.
+
 - [P04f · precios de empresa](dk2-p04f/aceptacion.md): pantalla simple,
   ejemplo del motor, importes extremos y texto ampliado en diez capturas.
 

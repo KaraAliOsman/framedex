@@ -5,7 +5,7 @@ import type {
   ProjectResponse,
   DesignOperationRequest,
 } from "../../api/generated/models";
-import { fmtMm, formatMoney, parseDecimalInput } from "../../format";
+import { fmtMm, parseDecimalInput } from "../../format";
 import { domainLabel } from "../../i18n/domainLabels";
 import { StatusBadge, EmptyState, Loading, useConfirm } from "../../ui";
 import { Icon } from "../../ui/Icon";
@@ -15,6 +15,7 @@ import { VirtualPositionRows, type PositionRowEntry } from "./VirtualPositionRow
 import { ProjectOpsReview, useProjectOperations } from "./ProjectOpsReview";
 import { QuotationGlobalChanges } from "./QuotationGlobalChanges";
 import type { OpeningLeafFact } from "../canvas/physicalOpenings";
+import { PositionPrice } from "../pricing/PositionPrice";
 
 const ProjectPositionLibrary = lazy(() =>
   import("./ProjectPositionLibrary").then((module) => ({ default: module.ProjectPositionLibrary })),
@@ -406,13 +407,13 @@ export function PositionCollection({
             onPropose={operations.propose}
           />
           {/* Gallery summary: what a person reads first, in one calm line. */}
-          <span className="position-row__summary" aria-hidden="true">
+          <span className="position-row__summary">
             <span>
               {finishLabel(position)} · {positionGlass(position)} ·{" "}
               {position.quantity === 1 ? "1 unidad" : `${position.quantity} unidades`}
             </span>
             {sale?.line_net != null ? (
-              <strong>{formatMoney(sale.line_net, project.currency)}</strong>
+              <PositionPrice project={project} position={position} />
             ) : null}
           </span>
         </div>
@@ -432,7 +433,7 @@ export function PositionCollection({
           <div>
             <dt>Total neto</dt>
             <dd className="is-numeric" title={sale?.source}>
-              {sale?.line_net != null ? formatMoney(sale.line_net, project.currency) : "Sin precio"}
+              <PositionPrice project={project} position={position} />
             </dd>
           </div>
           {group !== "none" && (

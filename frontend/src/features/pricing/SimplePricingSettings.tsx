@@ -18,6 +18,7 @@ import { formatMoney } from "../../format";
 import { Button, DeniedState, ErrorState, LoadingState, ValidatedForm } from "../../ui";
 import { actionErrorDetail } from "../errors";
 import { PricingRulesSettings } from "./PricingPage";
+import { policyPercentInput } from "./policyNumbers";
 import "./simple-pricing.css";
 
 type NumericKey =
@@ -33,14 +34,6 @@ const numericKeys: NumericKey[] = [
 ];
 const percentageKeys = new Set<NumericKey>(["margin", "waste", "tax_rate"]);
 
-// Input presentation only: move the decimal separator without binary arithmetic.
-function percentInput(value: string): string {
-  const [whole = "0", fraction = ""] = value.split(".");
-  const digits = fraction.padEnd(2, "0");
-  return decimalInputValue(
-    `${BigInt(whole) * 100n + BigInt(digits.slice(0, 2))}.${digits.slice(2) || "0"}`,
-  ).replace(".", ",");
-}
 function fractionInput(value: string): string {
   const [whole = "0", fraction = ""] = value.split(".");
   const digits = whole.padStart(3, "0");
@@ -50,7 +43,7 @@ function toDraft(policy: SimplePolicyResponse): Draft {
   const values: Draft = { ...policy };
   for (const key of numericKeys)
     values[key] = percentageKeys.has(key)
-      ? percentInput(policy[key])
+      ? policyPercentInput(policy[key])
       : decimalInputValue(policy[key]).replace(".", ",");
   return values;
 }
@@ -204,7 +197,7 @@ function Example({
           </dl>
           <p className="simple-pricing__note">
             La utilidad incluye {formatMoney(data.breakdown.rounding, data.currency)} de redondeo.
-            Calculado por el motor. Margen sobre venta: {percentInput(values.margin)} %. Los
+            Calculado por el motor. Margen sobre venta: {policyPercentInput(values.margin)} %. Los
             materiales usan los datos vigentes de la serie; los sugeridos conservan ese origen.
           </p>
         </>

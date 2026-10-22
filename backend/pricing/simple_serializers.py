@@ -97,6 +97,8 @@ class WorkingPriceLineSerializer(serializers.Serializer):
 
 
 class WorkingPriceSerializer(serializers.Serializer):
+    use_advanced = serializers.BooleanField()
+    policy = SimplePolicyResponseSerializer(required=False)
     state = serializers.ChoiceField(choices=['READY', 'BLOCKED', 'PENDING'])
     currency = serializers.ChoiceField(choices=['CLP', 'USD'])
     policy_revision = serializers.IntegerField()

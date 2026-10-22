@@ -3,7 +3,7 @@ type: state
 status: active
 updated: 2026-10-22
 volatility: high
-verified_ref: gpt/dk2-p04e-precio-pdf-revisable
+verified_ref: gpt/dk2-p04g-precio-obra
 sources:
   - backend/pricing/working.py
   - backend/tests/integration/test_working_prices.py
@@ -22,6 +22,30 @@ sources:
 ---
 
 # Precio del proyecto y confianza en el número
+
+## Precio visible de la obra · P04g
+
+Verificado el 22-10-2026 en `gpt/dk2-p04g-precio-obra`. Cabecera, ventanas y
+Precio leen la proyección del borrador o el aplicado de su revisión; un costo
+ausente nunca recupera un total cacheado. READY abre cotización y PENDING
+conserva la aprobación. La política indica si el avanzado sustituye al simple.
+Solo OWNER recibe política/desglose privado; el vendedor conserva su allowlist
+de venta. El detalle de borrador muestra la moneda de la política sin escribir
+ni volver a etiquetar los totales guardados.
+
+El popover distingue unidad/cantidad, servicios, margen sobre venta, redondeo
+y sugeridos. Preparar PDF admite precio listo sin Aplicar ni políticas de
+fabricación pendientes; no omite ubicación, condiciones, revisión del archivo
+ni confirmaciones de manilla. El bloqueo de fabricación sigue en el backend.
+Emitir conserva los mismos bytes revisados. La lectura de ventanas emitidas
+acepta tanto líneas simples como avanzadas y usa importes congelados, sin
+recalcular con los costos actuales.
+
+Dos E2E verifican tres ventanas PRO6004 sintéticas, cambio de margen, revisión,
+emisión y conservación posterior. También ejercitan una vista sintética de
+500 ventanas, nombres largos y texto al 200 %. Cuarenta y tres unitarias UI
+y 39 integraciones aprueban. [Aceptación](../../redesign/captures/dk2-p04g/aceptacion.md)
+conserva capturas, métricas y límites. P04 sigue pendiente de CI/fusión.
 
 ## PDF revisable sin bloquear el borrador · P04e
 

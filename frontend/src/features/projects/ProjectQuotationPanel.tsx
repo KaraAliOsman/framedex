@@ -68,6 +68,7 @@ import { QuotationLinkLedger } from "./QuotationLinkLedger";
 import { QuotationGlobalChanges } from "./QuotationGlobalChanges";
 import { MailHistory } from "../notifications/MailPanels";
 import { Loading } from "../../ui/Signature";
+import { priceReady } from "../pricing/workingPrice";
 
 function requirementsFor(position: DocumentaryPreparationPosition): HandleRequirement[] {
   const group = position.handle_requirements.find(
@@ -594,12 +595,13 @@ function selectedPolicy(
       <label htmlFor={id}>{label}</label>
       <select
         id={id}
-        required
         value={value ?? ""}
         disabled={disabled}
         onChange={(event) => onChange(event.target.value)}
       >
-        <option value="">{t("quotation.choosePolicy")}</option>
+        <option value="" disabled>
+          {t("quotation.choosePolicy")}
+        </option>
         {options.map((option) => (
           <option key={option.id} value={option.id}>
             {option.label.replaceAll("_", " ")} · versión {option.version}
@@ -937,7 +939,7 @@ export function ProjectQuotationPanel({
     }
     // A silent early-return reads as a dead button (review PM-C3): name the
     // first missing gate instead of swallowing the click.
-    if (!project.current_pricing_operation_id) {
+    if (!priceReady(project)) {
       setMessage(t("quotation.emitNeedsPricing"));
       return;
     }
@@ -947,17 +949,6 @@ export function ProjectQuotationPanel({
     }
     if (preparation.positions.some((position) => !position.location_tag.trim())) {
       setMessage(t("quotation.emitNeedsLocation"));
-      return;
-    }
-    if (
-      preparation.positions.some(
-        (position) =>
-          !position.manufacturing_placement_policy_id ||
-          !position.handle_requirement_policy_id ||
-          !position.reinforcement_cut_policy_id,
-      )
-    ) {
-      setMessage(t("quotation.emitNeedsPolicies"));
       return;
     }
     // A generated midpoint is a suggestion, not a choice: it can only seal
@@ -997,9 +988,9 @@ export function ProjectQuotationPanel({
             position_id: position.position_id,
             calculation_hash: position.calculation_hash,
             location_tag: position.location_tag,
-            manufacturing_placement_policy_id: position.manufacturing_placement_policy_id!,
-            handle_requirement_policy_id: position.handle_requirement_policy_id!,
-            reinforcement_cut_policy_id: position.reinforcement_cut_policy_id!,
+            manufacturing_placement_policy_id: position.manufacturing_placement_policy_id,
+            handle_requirement_policy_id: position.handle_requirement_policy_id,
+            reinforcement_cut_policy_id: position.reinforcement_cut_policy_id,
             workshop_annotations: position.workshop_annotations,
             structural_inputs: position.structural_inputs,
             glass_polishing: position.glass_polishing,
@@ -1013,7 +1004,9 @@ export function ProjectQuotationPanel({
       if (saved.status !== 200) throw new ApiError(saved.status, saved.data);
       const response = await quotationPreparePreview(
         project.id,
-        { pricing_operation_id: project.current_pricing_operation_id },
+        project.current_pricing_operation_id
+          ? { pricing_operation_id: project.current_pricing_operation_id }
+          : {},
         requestOptions,
       );
       if (response.status !== 201) throw new ApiError(response.status, response.data);
@@ -1171,11 +1164,7 @@ export function ProjectQuotationPanel({
     }
   }
 
-  const canEmit =
-    canWrite &&
-    project.status === "DRAFT" &&
-    project.pricing_current &&
-    project.current_pricing_operation_id !== null;
+  const canEmit = canWrite && project.status === "DRAFT" && priceReady(project);
   // APPROVED stays revisable — the client portal can flip a quote to
   // APPROVED and still request changes; the sealed revision is immutable
   // and the successor just needs a fresh approval (review WM7).
@@ -1191,7 +1180,7 @@ export function ProjectQuotationPanel({
       );
       if (response.status !== 200) throw new ApiError(response.status, response.data);
       await onChanged();
-      setMessage("Cliente y dirección de obra guardados. Los precios aplicados no cambian.");
+      setMessage("Cliente y dirección de obra guardados.");
       setCustomerDirty(false);
     } catch (error) {
       setMessage(
@@ -1413,7 +1402,7 @@ export function ProjectQuotationPanel({
   // at a time. Each item focuses its field.
   const emitMissing: { key: string; label: string; targetId?: string }[] = [];
   if (preparation) {
-    if (!project.current_pricing_operation_id) {
+    if (!priceReady(project)) {
       emitMissing.push({ key: "pricing", label: t("quotation.missingPricing") });
     }
     if (!preparation.payment_terms.trim()) {
@@ -1437,27 +1426,6 @@ export function ProjectQuotationPanel({
           key: `loc-${position.position_id}`,
           label: `${tag} — ${t("projects.location")}`,
           targetId: `position-location-${position.position_id}`,
-        });
-      }
-      if (!position.manufacturing_placement_policy_id) {
-        emitMissing.push({
-          key: `pl-${position.position_id}`,
-          label: `${tag} — ${t("quotation.placementPolicy")}`,
-          targetId: `placement-policy-${position.position_id}`,
-        });
-      }
-      if (!position.handle_requirement_policy_id) {
-        emitMissing.push({
-          key: `hp-${position.position_id}`,
-          label: `${tag} — ${t("quotation.handlePolicy")}`,
-          targetId: `handle-policy-${position.position_id}`,
-        });
-      }
-      if (!position.reinforcement_cut_policy_id) {
-        emitMissing.push({
-          key: `rf-${position.position_id}`,
-          label: `${tag} — ${t("quotation.reinforcementPolicy")}`,
-          targetId: `reinforcement-policy-${position.position_id}`,
         });
       }
       const pendingSeeds = seededIntentKeys.current.get(String(position.position_id));
@@ -1689,8 +1657,9 @@ export function ProjectQuotationPanel({
                 {project.position_count === 0
                   ? "La obra aún no tiene posiciones."
                   : canEmit
-                    ? "Los precios están aplicados. Revisa la preparación de las posiciones antes del PDF."
-                    : "Falta revisar y aplicar el precio de las posiciones."}
+                    ? "El precio está listo. Revisa las ventanas y las condiciones antes del PDF."
+                    : project.working_price?.error?.detail ||
+                      "Revisa los datos y precios de las ventanas."}
               </p>
               {project.position_count === 0 ? (
                 <Link to={`/projects/${project.id}/positions/new`}>Agregar primera posición</Link>
@@ -1730,7 +1699,7 @@ export function ProjectQuotationPanel({
                 ))}
               </ul>
             )}
-            {canWrite && project.status === "DRAFT" && !project.pricing_current && (
+            {canWrite && project.status === "DRAFT" && !priceReady(project) && (
               <p>{t("quotation.priceFirst")}</p>
             )}
             {preparation && (
