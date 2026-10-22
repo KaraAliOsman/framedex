@@ -46,7 +46,7 @@
   margin-top: var(--space-5);
 }
 .working-price-totals {
-  max-width: var(--reading-width);
+  max-width: 40rem;
 }
 .working-price-totals > div:last-child {
   border-top: 1px solid var(--border-default);
