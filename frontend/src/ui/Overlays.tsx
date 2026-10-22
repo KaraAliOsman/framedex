@@ -75,6 +75,23 @@ export function Popover({
   useFloatingLayer(open, () => setOpen(false));
   useEffect(() => {
     if (!open) return;
+    // The trigger that opened the panel, by element and by accessible name: a
+    // responsive layout may hide it or a list may remount its row while open.
+    const opener = container.current?.querySelector<HTMLButtonElement>("button") ?? null;
+    const name = opener?.getAttribute("aria-label");
+    const restore = () => {
+      if (opener?.isConnected && opener.offsetParent !== null) {
+        opener.focus();
+        return;
+      }
+      const twin = name
+        ? [...document.querySelectorAll<HTMLElement>("button[aria-label]")].find(
+            (element) =>
+              element.getAttribute("aria-label") === name && element.offsetParent !== null,
+          )
+        : undefined;
+      (twin ?? opener)?.focus();
+    };
     const dismiss = (event: PointerEvent) => {
       if (
         !container.current?.contains(event.target as Node) &&
@@ -86,7 +103,7 @@ export function Popover({
       if (event.key === "Escape") {
         event.stopPropagation();
         setOpen(false);
-        container.current?.querySelector<HTMLButtonElement>("button")?.focus();
+        restore();
       }
     };
     document.addEventListener("pointerdown", dismiss);
