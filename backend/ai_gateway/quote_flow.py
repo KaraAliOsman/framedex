@@ -60,13 +60,10 @@ def prepare(request, project_id: UUID) -> dict:
             with commercial_backend():
                 simple = not read_policy(org_id)["use_advanced"]
         applied_id = project.get("current_pricing_operation_id")
-        if simple and not applied_id:
-            # Simple pricing (P04): the working price is automatic. The draft
-            # renders from it; the price is applied only when issuing.
-            working = project.get("working_price") or {}
-            if working.get("state") != "READY":
-                return _blocked(str(working.get("reason") or "El precio de trabajo de la obra aún no está listo."))
-        elif not applied_id:
+        # Simple pricing (P04): the working price is automatic; the draft below
+        # prepares and renders from it (with its own cause when not ready) and
+        # the price is applied only when issuing. Advanced rules apply first.
+        if not applied_id and not simple:
             serializer = PriceRequestSerializer(data={
                 "project_id": str(project_id),
                 "pricing_mode": "COST_PLUS_MARGIN",
