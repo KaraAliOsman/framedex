@@ -271,6 +271,27 @@ a P03; P01 deja preparado su contrato y su bloqueo.
 - Los E2E comerciales existentes activan ejemplos mediante el control nuevo;
   el flujo de precio y emisión de dos revisiones aprobó sin cambiar sus
   comprobaciones de cálculo, documentos ni inmutabilidad.
+
+### P02e · Activación e integración
+
+- Inicio por fabricante/serie, búsqueda, alta desde biblioteca/plantilla/cero y
+  ejemplos plegados con carga bajo demanda. Los indicadores excluyen ejemplos.
+- Ruta simple activa, enlaces históricos redirigidos a ajustes y vuelta a ficha.
+  La ventana de prueba preliminar consulta opciones y calcula con el motor.
+- E2E real con Magic Link/TOTP en dos viewports: cinco filas pegadas, dos
+  confirmaciones, cambio de nivel/franja sin recarga, seis pestañas, precios,
+  historial, undo, prueba del motor y creación desde plantilla: aprobado.
+  Edición avanzada conservada y probada. [Aceptación](../redesign/captures/dk2-p02/aceptacion.md).
+- Diecinueve capturas seleccionadas e inspeccionadas; axe A/AA/2.1 AA y anchos
+  de página correctos. Trescientos perfiles, nombres de 80 caracteres y cuatro
+  decimales comprobados. Carga local de ficha 0,85–0,90 s.
+- Revisión final de precios: la ficha usa las identidades de costo que ya
+  comprueba el calculador, incluyendo kits, tornillos y procesos del vidrio.
+  Seis integraciones de ficha/precio pasan; la nueva regresión comprueba los
+  nueve materiales de la serie y edición/historia exactas del kit sin exigir
+  un código de proveedor adicional.
+- P02 espera sus cuatro controles por sub-PR y fusiones ordenadas. P03–P11
+  continúan pendientes; no hay activación de producción ni precios comerciales.
 - Database Gate detectó que la vista previa de marca usaba la zona predeterminada
   de Django para la vigencia, distinta del día de Santiago usado al preparar la
   emisión. La vista previa ahora declara Santiago explícitamente. Dos regresiones

@@ -8,6 +8,9 @@
 - [P02c · ficha de seis pestañas](dk2-p02/aceptacion-ficha.md): doce capturas
   de integración, comparación visual y límites de la entrega.
 
+- [P02 · catálogo integrado](dk2-p02/aceptacion.md): inicio, seis pestañas,
+  prueba preliminar, flujo real y extremos en 19 capturas seleccionadas.
+
 ## DEKOPEN v1
 
 La aceptación vigente está en [el informe final](../acceptance-2026-10-12.md).

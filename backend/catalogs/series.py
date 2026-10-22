@@ -138,18 +138,19 @@ def _actor_names(org_id):
 def price_items(org_id, system_id):
     # This projection is called only for OWNER and retains the existing
     # commercial role + tenant RLS. Other roles receive no purchase costs.
-    mappings = rows("SELECT m.commercial_sku AS sku FROM public.profile_purchase_mappings m JOIN public.profile_articles a ON a.id=m.profile_article_id WHERE a.system_id=%s "
-        "UNION SELECT commercial_sku FROM public.reinforcement_articles WHERE system_id=%s "
-        "UNION SELECT purchasing_sku FROM public.glass_purchase_mappings WHERE system_id=%s "
-        "UNION SELECT m.purchasing_sku FROM public.hardware_purchase_mappings m JOIN public.hardware_kits k ON k.id=m.hardware_kit_id WHERE k.system_id=%s "
-        , [system_id] * 4)
-    if not mappings:
+    from pricing.coverage import catalog_coverage
+
+    # Coverage follows the calculator's actual cost identities, including
+    # kit components, reinforcement screws and glass processes. Supplier
+    # mapping codes alone are not necessarily the keys used by the engine.
+    skus = sorted({item["sku"] for item in catalog_coverage(org_id, system_id=system_id)})
+    if not skus:
         return []
     with commercial_backend():
         return rows("SELECT c.id,c.cost_list_id,c.sku,c.description,c.unit,c.unit_cost::text,l.currency,l.valid_from,l.valid_to "
             "FROM public.cost_list_items c JOIN public.cost_lists l ON l.id=c.cost_list_id AND l.org_id=c.org_id "
             "WHERE c.org_id=%s AND l.is_active AND c.sku=ANY(%s) "
-            "ORDER BY c.sku,l.valid_from DESC,c.id", [org_id, [item["sku"] for item in mappings]])
+            "ORDER BY c.sku,l.valid_from DESC,c.id", [org_id, skus])
 
 
 def series_sheet(org_id, system_id, *, can_view_prices=False):

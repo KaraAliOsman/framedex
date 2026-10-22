@@ -392,8 +392,10 @@ test("real Magic Link reaches Mailpit and authenticates Django /auth/me", async 
     0,
   );
   await navigation.getByRole("link", { name: "Catálogos", exact: true }).click();
-  // The real catalog loads its authority families before mounting the workspace.
-  // Wait for that state to finish before inspecting publication controls.
+  await expect(page.getByRole("heading", { name: "Catálogo", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Agregar serie", exact: true })).toHaveCount(0);
+  await page.getByRole("link", { name: "Más ajustes del catálogo", exact: true }).click();
+  // The advanced path retains import review and the same backend permissions.
   await expect(page.getByRole("heading", { name: "Catálogo técnico", exact: true })).toBeVisible({
     timeout: 30_000,
   });

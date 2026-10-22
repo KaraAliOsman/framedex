@@ -2267,3 +2267,13 @@ del editor requieren «Mostrar ejemplos»; las ventanas históricas conservan su
 serie. La edición avanzada mantiene rutas profundas y regresión de navegador.
 La enmienda de Constitución registra el encargo actual sin cambiar permisos.
 Véase [catálogo](product/catalog-authority.md).
+
+
+## 2026-10-21 · P02e: catálogo integrado
+
+`gpt/dk2-p02e-catalogo-integrado` conecta inicio, ficha y prueba preliminar con
+APIs reales. Dos E2E de escritorio/móvil verifican edición, confirmación,
+precios, historia, extremos y creación versionada; la edición avanzada conserva
+su regresión. Se seleccionaron 19 capturas y se comprobaron axe y rendimiento
+local. La fase espera los cuatro gates y las fusiones; P03 mantiene pendiente
+la verificación persistida. Véase [aceptación](../redesign/captures/dk2-p02/aceptacion.md).

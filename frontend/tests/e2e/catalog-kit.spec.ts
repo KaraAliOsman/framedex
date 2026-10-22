@@ -47,7 +47,7 @@ async function loadCatalog(page: Page): Promise<KitResponse[]> {
         ),
       ),
     ),
-    page.goto("/catalogs/systems"),
+    page.goto("/catalogs/systems?advanced=1"),
   ]);
   for (const [index, response] of responses.entries()) {
     expect(response.status(), `GET ${paths[index]}`).toBe(200);
