@@ -3,7 +3,7 @@ type: state
 status: active
 updated: 2026-10-22
 volatility: high
-verified_ref: gpt/dk2-p04d-automatismo-emision
+verified_ref: gpt/dk2-p04e-precio-pdf-revisable
 sources:
   - backend/pricing/working.py
   - backend/tests/integration/test_working_prices.py
@@ -22,6 +22,27 @@ sources:
 ---
 
 # Precio del proyecto y confianza en el número
+
+## PDF revisable sin bloquear el borrador · P04e
+
+Verificado el 22-10-2026 en `gpt/dk2-p04e-precio-pdf-revisable` mediante
+`test_working_quotation.py`, `test_guided_quotation.py` y
+`test_working_price_issuance.py`: 26 integraciones aprobadas en PostgreSQL.
+La revisión privada puede omitir una operación aplicada. Guarda una propuesta
+`AT_ISSUE`, compone importes del motor sin escribir precios comerciales y deja
+la obra editable. El borrador temprano también usa esa propuesta.
+
+El clic humano de emisión vuelve a comprobar diseño, costos y política vigentes,
+la huella del contenido y los bytes revisados. Solo entonces aplica y emite en
+una transacción. Un cambio requiere un PDF nuevo; fallo posterior revierte la
+aplicación y conserva la revisión privada. La auditoría inmutable de operación
+conserva aprobador/fecha; esos campos no forman parte de la identidad del PDF
+automático para que el documento emitido sea exactamente el revisado.
+
+Se ejercitaron política simple y avanzada, dueño y estimador, cambio de margen,
+costo y cantidad, replay y dos clics concurrentes. La traducción pública de
+errores ocurre después del bucle de reintento de serialización. La interfaz
+de configuración y su aceptación visual siguen pendientes de P04.
 
 ## Conexión a guardado y emisión directa · P04d
 

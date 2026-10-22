@@ -193,15 +193,21 @@ def _preview_public(row: dict) -> dict:
 
 
 def prepare_preview(
-    *, org_id: UUID, actor_id: UUID, project_id: UUID, pricing_operation_id: UUID
+    *, org_id: UUID, actor_id: UUID, project_id: UUID, pricing_operation_id: UUID | None = None
 ) -> dict:
-    lock_revision_inputs(
-        org_id=org_id, project_id=project_id, pricing_operation_id=pricing_operation_id
-    )
     # The work's commercial number is given once, with its first issuable
     # preview: this PDF is the one that gets issued.
     from documents.numbering import assign_commercial_number
     assign_commercial_number(org_id, project_id)
+    if pricing_operation_id is None:
+        from pricing.working import member_actor, prepare_for_issue
+        actor = member_actor(org_id)
+        if actor is None:
+            raise DocumentaryError('document_access_denied')
+        pricing_operation_id = prepare_for_issue(org_id, actor, actor_id, project_id)
+    lock_revision_inputs(
+        org_id=org_id, project_id=project_id, pricing_operation_id=pricing_operation_id
+    )
     now = datetime.now(timezone.utc)
     prepared = compose_revision(
         org_id=org_id,
@@ -210,6 +216,7 @@ def prepare_preview(
         pricing_operation_id=pricing_operation_id,
         sealed_at=now,
         allow_incomplete_workshop=True,
+        allow_working_price=True,
     )
     snapshot = prepared.snapshot
     _requirements(snapshot)
@@ -327,6 +334,11 @@ def issue_preview(*, org_id: UUID, actor_id: UUID, project_id: UUID, role: str, 
             "quotation_preview_expired",
             detail="La revisión del PDF venció. Prepara y revisa una vista previa nueva.",
         )
+    from pricing.working import member_actor, assert_reviewed_price
+    actor = member_actor(org_id)
+    if actor is None:
+        raise DocumentaryError('document_access_denied')
+    automatic = assert_reviewed_price(org_id, actor, actor_id, project_id, preview['pricing_operation_id'])
     prepared = compose_revision(
         org_id=org_id,
         actor_id=actor_id,
@@ -334,6 +346,7 @@ def issue_preview(*, org_id: UUID, actor_id: UUID, project_id: UUID, role: str, 
         pricing_operation_id=preview["pricing_operation_id"],
         sealed_at=preview["document_date"],
         allow_incomplete_workshop=True,
+        allow_working_price=automatic,
     )
     _requirements(prepared.snapshot)
     if snapshot_sha256_v1(prepared.snapshot) != str(preview["snapshot_sha256"]):
@@ -348,6 +361,11 @@ def issue_preview(*, org_id: UUID, actor_id: UUID, project_id: UUID, role: str, 
             "quotation_preview_integrity_failed",
             detail="El PDF revisado no conserva su huella. Prepara una vista previa nueva.",
         )
+    if automatic:
+        from pricing.service import apply_operation
+        with commercial_backend():
+            apply_operation(org_id, actor_id, role, preview['pricing_operation_id'],
+                'Precio registrado al emitir la cotización revisada', True)
     version = persist_revision(prepared=prepared)
     version_id = UUID(version["id"])
     object_key = f"org_{org_id}/projects/{project_id}/{version['revision_code']}/{version_id}/doc-01_pdf_{preview['file_sha256']}.pdf"
@@ -412,24 +430,29 @@ def issue_preview(*, org_id: UUID, actor_id: UUID, project_id: UUID, role: str, 
 
 
 def draft_preview(*, org_id: UUID, actor_id: UUID, project_id: UUID, layout: dict | None = None) -> bytes:
-    """The real document early: rendered from the current applied price and
+    """The real document early: rendered from the current price and
     preparation, marked «Borrador», without consuming a commercial number and
     without the data that only issuance requires. Never stored or issuable."""
     from projects import service as projects_service
 
     project = projects_service.project_public(org_id, projects_service.project_row(org_id, project_id))
-    if not project.get("current_pricing_operation_id"):
-        raise DocumentaryError(
-            "applied_pricing_authority_required",
-            detail="Calcula y aplica el precio de la obra para ver la cotización.",
-        )
+    operation_id = project.get('current_pricing_operation_id')
+    if not operation_id:
+        from pricing.working import member_actor, prepare_for_issue
+        from pricing.views import public_pricing_errors
+        actor = member_actor(org_id)
+        if actor is None:
+            raise DocumentaryError('document_access_denied')
+        with public_pricing_errors():
+            operation_id = prepare_for_issue(org_id, actor, actor_id, project_id)
     prepared = compose_revision(
         org_id=org_id,
         actor_id=actor_id,
         project_id=project_id,
-        pricing_operation_id=UUID(str(project["current_pricing_operation_id"])),
+        pricing_operation_id=UUID(str(operation_id)),
         sealed_at=datetime.now(timezone.utc),
         allow_incomplete_workshop=True,
+        allow_working_price=True,
     )
     snapshot = decoded(documentary_canonical_json_v1(prepared.snapshot).decode())
     snapshot["draft"] = True
