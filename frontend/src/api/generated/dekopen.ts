@@ -412,6 +412,10 @@ import type {
   StepTransitionRequestRequest,
   SuccessorRequestRequest,
   Supplier,
+  SupplierFileRequest,
+  SupplierInspection,
+  SupplierPreview,
+  SupplierReviewRequest,
   SupplierUpsertRequest,
   SuppliersIndexResponse,
   SystemList,
@@ -17886,6 +17890,170 @@ export const pricingPreview = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(priceRequestRequest),
+  });
+};
+
+export type pricingSupplierInspectResponse200 = {
+  data: SupplierInspection;
+  status: 200;
+};
+
+export type pricingSupplierInspectResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type pricingSupplierInspectResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type pricingSupplierInspectResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type pricingSupplierInspectResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type pricingSupplierInspectResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type pricingSupplierInspectResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type pricingSupplierInspectResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type pricingSupplierInspectResponseSuccess = pricingSupplierInspectResponse200 & {
+  headers: Headers;
+};
+export type pricingSupplierInspectResponseError = (
+  | pricingSupplierInspectResponse400
+  | pricingSupplierInspectResponse401
+  | pricingSupplierInspectResponse403
+  | pricingSupplierInspectResponse404
+  | pricingSupplierInspectResponse409
+  | pricingSupplierInspectResponse422
+  | pricingSupplierInspectResponse503
+) & {
+  headers: Headers;
+};
+
+export type pricingSupplierInspectResponse =
+  pricingSupplierInspectResponseSuccess | pricingSupplierInspectResponseError;
+
+export const getPricingSupplierInspectUrl = () => {
+  return `/api/v1/pricing/supplier-prices/inspect/`;
+};
+
+export const pricingSupplierInspect = async (
+  supplierFileRequest: SupplierFileRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<pricingSupplierInspectResponse> => {
+  const formData = new FormData();
+  formData.append(`file`, supplierFileRequest.file);
+
+  return apiMutator<pricingSupplierInspectResponse>(getPricingSupplierInspectUrl(), {
+    ...options,
+    method: "POST",
+    body: formData,
+  });
+};
+
+export type pricingSupplierReviewResponse200 = {
+  data: SupplierPreview;
+  status: 200;
+};
+
+export type pricingSupplierReviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type pricingSupplierReviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type pricingSupplierReviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type pricingSupplierReviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type pricingSupplierReviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type pricingSupplierReviewResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type pricingSupplierReviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type pricingSupplierReviewResponseSuccess = pricingSupplierReviewResponse200 & {
+  headers: Headers;
+};
+export type pricingSupplierReviewResponseError = (
+  | pricingSupplierReviewResponse400
+  | pricingSupplierReviewResponse401
+  | pricingSupplierReviewResponse403
+  | pricingSupplierReviewResponse404
+  | pricingSupplierReviewResponse409
+  | pricingSupplierReviewResponse422
+  | pricingSupplierReviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type pricingSupplierReviewResponse =
+  pricingSupplierReviewResponseSuccess | pricingSupplierReviewResponseError;
+
+export const getPricingSupplierReviewUrl = () => {
+  return `/api/v1/pricing/supplier-prices/review/`;
+};
+
+export const pricingSupplierReview = async (
+  supplierReviewRequest: SupplierReviewRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<pricingSupplierReviewResponse> => {
+  const formData = new FormData();
+  formData.append(`file`, supplierReviewRequest.file);
+  formData.append(`mapping`, supplierReviewRequest.mapping);
+  if (supplierReviewRequest.decimal_separator !== undefined) {
+    formData.append(`decimal_separator`, supplierReviewRequest.decimal_separator);
+  }
+  formData.append(`cost_list_id`, supplierReviewRequest.cost_list_id);
+  formData.append(`reason`, supplierReviewRequest.reason);
+  if (supplierReviewRequest.apply !== undefined) {
+    formData.append(`apply`, supplierReviewRequest.apply.toString());
+  }
+  if (supplierReviewRequest.review_token !== undefined) {
+    formData.append(`review_token`, supplierReviewRequest.review_token);
+  }
+
+  return apiMutator<pricingSupplierReviewResponse>(getPricingSupplierReviewUrl(), {
+    ...options,
+    method: "POST",
+    body: formData,
   });
 };
 

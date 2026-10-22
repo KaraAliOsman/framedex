@@ -403,3 +403,18 @@ orden, duplicados, ausencia, soporte, claves idempotentes y números inexactos.
 Las propuestas de calibración pasan además por el serializer real del catálogo:
 una solución matemática que no pueda almacenarse no se ofrece al usuario.
 La integración visual y el mapeo de precios siguen pendientes de P03.
+
+## Precios mapeados · preparación P03d
+
+Verificado el 21-10-2026 en `gpt/dk2-p03d-precios-mapeados`: inspección de
+XLSX/CSV y mapeo asistido por encabezados, sin inferir unidades ni precios.
+El XML conserva los lexemas numéricos del Excel; el CSV exige separador
+decimal explícito. Los códigos conservan sus ceros y KG se rechaza, sin
+convertirlo en metros. La revisión muestra diez filas y valida todo el archivo.
+
+El token de confirmación liga archivo, mapeo, motivo, lista y empresa. Solo
+el dueño aplica el archivo íntegro, con auditoría y transacción; un duplicado
+existente exige usar otra lista o editar el precio actual. No se atribuyen
+estos precios al fabricante: su origen es el taller. Las ocho integraciones
+de `test_supplier_price_import.py` verifican revisión, exactitud, permisos,
+aislamiento y rechazos sin escrituras parciales. La UI se incorpora después.

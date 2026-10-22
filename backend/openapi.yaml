@@ -16452,6 +16452,146 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/pricing/supplier-prices/inspect/:
+    post:
+      operationId: pricing_supplier_inspect
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - pricing
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SupplierFileRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierInspection'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/pricing/supplier-prices/review/:
+    post:
+      operationId: pricing_supplier_review
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - pricing
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SupplierReviewRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierPreview'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/pricing/workspace/:
     post:
       operationId: pricing_workspace
@@ -51156,6 +51296,118 @@ components:
           type: string
           default: ''
           maxLength: 1000
+    SupplierFileRequest:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+      required:
+      - file
+    SupplierInspection:
+      type: object
+      properties:
+        sheet:
+          type: string
+        columns:
+          type: array
+          items:
+            type: string
+        suggested_mapping:
+          type: object
+          additionalProperties:
+            type: string
+        preview:
+          type: array
+          items:
+            type: array
+            items:
+              type: string
+        total:
+          type: integer
+      required:
+      - columns
+      - preview
+      - sheet
+      - suggested_mapping
+      - total
+    SupplierPreview:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SupplierPrice'
+        total:
+          type: integer
+        applied:
+          type: boolean
+        review_token:
+          type: string
+          nullable: true
+      required:
+      - applied
+      - items
+      - review_token
+      - total
+    SupplierPrice:
+      type: object
+      properties:
+        sku:
+          type: string
+        description:
+          type: string
+        unit:
+          type: string
+        unit_cost:
+          type: string
+        origin:
+          $ref: '#/components/schemas/SupplierPriceOriginEnum'
+      required:
+      - description
+      - origin
+      - sku
+      - unit
+      - unit_cost
+    SupplierPriceOriginEnum:
+      enum:
+      - WORKSHOP
+      type: string
+      description: '* `WORKSHOP` - WORKSHOP'
+    SupplierReviewRequest:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+        mapping:
+          type: string
+          minLength: 1
+          description: JSON object mapping sku, description, unit and unit_cost to
+            column names.
+        decimal_separator:
+          allOf:
+          - $ref: '#/components/schemas/DecimalSeparatorEnum'
+          default: .
+        cost_list_id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 700
+        apply:
+          type: boolean
+          default: false
+        review_token:
+          type: string
+          minLength: 1
+          maxLength: 10000
+      required:
+      - cost_list_id
+      - file
+      - mapping
+      - reason
     SupplierUpsertRequest:
       type: object
       properties:
