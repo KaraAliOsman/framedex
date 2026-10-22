@@ -6,6 +6,9 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { AiAgentStepItemsItem } from "./aiAgentStepItemsItem";
+import type { AiStepAssumption } from "./aiStepAssumption";
+import type { AiStepOrigin } from "./aiStepOrigin";
+import type { AiStepSource } from "./aiStepSource";
 import type { DesignOperation } from "./designOperation";
 
 export interface AiAgentStep {
@@ -22,4 +25,7 @@ export interface AiAgentStep {
   apply_error?: string;
   layout?: unknown;
   project_id?: string;
+  origins?: AiStepOrigin[];
+  assumptions?: AiStepAssumption[];
+  sources?: AiStepSource[];
 }

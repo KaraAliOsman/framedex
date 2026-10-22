@@ -9,6 +9,7 @@ import { ApiError } from "../../api/apiMutator";
 import {
   aiAgent,
   aiJobApprove,
+  aiJobUndoAll,
   aiJobCancel,
   aiJobMessageCreate,
   aiJobOutcomeCreate,
@@ -731,6 +732,39 @@ export function AgentBody({
     }
   }
 
+  async function undoAll(): Promise<void> {
+    if (!job || busy) return;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await aiJobUndoAll(job.id, headers);
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      const result = response.data;
+      setMessage(
+        result.kept.length
+          ? `Deshice lo posible. ${result.kept[0]?.reason ?? ""}`
+          : result.project_state === "removed"
+            ? "Deshice todo y quité la obra borrador que había creado."
+            : result.project_state === "kept"
+              ? "Deshice las ventanas. La obra quedó vacía porque tiene otros datos ligados."
+              : "Deshice todos los cambios de este trabajo.",
+      );
+      const current = await aiJobRetrieve(job.id, headers);
+      if (current.status === 200) setJob(current.data);
+      void queryClient.invalidateQueries();
+    } catch (error) {
+      setMessage(
+        error instanceof ApiError && typeof error.payload === "object" && error.payload !== null
+          ? String(
+              (error.payload as { error?: { detail?: unknown } }).error?.detail ?? t("agent.error"),
+            )
+          : t("agent.error"),
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
   function startFresh(): void {
     requestSeq.current += 1;
     clearPoll();
@@ -915,6 +949,30 @@ export function AgentBody({
         !(step as { applied?: unknown }).applied &&
         !(step as { apply_error?: string }).apply_error,
     );
+  // «Deshacer todo» (P08): the job saved reversible window changes that no
+  // later decision undid. The server walks them newest first.
+  const undoable =
+    job !== null &&
+    (job.outcomes ?? []).some((value) => {
+      const outcome = value as {
+        turn_index?: number;
+        step_index?: number;
+        action?: string;
+        operation_id?: string;
+      };
+      return (
+        outcome.action === "applied" &&
+        Boolean(outcome.operation_id) &&
+        !(job.outcomes ?? []).some((other) => {
+          const later = other as { turn_index?: number; step_index?: number; action?: string };
+          return (
+            later.action === "undone" &&
+            later.turn_index === outcome.turn_index &&
+            later.step_index === outcome.step_index
+          );
+        })
+      );
+    });
   const lastTurn = thread.at(-1);
   const chatProposal =
     lastTurn?.mode === "chat" &&
@@ -1457,6 +1515,20 @@ export function AgentBody({
                   )}
                   {turnIndex === thread.length - 1 && job?.receipt && !live ? (
                     <Receipt receipt={job.receipt} onOpen={(path) => navigate(path)} />
+                  ) : null}
+                  {turnIndex === thread.length - 1 && undoable && !live ? (
+                    <div className="copilot-undo-all">
+                      <p>Nada se envió: emitir y enviar siguen siendo tuyos.</p>
+                      <button
+                        type="button"
+                        className="ui-button ui-button--compact"
+                        disabled={busy}
+                        onClick={() => void undoAll()}
+                      >
+                        <Icon name="undo" size={16} />
+                        Deshacer todo
+                      </button>
+                    </div>
                   ) : null}
                   {turnIndex === thread.length - 1 && approvable && !live ? (
                     <div className="copilot-approve">

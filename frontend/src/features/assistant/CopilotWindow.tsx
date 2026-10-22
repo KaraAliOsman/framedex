@@ -19,6 +19,7 @@ import { ValidatedForm } from "../../ui/FormValidation";
 import { Icon } from "../../ui/Icon";
 import { AgentBody } from "./AgentBody";
 import { useAssistantContext } from "./assistantContext";
+import { agentePanelLateral } from "../../app/productFeatures";
 import { COPILOT_DELEGATE_EVENT, type CopilotDelegation } from "./copilotBridge";
 import {
   AUTONOMY_OPTIONS,
@@ -353,8 +354,9 @@ export function CopilotWindow({
   if (!mounted) return null;
 
   const shown = adjusting ?? geometry;
+  const docked = agentePanelLateral() && !mobile && !maximized;
   const style =
-    mobile || maximized
+    mobile || maximized || docked
       ? undefined
       : { left: shown.x, top: shown.y, width: shown.width, height: shown.height };
 
@@ -390,8 +392,8 @@ export function CopilotWindow({
       <section
         ref={panel}
         className={`copilot${maximized ? " is-maximized" : ""}${mobile ? " is-mobile" : ""}${
-          adjusting ? " is-adjusting" : ""
-        }`}
+          docked ? " is-docked" : ""
+        }${adjusting ? " is-adjusting" : ""}`}
         style={style}
         role="dialog"
         aria-modal="false"
@@ -400,7 +402,12 @@ export function CopilotWindow({
         tabIndex={-1}
         onKeyDown={onKeyDown}
       >
-        <header className="copilot__header" onPointerDown={(event) => startPointer(event, "move")}>
+        <header
+          className="copilot__header"
+          onPointerDown={(event) => {
+            if (!docked) startPointer(event, "move");
+          }}
+        >
           <Companion state={pose} size={24} />
           <h2 id="copilot-title" className="copilot__title">
             Asistente
@@ -429,7 +436,7 @@ export function CopilotWindow({
             >
               <Icon name="clock" size={16} />
             </button>
-            {!mobile ? (
+            {!mobile && !docked ? (
               <button
                 type="button"
                 className="ui-icon-button copilot__icon"
@@ -537,7 +544,7 @@ export function CopilotWindow({
             />
           </div>
         </div>
-        {!mobile && !maximized
+        {!mobile && !maximized && !docked
           ? EDGES.map((edge) => (
               <span
                 key={edge}

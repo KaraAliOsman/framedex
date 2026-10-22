@@ -40,15 +40,26 @@ export const test = base.extend<{
   doubleReadManual: boolean;
   lightCatalog: boolean;
   unpricedCatalog: boolean;
+  aiTrial: boolean;
 }>({
   catalogRole: ["OWNER", { option: true }],
   catalogProjects: [false, { option: true }],
   doubleReadManual: [false, { option: true }],
   lightCatalog: [false, { option: true }],
   unpricedCatalog: [false, { option: true }],
+  // A live trial includes the AI core and its own credit grant (P08).
+  aiTrial: [false, { option: true }],
   catalog: [
     async (
-      { page, catalogRole, catalogProjects, doubleReadManual, lightCatalog, unpricedCatalog },
+      {
+        page,
+        catalogRole,
+        catalogProjects,
+        doubleReadManual,
+        lightCatalog,
+        unpricedCatalog,
+        aiTrial,
+      },
       use,
     ) => {
       const supabaseUrl = local("SUPABASE_URL");
@@ -88,7 +99,7 @@ export const test = base.extend<{
           id: organizationId,
           name: `DK2 E2E SYNTHETIC ${suffix}`,
           tax_id: `E2E-DK2-${suffix}`,
-          subscription_tier: "STARTER",
+          subscription_tier: aiTrial ? "TRIAL" : "STARTER",
         });
         await admin("/rest/v1/tenancy_memberships", "POST", {
           org_id: organizationId,

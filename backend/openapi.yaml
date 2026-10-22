@@ -28847,6 +28847,18 @@ components:
         project_id:
           type: string
           format: uuid
+        origins:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiStepOrigin'
+        assumptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiStepAssumption'
+        sources:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiStepSource'
       required:
       - kind
       - label
@@ -29861,6 +29873,80 @@ components:
       - expected_revision
       - monthly_budget_credits
       - routes
+    AiStepAssumption:
+      type: object
+      description: |-
+        A choice the request does not state: «agent» asks for confirmation,
+        «usual» is the company's habitual value used for the listed windows.
+      properties:
+        field:
+          $ref: '#/components/schemas/FieldEnum'
+        value:
+          type: string
+        source:
+          $ref: '#/components/schemas/AiStepAssumptionSourceEnum'
+        location:
+          type: string
+        locations:
+          type: array
+          items:
+            type: string
+        reason:
+          type: string
+      required:
+      - field
+      - source
+      - value
+    AiStepAssumptionSourceEnum:
+      enum:
+      - agent
+      - usual
+      type: string
+      description: |-
+        * `agent` - agent
+        * `usual` - usual
+    AiStepOrigin:
+      type: object
+      description: 'P08: the phrase of the request each new window was read from.'
+      properties:
+        position_id:
+          type: string
+        location:
+          type: string
+        source:
+          type: integer
+          minimum: 0
+        start:
+          type: integer
+          minimum: 0
+        end:
+          type: integer
+          minimum: 0
+        quote:
+          type: string
+      required:
+      - end
+      - quote
+      - source
+      - start
+    AiStepSource:
+      type: object
+      properties:
+        kind:
+          $ref: '#/components/schemas/AiStepSourceKindEnum'
+        text:
+          type: string
+      required:
+      - kind
+      - text
+    AiStepSourceKindEnum:
+      enum:
+      - request
+      - attachment
+      type: string
+      description: |-
+        * `request` - request
+        * `attachment` - attachment
     AiThread:
       type: object
       properties:
@@ -36805,6 +36891,18 @@ components:
       required:
       - kind
       - operation_key
+    FieldEnum:
+      enum:
+      - series
+      - glass
+      - color
+      - opening
+      type: string
+      description: |-
+        * `series` - series
+        * `glass` - glass
+        * `color` - color
+        * `opening` - opening
     FieldReceipt:
       type: object
       properties:

@@ -7,6 +7,7 @@ import { globalSearch } from "../../api/generated/dekopen";
 import type { SearchResult } from "../../api/generated/models";
 import { t, type TranslationKey } from "../../i18n/es-CL";
 import { MOD_K_HINT } from "../../platform";
+import { useCopilot } from "../assistant/copilotBridge";
 import { useCommandSurface } from "./registry";
 import type { CommandParam, ResolvedCommand } from "./types";
 
@@ -81,6 +82,7 @@ export function CommandPalette({
   const inputRef = useRef<HTMLInputElement>(null);
   const paletteRef = useRef<HTMLDivElement>(null);
   const surface = useCommandSurface();
+  const copilot = useCopilot();
 
   const close = useCallback(() => {
     searchSeq.current += 1;
@@ -273,8 +275,22 @@ export function CommandPalette({
         },
       });
     }
+    // P08: what is not a command can be asked. The copilot opens with the
+    // text prefilled; the person still sends it.
+    const request = query.trim();
+    if (copilot.available && request.length >= 3) {
+      listed.push({
+        key: "ask.dekopen",
+        title: `Pedir a DEKOPEN: «${request}»`,
+        hint: "Asistente",
+        run: () => {
+          copilot.delegate({ mode: "work", text: request });
+          close();
+        },
+      });
+    }
     return listed;
-  }, [query, surface, navItems, onNavigate, close, searchResults]);
+  }, [query, surface, navItems, onNavigate, close, searchResults, copilot]);
 
   if (!open) return null;
 

@@ -223,7 +223,9 @@ def run_auth_e2e(env: Mapping[str, str], *test_args: str) -> None:
     _free_port(8000)
     _free_port(5173)
     node = executable("node")
-    backend_env = gate_mail_environment(env)
+    # The isolated gate may exercise the assistant with recorded test rounds;
+    # the test provider stays disabled everywhere else.
+    backend_env = {**gate_mail_environment(env), "AI_GATEWAY_MOCK_ENABLED": "1"}
     frontend_env = {
         key: value
         for key, value in env.items()

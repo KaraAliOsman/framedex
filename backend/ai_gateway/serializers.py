@@ -138,6 +138,34 @@ class AiAgentRequestSerializer(serializers.Serializer):
     autonomy = serializers.ChoiceField(choices=["propose", "approve", "draft"], required=False, default="propose")
 
 
+class AiStepOriginSerializer(serializers.Serializer):
+    """P08: the phrase of the request each new window was read from."""
+
+    position_id = serializers.CharField(required=False)
+    location = serializers.CharField(required=False, allow_blank=True)
+    source = serializers.IntegerField(min_value=0)
+    start = serializers.IntegerField(min_value=0)
+    end = serializers.IntegerField(min_value=0)
+    quote = serializers.CharField()
+
+
+class AiStepAssumptionSerializer(serializers.Serializer):
+    """A choice the request does not state: «agent» asks for confirmation,
+    «usual» is the company's habitual value used for the listed windows."""
+
+    field = serializers.ChoiceField(choices=["series", "glass", "color", "opening"])
+    value = serializers.CharField()
+    source = serializers.ChoiceField(choices=["agent", "usual"])
+    location = serializers.CharField(required=False, allow_blank=True)
+    locations = serializers.ListField(child=serializers.CharField(allow_blank=True), required=False)
+    reason = serializers.CharField(required=False, allow_blank=True)
+
+
+class AiStepSourceSerializer(serializers.Serializer):
+    kind = serializers.ChoiceField(choices=["request", "attachment"])
+    text = serializers.CharField()
+
+
 class AiAgentStepSerializer(serializers.Serializer):
     kind = serializers.CharField()
     tool = serializers.CharField(required=False)
@@ -156,6 +184,11 @@ class AiAgentStepSerializer(serializers.Serializer):
     # document_layout: the quotation composition proposed for this work.
     layout = serializers.JSONField(required=False)
     project_id = serializers.UUIDField(required=False)
+    # project_ops read from a request (P08): origin of each new window, the
+    # assumptions to confirm and the texts the origins point into.
+    origins = AiStepOriginSerializer(many=True, required=False)
+    assumptions = AiStepAssumptionSerializer(many=True, required=False)
+    sources = AiStepSourceSerializer(many=True, required=False)
 
 
 class ClarifyOptionSerializer(serializers.Serializer):

@@ -40,9 +40,23 @@ beforeEach(() => {
   Object.defineProperty(window, "innerWidth", { configurable: true, value: 1440 });
   Object.defineProperty(window, "innerHeight", { configurable: true, value: 900 });
 });
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.unstubAllEnvs();
+});
+
+it("docks as a full-height side panel by default, without drag or resize", () => {
+  mount();
+  const dialog = screen.getByRole("dialog", { name: "Asistente" });
+  expect(dialog).toHaveClass("is-docked");
+  expect(dialog.style.width).toBe("");
+  expect(
+    screen.queryByRole("button", { name: "Mover o cambiar tamaño con el teclado" }),
+  ).not.toBeInTheDocument();
+});
 
 it("opens as a non-modal dialog that leaves the page interactive", () => {
+  vi.stubEnv("VITE_AGENTE_PANEL_LATERAL", "false");
   mount();
   const dialog = screen.getByRole("dialog", { name: "Asistente" });
   expect(dialog).toHaveAttribute("aria-modal", "false");
@@ -90,6 +104,7 @@ it("minimizes and restores without losing the draft", () => {
 });
 
 it("adjusts position from the keyboard and saves with Enter", () => {
+  vi.stubEnv("VITE_AGENTE_PANEL_LATERAL", "false");
   mount();
   const dialog = screen.getByRole("dialog");
   fireEvent.click(screen.getByRole("button", { name: "Mover o cambiar tamaño con el teclado" }));

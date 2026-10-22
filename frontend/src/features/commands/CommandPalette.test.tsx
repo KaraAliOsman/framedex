@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { afterEach, expect, it, vi } from "vitest";
 
 import { t } from "../../i18n/es-CL";
+import { COPILOT_DELEGATE_EVENT, CopilotProvider } from "../assistant/copilotBridge";
 import { CommandPalette } from "./CommandPalette";
 import { useRegisterCommands } from "./registry";
 import type { ResolvedCommand } from "./types";
@@ -395,4 +396,32 @@ it("merges global search results into the list and navigates to their path", asy
   } finally {
     vi.useRealTimers();
   }
+});
+
+it("offers to ask the assistant only when the copilot is available, prefilled and unsent", () => {
+  const delegated: unknown[] = [];
+  const listener = (event: Event) => delegated.push((event as CustomEvent).detail);
+  window.addEventListener(COPILOT_DELEGATE_EVENT, listener);
+  render(
+    <CopilotProvider available>
+      <Harness commands={[]} />
+    </CopilotProvider>,
+  );
+  openPalette();
+  const input = screen.getByPlaceholderText(t("cmd.placeholder"));
+  fireEvent.change(input, { target: { value: "cotiza 2 ventanas de 1,20 x 1,50" } });
+  fireEvent.click(
+    screen.getByRole("option", { name: /Pedir a DEKOPEN: «cotiza 2 ventanas de 1,20 x 1,50»/ }),
+  );
+  expect(delegated).toEqual([{ mode: "work", text: "cotiza 2 ventanas de 1,20 x 1,50" }]);
+  expect(screen.queryByRole("dialog")).toBeNull();
+  window.removeEventListener(COPILOT_DELEGATE_EVENT, listener);
+  cleanup();
+
+  render(<Harness commands={[]} />);
+  openPalette();
+  fireEvent.change(screen.getByPlaceholderText(t("cmd.placeholder")), {
+    target: { value: "cotiza algo" },
+  });
+  expect(screen.queryByRole("option", { name: /Pedir a DEKOPEN/ })).toBeNull();
 });
