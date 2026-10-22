@@ -331,7 +331,7 @@ class AiAgentView(APIView):
                         org_id=org_id,
                         job_type="ai.agent.run",
                         payload={
-                            "session_aal": token.aal,
+                            "session_aal": getattr(token, "aal", "aal1"),
                             "ai_job_id": job["id"],
                             "mode": "new",
                             "surface": surface,
@@ -590,7 +590,7 @@ class AiJobMessagesView(APIView):
                             org_id=org_id,
                             job_type="ai.agent.run",
                             payload={
-                                "session_aal": token.aal,
+                                "session_aal": getattr(token, "aal", "aal1"),
                                 "ai_job_id": str(job["id"]),
                                 "mode": "resume",
                                 "surface": str(job["surface"]),
@@ -722,7 +722,7 @@ class AiJobRetryView(APIView):
                         org_id=org_id,
                         job_type="ai.agent.run",
                         payload={
-                            "session_aal": token.aal,
+                            "session_aal": getattr(token, "aal", "aal1"),
                             "ai_job_id": str(job["id"]),
                             "mode": "resume",
                             "surface": str(job["surface"]),
