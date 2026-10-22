@@ -2448,3 +2448,19 @@ de Hoy, las etapas de Obras y la purga global siguen en P05. Se conserva el
   trabajo IA sintético del seeder de una llamada real al proveedor. El editor
   móvil sigue siendo de lectura hasta P06. Obras/glosario global y las
   fusiones con los cuatro controles siguen pendientes.
+
+## [2026-10-22] DEKOPEN 2 P05d | Obras con etapas comprobadas
+
+- Lista densa con enlace de fila completo, búsqueda/orden en URL, recuentos
+  por etapa y páginas de 50. La consulta sigue limitada a las 500 obras más
+  recientes y lo declara; no se inventa un recuento global.
+- La venta elegida emitida prevalece; sin precio vigente, el borrador pide
+  abrir para calcular. Se preservan estados de enlaces antiguos. `/quotes`
+  conserva su índice hasta integrar seguimiento/fase/moneda en la siguiente
+  sub-PR. Purga global y P06–P11 siguen pendientes.
+- Seis E2E de dueño/vendedor/jefe de taller cubren obras reales, 500 registros,
+  nombres e importes extremos, 320 px y texto al 200 %, con axe. Se corrigió
+  un desborde de botón y el color heredado de las filas.
+- Las dependencias completas P03h se integran mediante merges en P04/P05;
+  se regenera OpenAPI/orval en el conflicto de rutas y se comprueba paridad.
+  Los cuatro gates se vuelven a exigir en cada nuevo head.

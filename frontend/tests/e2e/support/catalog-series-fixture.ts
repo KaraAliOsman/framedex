@@ -1,11 +1,14 @@
-import { execFileSync } from "node:child_process";
+import { execFile } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
 import * as OTPAuth from "otpauth";
 import { expect, test as base } from "@playwright/test";
 
 import { environment } from "./environment";
 import { requireMailpitHealthy, waitForMagicLink } from "./mailpit";
 import type { MembershipRoleEnum } from "../../../src/api/generated/models";
+
+const runSeed = promisify(execFile);
 
 type CatalogFixture = {
   systemId: string;
@@ -62,6 +65,8 @@ export const test = base.extend<{
           headers: adminHeaders,
           body: body === undefined ? undefined : JSON.stringify(body),
           signal: AbortSignal.timeout(15_000),
+        }).catch((cause: unknown) => {
+          throw new Error(`Fixture request failed: ${method} ${path}`, { cause });
         });
         expect(response.ok, `${method} ${path}: ${response.status}`).toBe(true);
         return response;
@@ -70,6 +75,7 @@ export const test = base.extend<{
       const organizationId = crypto.randomUUID();
       const email = `dk2-${suffix}@example.com`;
       let userId: string | undefined;
+      let fixtureError: unknown;
       try {
         await requireMailpitHealthy(mailpit);
         const user = await admin("/auth/v1/admin/users", "POST", {
@@ -92,7 +98,7 @@ export const test = base.extend<{
         });
         // Service credentials and DB access remain in the runner. Only ordinary
         // Magic Link + real TOTP credentials ever enter the browser.
-        const output = execFileSync(
+        const { stdout: output } = await runSeed(
           environment("PYTHON") ?? "python",
           [
             "scripts/seed_catalog_series_e2e.py",
@@ -111,19 +117,19 @@ export const test = base.extend<{
         );
         const seeded = JSON.parse(output.trim()) as Omit<CatalogFixture, "organizationId">;
         expect(seeded.pasteValues).toHaveLength(5);
-        if (catalogProjects)
-          seeded.projects = JSON.parse(
-            execFileSync(
-              environment("PYTHON") ?? "python",
-              ["scripts/seed_today_e2e.py", organizationId, userId],
-              {
-                cwd: fileURLToPath(new URL("../../../../", import.meta.url)),
-                encoding: "utf8",
-                timeout: 120_000,
-                env: { ...process.env, PYTHONUTF8: "1" },
-              },
-            ).trim(),
-          ) as { issued: string; draft: string };
+        if (catalogProjects) {
+          const { stdout: projects } = await runSeed(
+            environment("PYTHON") ?? "python",
+            ["scripts/seed_today_e2e.py", organizationId, userId],
+            {
+              cwd: fileURLToPath(new URL("../../../../", import.meta.url)),
+              encoding: "utf8",
+              timeout: 120_000,
+              env: { ...process.env, PYTHONUTF8: "1" },
+            },
+          );
+          seeded.projects = JSON.parse(projects.trim()) as { issued: string; draft: string };
+        }
         // Seed only with the fixture's ownership proof, then exercise the real
         // role through its ordinary session. Never relax the seeder's guard.
         if (catalogRole !== "OWNER")
@@ -152,10 +158,24 @@ export const test = base.extend<{
         }
         await expect(page.getByTestId("app-shell")).toBeVisible();
         await use({ ...seeded, organizationId });
+      } catch (error) {
+        fixtureError = error;
+        throw error;
       } finally {
         // Cell and price history deliberately prevent tenant deletion. Retain the
         // synthetic tenant until the owned stack ends; never disable immutability.
-        if (userId) await admin(`/auth/v1/admin/users/${userId}`, "DELETE");
+        if (userId) {
+          try {
+            await admin(`/auth/v1/admin/users/${userId}`, "DELETE");
+          } catch (cleanupError) {
+            if (fixtureError)
+              throw new AggregateError(
+                [fixtureError, cleanupError],
+                "Catalog fixture failed and its user cleanup also failed",
+              );
+            throw cleanupError;
+          }
+        }
       }
     },
     { timeout: 180_000 },

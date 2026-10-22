@@ -2,6 +2,9 @@
 
 ## DEKOPEN 2
 
+- [P05d · Obras por etapa](dk2-p05d/aceptacion.md): lista densa, enlaces de
+  fila, filtros persistentes y 500 obras en tres roles autorizados.
+
 - [P05c · Hoy y revisión de preparadas](dk2-p05c/aceptacion.md): saludo,
   tareas reales por rol, revisión humana y extremos de 1.000 acciones.
 

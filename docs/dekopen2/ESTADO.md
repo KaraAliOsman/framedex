@@ -8,9 +8,9 @@ Producción y precios comerciales requieren autorización aparte.
 | ---- | -------------------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | P01  | Catálogo v2: backend, origen, niveles y plantillas | Hecha                                | [P01a #164](https://github.com/KaraAliOsman/framedex/pull/164), [P01b #165](https://github.com/KaraAliOsman/framedex/pull/165), [P01c #166](https://github.com/KaraAliOsman/framedex/pull/166), [P01d #167](https://github.com/KaraAliOsman/framedex/pull/167) y [P01e #168](https://github.com/KaraAliOsman/framedex/pull/168) fusionadas |
 | P02  | Ficha de serie editable                            | Hecha                                | Sub-PR [#169](https://github.com/KaraAliOsman/framedex/pull/169)–[#173](https://github.com/KaraAliOsman/framedex/pull/173) fusionadas                                                                                                                                                                                                      |
-| P03 | Alta de serie y ventana de prueba | Implementada; fusión final en curso | #174–#180 fusionadas; [P03h #181](https://github.com/KaraAliOsman/framedex/pull/181) espera sus cuatro controles |
+| P03  | Alta de serie y ventana de prueba                  | Implementada; fusión final en curso  | #174–#180 fusionadas; [P03h #181](https://github.com/KaraAliOsman/framedex/pull/181) espera sus cuatro controles                                                                                                                                                                                                                           |
 | P04  | Precio simple automático                           | Implementada; CI y fusiones en curso | [#182](https://github.com/KaraAliOsman/framedex/pull/182)–[#187](https://github.com/KaraAliOsman/framedex/pull/187), [#188](https://github.com/KaraAliOsman/framedex/pull/188)                                                                                                                                                             |
-| P05  | Navegación, Hoy y Obras                            | En curso                             | [P05a #189](https://github.com/KaraAliOsman/framedex/pull/189), [P05b #190](https://github.com/KaraAliOsman/framedex/pull/190); P05c `gpt/dk2-p05c-hoy` |
+| P05  | Navegación, Hoy y Obras                            | En curso                             | [P05a #189](https://github.com/KaraAliOsman/framedex/pull/189), [P05b #190](https://github.com/KaraAliOsman/framedex/pull/190); P05c `gpt/dk2-p05c-hoy`                                                                                                                                                                                    |
 | P06  | Mesa de la obra y edición directa                  | Pendiente                            | —                                                                                                                                                                                                                                                                                                                                          |
 | P07  | Cotización y portal                                | Pendiente                            | —                                                                                                                                                                                                                                                                                                                                          |
 | P08  | Agente v2                                          | Pendiente                            | —                                                                                                                                                                                                                                                                                                                                          |
@@ -19,6 +19,21 @@ Producción y precios comerciales requieren autorización aparte.
 | P11  | Pulido y cierre                                    | Pendiente                            | —                                                                                                                                                                                                                                                                                                                                          |
 
 ## P05 · Navegación, Hoy y Obras
+
+- P05c se publica en [#191](https://github.com/KaraAliOsman/framedex/pull/191).
+  P05d `gpt/dk2-p05d-obras` conecta etapas reales, búsqueda, recuentos y páginas
+  de 50 filas con enlaces completos. Conserva los filtros históricos de estado
+  y declara el límite de las 500 obras más recientes de la API existente.
+- La oferta vigente elegida aporta su total; precio aplicado solo se usa si
+  corresponde a la revisión. Un borrador sin precio pide abrir para calcular.
+  Seis E2E cubren dueño, vendedor y jefe de taller en 1440/390, 500 obras,
+  0/500 ventanas, 255 caracteres, montos grandes, 320 px y texto al 200 %.
+  [Aceptación P05d](../redesign/captures/dk2-p05d/aceptacion.md).
+- Se integraron en orden las dependencias completas de P03h en P04 y P05,
+  con merges ordinarios y API regenerada. Las PR esperan los cuatro controles
+  nuevamente. No se fusiona un head solo por conservar un gate anterior verde.
+- Pendientes P05: integrar `/quotes` conservando seguimiento, fase, moneda y
+  paginación; purga global y guarda de lenguaje. P06–P11 siguen pendientes.
 
 - P05c añade saludo y fecha, hasta tres métricas reales por rol, tarjeta de
   cotizaciones preparadas y cola compacta. Revisar abre borradores guardados;

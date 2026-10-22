@@ -29,7 +29,7 @@ for (const role of ["OWNER", "ESTIMATOR", "WORKSHOP_MANAGER"] as MembershipRoleE
     { width: 390, height: 844 },
   ]) {
     test.describe(`${role} Works ${viewport.width}`, () => {
-      test.use({ catalogRole: role, catalogProjects: true, viewport });
+      test.use({ catalogRole: role, catalogProjects: true, lightCatalog: true, viewport });
       test("opens real works by stage and keeps 500 extreme records usable", async ({
         page,
         catalog,

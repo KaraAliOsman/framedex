@@ -3,7 +3,7 @@ type: state
 status: active
 updated: 2026-10-22
 volatility: high
-verified_ref: gpt/dk2-p05c-hoy
+verified_ref: gpt/dk2-p05d-obras
 sources:
   - docs/redesign/P03-ACEPTACION.md
   - engine/src/dekopen_engine/work_queue.py
@@ -12,6 +12,8 @@ sources:
   - frontend/src/app/DashboardPage.tsx
   - frontend/src/app/todaySummary.ts
   - frontend/tests/e2e/today.spec.ts
+  - frontend/src/features/projects/worksList.ts
+  - frontend/tests/e2e/works.spec.ts
   - frontend/scripts/verify-p03.mjs
 ---
 
@@ -54,6 +56,19 @@ Cotizando; órdenes y pagos se contrastan con la solución elegida vigente.
 La instalación completa más saldo real pendiente lleva a Por cobrar;
 instalación más saldo cubierto por pagos reales lleva a Cerrada. Sin total
 comprobable queda Instalada. No se modifica el estado persistido al leer.
+
+P05d conecta esas etapas a Obras: todas las filas son enlaces completos,
+utilizables con teclado; búsqueda y orden se guardan en URL, y las páginas
+muestran 50 filas. Los recuentos siguen la búsqueda y el estado heredado antes
+de aplicar el segmento. La consulta actual del backend limita a las 500 obras
+más recientes y la pantalla lo informa al alcanzar ese límite. No declara un
+recuento global del tenant. El total de la oferta elegida vigente tiene
+prioridad; sin él solo se muestra precio aplicado comprobable de esa revisión.
+Un borrador sin precio invita a abrir para calcular, sin reutilizar venta vieja.
+`/quotes` conserva el índice anterior hasta integrar seguimiento/fase/moneda;
+el parámetro histórico `status` sigue filtrando exactamente su estado guardado.
+Seis E2E de tres roles autorizados ejercitan obras reales y 500 casos extremos
+en 1440/390, 320 px y texto al 200 %; [aceptación P05d](../../redesign/captures/dk2-p05d/aceptacion.md).
 
 El motor ordena compromisos vencidos, bloqueos, trabajo del día y seguimiento.
 El backend lee bajo RLS revisión actual, solicitudes/recibos de precio, ledger
