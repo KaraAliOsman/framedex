@@ -7,8 +7,8 @@ Producción y precios comerciales requieren autorización aparte.
 | Fase | Alcance | Estado | Rama / PR |
 |---|---|---|---|
 | P01 | Catálogo v2: backend, origen, niveles y plantillas | Hecha | [P01a #164](https://github.com/KaraAliOsman/framedex/pull/164), [P01b #165](https://github.com/KaraAliOsman/framedex/pull/165), [P01c #166](https://github.com/KaraAliOsman/framedex/pull/166), [P01d #167](https://github.com/KaraAliOsman/framedex/pull/167) y [P01e #168](https://github.com/KaraAliOsman/framedex/pull/168) fusionadas |
-| P02 | Ficha de serie editable | En curso | [P02a #169](https://github.com/KaraAliOsman/framedex/pull/169), [P02b #170](https://github.com/KaraAliOsman/framedex/pull/170), [P02c #171](https://github.com/KaraAliOsman/framedex/pull/171) y [P02d #172](https://github.com/KaraAliOsman/framedex/pull/172) fusionadas; [P02e #173](https://github.com/KaraAliOsman/framedex/pull/173) pendiente |
-| P03 | Alta de serie y ventana de prueba | En preparación, pendiente de fusionar P02 | [P03a #174](https://github.com/KaraAliOsman/framedex/pull/174), [P03b #175](https://github.com/KaraAliOsman/framedex/pull/175), [P03c #176](https://github.com/KaraAliOsman/framedex/pull/176), [P03d #177](https://github.com/KaraAliOsman/framedex/pull/177), [P03e #178](https://github.com/KaraAliOsman/framedex/pull/178), [P03f #179](https://github.com/KaraAliOsman/framedex/pull/179); revisión del manual `gpt/dk2-p03g-asistente-serie` |
+| P02 | Ficha de serie editable | Hecha | [P02a #169](https://github.com/KaraAliOsman/framedex/pull/169), [P02b #170](https://github.com/KaraAliOsman/framedex/pull/170), [P02c #171](https://github.com/KaraAliOsman/framedex/pull/171), [P02d #172](https://github.com/KaraAliOsman/framedex/pull/172) y [P02e #173](https://github.com/KaraAliOsman/framedex/pull/173) fusionadas con los cuatro controles aprobados |
+| P03 | Alta de serie y ventana de prueba | En curso | [P03a #174](https://github.com/KaraAliOsman/framedex/pull/174), [P03b #175](https://github.com/KaraAliOsman/framedex/pull/175), [P03c #176](https://github.com/KaraAliOsman/framedex/pull/176), [P03d #177](https://github.com/KaraAliOsman/framedex/pull/177), [P03e #178](https://github.com/KaraAliOsman/framedex/pull/178), [P03f #179](https://github.com/KaraAliOsman/framedex/pull/179), [P03g #180](https://github.com/KaraAliOsman/framedex/pull/180); asistente en `gpt/dk2-p03h-asistente-reanudable` |
 | P04 | Precio simple automático | Pendiente | — |
 | P05 | Navegación, Hoy y Obras | Pendiente | — |
 | P06 | Mesa de la obra y edición directa | Pendiente | — |
@@ -435,3 +435,31 @@ a P03; P01 deja preparado su contrato y su bloqueo.
   preseleccionada y la aceptación integral desde plantilla. P02e espera su gate
   de base; el formato de P03f señalado por CI se corrigió en `488dc936` y vuelve
   a ejecutar sus cuatro controles.
+
+### P03h · Cinco pasos reanudables y primera obra
+
+- El alta integra serie, revisión del manual, precios mapeados, ventana de
+  prueba y primera cotización. Conserva archivos y decisiones al cambiar de
+  paso; cerrar o recuperar advierte del descarte de borradores sin publicar.
+  Los pasos ocultos permanecen fuera del foco y de la pantalla.
+- El progreso usa revisiones consecutivas y detiene la cola ante conflicto.
+  Reabrir espera el estado actual. La confirmación de la ventana incrementa
+  también esa revisión, preserva el borrador técnico y conduce al paso cinco.
+- El asistente solo publica filas con la identidad exacta de esta serie.
+  Los costos conservan los permisos del dueño. El final exige capacidad real
+  de cotización y ninguna tarea sin guardar; visitar el paso no verifica nada.
+- La obra guarda la serie inicial y el primer editor la hereda, sin alterar
+  la empresa. Corregido que la creación aceptaba `design_defaults` pero no
+  los persistía. Otra empresa no puede aportar su serie ni dejar una obra parcial.
+- Tres E2E finales aprobados: alta 1440/390 con 12 precios, corrección exacta
+  1206 → 1208 mm, caso inmutable y obra; extremos 1440/390/320, 0/1/500 perfiles
+  y pendientes, texto al 200 %, teclado y axe. Los perfiles/precios son
+  sintéticos y las dos lecturas están simuladas; no son aceptación del manual
+  real de Proline. [Capturas y límites](../redesign/captures/dk2-p03h/aceptacion.md).
+- Frontend completo 1.218 PASS y 43 regresiones finales; backend 1.702 PASS;
+  motor 1.086 PASS y dos xfail previos, bytes dorados intactos; 16 integraciones
+  PostgreSQL aprobadas. Tipos, lint, formato, API reproducible, guardas y build
+  aprobados. La apertura local tarda unos 3,8 s; el rendimiento final queda en P11.
+- P03a #174 está fusionada. P03b #175 actualiza su base y repite CI por la
+  protección de GitHub; las siguientes se fusionarán en orden, con sus cuatro
+  controles. P03 permanece en curso hasta que toda la cadena esté fusionada.

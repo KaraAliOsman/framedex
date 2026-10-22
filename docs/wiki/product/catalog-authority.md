@@ -3,7 +3,7 @@ type: concept
 status: active
 updated: 2026-10-22
 volatility: medium
-verified_ref: gpt/dk2-p03f-precios-ui
+verified_ref: gpt/dk2-p03h-asistente-reanudable
 sources:
   - engine/src/dekopen_engine/catalog_rules.py
   - engine/tests/test_gold_cases_catalog_families.py
@@ -23,6 +23,9 @@ sources:
   - frontend/src/features/catalogs/SupplierPriceImport.tsx
   - frontend/tests/e2e/catalog-prices.spec.ts
   - docs/redesign/captures/dk2-p03f/aceptacion.md
+  - frontend/src/features/catalogs/SeriesSetupWizard.tsx
+  - frontend/tests/e2e/catalog-setup.spec.ts
+  - backend/tests/integration/test_new_project_series.py
 ---
 
 # Autoridad de catálogo por familia
@@ -479,3 +482,30 @@ dos respuestas simuladas del modelo de las APIs, almacenamiento y PostgreSQL
 reales. Comprueba el límite humano de escritura y el origen MANUAL de una
 lectura citada. El asistente y la primera obra siguen pendientes; no se declara
 una aceptación de datos reales del fabricante ni de rendimiento en producción.
+
+## Alta reanudable y primera obra · P03h
+
+Verificado el 22-10-2026 en `gpt/dk2-p03h-asistente-reanudable`: cinco pasos
+comparten las APIs ya descritas. Las escrituras de progreso se serializan
+usando la revisión devuelta por su predecesora; un conflicto detiene la cola
+y exige recuperar el progreso vigente. Reabrir espera ese estado, sin mostrar
+un paso antiguo de caché. Verificar también incrementa la revisión y preserva
+el estado previo. Los costos siguen fuera del progreso técnico compartido.
+
+Los módulos visitados permanecen montados y ocultos al cambiar de paso: el
+File de precios y las decisiones del manual no se pierden. Cerrar/recuperar
+advierte del descarte de borradores sin publicar. Dentro del alta solo se
+incluyen filas documentales con el código exacto de esta serie; no se reasignan
+identidades dudosas. Las publicaciones y la verificación requieren sus clics.
+
+La obra nueva recibe `design_defaults.system_id`; `create_project` lo valida
+y persiste en la misma inserción. No modifica preferencias de empresa.
+La integración rechaza una serie de otra empresa sin crear una obra parcial.
+La acción final exige capacidad QUOTABLE y ningún borrador pendiente; visitar
+ese paso nunca verifica la fabricación. Las capacidades son independientes:
+MACHINE_READY no sustituye la comprobación de precios para cotizar.
+
+La [evidencia](../../redesign/captures/dk2-p03h/aceptacion.md) distingue los
+precios/perfiles sintéticos y respuestas documentales simuladas de la base,
+autenticación y almacenamiento reales. El precio automático y una aceptación
+con los datos reales del dueño corresponden a P04 y P10 respectivamente.

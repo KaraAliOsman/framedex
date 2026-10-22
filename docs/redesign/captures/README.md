@@ -2,6 +2,9 @@
 
 ## DEKOPEN 2
 
+- [P03h · alta reanudable](dk2-p03h/aceptacion.md): cinco pasos, conservación
+  de borradores, corrección exacta y primera obra con la serie seleccionada.
+
 - [P03g · doble lectura visible](dk2-p03g/aceptacion.md): diferencias, ambas
   citas, elección humana, publicación real y extremos de 0/1/500 filas.
 

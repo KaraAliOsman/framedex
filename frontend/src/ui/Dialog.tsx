@@ -55,16 +55,20 @@ export function Dialog({
       if (event.key === "Tab" && panelRef.current) {
         // Modal containment — Tab cycles inside the dialog, never reaching
         // the page behind the overlay.
-        const focusables = panelRef.current.querySelectorAll<HTMLElement>(
-          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        const focusables = Array.from(
+          panelRef.current.querySelectorAll<HTMLElement>(
+            'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+          ),
+        ).filter(
+          (element) => !element.closest("[hidden], [inert]") && !element.matches(":disabled"),
         );
         if (focusables.length === 0) {
           event.preventDefault();
           panelRef.current.focus();
           return;
         }
-        const first = focusables.item(0);
-        const last = focusables.item(focusables.length - 1);
+        const first = focusables[0]!;
+        const last = focusables[focusables.length - 1]!;
         const active = document.activeElement as HTMLElement | null;
         if (event.shiftKey) {
           if (
@@ -118,7 +122,9 @@ export function Dialog({
             <Icon name="close" />
           </button>
         </header>
-        <div className="ui-dialog__body">{children}</div>
+        <div className="ui-dialog__body" tabIndex={0}>
+          {children}
+        </div>
         {footer ? <footer className="ui-dialog__footer">{footer}</footer> : null}
       </div>
     </div>,
