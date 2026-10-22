@@ -9,7 +9,7 @@ from django.utils import timezone
 
 from authentication.errors import contract_error
 from dekopen_engine.simple_pricing import SimplePricingPolicy, simple_price
-from dekopen_engine.commercial import CommercialLine, finish_lines
+from dekopen_engine.commercial import CommercialLine, PricingError, finish_lines
 from dekopen_engine.extra_models import ExtraLine
 from pricing.repository import PricingRepository, audit_reason, commercial_backend, one, rows, json_text
 
@@ -21,6 +21,23 @@ POLICY_FIELDS = ('currency', 'labor_rate', 'labor_basis', 'installation_rate',
 def engine_policy(values):
     return SimplePricingPolicy(**{key: values[key] for key in POLICY_FIELDS
         if key not in ('tax_rate', 'use_advanced')})
+
+
+def simple_position_price(repo, position, values, *, installation_included=False):
+    """Resolve one design through the same BOM and simple engine in every preview."""
+    from pricing.service import position_cost
+
+    policy = engine_policy(values)
+    rules = {'waste_factor_pct': policy.waste, 'tax_rate_pct': values['tax_rate'],
+        'labor_rate_per_m2': D('0'), 'installation_rate_per_m2': D('0'),
+        'default_margin_pct': policy.margin}
+    _, area, bom, formation = position_cost(repo, position, rules)
+    extras = [ExtraLine.model_validate_json(json_text(item)) for item in formation['extra_lines']]
+    if installation_included and any(item.installation for item in extras):
+        raise PricingError('installation_rule_duplicate')
+    price = simple_price([D(item['cost']) for item in formation['composition'] if item['kind'] != 'EXTRA'],
+        area, policy, installation_included=installation_included, extras=extras)
+    return price, bom, formation, extras
 
 
 def lock_policy(org_id):
@@ -74,8 +91,6 @@ def save_policy(org_id, values, expected_revision, reason):
 
 def policy_example(org_id, values, position_id=None):
     """No preview operation or prices are persisted by this endpoint."""
-    from pricing.service import position_cost
-
     policy = engine_policy(values)
     with commercial_backend():
         condition = ' AND p.id=%s' if position_id else ''
@@ -92,14 +107,7 @@ def policy_example(org_id, values, position_id=None):
         position = positions[0]
         repo = PricingRepository(org_id, timezone.localdate(timezone=ZoneInfo('America/Santiago')),
             policy.currency, request_cache=True)
-        # Resolve all materials once through the established backend authority.
-        # Zero services/waste here leave those additions to the simple engine.
-        _, area, _, formation = position_cost(repo, position, {'waste_factor_pct': D('0'),
-            'labor_rate_per_m2': D('0'), 'installation_rate_per_m2': D('0'),
-            'default_margin_pct': values['margin']})
-        extras = [ExtraLine.model_validate_json(json_text(item)) for item in formation['extra_lines']]
-        price = simple_price([D(row['cost']) for row in formation['composition'] if row['kind'] != 'EXTRA'],
-            area, policy, extras=extras)
+        price, _, formation, _ = simple_position_price(repo, position, values)
         total = finish_lines([CommercialLine(position['position_index'], 1, price.direct_cost, price.unit_net)],
             policy.currency, values['tax_rate'])
     return {'position_id': position['id'], 'position_index': position['position_index'],

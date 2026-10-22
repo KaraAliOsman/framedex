@@ -36,7 +36,9 @@ function ProjectPricePanel({
   const updatedRequest = useCallback(
     async <T,>(path: string, method = "GET", body?: unknown): Promise<T> => {
       const response = await request<T>(path, method, body);
-      if (method !== "GET") await changed.current();
+      // Reading a proposal must not trigger a second full BOM/price read of
+      // the work. Refresh its saved state after commercial mutations only.
+      if (method !== "GET" && path !== "workspace/") await changed.current();
       return response;
     },
     [request],

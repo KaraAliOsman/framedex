@@ -497,6 +497,44 @@ test("two tilt-turn leaves 1500×1200 and 4-16-4 take at most six design interac
   await expect(page.locator(".canvas-sheet [aria-label^='Paño']")).toHaveCount(2);
 });
 
+test("a leaf too wide for its hardware is fixed in one click by widening and splitting together", async ({
+  page,
+}) => {
+  await open(page);
+  await page.getByRole("button", { name: /Una hoja.*Oscilobatiente de una hoja/ }).click();
+  const glass = page.getByRole("combobox", { name: "Vidrio", exact: true });
+  const thermopane = glass.locator("option").filter({ hasText: /4-16-4/ });
+  await expect(thermopane).toHaveCount(1);
+  const glassSimulation = waitForDesignSimulation(page, "set_glass");
+  await glass.selectOption((await thermopane.getAttribute("value"))!);
+  await glassSimulation;
+  // KIT-TILT-TURN declares 1400 mm of leaf width: an 1800 mm single leaf is
+  // refused by the engine, and the refusal offers the validated correction.
+  await page.locator('.canvas-sheet [role="button"][aria-label="Ancho total"]').first().click();
+  const field = page.locator('foreignObject input[aria-label="Ancho total"]');
+  await field.fill("1800");
+  const refused = page.waitForResponse(
+    (candidate) =>
+      candidate.url().endsWith("/api/v1/projects/operations/simulate/") &&
+      candidate.request().method() === "POST" &&
+      (candidate.request().postDataJSON() as { ops: { op: string }[] }).ops.some(
+        (op) => op.op === "set_total_width",
+      ),
+  );
+  await field.press("Enter");
+  expect((await (await refused).json()).valid).toBe(false);
+  const message = page.locator(".editor-operation-message[role='alert']");
+  await expect(message).toContainText("No se aplicó el cambio.");
+  const fix = message.getByRole("button", { name: "Aplicar y dividir con montante", exact: true });
+  await expect(fix).toBeVisible();
+  const fixed = waitForDesignSimulation(page, "split_bay");
+  await fix.click();
+  await fixed;
+  await expect(page.locator(".viewport-status")).toContainText("1 800");
+  await expect(page.locator(".canvas-sheet [aria-label^='Paño']")).toHaveCount(2);
+  await expect(message).toHaveCount(0);
+});
+
 test("the sheet fits desktop, all tools are named, and a 10000px pan keeps it reachable", async ({
   page,
 }) => {
@@ -696,7 +734,7 @@ test("every editor link opens the unsaved guard and only one footer panel remain
   editorPath = new URL(page.url()).pathname;
   await page.getByRole("button", { name: "Precio neto indicativo", exact: true }).click();
   await guarded(() =>
-    page.getByRole("link", { name: "Revisar reglas de precio", exact: true }).click(),
+    page.getByRole("link", { name: "Cómo calculo mis precios", exact: true }).click(),
   );
   await page.keyboard.press("Escape");
   // The window list is persistent. The library now exercises layer exclusion

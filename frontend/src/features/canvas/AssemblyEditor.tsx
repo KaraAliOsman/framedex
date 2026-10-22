@@ -2242,6 +2242,9 @@ export function AssemblyEditor({
     ? (anglePreview.evaluation ?? drawingEvaluation)
     : drawingEvaluation;
   const [operationIssues, setOperationIssues] = useState<ProductIssue[]>([]);
+  // The operations the engine just refused, so a correction can re-run them
+  // together with its own fix (e.g. widen and split in one validated step).
+  const [rejectedOps, setRejectedOps] = useState<DesignOperationRequest[]>([]);
   const [view3dOpen, setView3dOpen] = useState(false);
   const [view3dExpanded, setView3dExpanded] = useState(false);
   const [operationBusy, setOperationBusy] = useState(false);
@@ -2399,6 +2402,7 @@ export function AssemblyEditor({
         if (useCanvasStore.getState().inputs !== snapshot) throw Error("stale");
         if (!response.data.valid) {
           setOperationIssues(response.data.issues);
+          setRejectedOps(ops);
           setOperationMessage(
             "No se aplicó el cambio. " +
               response.data.issues
@@ -2838,6 +2842,35 @@ export function AssemblyEditor({
     simulateCommand([{ op: "add_unit", side }]);
   }
 
+  /** A one-click correction only when it is a real engine operation: an
+   * oversized leaf is split at its own bay (mullion for width, transom for
+   * height). The engine still validates it; anything else goes to review. */
+  function issueFix(issue: ProductIssue): { label: string; ops: DesignOperationRequest[] } | null {
+    const series = issue.code === "system_dimensional_limit";
+    const kit = issue.code === "hardware_kit_incompatible";
+    if ((!series && !kit) || !issue.target.startsWith("module:")) return null;
+    const module = issue.target.slice("module:".length);
+    // Series limits name their bay; a kit failure belongs to the module's
+    // own leaf, which is its root bay when the module has not been split.
+    const bay =
+      issue.params.bay ?? modules.find((item) => item.id === module)?.tree.id ?? undefined;
+    if (!bay) return null;
+    const maxWidth = series ? issue.params.max_width_mm : issue.params.kit_max_width_mm;
+    const maxHeight = series ? issue.params.max_height_mm : issue.params.kit_max_height_mm;
+    const over = (value?: string, limit?: string) =>
+      value !== undefined && limit !== undefined && Number(value) > Number(limit);
+    if (over(issue.params.leaf_width_mm, maxWidth) && mullionSkus.SPLIT_V)
+      return {
+        label: "Dividir con montante",
+        ops: [{ op: "split_bay", module, bay, axis: "V", from: "CENTER" }],
+      };
+    if (over(issue.params.leaf_height_mm, maxHeight) && mullionSkus.SPLIT_H)
+      return {
+        label: "Dividir con travesaño",
+        ops: [{ op: "split_bay", module, bay, axis: "H", from: "CENTER" }],
+      };
+    return null;
+  }
   function reviewIssue(issue: ProductIssue): void {
     if (!product) return;
     const { target, field, label, catalog } = assemblyIssueDestination(issue, product);
@@ -2896,11 +2929,24 @@ export function AssemblyEditor({
       {operationMessage && (
         <output className="editor-operation-message" role="alert">
           <p>{operationMessage}</p>
-          {operationIssues.map((issue, index) => (
-            <button key={index} type="button" onClick={() => reviewIssue(issue)}>
-              Revisar {issue.target.startsWith("coupling:") ? "unión" : "marco"}
-            </button>
-          ))}
+          {operationIssues.map((issue, index) => {
+            const fix = issueFix(issue);
+            return fix ? (
+              <button
+                key={index}
+                type="button"
+                className="editor-operation-message__fix"
+                disabled={disabled || readOnly}
+                onClick={() => simulateCommand([...rejectedOps, ...fix.ops])}
+              >
+                Aplicar y {fix.label.charAt(0).toLowerCase() + fix.label.slice(1)}
+              </button>
+            ) : (
+              <button key={index} type="button" onClick={() => reviewIssue(issue)}>
+                Revisar {issue.target.startsWith("coupling:") ? "unión" : "marco"}
+              </button>
+            );
+          })}
         </output>
       )}
       <div className="assembly-tools" role="toolbar" aria-label={t("assembly.tools")}>
@@ -3856,6 +3902,45 @@ export function AssemblyEditor({
         </div>
         {pricePanel}
       </div>
+      {!operationMessage && !operationBusy && !evaluating && issues.length > 0 && (
+        <ul className="editor-issue-chips" aria-label="Avisos del diseño">
+          {issues.slice(0, 2).map((issue, index) => {
+            const fix = issueFix(issue);
+            return (
+              <li
+                key={`${issue.code}-${issue.target}-${index}`}
+                className={`editor-issue-chip editor-issue-chip--${issue.severity}`}
+              >
+                <span>{issueText(issue, modules, couplings)}</span>
+                {fix ? (
+                  <button
+                    type="button"
+                    disabled={disabled || readOnly}
+                    onClick={() => simulateCommand(fix.ops)}
+                  >
+                    {fix.label}
+                  </button>
+                ) : (
+                  <button type="button" onClick={() => reviewIssue(issue)}>
+                    Corregir
+                  </button>
+                )}
+              </li>
+            );
+          })}
+          {issues.length > 2 && (
+            <li>
+              <button
+                type="button"
+                className="editor-issue-chips__more"
+                onClick={() => onOpenIssues?.()}
+              >
+                {issues.length - 2 === 1 ? "1 aviso más" : `${issues.length - 2} avisos más`}
+              </button>
+            </li>
+          )}
+        </ul>
+      )}
       <footer className="assembly-statusbar">
         <span
           className={`assembly-status assembly-status--${

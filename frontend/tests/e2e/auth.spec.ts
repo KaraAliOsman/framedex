@@ -159,7 +159,8 @@ async function openProjectPrices(page: Page): Promise<void> {
   const projection = page.waitForResponse(
     (response) =>
       response.request().method() === "POST" &&
-      new URL(response.url()).pathname === "/api/v1/pricing/workspace/",
+      new URL(response.url()).pathname === "/api/v1/pricing/workspace/" &&
+      projectUrl.pathname === `/projects/${response.request().postDataJSON().project_id}`,
   );
   await page
     .getByRole("navigation", { name: "Navegación principal", exact: true })
@@ -177,6 +178,10 @@ async function openProjectPrices(page: Page): Promise<void> {
   const projected = await projection;
   expect(projected.status(), await projected.text()).toBe(200);
   expect((await projected.json()).workspace.positions.length).toBeGreaterThan(0);
+  await expect(page.getByRole("region", { name: "Lectura de precios" })).not.toHaveAttribute(
+    "aria-busy",
+    "true",
+  );
 }
 
 async function prepareProjectPrice(page: Page, date: string, reason: string): Promise<void> {

@@ -33,6 +33,7 @@ from pricing.repository import PricingRepository, commercial_backend, json_text,
 from pricing.resolved import financial_bundle
 from pricing.serializers import StrictSerializer
 from pricing.service import configured_unit_price, position_cost, pricing_public_detail
+from pricing.simple_policy import read_policy, simple_position_price
 from pricing.views import DecimalJSONParser, ERRORS, scope, validate
 from projects import design_assist, service
 from projects.operation_serializers import DesignOperationSerializer
@@ -118,19 +119,21 @@ def calculate_product(org_id, product, system_id, color, catalog=None):
         "nominal_width_mm": width, "nominal_height_mm": height}, evaluation)
 
 
-def sale_price(org_id, product, system_id, color, quantity=1):
-    """Read-only indicative selling price; no buying costs leave this adapter."""
+def sale_price(org_id, product, system_id, color, quantity=1, *, role=None):
+    """Read-only selling price; only the authenticated owner gets private detail."""
     with commercial_backend():
         organizations = rows("SELECT currency FROM public.tenancy_organizations WHERE id=%s", [org_id])
         if not organizations:
             raise contract_error(404, "organization_not_found",
                                  "La organización ya no está disponible. Selecciona una organización para continuar.")
         org = organizations[0]
-        rules = rows("SELECT * FROM public.pricing_rules WHERE org_id=%s", [org_id])
-        currency = org["currency"]
-        if not rules:
+        values = read_policy(org_id)
+        advanced = values['use_advanced']
+        currency = org["currency"] if advanced else values['currency']
+        rules = rows("SELECT * FROM public.pricing_rules WHERE org_id=%s", [org_id]) if advanced else []
+        if advanced and not rules:
             return {"net": None, "currency": currency, "reason": "Completa las reglas de precio en Ajustes."}
-        rules = rules[0]
+        rules = rules[0] if rules else None
         # One read-only calculation owns this repository. Reuse its exact input
         # snapshot across components; the next request builds a fresh one.
         repo = PricingRepository(org_id, datetime.now(ZoneInfo("America/Santiago")).date(), currency, None,
@@ -138,18 +141,32 @@ def sale_price(org_id, product, system_id, color, quantity=1):
         repo.preload_costs(financial_bundle(repo))
         def quote(value, count):
             design = design_from_product(value, system_id, color)
+            position = {"system_id": design["system_id"], "width_mm": design["nominal_width_mm"],
+                        "height_mm": design["nominal_height_mm"], "parametric_tree": design["parametric_tree"],
+                        "color_interior": color, "color_exterior": color, "typology": service._typology(design["parametric_tree"])}
+            if not advanced:
+                priced, _, formation, _ = simple_position_price(repo, position, values)
+                price = {"net": str(indicative_line_net(priced.unit_net, count, currency)),
+                    "unit_net": str(priced.unit_net), "currency": currency, "reason": None,
+                    "use_advanced": False, "policy_revision": values['revision'],
+                    "source": "Motor comercial con los precios de tu empresa. Diseño sin guardar; "
+                        "incluye los servicios por ventana, antes de descuentos y servicios generales de la obra."}
+                if role == 'OWNER':
+                    from dataclasses import asdict
+                    from pricing.simple_serializers import SimplePriceBreakdownSerializer, SimplePolicyResponseSerializer
+                    price.update(breakdown=SimplePriceBreakdownSerializer(asdict(priced)).data,
+                        policy=SimplePolicyResponseSerializer(values).data,
+                        catalog_use=formation.get('catalog_use', {}))
+                return price
             mode = PricingMode(rules["pricing_mode"])
             if mode is PricingMode.TARGET_GROSS_MARGIN_PROJECT:
                 return {"net": None, "currency": currency, "reason": "El margen objetivo requiere calcular el proyecto completo."}
             calculated = {**rules, **{field: repo.convert(rules[field], currency) for field in ("labor_rate_per_m2", "installation_rate_per_m2")}}
-            position = {"system_id": design["system_id"], "width_mm": design["nominal_width_mm"],
-                        "height_mm": design["nominal_height_mm"], "parametric_tree": design["parametric_tree"],
-                        "color_interior": color, "color_exterior": color, "typology": service._typology(design["parametric_tree"])}
             cost, area, result, formation = position_cost(repo, position, calculated)
             extras = [ExtraLine.model_validate_json(json_text(item)) for item in formation.get("extra_lines", [])]
             net = configured_unit_price(repo, mode, position, cost=cost, area=area, result=result,
                                        margin=rules["default_margin_pct"], context_code="DEFAULT", extras=extras)
-            return {"net": str(indicative_line_net(net, count, currency)), "unit_net": str(net), "currency": currency, "reason": None,
+            return {"net": str(indicative_line_net(net, count, currency)), "unit_net": str(net), "currency": currency, "reason": None, "use_advanced": True,
                     "source": "Motor comercial; modo y tarifa predeterminados de Ajustes; precio neto indicativo sin descuento."}
 
         try:
@@ -191,7 +208,7 @@ def _diff(before, after, path=""):
     return [{"field": path, "before": before, "after": after}]
 
 
-def simulate_ops(org_id, product, ops, system_id, color, quantity=1):
+def simulate_ops(org_id, product, ops, system_id, color, quantity=1, *, role=None):
     previous_system, previous_color = system_id, color
     catalog = catalog_for(org_id, system_id)
     before = as_product(product)
@@ -225,8 +242,8 @@ def simulate_ops(org_id, product, ops, system_id, color, quantity=1):
         previous_engine = None
     issues = engine.get("issues", [])
     valid = engine.get("status") in {"VALID", "MANUFACTURING_INCOMPLETE"} and not any(issue.get("severity") == "error" for issue in issues)
-    previous = sale_price(org_id, before, previous_system, previous_color, quantity)
-    price = (previous if same_design else sale_price(org_id, output["product"], system_id, color, quantity)) if valid else {"net": None, "currency": previous["currency"], "reason": "Corrige la geometría antes de preciar."}
+    previous = sale_price(org_id, before, previous_system, previous_color, quantity, role=role)
+    price = (previous if same_design else sale_price(org_id, output["product"], system_id, color, quantity, role=role)) if valid else {"net": None, "currency": previous["currency"], "reason": "Corrige la geometría antes de preciar."}
     delta = str(finish_selling_delta(Decimal(previous["net"]), Decimal(price["net"]))) if price.get("net") is not None and previous.get("net") is not None else None
     return {**output, "system_id": str(system_id), "color": color, "valid": valid, "status": engine["status"], "issues": issues, "engine": engine,
             "before": {"product": before, "system_id": str(previous_system), "color": previous_color, "price": previous, "engine": previous_engine}, "price": {**price, "delta_net": delta},
@@ -270,8 +287,9 @@ class SimulateOpsView(APIView):
     def post(self, request):
         data = validate(SimulateOpsSerializer, request.data)
         try:
-            with scope(request, READ_ROLES) as (_, _, org):
-                return response(simulate_ops(org, data["product"], data["ops"], data["system_id"], data["color"], data["quantity"]))
+            with scope(request, READ_ROLES) as (_, actor, org):
+                return response(simulate_ops(org, data["product"], data["ops"], data["system_id"], data["color"], data["quantity"],
+                    role=actor.active_organization.role))
         except OperationError as error:
             raise contract_error(422, error.code, str(error)) from error
         except (ValueError, InvalidEngineRequest, UnsupportedEngineContract) as error:
