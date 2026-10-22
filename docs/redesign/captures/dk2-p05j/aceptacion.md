@@ -4,6 +4,10 @@ Verificado el 22-10-2026 en `gpt/dk2-p05j-documentos-taller`, sobre P05i
 `bca5adff`. API 8010, vista previa 5175 y PostgreSQL aislado. Se conserva
 REVIEW y el checkout del dueño. El frontend usa el build ya verificado de P05h.
 
+Regresión ampliada: se actualizan dos expectativas antiguas del desglose y
+del dibujo de puerta heredada al texto ya implementado. Sus 95 pruebas pasan;
+se conservan precios, redondeos y rechazo de bisagras o manillas inventadas.
+
 ## Cambio
 
 Veintiún módulos de documentos, corte, CNC y terreno distinguen ventana de

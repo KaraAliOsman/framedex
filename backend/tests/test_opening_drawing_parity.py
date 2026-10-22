@@ -122,7 +122,7 @@ def test_short_dimension_segments_use_separate_label_lanes():
 def test_legacy_door_never_invents_handle_or_hinge():
     svg = _position_svg({"position_index":1, "width_mm":"1000", "height_mm":"2100",
         "parametric_tree":{"id":"b", "type":"BAY", "opening_type":"DOOR_ENTRY"}}, commercial=True)
-    assert 'Sin dato: bisagras' in svg
+    assert 'Falta completar las bisagras de la puerta' in svg
     assert 'data-symbol="turn_' not in svg
     assert 'data-handle' not in svg
 
