@@ -2359,3 +2359,16 @@ de Hoy, las etapas de Obras y la purga global siguen en P05. Se conserva el
   preparadas por trabajos verificados del usuario, conservando RLS.
 - Fuentes: `backend/projects/progress.py`, `backend/analytics/prepared.py`,
   `backend/tests/integration/test_project_progress.py`.
+
+## [2026-10-22] DEKOPEN 2 P05c | Hoy para revisar y continuar
+
+- Saludo, fecha, hasta tres métricas reales por rol, preparadas verificadas y
+  cola compacta de 50 acciones por página. Se conservan decisiones humanas,
+  importes del motor, origen y enlaces de fase/moneda.
+- Catorce unitarias y doce E2E reales cubren cinco roles, revisión sin envío,
+  creación por clic, extremos de 1.000 acciones, 320 px y texto al 200 %.
+  La campana acota el contador visual y conserva el total accesible.
+- La aceptación registra mockup, capturas y mediciones locales; distingue el
+  trabajo IA sintético del seeder de una llamada real al proveedor. El editor
+  móvil sigue siendo de lectura hasta P06. Obras/glosario global y las
+  fusiones con los cuatro controles siguen pendientes.

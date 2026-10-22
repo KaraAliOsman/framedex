@@ -3,12 +3,15 @@ type: state
 status: active
 updated: 2026-10-22
 volatility: high
-verified_ref: gpt/dk2-p05b-etapas-reales
+verified_ref: gpt/dk2-p05c-hoy
 sources:
   - docs/redesign/P03-ACEPTACION.md
   - engine/src/dekopen_engine/work_queue.py
   - backend/analytics/today.py
   - frontend/src/app/navigation.ts
+  - frontend/src/app/DashboardPage.tsx
+  - frontend/src/app/todaySummary.ts
+  - frontend/tests/e2e/today.spec.ts
   - frontend/scripts/verify-p03.mjs
 ---
 
@@ -26,6 +29,24 @@ hasta integrar las etapas de la lista única en P05.
 Diez E2E con sesiones reales, cinco roles y 1440/390 px comprueban navegación,
 clientes en la paleta y límites de acceso. Véase la [aceptación P05a](../../redesign/captures/dk2-p05a/aceptacion.md).
 El contenido nuevo de Hoy y las etapas todavía no forman parte de P05a.
+
+P05c presenta saludo, fecha del calendario recibido y hasta tres recuentos
+pertinentes al rol. Los recuentos salen de tareas reales, deduplicadas por
+código; «Aceptadas por coordinar» no afirma una semana que la API no mide.
+Los ceros desaparecen. La tarjeta de preparadas abre solo borradores guardados
+y verificados del propio usuario; revisar y navegar no emite ni envía nada.
+«Nueva cotización» crea con un clic humano y comparte el mismo comportamiento
+en Hoy y Obras. Un resultado tardío de otra organización no navega.
+
+La cola mantiene decisiones de precio, recordatorios, saldos y origen bajo
+desplegables; orden y paginación de 50 conservan el contrato existente. Venta
+por etapa queda plegada y conserva sus enlaces exactos de fase/moneda.
+Diez recorridos reales por rol y dos flujos completos de Hoy cubren escritorio
+y móvil; incluyen 1.000 acciones sintéticas, 320 px y texto al 200 %.
+Véase la [aceptación P05c](../../redesign/captures/dk2-p05c/aceptacion.md).
+El editor móvil actual sigue siendo de lectura por debajo de 1024 px; ampliar
+su edición corresponde a P06, no se presenta como capacidad de P05c.
+
 P05b incorpora la proyección de etapas, compartición comprobada y las obras
 que el asistente guardó con ventanas para el usuario que consulta. Un PDF
 con enlace DOCUMENT sin vistas no cuenta como envío. Una sucesora vuelve a

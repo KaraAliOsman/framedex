@@ -92,7 +92,7 @@ describe("SHOT-04 application routes", () => {
     const auth = authValue("ready");
     auth.me!.active_organization!.role = "OPERATOR";
     renderRoute("/dashboard", auth);
-    expect(await screen.findByRole("heading", { name: "Pendientes" })).toBeVisible();
+    expect(await screen.findByRole("link", { name: "Abrir taller" })).toBeVisible();
     expect(screen.queryByRole("link", { name: "Precios" })).not.toBeInTheDocument();
   });
 

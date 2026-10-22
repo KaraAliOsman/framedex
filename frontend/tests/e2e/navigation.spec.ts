@@ -11,7 +11,7 @@ async function capture(page: Page, info: TestInfo, name: string) {
   expect(
     (
       await new AxeBuilder({ page })
-        .include(".app-rail, .app-topbar, .advanced-features")
+        .include(".app-rail, .app-topbar, .advanced-features, .today-page")
         .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
         .analyze()
     ).violations,
@@ -41,7 +41,10 @@ for (const role of [
         const office = ["OWNER", "ESTIMATOR", "WORKSHOP_MANAGER"].includes(role);
         await page.goto("/");
         await expect(page).toHaveURL(/\/dashboard$/);
-        await expect(page.getByRole("heading", { name: "Pendientes", exact: true })).toBeVisible();
+        await expect(page.locator("#page-title")).toContainText(
+          /Buenos días|Buenas tardes|Buenas noches/,
+        );
+        await expect(page.locator(".today-clear, .today-queue")).toBeVisible();
         const rail = page.locator(".app-rail");
         const navigation = page.getByRole("navigation", {
           name: "Navegación principal",

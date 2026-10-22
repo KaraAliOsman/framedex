@@ -1,9 +1,9 @@
-import { useMemo, useRef, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Link, useSearchParams } from "react-router-dom";
 
 import { ApiError } from "../../api/apiMutator";
-import { engineSystems, projectsCreate } from "../../api/generated/dekopen";
+import { engineSystems } from "../../api/generated/dekopen";
 import type { ProjectResponse, TodayAction } from "../../api/generated/models";
 import { useToday } from "../../app/useToday";
 import { formatRelativeTimestamp } from "../../decimal";
@@ -14,6 +14,8 @@ import { Icon } from "../../ui/Icon";
 import { StatusBadge } from "../../ui/StatusBadge";
 import { formatMoney } from "../money";
 import "./projects-home.css";
+import { useNewQuotation } from "./useNewQuotation";
+export { draftQuotationName } from "./useNewQuotation";
 
 export const PROJECT_STATUS: Record<ProjectResponse["status"], TranslationKey> = {
   DRAFT: "projects.draft",
@@ -33,16 +35,6 @@ const FILTERS: { value: string; label: string }[] = [
   { value: "COMPLETED", label: "Terminados" },
 ];
 
-/** A new quotation is named by its day until the person names it. */
-export function draftQuotationName(now = new Date()): string {
-  const day = now.toLocaleDateString("es-CL", {
-    day: "numeric",
-    month: "long",
-    timeZone: "America/Santiago",
-  });
-  return `Cotización del ${day}`;
-}
-
 /** «¿Con qué obra continúo o cómo empiezo otra?» (screen contract: Proyectos).
  * One click starts a draft quotation and opens the typology library; the
  * client is added when it is needed, never before the first window. */
@@ -57,12 +49,8 @@ export function ProjectsHome({
   orgName: string;
   canWrite: boolean;
 }): JSX.Element {
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [params, setParams] = useSearchParams();
-  const [creating, setCreating] = useState(false);
-  const [createError, setCreateError] = useState("");
-  const lock = useRef(false);
+  const { creating, createError, startQuotation } = useNewQuotation(orgId);
 
   const search = params.get("q") ?? "";
   const statusFilter = params.get("status") ?? "";
@@ -106,32 +94,6 @@ export function ProjectsHome({
         ? (a.name || a.code).localeCompare(b.name || b.code, "es-CL")
         : b.updated_at.localeCompare(a.updated_at),
     );
-
-  async function startQuotation(): Promise<void> {
-    if (lock.current) return;
-    lock.current = true;
-    setCreating(true);
-    setCreateError("");
-    try {
-      const response = await projectsCreate(
-        { name: draftQuotationName(), client_name: "" },
-        { headers: { "X-Organization-ID": orgId } },
-      );
-      if (response.status !== 201) throw new ApiError(response.status, response.data);
-      void queryClient.invalidateQueries({ queryKey: ["project-pages"] });
-      navigate(`/projects/${encodeURIComponent(response.data.id)}/positions/new`);
-    } catch (caught) {
-      const status = caught instanceof ApiError ? caught.status : null;
-      setCreateError(
-        status === 403
-          ? "Tu rol no puede crear cotizaciones. Pide acceso de estimador al dueño."
-          : "No se pudo crear la cotización. Revisa la conexión y vuelve a intentarlo.",
-      );
-    } finally {
-      lock.current = false;
-      setCreating(false);
-    }
-  }
 
   return (
     <div className="projects-home">

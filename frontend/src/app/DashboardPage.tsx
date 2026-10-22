@@ -2,12 +2,23 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import type { TodayAction } from "../api/generated/models";
 import { useAuthSession } from "../auth/AuthSessionProvider";
-import { DateOnly, DeniedState, ErrorState, LoadingState, Money, PageHeader } from "../ui";
+import {
+  Button,
+  DateOnly,
+  DeniedState,
+  Dialog,
+  ErrorState,
+  Icon,
+  LoadingState,
+  Money,
+} from "../ui";
 import { PriceDecision } from "../features/pricing/PriceDecision";
 import { CollectionReminder } from "../features/projects/CollectionReminder";
 import { useToday } from "./useToday";
 import { consequenceLabels, phaseLabels } from "./todayLabels";
 import { SourceSummary } from "../ui/SourceSummary";
+import { useNewQuotation } from "../features/projects/useNewQuotation";
+import { todayDate, todayGreeting, todayMetrics } from "./todaySummary";
 
 export function DashboardPage(): JSX.Element {
   const auth = useAuthSession();
@@ -17,8 +28,11 @@ export function DashboardPage(): JSX.Element {
 }
 
 function TodayWorkspace(): JSX.Element {
-  const org = useAuthSession().me!.active_organization!;
+  const auth = useAuthSession();
+  const org = auth.me!.active_organization!;
   const query = useToday();
+  const { creating, createError, startQuotation } = useNewQuotation(org.id);
+  const [reviewPrepared, setReviewPrepared] = useState(false);
   const [decision, setDecision] = useState<TodayAction | null>(null);
   const [tier, setTier] = useState("");
   const [page, setPage] = useState(0);
@@ -28,25 +42,38 @@ function TodayWorkspace(): JSX.Element {
   const tiers = [...new Set(query.data?.actions.map((item) => item.consequence) ?? [])];
   const workshop =
     org.role === "INSTALLER" || org.role === "OPERATOR" || org.role === "WORKSHOP_MANAGER";
+  const prepared = query.data?.prepared;
+  const metrics = todayMetrics(query.data?.actions ?? [], org.role);
+  const name =
+    auth.session?.user.user_metadata?.full_name ?? auth.session?.user.user_metadata?.name;
   return (
     <section className="today-page" aria-labelledby="page-title">
-      <PageHeader
-        title="Pendientes"
-        headingId="page-title"
-        context={org.name}
-        actions={
+      <header className="today-head">
+        <div>
+          <p className="today-date">
+            {query.data && <time dateTime={query.data.today}>{todayDate(query.data.today)}</time>}
+          </p>
+          <h1 id="page-title">{todayGreeting(name)}</h1>
+        </div>
+        {workshop ? (
           <Link
-            className="ui-button"
-            to={org.role === "INSTALLER" ? "/field" : workshop ? "/production" : "/projects"}
+            className="ui-button ui-button--primary"
+            to={org.role === "INSTALLER" ? "/field" : "/production"}
           >
-            {org.role === "INSTALLER"
-              ? "Abrir despachos e instalaciones"
-              : workshop
-                ? "Abrir taller"
-                : "Abrir proyectos"}
+            {org.role === "INSTALLER" ? "Abrir instalaciones" : "Abrir taller"}
           </Link>
-        }
-      />
+        ) : (
+          <Button
+            variant="primary"
+            loading={creating}
+            onClick={() => void startQuotation()}
+            icon={<Icon name="plus" />}
+          >
+            Nueva cotización
+          </Button>
+        )}
+      </header>
+      {createError && <p role="alert">{createError}</p>}
       {query.isPending ? (
         <LoadingState label="Consultando los compromisos de hoy" />
       ) : query.isError ? (
@@ -57,12 +84,51 @@ function TodayWorkspace(): JSX.Element {
         />
       ) : (
         <>
-          <p className="today-date">
-            <DateOnly value={query.data.today} /> ·{" "}
-            {org.role === "INSTALLER"
-              ? "Entregas e instalaciones comprometidas"
-              : "Primero lo vencido y lo que bloquea a otros"}
-          </p>
+          {metrics.length > 0 && (
+            <section className="today-metrics" aria-label="Resumen de hoy">
+              {metrics.map((metric) => (
+                <div key={metric.label} data-tier={metric.tier}>
+                  <span>{metric.label}</span>
+                  <strong className="ui-value">{metric.count}</strong>
+                </div>
+              ))}
+            </section>
+          )}
+          {prepared && prepared.count > 0 && (
+            <section className="today-prepared" aria-labelledby="prepared-title">
+              <span className="today-prepared__icon" aria-hidden="true">
+                <Icon name="check" size={20} />
+              </span>
+              <div>
+                <h2 id="prepared-title">
+                  DEKOPEN preparó {prepared.count} {prepared.count === 1 ? "cosa" : "cosas"}
+                </h2>
+                <p>
+                  {prepared.count === 1
+                    ? "Una cotización guardada por tu asistente."
+                    : "Cotizaciones guardadas por tu asistente."}
+                </p>
+              </div>
+              <Button onClick={() => setReviewPrepared(true)}>Revisar</Button>
+            </section>
+          )}
+          {reviewPrepared && prepared && (
+            <Dialog title="Cotizaciones preparadas" onClose={() => setReviewPrepared(false)}>
+              <ul className="today-prepared__list">
+                {prepared.items.map((item) => (
+                  <li key={item.project_id}>
+                    <Link to={item.href}>
+                      <strong>{item.name}</strong>
+                      <span>{item.code}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              {prepared.count > prepared.items.length && (
+                <Link to="/projects">Ver todas las obras</Link>
+              )}
+            </Dialog>
+          )}
           {decision?.operation_id && (
             <section className="today-decision" aria-label="Decisión de precio">
               <div className="today-decision__head">
@@ -87,6 +153,7 @@ function TodayWorkspace(): JSX.Element {
             </div>
           ) : (
             <>
+              <h2 className="today-section-title">Para hacer</h2>
               <nav className="today-filters ui-segmented" aria-label="Filtrar por consecuencia">
                 <button
                   type="button"
@@ -131,27 +198,27 @@ function TodayWorkspace(): JSX.Element {
                         {item.due_on && <DateOnly value={item.due_on} />}
                       </div>
                       <div className="today-action__body">
-                        <h2>{item.title}</h2>
+                        <h3>{item.title}</h3>
                         <p>{item.entity_name}</p>
-                        <p>{item.reason}</p>
-                        {item.key.startsWith("receivable_overdue:") && org.role === "OWNER" && (
-                          <CollectionReminder
-                            orgId={org.id}
-                            projectId={item.key.slice("receivable_overdue:".length)}
-                          />
-                        )}
                         {item.amount !== null && item.currency && (
                           <p className="today-amount">
                             <Money value={item.amount} currency={item.currency} />
                           </p>
                         )}
-                        {item.source && (
+                        {(item.source || item.reason) && (
                           <details className="today-source">
                             <SourceSummary />
+                            <p>{item.reason}</p>
                             <p>{item.source}</p>
+                            {item.key.startsWith("receivable_overdue:") && org.role === "OWNER" && (
+                              <CollectionReminder
+                                orgId={org.id}
+                                projectId={item.key.slice("receivable_overdue:".length)}
+                              />
+                            )}
                             {item.balance_total !== null && item.currency && (
                               <dl>
-                                <dt>Total sellado</dt>
+                                <dt>Total emitido</dt>
                                 <dd>
                                   <Money value={item.balance_total} currency={item.currency} />
                                 </dd>
@@ -207,31 +274,31 @@ function TodayWorkspace(): JSX.Element {
             </>
           )}
           {query.data.pipeline.length > 0 && (
-            <section className="today-pipeline" aria-label="Venta por fase">
-              <h2>Venta por fase</h2>
+            <details className="today-pipeline" aria-label="Venta por etapa">
+              <summary>Venta por etapa</summary>
               <p>Totales emitidos, separados por moneda.</p>
               <ul>
                 {query.data.pipeline.map((item) => (
                   <li key={`${item.phase}:${item.currency}`}>
                     <Link to={item.href}>
-                      <span>{phaseLabels[item.phase] ?? "Fase sin dato"}</span>
+                      <span>{phaseLabels[item.phase] ?? "Revisar etapa"}</span>
                       <span className="ui-value">
-                        {item.count} {item.count === 1 ? "proyecto" : "proyectos"}
+                        {item.count} {item.count === 1 ? "obra" : "obras"}
                       </span>
                       {item.currency ? (
                         <Money
                           value={item.amount}
                           currency={item.currency}
-                          cause="Falta el total sellado"
+                          cause="Falta el total emitido"
                         />
                       ) : (
-                        <span>Sin dato · falta moneda sellada</span>
+                        <span>Falta moneda · Revisar cotización</span>
                       )}
                     </Link>
                     {item.unknown_count > 0 && (
                       <p>
-                        <span className="ui-value">{item.unknown_count}</span> sin total o moneda
-                        sellada · <Link to={item.href}>Revisar</Link>
+                        <span className="ui-value">{item.unknown_count}</span> sin total o moneda de
+                        emisión · <Link to={item.href}>Revisar</Link>
                       </p>
                     )}
                     <details className="today-source">
@@ -241,7 +308,7 @@ function TodayWorkspace(): JSX.Element {
                   </li>
                 ))}
               </ul>
-            </section>
+            </details>
           )}
         </>
       )}

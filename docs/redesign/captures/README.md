@@ -2,6 +2,9 @@
 
 ## DEKOPEN 2
 
+- [P05c · Hoy y revisión de preparadas](dk2-p05c/aceptacion.md): saludo,
+  tareas reales por rol, revisión humana y extremos de 1.000 acciones.
+
 - [P04g · precio automático en obra](dk2-p04g/aceptacion.md): total, desglose,
   emisión sin aplicar, PDF conservado y extremos de 500 ventanas.
 

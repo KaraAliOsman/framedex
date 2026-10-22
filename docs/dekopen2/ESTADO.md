@@ -8,9 +8,9 @@ Producción y precios comerciales requieren autorización aparte.
 | ---- | -------------------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | P01  | Catálogo v2: backend, origen, niveles y plantillas | Hecha                                | [P01a #164](https://github.com/KaraAliOsman/framedex/pull/164), [P01b #165](https://github.com/KaraAliOsman/framedex/pull/165), [P01c #166](https://github.com/KaraAliOsman/framedex/pull/166), [P01d #167](https://github.com/KaraAliOsman/framedex/pull/167) y [P01e #168](https://github.com/KaraAliOsman/framedex/pull/168) fusionadas |
 | P02  | Ficha de serie editable                            | Hecha                                | Sub-PR [#169](https://github.com/KaraAliOsman/framedex/pull/169)–[#173](https://github.com/KaraAliOsman/framedex/pull/173) fusionadas                                                                                                                                                                                                      |
-| P03  | Alta de serie y ventana de prueba                  | Implementada; fusiones en curso      | [#174](https://github.com/KaraAliOsman/framedex/pull/174)–[#178](https://github.com/KaraAliOsman/framedex/pull/178) fusionadas; #179–#181 pendientes                                                                                                                                                                                       |
+| P03  | Alta de serie y ventana de prueba                  | Implementada; fusiones en curso      | [#174](https://github.com/KaraAliOsman/framedex/pull/174)–[#179](https://github.com/KaraAliOsman/framedex/pull/179) fusionadas; #180–#181 pendientes |
 | P04  | Precio simple automático                           | Implementada; CI y fusiones en curso | [#182](https://github.com/KaraAliOsman/framedex/pull/182)–[#187](https://github.com/KaraAliOsman/framedex/pull/187), [#188](https://github.com/KaraAliOsman/framedex/pull/188)                                                                                                                                                             |
-| P05  | Navegación, Hoy y Obras                            | En curso                             | [P05a #189](https://github.com/KaraAliOsman/framedex/pull/189); `gpt/dk2-p05b-etapas-reales`                                                                                                                                                                                                                                                                                                                  |
+| P05  | Navegación, Hoy y Obras                            | En curso                             | [P05a #189](https://github.com/KaraAliOsman/framedex/pull/189), [P05b #190](https://github.com/KaraAliOsman/framedex/pull/190); P05c `gpt/dk2-p05c-hoy` |
 | P06  | Mesa de la obra y edición directa                  | Pendiente                            | —                                                                                                                                                                                                                                                                                                                                          |
 | P07  | Cotización y portal                                | Pendiente                            | —                                                                                                                                                                                                                                                                                                                                          |
 | P08  | Agente v2                                          | Pendiente                            | —                                                                                                                                                                                                                                                                                                                                          |
@@ -19,6 +19,21 @@ Producción y precios comerciales requieren autorización aparte.
 | P11  | Pulido y cierre                                    | Pendiente                            | —                                                                                                                                                                                                                                                                                                                                          |
 
 ## P05 · Navegación, Hoy y Obras
+
+- P05c añade saludo y fecha, hasta tres métricas reales por rol, tarjeta de
+  cotizaciones preparadas y cola compacta. Revisar abre borradores guardados;
+  navegar a enviar no escribe en la API. La creación manual requiere clic
+  y comparte su implementación entre Hoy y Obras.
+- Catorce unitarias y doce E2E reales de Hoy/navegación pasan, con cinco roles,
+  escritorio y móvil, revisión con teclado, 1.000 tareas, 320 px y texto al
+  200 %. Lint, tipos, build y Ruff del seeder local aprobados.
+  [Aceptación P05c y capturas](../redesign/captures/dk2-p05c/aceptacion.md).
+- La prueba usa un trabajo IA sintético con recibo válido, sin atribuirlo a
+  una llamada de proveedor. El editor bajo 1024 px conserva su lectura actual;
+  edición móvil se revisará en P06. Obras y la purga global siguen pendientes.
+- Correcciones de CI: reapertura/clonación compara el precio comercial que
+  proyecta el motor; correo entregado sin enlace no compara una caducidad
+  ausente; el glosario incluye las cuatro etapas nuevas. Sin reducir gates.
 
 - P05b añade etapas derivadas de la oferta vigente y la solución elegida,
   órdenes de esa revisión e instalación completa. El motor proyecta el saldo
