@@ -338,7 +338,7 @@ function AnalyticsWorkspace(): JSX.Element {
   if (!allowed || denied)
     return (
       <section data-density="office">
-        <h1>Analítica</h1>
+        <h1>Informes</h1>
         <DeniedState reason="El dueño y el jefe de taller pueden leer costos y analítica. Pide ese permiso al dueño de tu organización." />
       </section>
     );
@@ -376,7 +376,7 @@ function AnalyticsWorkspace(): JSX.Element {
     <section className="analytics-page" data-density="office">
       <header>
         <div>
-          <h1>Analítica</h1>
+          <h1>Informes</h1>
           <p>Decide con la revisión y el registro que respaldan cada cifra.</p>
         </div>
         <Button loading={exporting} disabled={!data || loading} onClick={() => void download()}>

@@ -13,6 +13,7 @@ const dot = (cx: number, cy: number): Shape => ({ circle: [cx, cy, 1.1], fill: t
 
 const ICONS = {
   // Navigation areas
+  today: [{ rect: [4, 5.5, 16, 15, 2] }, "M8 3.5v4M16 3.5v4M4 10h16", "m8.5 15 2.2 2.2 4.8-4.8"],
   projects: [
     "M3 7.5A1.5 1.5 0 0 1 4.5 6H9l2 2h8.5A1.5 1.5 0 0 1 21 9.5v8a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5z",
   ],

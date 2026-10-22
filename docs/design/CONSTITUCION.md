@@ -284,10 +284,28 @@ Diseño a **1440 × 900**. Debe funcionar sin scroll horizontal a 1280 × 800 y 
 ## 5. Superficies: anatomía obligatoria
 
 ### 5.1 Shell
-Navegación lateral de 216 px con **cuatro áreas habituales**: Proyectos · Clientes · Catálogos · Taller, y **Empresa** como acceso inferior. Cada rol ve las áreas que puede leer (la API sigue autorizando). Barra superior de 56 px: migas con el **nombre** de la obra (el código va en detalle), búsqueda/paleta (`Ctrl+K`), avisos y, **solo cuando la organización tiene derecho a IA**, el botón «Asistente» con el compañero, que abre el popup global. El plan manual no monta botón, presencia ni sondeo de IA. El logo vuelve a Proyectos. Analítica se abre desde Empresa; el historial del asistente vive en su popup (y en lectura desde la cuenta tras pasar a manual), no en otra aplicación. Las direcciones antiguas redirigen al contexto equivalente.
 
-### 5.2 Proyectos (inicio)
-La entrada habitual del dueño y del estimador: «Nueva cotización», trabajos para retomar y, si no hay ningún sistema utilizable, «Importar catálogo». Debajo, pocas decisiones agrupadas por obra (cotizaciones por vencer, aprobaciones, bloqueos), cada una con un verbo. No es un mural de indicadores ni una consola de incidencias. El taller empieza en sus órdenes, el operario en su estación y el instalador en su agenda.
+Enmienda P05 del encargo DEKOPEN 2 (21-10-2026): navegación lateral de 232 px con
+**Hoy · Obras · Taller · Catálogo**, y **Empresa** como acceso inferior. Cada rol
+ve solo los destinos que puede leer; la API sigue autorizando. El logo vuelve
+a Hoy. Clientes permanece en la obra y en la búsqueda; `/clients` sigue
+funcionando. Cotizaciones se integra en Obras. Informes y Funciones avanzadas
+se abren desde Empresa; CNC, cohortes, cierres de costos y rectificaciones
+conservan sus herramientas y direcciones de contexto.
+
+Barra superior de 56 px: migas con el nombre de la obra, búsqueda/paleta
+(`Ctrl+K`), avisos y, solo con derecho a IA, entrada al popup global opcional.
+El plan manual no monta botón, presencia ni sondeo de IA. Esta enmienda no
+decide la propuesta de panel lateral del agente ni la de vista única de obra.
+
+### 5.2 Hoy y Obras
+
+Todos los roles comienzan en Hoy: saludo y fecha, hasta tres métricas reales,
+trabajo preparado por el asistente y una cola «Para hacer» con verbo y acción.
+Obras reúne cotizaciones y obras en una lista densa por etapa real, con conteos,
+búsqueda, ventanas, importe y última actividad. «Nueva cotización» abre la
+primera ventana; el cliente se completa cuando hace falta. Taller y agenda
+siguen a un clic para operario e instalador.
 
 ### 5.3 Proyecto
 Cabecera compacta: nombre, cliente, estado comercial y **una** acción principal, con el selector textual **Mesa de obra · Estudio** (preferencia por usuario y organización; Mesa por defecto; `?view=mesa|estudio&position=<id>`). Cuatro destinos: **Ventanas · Cotización · Materiales y corte · Actividad**. En **Mesa**, la colección de ventanas es el contenido principal, con dibujo real, ambiente/nombre, medidas, cantidad, acabado y precio, en galería o tabla (formatos locales de la colección, no las vistas). Selección múltiple con alcance visible, cambios en lote y diff antes de aplicar. En **Estudio**, franja de posiciones plegable, dibujo predominante e inspector manual de la misma sesión de edición. Cambiar de vista no guarda, no recalcula y conserva selección, borrador y deshacer.

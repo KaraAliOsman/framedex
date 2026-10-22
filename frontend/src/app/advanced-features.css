@@ -1,0 +1,23 @@
+.advanced-features ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  gap: var(--space-4);
+  list-style: none;
+  margin: var(--space-6) 0;
+  padding: 0;
+}
+.advanced-features li {
+  padding: var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--r-3);
+  background: var(--surface-panel);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.advanced-features li a {
+  font-weight: 600;
+}
+.advanced-features p {
+  color: var(--text-secondary);
+  margin: var(--space-2) 0 0;
+}

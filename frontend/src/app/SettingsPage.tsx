@@ -867,6 +867,8 @@ export function SettingsPage(): JSX.Element {
           ))}
           <Link to="/settings/billing">Plan y facturación</Link>
           <Link to="/settings/wallet">Créditos de IA</Link>
+          {workshop && <Link to="/analytics">Informes</Link>}
+          <Link to="/settings/advanced">Funciones avanzadas</Link>
         </nav>
         <div className="settings-content" key={`${org.id}-${section}`}>
           {section === "account" && (

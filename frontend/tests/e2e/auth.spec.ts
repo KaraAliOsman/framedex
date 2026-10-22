@@ -160,7 +160,7 @@ async function openProjectPrices(page: Page): Promise<void> {
   );
   await page
     .getByRole("navigation", { name: "Navegación principal", exact: true })
-    .getByRole("link", { name: "Proyectos", exact: true })
+    .getByRole("link", { name: "Obras", exact: true })
     .click();
   await page.locator(`a[href="${projectUrl.pathname}"]`).first().click();
   await page.getByRole("tab", { name: "Cotización", exact: true }).click();
@@ -411,11 +411,11 @@ test("real Magic Link reaches Mailpit and authenticates Django /auth/me", async 
   const navigation = page.getByRole("navigation", { name: "Navegación principal" });
   // ESTIMATOR can read technical authority, while publication and organization
   // administration remain supervisor capabilities enforced by the backend.
-  await expect(navigation.getByRole("link", { name: "Catálogos", exact: true })).toHaveCount(1);
+  await expect(navigation.getByRole("link", { name: "Catálogo", exact: true })).toHaveCount(1);
   await expect(navigation.getByRole("link", { name: "Administración", exact: true })).toHaveCount(
     0,
   );
-  await navigation.getByRole("link", { name: "Catálogos", exact: true }).click();
+  await navigation.getByRole("link", { name: "Catálogo", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Catálogo", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Agregar serie", exact: true })).toHaveCount(0);
   await page.getByRole("link", { name: "Más ajustes del catálogo", exact: true }).click();
@@ -441,7 +441,7 @@ test("real Magic Link reaches Mailpit and authenticates Django /auth/me", async 
     page.getByRole("heading", { name: "Documentos", exact: true, level: 2 }),
   ).toBeVisible();
   await expect(page.getByRole("button", { name: "Guardar documentos", exact: true })).toBeVisible();
-  for (const route of ["Proyectos", "Clientes", "Catálogos"]) {
+  for (const route of ["Hoy", "Obras", "Catálogo"]) {
     await navigation.getByRole("link", { name: route, exact: true }).click();
     await expect(page.getByTestId("app-shell")).toBeVisible();
   }

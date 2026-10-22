@@ -83,9 +83,9 @@ describe("SHOT-04 application routes", () => {
   it("opens the real project list from the authenticated shell", async () => {
     renderRoute("/dashboard", authValue("ready"));
     expect(await screen.findByTestId("app-shell")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Proyectos" })).toHaveAttribute("href", "/projects");
-    fireEvent.click(screen.getByRole("link", { name: "Proyectos" }));
-    expect(await screen.findByRole("heading", { name: "Proyectos", level: 1 })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Obras" })).toHaveAttribute("href", "/projects");
+    fireEvent.click(screen.getByRole("link", { name: "Obras" }));
+    expect(await screen.findByRole("heading", { name: "Obras", level: 1 })).toBeInTheDocument();
   });
 
   it("lets an operator explicitly open their role-scoped Today queue", async () => {

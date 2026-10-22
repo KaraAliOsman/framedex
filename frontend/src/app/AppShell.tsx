@@ -21,10 +21,10 @@ import { OrgSwitcher } from "./OrgSwitcher";
 import { ShellCrumbs, crumbsFor, useProjectName } from "./ShellCrumbs";
 import { ShellLeafContext } from "./shellLeaf";
 import { roleLabel } from "./shellUtils";
-import { areaFor, homeFor, navigationFor } from "./navigation";
+import { areaFor, homeFor, navigationFor, paletteNavigationFor } from "./navigation";
 import { ShortcutHelp } from "./ShortcutHelp";
 
-/** The product shell (constitution §5.1): four everyday areas plus Empresa,
+/** The product shell (constitution §5.1): Hoy, Obras, Taller, Catálogo and Empresa,
  * a 56 px top bar with search, notices and the assistant, and the area's own
  * sections as tabs on its list pages. Detail pages keep the full height. */
 export function AppShell({ children }: PropsWithChildren): JSX.Element {
@@ -139,9 +139,10 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
     document.title = head ? `${head} · DEKOPEN` : "DEKOPEN";
   }, [location.pathname, projectName, leaf]);
 
-  const paletteItems = areas.flatMap((area) =>
-    area.sections.map((section) => ({ to: section.to, label: t(section.label) })),
-  );
+  const paletteItems = paletteNavigationFor(role).map((section) => ({
+    to: section.to,
+    label: t(section.label),
+  }));
 
   return (
     <ShellLeafContext.Provider value={leafContext}>

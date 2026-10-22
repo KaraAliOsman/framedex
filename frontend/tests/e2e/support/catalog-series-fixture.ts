@@ -5,6 +5,7 @@ import { expect, test as base } from "@playwright/test";
 
 import { environment } from "./environment";
 import { requireMailpitHealthy, waitForMagicLink } from "./mailpit";
+import type { MembershipRoleEnum } from "../../../src/api/generated/models";
 
 type CatalogFixture = {
   systemId: string;
@@ -25,9 +26,10 @@ function local(name: string): string {
   return url.origin;
 }
 
-export const test = base.extend<{ catalog: CatalogFixture }>({
+export const test = base.extend<{ catalog: CatalogFixture; catalogRole: MembershipRoleEnum }>({
+  catalogRole: ["OWNER", { option: true }],
   catalog: [
-    async ({ page }, use) => {
+    async ({ page, catalogRole }, use) => {
       const supabaseUrl = local("SUPABASE_URL");
       const mailpit = local("MAILPIT_URL");
       const serviceKey = required("SUPABASE_SERVICE_ROLE_KEY");
@@ -84,22 +86,32 @@ export const test = base.extend<{ catalog: CatalogFixture }>({
         );
         const seeded = JSON.parse(output.trim()) as Omit<CatalogFixture, "organizationId">;
         expect(seeded.pasteValues).toHaveLength(5);
+        // Seed only with the fixture's ownership proof, then exercise the real
+        // role through its ordinary session. Never relax the seeder's guard.
+        if (catalogRole !== "OWNER")
+          await admin(
+            `/rest/v1/tenancy_memberships?org_id=eq.${organizationId}&user_id=eq.${userId}`,
+            "PATCH",
+            { role: catalogRole },
+          );
         await page.goto("/login");
         await page.getByLabel("Correo", { exact: true }).fill(email);
         await page.getByRole("button", { name: "Enviar enlace de acceso", exact: true }).click();
         await expect(page.getByRole("status")).toContainText("Revisa tu correo para continuar");
         const message = await waitForMagicLink({ baseUrl: mailpit, supabaseUrl, recipient: email });
         await page.goto(message.link);
-        await page.getByRole("button", { name: "Configurar autenticador", exact: true }).click();
-        const secret = (await page.getByTestId("totp-secret").textContent())?.trim() ?? "";
-        const generator = new OTPAuth.TOTP({
-          algorithm: "SHA1",
-          digits: 6,
-          period: 30,
-          secret: OTPAuth.Secret.fromBase32(secret),
-        });
-        await page.getByLabel("Código de seis dígitos").fill(generator.generate());
-        await page.getByRole("button", { name: "Verificar", exact: true }).click();
+        if (catalogRole === "OWNER") {
+          await page.getByRole("button", { name: "Configurar autenticador", exact: true }).click();
+          const secret = (await page.getByTestId("totp-secret").textContent())?.trim() ?? "";
+          const generator = new OTPAuth.TOTP({
+            algorithm: "SHA1",
+            digits: 6,
+            period: 30,
+            secret: OTPAuth.Secret.fromBase32(secret),
+          });
+          await page.getByLabel("Código de seis dígitos").fill(generator.generate());
+          await page.getByRole("button", { name: "Verificar", exact: true }).click();
+        }
         await expect(page.getByTestId("app-shell")).toBeVisible();
         await use({ ...seeded, organizationId });
       } finally {

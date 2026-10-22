@@ -138,7 +138,7 @@ export function ProjectsHome({
       <header className="projects-home__head">
         <div>
           <h1 className="projects-home__title" id="page-title">
-            Proyectos
+            Obras
           </h1>
           <p className="projects-home__context">Lo que tiene {orgName} en curso.</p>
         </div>

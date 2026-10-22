@@ -1,9 +1,9 @@
 ---
 type: state
 status: active
-updated: 2026-10-09
+updated: 2026-10-22
 volatility: high
-verified_ref: 5b06ceb12457b297a8748580453695714469c6a0
+verified_ref: gpt/dk2-p05a-navegacion
 sources:
   - docs/redesign/P03-ACEPTACION.md
   - engine/src/dekopen_engine/work_queue.py
@@ -16,10 +16,16 @@ sources:
 
 ## Hechos verificados
 
-La navegación refleja capacidades del backend por rol y agrupa ventas,
-ingeniería, operación, asistente y ajustes. Inventario y cotizaciones tienen
-índices propios; producción conserva sus direcciones. Solo el operario entra
-automáticamente al taller. Todos pueden abrir su cola explícita.
+P05a dispone Hoy · Obras · Taller · Catálogo · Empresa en ese orden, ocultando
+los destinos que cada rol no puede leer. Hoy es el inicio de los cinco roles;
+operario e instalador conservan acceso directo a taller y agenda. Clientes
+continúa en `/clients` y la búsqueda de oficina. Informes y Funciones avanzadas
+viven en Empresa. El índice antiguo de cotizaciones mantiene su ruta y filtros
+hasta integrar las etapas de la lista única en P05.
+
+Diez E2E con sesiones reales, cinco roles y 1440/390 px comprueban navegación,
+clientes en la paleta y límites de acceso. Véase la [aceptación P05a](../../redesign/captures/dk2-p05a/aceptacion.md).
+El contenido nuevo de Hoy y las etapas todavía no forman parte de P05a.
 
 El motor ordena compromisos vencidos, bloqueos, trabajo del día y seguimiento.
 El backend lee bajo RLS revisión actual, solicitudes/recibos de precio, ledger

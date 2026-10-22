@@ -2340,3 +2340,13 @@ de 500 ventanas detectó contraste, columnas y texto largo; los extremos y
 texto al 200 % pasan. Corregida la lectura de líneas simples emitidas y el
 reloj mutable en la regresión de clonación (`9223078d`, propagado a P04d–f).
 La fase espera CI/fusión. Véase [precio](product/price-workspace.md).
+
+## 2026-10-22 · P05a: destinos cotidianos por rol
+
+En `gpt/dk2-p05a-navegacion` se implementan Hoy, Obras, Taller, Catálogo y
+Empresa, con inicio Hoy y acceso a Clientes desde la búsqueda. Empresa reúne
+Informes y Funciones avanzadas según rol. Diez E2E reales en 1440/390 pasan;
+la Constitución §5.1/5.2 registra la enmienda del encargo. El contenido nuevo
+de Hoy, las etapas de Obras y la purga global siguen en P05. Se conserva el
+índice anterior de cotizaciones hasta reemplazar sus filtros. Véase
+[trabajo de Hoy](product/today-workflow.md).

@@ -58,3 +58,6 @@ versionarla. Consulte [mantenimiento del workspace](../../operations/WORKSPACE.m
 para proteger fixtures, secretos, sesiones, WSL y bases. `.rgignore` excluye
 estos payloads de las búsquedas generales; las rutas explícitas y
 `rg --no-ignore docs/redesign/captures/` permiten investigarlos.
+
+- [P05a · Navegación por rol](dk2-p05a/aceptacion.md): dieciséis capturas de
+  cinco roles en escritorio/móvil; contenido nuevo de Hoy/Obras aún pendiente.

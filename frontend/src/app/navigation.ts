@@ -13,7 +13,7 @@ export type NavSection = {
   roles: readonly MembershipRoleEnum[];
 };
 export type NavArea = {
-  id: "projects" | "clients" | "catalogs" | "workshop" | "company";
+  id: "today" | "projects" | "catalogs" | "workshop" | "company";
   label: TranslationKey;
   icon: IconName;
   /** Paths that belong to the area even when they are not a listed section. */
@@ -21,26 +21,23 @@ export type NavArea = {
   sections: NavSection[];
 };
 
-/** Four everyday areas and Empresa (constitution §5.1). The list mirrors the
+/** Five destinations, filtered by role (constitution §5.1). The list mirrors the
  * domain API's read capabilities; the server still authorizes every request
  * and this list grants nothing. Sections render as the area's own tabs. */
 const AREAS: NavArea[] = [
   {
+    id: "today",
+    label: "nav.today",
+    icon: "today",
+    owns: ["/dashboard"],
+    sections: [{ to: "/dashboard", label: "nav.today", roles: everyone }],
+  },
+  {
     id: "projects",
     label: "nav.projects",
     icon: "projects",
-    owns: ["/projects", "/quotes", "/dashboard", "/onboarding", "/pricing/commercial"],
-    sections: [
-      { to: "/projects", label: "nav.projects", roles: office },
-      { to: "/quotes", label: "nav.quotes", roles: commercial },
-    ],
-  },
-  {
-    id: "clients",
-    label: "nav.clients",
-    icon: "clients",
-    owns: ["/clients"],
-    sections: [{ to: "/clients", label: "nav.clients", roles: office }],
+    owns: ["/projects", "/quotes", "/clients", "/onboarding"],
+    sections: [{ to: "/projects", label: "nav.projects", roles: office }],
   },
   {
     id: "catalogs",
@@ -70,14 +67,11 @@ const AREAS: NavArea[] = [
     id: "company",
     label: "nav.company",
     icon: "company",
-    owns: ["/settings", "/analytics", "/pricing/cost-lists", "/jobs", "/assistant"],
+    owns: ["/settings", "/analytics", "/pricing", "/jobs", "/assistant"],
     sections: [
       { to: "/settings/general", label: "nav.preferences", roles: office },
-      // Cost lists are owner-only; the estimator lands on the commercial
-      // rules it can actually use instead of a denied page.
-      { to: "/pricing/cost-lists", label: "nav.costs", roles: ["OWNER"] },
-      { to: "/pricing/commercial", label: "nav.costs", roles: ["ESTIMATOR"] },
       { to: "/analytics", label: "nav.analytics", roles: ["OWNER", "WORKSHOP_MANAGER"] },
+      { to: "/settings/advanced", label: "nav.advanced", roles: office },
       { to: "/settings/billing", label: "nav.plan", roles: office },
     ],
   },
@@ -92,7 +86,19 @@ export function navigationFor(role: MembershipRoleEnum | undefined): VisibleArea
     const sections = area.sections.filter((section) => section.roles.includes(role));
     const first = sections[0];
     return first ? [{ ...area, sections, to: first.to }] : [];
-  });
+  }).sort(
+    (a, b) =>
+      ["today", "projects", "workshop", "catalogs", "company"].indexOf(a.id) -
+      ["today", "projects", "workshop", "catalogs", "company"].indexOf(b.id),
+  );
+}
+
+/** Clients remain searchable without becoming a sixth rail destination. */
+export function paletteNavigationFor(role: MembershipRoleEnum | undefined): NavSection[] {
+  const sections = navigationFor(role).flatMap((area) => area.sections);
+  return role && office.some((allowed) => allowed === role)
+    ? [...sections, { to: "/clients", label: "nav.clients", roles: office }]
+    : sections;
 }
 
 /** The area that owns a pathname, for the active rail item and its tabs. */
@@ -107,10 +113,7 @@ export function areaFor(
   );
 }
 
-/** Each role starts with its own work (owner/estimator: projects; workshop:
- * orders; operator: station; installer: agenda). */
+/** All roles start with their actionable day, with workshop/agenda one click away. */
 export function homeFor(role: MembershipRoleEnum | undefined): string {
-  if (role === "OPERATOR" || role === "WORKSHOP_MANAGER") return "/production";
-  if (role === "INSTALLER") return "/field";
-  return "/projects";
+  return role ? "/dashboard" : "/projects";
 }

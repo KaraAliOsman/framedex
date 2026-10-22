@@ -80,7 +80,7 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   const toProjects = () =>
     page
       .getByRole("navigation", { name: "Ruta de navegación" })
-      .getByRole("link", { name: "Proyectos", exact: true })
+      .getByRole("link", { name: "Obras", exact: true })
       .click();
   const freshRead = () => page.reload();
 

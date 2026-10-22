@@ -1,54 +1,47 @@
 import { expect, it } from "vitest";
-import { areaFor, homeFor, navigationFor } from "./navigation";
+import { areaFor, homeFor, navigationFor, paletteNavigationFor } from "./navigation";
 import type { MembershipRoleEnum } from "../api/generated/models";
 
 const expected: Record<MembershipRoleEnum, Record<string, string[]>> = {
   OWNER: {
-    projects: ["/projects", "/quotes"],
-    clients: ["/clients"],
+    today: ["/dashboard"],
+    projects: ["/projects"],
     catalogs: ["/catalogs/systems", "/catalogs/finish-samples", "/catalogs/sheet-formats"],
     workshop: ["/production", "/purchasing", "/inventory", "/dispatch", "/field"],
-    company: ["/settings/general", "/pricing/cost-lists", "/analytics", "/settings/billing"],
+    company: ["/settings/general", "/analytics", "/settings/advanced", "/settings/billing"],
   },
   ESTIMATOR: {
-    projects: ["/projects", "/quotes"],
-    clients: ["/clients"],
+    today: ["/dashboard"],
+    projects: ["/projects"],
     catalogs: ["/catalogs/systems", "/catalogs/finish-samples", "/catalogs/sheet-formats"],
     workshop: ["/production", "/purchasing", "/inventory", "/dispatch", "/field"],
-    company: ["/settings/general", "/pricing/commercial", "/settings/billing"],
+    company: ["/settings/general", "/settings/advanced", "/settings/billing"],
   },
   WORKSHOP_MANAGER: {
+    today: ["/dashboard"],
     projects: ["/projects"],
-    clients: ["/clients"],
     catalogs: ["/catalogs/systems", "/catalogs/finish-samples", "/catalogs/sheet-formats"],
     workshop: ["/production", "/purchasing", "/inventory", "/dispatch", "/field"],
-    company: ["/settings/general", "/analytics", "/settings/billing"],
+    company: ["/settings/general", "/analytics", "/settings/advanced", "/settings/billing"],
   },
-  OPERATOR: { workshop: ["/production", "/inventory"] },
-  INSTALLER: { workshop: ["/production", "/field"] },
-};
-const home: Record<MembershipRoleEnum, string> = {
-  OWNER: "/projects",
-  ESTIMATOR: "/projects",
-  WORKSHOP_MANAGER: "/production",
-  OPERATOR: "/production",
-  INSTALLER: "/field",
+  OPERATOR: { today: ["/dashboard"], workshop: ["/production", "/inventory"] },
+  INSTALLER: { today: ["/dashboard"], workshop: ["/production", "/field"] },
 };
 
 it.each(Object.keys(expected) as MembershipRoleEnum[])(
-  "shows four everyday areas plus Empresa within the read capabilities of %s",
+  "shows the new destinations within the read capabilities of %s",
   (role) => {
     const areas = navigationFor(role);
     expect(
       Object.fromEntries(areas.map((area) => [area.id, area.sections.map((item) => item.to)])),
     ).toEqual(expected[role]);
     expect(areas.every((area) => area.to === area.sections[0]!.to)).toBe(true);
-    expect(homeFor(role)).toBe(home[role]);
+    expect(homeFor(role)).toBe("/dashboard");
   },
 );
 
 it("keeps replaced destinations inside their area", () => {
-  expect(areaFor("/pricing/commercial", "OWNER")?.id).toBe("projects");
+  expect(areaFor("/pricing/commercial", "OWNER")?.id).toBe("company");
   expect(areaFor("/projects/abc/positions/1/edit", "ESTIMATOR")?.id).toBe("projects");
   expect(areaFor("/jobs", "OWNER")?.id).toBe("company");
   expect(areaFor("/inventory", "OPERATOR")?.id).toBe("workshop");
@@ -56,4 +49,17 @@ it("keeps replaced destinations inside their area", () => {
 
 it("offers no domain entry before a tenant role resolves", () => {
   expect(navigationFor(undefined)).toEqual([]);
+});
+
+it("keeps clients in search for office roles and preserves a stable destination order", () => {
+  expect(navigationFor("OWNER").map((area) => area.id)).toEqual([
+    "today",
+    "projects",
+    "workshop",
+    "catalogs",
+    "company",
+  ]);
+  expect(paletteNavigationFor("ESTIMATOR").some((entry) => entry.to === "/clients")).toBe(true);
+  expect(paletteNavigationFor("INSTALLER").some((entry) => entry.to === "/clients")).toBe(false);
+  expect(areaFor("/clients/123", "OWNER")?.id).toBe("projects");
 });
