@@ -46,4 +46,6 @@ def extra_cases() -> dict[str, Any]:
         "extra-members":[member.model_dump(mode="json") for member in computation.manufacturing_trace.members if member.assembly == "EXTRA"],
         "sublines":[item.model_dump(mode="json") for item in prices],
         "project-perimeter":[item.model_dump(mode="json") for item in services],
-        "exact-partition":partition_price(D(210001),D(100000),[(item,item.total_price) for item in prices],quantity=2,currency="CLP")}
+        "exact-partition":partition_price(D(210001),D(100000),[(item,item.total_price) for item in prices],quantity=2,currency="CLP"),
+        "explicit-free-partition":partition_price(D(0),D(0),[(prices[0].model_copy(update={
+            "cost_rate":D(0),"selling_rate":D(0),"total_cost":D(0),"total_price":D(0)}),D(0))],quantity=2,currency="CLP")}

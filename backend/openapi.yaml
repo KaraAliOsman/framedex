@@ -50223,9 +50223,15 @@ components:
           type: string
         profit:
           type: string
+        extras_cost:
+          type: string
+        extras_net:
+          type: string
       required:
       - direct_cost
       - exact_unit_price
+      - extras_cost
+      - extras_net
       - installation
       - labor
       - materials

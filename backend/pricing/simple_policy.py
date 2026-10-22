@@ -10,7 +10,8 @@ from django.utils import timezone
 from authentication.errors import contract_error
 from dekopen_engine.simple_pricing import SimplePricingPolicy, simple_price
 from dekopen_engine.commercial import CommercialLine, finish_lines
-from pricing.repository import PricingRepository, audit_reason, commercial_backend, one, rows
+from dekopen_engine.extra_models import ExtraLine
+from pricing.repository import PricingRepository, audit_reason, commercial_backend, one, rows, json_text
 
 D = Decimal
 POLICY_FIELDS = ('currency', 'labor_rate', 'labor_basis', 'installation_rate',
@@ -96,8 +97,9 @@ def policy_example(org_id, values, position_id=None):
         _, area, _, formation = position_cost(repo, position, {'waste_factor_pct': D('0'),
             'labor_rate_per_m2': D('0'), 'installation_rate_per_m2': D('0'),
             'default_margin_pct': values['margin']})
-        price = simple_price([D(row['cost']) for row in formation['composition']], area, policy,
-            installation_included=any(item.get('installation') for item in formation['extra_lines']))
+        extras = [ExtraLine.model_validate_json(json_text(item)) for item in formation['extra_lines']]
+        price = simple_price([D(row['cost']) for row in formation['composition'] if row['kind'] != 'EXTRA'],
+            area, policy, extras=extras)
         total = finish_lines([CommercialLine(position['position_index'], 1, price.direct_cost, price.unit_net)],
             policy.currency, values['tax_rate'])
     return {'position_id': position['id'], 'position_index': position['position_index'],

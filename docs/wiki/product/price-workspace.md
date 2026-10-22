@@ -3,8 +3,11 @@ type: state
 status: active
 updated: 2026-10-22
 volatility: high
-verified_ref: gpt/dk2-p04b-politica-empresa
+verified_ref: gpt/dk2-p04c-precio-vigente
 sources:
+  - backend/pricing/working.py
+  - backend/tests/integration/test_working_prices.py
+  - supabase/migrations/20270210000000_project_working_prices.sql
   - engine/src/dekopen_engine/simple_pricing.py
   - backend/pricing/simple_policy.py
   - supabase/migrations/20270209000000_workshop_pricing_policy.sql
@@ -19,6 +22,22 @@ sources:
 ---
 
 # Precio del proyecto y confianza en el número
+
+## Proyección privada del borrador · P04c
+
+Verificada el 22-10-2026 en `gpt/dk2-p04c-precio-vigente`. La función
+`refresh_working` recalcula costos actuales y guarda una proyección privada por
+revisión. No escribe precios aplicados ni modifica el diseño. La política nueva
+se refleja al recalcular; un costo ausente reemplaza la proyección anterior por
+un bloqueo con causa. Los cinco modos avanzados simulan su contrato existente
+y conservan la necesidad de aprobación cuando corresponde.
+
+Las guardas SQL impiden escribir sobre una revisión emitida o con precio
+aplicado. El estimador recibe únicamente importes de venta; BOM y desglose de
+costos permanecen privados. Los extras conservan su tarifa explícita y el motor
+calcula cantidades, servicios, IVA y partición documental, incluso precio cero.
+Se verificaron 25 integraciones de política/proyección y ocho aserciones pgTAP
+en la base sintética aislada. HTTP, hooks de edición y emisión siguen pendientes.
 
 ## Precio simple de DEKOPEN 2 · P04a
 

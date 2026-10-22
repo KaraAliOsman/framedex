@@ -16,4 +16,6 @@ export interface SimplePriceBreakdown {
   unit_net: string;
   rounding: string;
   profit: string;
+  extras_cost: string;
+  extras_net: string;
 }

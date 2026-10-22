@@ -32,6 +32,14 @@ def position_price(base: Decimal, extras: list[ExtraLine] | tuple[ExtraLine, ...
         return base + sum((item.total_price for item in extras),D(0))
 
 
+def base_price_weight(price: Decimal, extras: list[ExtraLine] | tuple[ExtraLine, ...]) -> Decimal:
+    """Keep a rounded simple window's residual in its base documentary subline."""
+    from .commercial import number
+    with localcontext() as context:
+        context.prec = 256
+        return number(price - sum((item.total_price for item in extras), D(0)))
+
+
 def price_facts(authority: ExtraAuthority | None, facts: list[ExtraFact]) -> list[ExtraLine]:
     return [line(selected_definition(authority, ExtraSelection(code=fact.code), fact.scope),
         ExtraSelection(code=fact.code, zone=fact.zone), fact.quantity, width=fact.width_mm,
@@ -193,10 +201,10 @@ def partition_price(total: Decimal, base: Decimal, extras: list[tuple[ExtraLine,
         context.prec = 80
         weights = [base, *(amount for _, amount in extras)]
         weight = sum(weights, D(0))
-        if weight <= 0 or any(value < 0 for value in weights):
+        if weight < 0 or (weight == 0 and total != 0) or any(value < 0 for value in weights):
             raise ValueError("Falta autoridad de precio para distribuir las sublíneas.")
         q = quantum(currency)
-        exact = [total*value/weight for value in weights]
+        exact = [total*value/weight for value in weights] if weight else [D(0) for _ in weights]
         amounts = [(value//q)*q for value in exact]
         remainder = int((total-sum(amounts, D(0)))/q)
         order = sorted(range(len(exact)), key=lambda i: (-(exact[i]-amounts[i]), i))

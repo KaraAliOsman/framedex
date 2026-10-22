@@ -12,7 +12,9 @@ from dekopen_engine import (
 from dekopen_engine.glass import exact_glass_area_m2
 from dekopen_engine.models import ProfileCutRule, ProfileReinforcementRule, SystemDimensionalLimit
 from dekopen_engine.price_workspace import linear_purchase
-from dekopen_engine.simple_pricing import SimplePricingPolicy, simple_price
+from dekopen_engine.simple_pricing import SimplePricingPolicy, simple_price, simple_project
+from dekopen_engine.commercial import CommercialLine
+from dekopen_engine.extra_models import ExtraLine
 
 SOURCE = 'Synthetic workshop fixture; not manufacturer data'
 RATES = {'PRO-F': D('12000'), 'PRO-S': D('15000'), 'PRO-B': D('5000'),
@@ -61,7 +63,8 @@ def pro6004_params() -> SystemParams:
             weight_kg=D('1'))])
 
 
-def window_case(opening: BayOpeningType, policy: SimplePricingPolicy) -> dict[str, Any]:
+def window_case(opening: BayOpeningType, policy: SimplePricingPolicy,
+                extras: tuple[ExtraLine, ...] = ()) -> dict[str, Any]:
     root = ParametricNode(id='trial', type=NodeType.BAY, width_mm=D('1200'), height_mm=D('1100'),
         opening_type=opening, glass_spec='4-16-4', glass_article_sku='GLASS-24',
         glass_thickness_mm=D('24'))
@@ -93,9 +96,14 @@ def window_case(opening: BayOpeningType, policy: SimplePricingPolicy) -> dict[st
         for fitting in bom.fittings:
             materials.append({'kind': 'FITTING', 'sku': fitting.sku, 'quantity': fitting.qty,
                 'unit': 'EA', 'rate': str(RATES[fitting.sku]), 'amount': str(RATES[fitting.sku] * fitting.qty)})
-    priced = simple_price([D(item['amount']) for item in materials], D('1.32'), policy)
+    priced = simple_price([D(item['amount']) for item in materials], D('1.32'), policy, extras=extras)
+    project = simple_project([CommercialLine(1, 3, priced.direct_cost, priced.unit_net)], policy.currency, D('.19'))
     return {'source': SOURCE, 'system_code': 'PRO6004-SYNTHETIC',
         'input': root.model_dump(mode='json'), 'materials': materials,
+        'extras': [item.model_dump(mode='json') for item in extras],
+        'three_units': {'cost_lines': [[index, str(amount)] for index, amount in project.cost_lines],
+            'net': str(project.totals.project_net), 'tax': str(project.totals.project_tax),
+            'gross': str(project.totals.project_gross)},
         'policy': {key: str(value) for key, value in asdict(policy).items()},
         'price': {key: str(value) for key, value in asdict(priced).items()}}
 
@@ -108,4 +116,11 @@ def simple_pricing_cases() -> dict[str, Any]:
         'PRO6004-abatible': window_case(BayOpeningType.TURN_LEFT, SimplePricingPolicy(currency='CLP',
             labor_rate=D('20000'), labor_basis='WINDOW', installation_rate=D('5000'),
             installation_basis='M2', margin=D('0.35'), rounding_step=D('1000'))),
+        'PRO6004-fija-instalacion': window_case(BayOpeningType.FIXED, SimplePricingPolicy(currency='CLP',
+            labor_rate=D('15000'), labor_basis='M2', installation_rate=D('10000'),
+            installation_basis='WINDOW', margin=D('.35'), rounding_step=D('1000'), waste=D('.08')),
+            (ExtraLine(code='INSTALL', name='Synthetic installation', scope='POSITION', kind='SERVICE',
+                quantity=D('1'), unit='EA', cost_rate=D('10000'), selling_rate=D('15000'),
+                total_cost=D('10000'), total_price=D('15000'), currency='CLP', source=SOURCE,
+                synthetic=True, installation=True),)),
     }

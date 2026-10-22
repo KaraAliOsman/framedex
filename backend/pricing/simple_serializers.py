@@ -58,6 +58,8 @@ class SimplePriceBreakdownSerializer(serializers.Serializer):
     unit_net = serializers.CharField()
     rounding = serializers.CharField()
     profit = serializers.CharField()
+    extras_cost = serializers.CharField()
+    extras_net = serializers.CharField()
 
 
 class SimplePolicyExampleResponseSerializer(serializers.Serializer):

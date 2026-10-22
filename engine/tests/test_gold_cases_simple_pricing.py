@@ -9,7 +9,8 @@ from typing import Any
 import pytest
 
 from dekopen_engine.commercial import CommercialLine, PricingError, direct_cost, finish_lines
-from dekopen_engine.simple_pricing import SimplePricingPolicy, round_sale_up, simple_price
+from dekopen_engine.simple_pricing import SimplePricingPolicy, round_sale_up, simple_price, simple_project
+from dekopen_engine.extra_models import ExtraLine
 from engine.tests.simple_pricing_cases import simple_pricing_cases
 
 
@@ -112,3 +113,41 @@ def test_legacy_direct_cost_keeps_its_existing_m2_contract() -> None:
     assert direct_cost([D('100')], D('2'), D('.08'), D('20'), D('15')) == D('178')
     assert direct_cost([D('100')], D('2'), D('.08'), D('20'), D('15'),
         labor_basis='WINDOW', installation_basis='WINDOW') == D('143')
+
+
+def test_declared_extra_tariffs_are_preserved_without_second_waste_or_installation() -> None:
+    extra = ExtraLine(code='INSTALL', name='Installation', scope='POSITION', kind='SERVICE',
+        quantity=D('1'), unit='EA', cost_rate=D('10'), selling_rate=D('15'),
+        total_cost=D('10'), total_price=D('15'), currency='CLP', source='Synthetic fixture', synthetic=True, installation=True)
+    priced = simple_price([D('100')], D('2'), policy(waste=D('.10')), extras=[extra])
+    assert priced.materials == D('100') and priced.waste == D('10')
+    assert priced.installation == D('0') and priced.labor == D('40')
+    assert priced.extras_cost == D('10') and priced.extras_net == D('15')
+    assert priced.direct_cost == D('160') and priced.exact_unit_price == D('202.5')
+    assert priced.unit_net == D('203') and priced.profit == D('43')
+    with pytest.raises(PricingError, match='incompatible_extra_currency'):
+        simple_price([D('100')], D('2'), policy(), extras=[extra.model_copy(update={'currency': 'USD'})])
+
+
+def test_simple_project_includes_project_services_once_and_keeps_exact_costs() -> None:
+    service = ExtraLine(code='FREIGHT', name='Freight', scope='PROJECT', kind='SERVICE',
+        quantity=D('1'), unit='EA', cost_rate=D('10'), selling_rate=D('15'),
+        total_cost=D('10'), total_price=D('15'), currency='CLP', source='Synthetic fixture', synthetic=True, installation=False)
+    result = simple_project([CommercialLine(1, 3, D('155'), D('194'))], 'CLP', D('.19'), [service])
+    assert result.cost_lines == ((1, D('465')),)
+    assert result.total_cost == D('475') and result.services_cost == D('10')
+    assert result.totals.project_net == D('597')
+    assert result.totals.project_tax == D('113') and result.totals.project_gross == D('710')
+
+
+def test_explicit_free_extra_has_zero_sublines_without_losing_its_identity() -> None:
+    from dekopen_engine.extras import base_price_weight, partition_price
+
+    extra = ExtraLine(code='FREE', name='Explicit free extra', scope='POSITION', kind='SERVICE',
+        quantity=D('1'), unit='EA', cost_rate=D('0'), selling_rate=D('0'), total_cost=D('0'),
+        total_price=D('0'), currency='CLP', source='Synthetic fixture', synthetic=True, installation=False)
+    priced = simple_price([D('0')], D('1'), policy(labor_rate=D('0'), installation_rate=D('0')), extras=[extra])
+    partition = partition_price(priced.unit_net, base_price_weight(priced.unit_net, [extra]),
+        [(extra, extra.total_price)], quantity=1, currency='CLP')
+    assert partition['base_net'] == '0' and partition['sublines'][0]['net'] == '0'
+    assert partition['sublines'][0]['code'] == 'FREE'
