@@ -480,6 +480,7 @@ function PositionWorkspace({
   // straight to the canvas — picking a starter collapses it.
   const [libraryOpen, setLibraryOpen] = useState(!positionId && !copyId);
   const [issuesOpen, setIssuesOpen] = useState(false);
+  const [showExamples, setShowExamples] = useState(false);
   const project = useProject(projectId);
   const generation = useRef(0);
   const inputs = useCanvasStore((s) => s.inputs);
@@ -1037,6 +1038,16 @@ function PositionWorkspace({
           }
         >
           <label className="editor-system-field">
+            <span>
+              <input
+                type="checkbox"
+                checked={showExamples}
+                onChange={(event) => setShowExamples(event.target.checked)}
+              />{" "}
+              Mostrar ejemplos
+            </span>
+          </label>
+          <label className="editor-system-field">
             <span>{t("projects.system")}</span>
             <select
               className="assembly-select"
@@ -1048,9 +1059,14 @@ function PositionWorkspace({
               <option value="">{t("projects.chooseSystem")}</option>
               {systemId &&
                 systems.data &&
-                !systems.data.some((system) => system.id === systemId && isDrawable(system)) && (
+                !systems.data.some(
+                  (system) =>
+                    system.id === systemId &&
+                    isDrawable(system) &&
+                    (!system.is_demo || showExamples),
+                ) && (
                   <option value={systemId}>
-                    Catálogo histórico del producto{options.data?.is_demo ? " · DEMO" : ""}
+                    Serie de esta ventana{options.data?.is_demo ? " · Ejemplo" : ""}
                   </option>
                 )}
               {systems.data?.some(isCompanySeries) ? (
@@ -1062,8 +1078,9 @@ function PositionWorkspace({
                   ))}
                 </optgroup>
               ) : null}
-              {systems.data?.some((system) => isDrawable(system) && system.is_demo) ? (
-                <optgroup label="Laboratorio · DEMO sintético, sin certificación">
+              {showExamples &&
+              systems.data?.some((system) => isDrawable(system) && system.is_demo) ? (
+                <optgroup label="Ejemplos sintéticos, sin certificación">
                   {systems.data
                     ?.filter((system) => isDrawable(system) && system.is_demo)
                     .map((system) => (
@@ -1580,6 +1597,7 @@ function SeriesChooser({
   onRetry(): void;
   onPick(systemId: string): void;
 }): JSX.Element {
+  const [showExamples, setShowExamples] = useState(false);
   if (failed) return <ErrorState title="No se pudieron cargar las series" onRetry={onRetry} />;
   if (systems === undefined) return <LoadingState label="Cargando las series" />;
   const company = systems.filter(isCompanySeries);
@@ -1628,7 +1646,17 @@ function SeriesChooser({
         La serie define perfiles, aperturas y vidrios posibles. Puedes cambiarla después.
       </p>
       {group("Series de la empresa", company, false)}
-      {group("Laboratorio · DEMO sin certificación", lab, true)}
+      {lab.length > 0 && (
+        <label>
+          <input
+            type="checkbox"
+            checked={showExamples}
+            onChange={(event) => setShowExamples(event.target.checked)}
+          />{" "}
+          Mostrar ejemplos
+        </label>
+      )}
+      {showExamples && group("Ejemplos sintéticos, sin certificación", lab, true)}
     </div>
   );
 }

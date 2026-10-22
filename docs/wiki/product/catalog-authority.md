@@ -325,3 +325,18 @@ la captura integra también componentes pendientes de esa sub-PR. Véanse
 [evidencia](../../redesign/captures/dk2-p02/aceptacion-ficha.md) y
 [estado de fases](../../dekopen2/ESTADO.md). La verificación de fabricación
 continúa pendiente de P03.
+
+
+## Lenguaje y ejemplos optativos · P02d
+
+Verificado el 21-10-2026 en `gpt/dk2-p02d-lenguaje-ejemplos`: el glosario de
+Catálogo se comprueba con `frontend/scripts/check-catalog-copy.mjs` desde la
+guarda general. El parser inspecciona literales y JSX, incluyendo expresiones,
+plantillas y concatenaciones; excluye comentarios, identificadores, nombres de
+contrato y tests. Las traducciones compartidas de catálogo/vidrio también se
+inspeccionan. No se cambian las claves API ni el significado de la revisión.
+
+El editor exige activar «Mostrar ejemplos» para ofrecer series sintéticas.
+Una ventana histórica mantiene su selección; los ejemplos no adquieren origen
+manual ni certificación. La edición avanzada conserva sus rutas profundas para
+biblioteca, alta desde cero e inspección, y vuelve a la ficha simple.

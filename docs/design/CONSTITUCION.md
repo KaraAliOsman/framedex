@@ -10,6 +10,19 @@
 
 ---
 
+> **Enmienda 2026-10-21 (DEKOPEN 2, Catálogo).** El encargo del dueño adopta
+> [la ficha editable](../research/2026-10-21-competencia/prompts/P02-ficha-de-serie-ui.md)
+> y su glosario: fabricante → serie → seis pestañas, tabla con pegado desde
+> planilla y pendientes con acción. El origen se expresa como **Del manual ·
+> Del taller · Sugerido**; los vacíos piden **Completar** y las revisiones
+> emitidas se describen como no editables. Esta regla sustituye las etiquetas
+> técnicas y «Sin dato» en Catálogo, sin ocultar ausencia, evidencia ni límites.
+> Los ejemplos sintéticos quedan plegados y el editor los ofrece solo al activar
+> **Mostrar ejemplos**. Se incorpora `--origin-workshop` azul, exclusivamente
+> para el punto de origen del taller del mockup; conserva texto además de color,
+> AA, turquesa para acción y naranja/ámbar para atención humana. Las decisiones
+> pendientes sobre vista de obra, agente y tarifas siguen bajo sus banderas.
+
 ## 0. Por qué existe este documento
 
 Un modelo de lenguaje, cuando no tiene un punto de vista, entrega **el promedio estadístico de lo que ya existe**: tarjetas redondeadas, sombras suaves, un degradado morado, "¡Bienvenido de nuevo!", un dashboard con cuatro KPI. Se ve terminado en segundos y no resuelve nada. Eso es la **UI zombi**: software desechable, sin coherencia y sin alguien detrás que se haya preocupado.

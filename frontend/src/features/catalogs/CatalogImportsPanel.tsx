@@ -59,7 +59,7 @@ type ReviewRow = {
 };
 const STATUS: Record<string, string> = {
   UPLOADED: "En cola",
-  EXTRACTING: "Analizando fuente",
+  EXTRACTING: "Analizando referencia",
   REVIEW_READY: "Requiere revisión",
   CONFIRMED: "Publicado",
   UNDONE: "Publicación deshecha",
@@ -67,11 +67,11 @@ const STATUS: Record<string, string> = {
 };
 const WARNINGS: Record<string, string> = {
   "catalog.no_candidates":
-    "No se encontraron filas. Usa la plantilla oficial o una fuente con texto legible.",
+    "No se encontraron filas. Usa la plantilla oficial o una referencia con texto legible.",
   "catalog.source_parse_failed":
-    "No se pudo leer el texto. Sube una fuente legible para verificar sus valores.",
+    "No se pudo leer el texto. Sube una referencia legible para verificar sus valores.",
   "catalog.candidates_capped":
-    "La fuente excede 2 000 filas. Divide el archivo para revisar el resto.",
+    "La referencia excede 2 000 filas. Divide el archivo para revisar el resto.",
 };
 function inputText(value: unknown): string {
   if (value == null) return "";
@@ -90,10 +90,10 @@ function errorText(error: unknown): string {
   return "No se pudo completar la acción. Conservamos la revisión; intenta de nuevo.";
 }
 function display(value: unknown, column?: CatalogTemplateColumn, field?: string): string {
-  if (value == null || value === "") return "Sin dato";
+  if (value == null || value === "") return "Completar";
   if ((field ?? column?.key) === "finish_authority" && typeof value === "object") {
     const chart = value as FinishAuthority;
-    return `${chart.colors?.length ?? 0} muestras · ${chart.combinations?.length ?? 0} combinaciones · ${chart.source ?? "Fuente sin dato"}`;
+    return `${chart.colors?.length ?? 0} muestras · ${chart.combinations?.length ?? 0} combinaciones · ${chart.source ?? "Referencia por completar"}`;
   }
   if (field === "opening_capabilities" && Array.isArray(value))
     return (
@@ -102,7 +102,7 @@ function display(value: unknown, column?: CatalogTemplateColumn, field?: string)
           (cap) =>
             `${cap.hinge_sides.map((hinge_side) => physicalLabel({ ...cap, hinge_side }, cap.use)).join(" / ")}${cap.leaf_role === "SINGLE" ? "" : ` · ${domainLabel(cap.leaf_role)}`} · ${cap.source}`,
         )
-        .join("; ") || "Sin dato"
+        .join("; ") || "Completar"
     );
   if (field === "paired_leaf_rule" && typeof value === "object") {
     const rule = value as PairedRule;
@@ -297,7 +297,7 @@ export function CatalogImportsPanel({
       setPaste("");
       await load();
       setMessage(
-        "Archivo recibido. La extracción aparecerá aquí para que revises su fuente y sus cambios.",
+        "Archivo recibido. La extracción aparecerá aquí para que revises su referencia y sus cambios.",
       );
     } catch (error) {
       setMessage(errorText(error));
@@ -395,7 +395,7 @@ export function CatalogImportsPanel({
       await load();
       onConfirmed?.();
       setMessage(
-        `Publicación completa: ${response.data.created.length} cambios con fuente y revisor. Puedes deshacerla desde el historial.`,
+        `Publicación completa: ${response.data.created.length} cambios con referencia y revisor. Puedes deshacerla desde el historial.`,
       );
     } catch (error) {
       setDiff(null);
@@ -422,7 +422,7 @@ export function CatalogImportsPanel({
       if (response.status !== 200) throw new ApiError(response.status, response.data);
       await load();
       onConfirmed?.();
-      setMessage("Publicación deshecha. La fuente y la revisión quedan en el historial.");
+      setMessage("Publicación deshecha. La referencia y la revisión quedan en el historial.");
       setTimelineReload((value) => value + 1);
     } catch (error) {
       setMessage(errorText(error));
@@ -450,7 +450,7 @@ export function CatalogImportsPanel({
       <h4>Plantilla XLSX o CSV</h4>
       <p>
         Hojas para sistemas, perfiles, corte, refuerzos, límites, colores, vidrios, herrajes y
-        costos. Una celda vacía queda como Sin dato.
+        costos. Una celda vacía queda pendiente de completar.
       </p>
       <div className="catalog-toolbar">
         <button
@@ -509,7 +509,7 @@ export function CatalogImportsPanel({
       <p className="catalog-ingest-lead">
         {aiReading
           ? "Sube el PDF del proveedor tal como lo recibiste. El asistente lo lee por partes, también las páginas escaneadas, y deja candidatos para que los revises antes de publicar."
-          : "Carga los datos con la plantilla XLSX o CSV: cada fila queda para revisar antes de publicar. Una celda vacía queda como Sin dato."}
+          : "Carga los datos con la plantilla XLSX o CSV: cada fila queda para revisar antes de publicar. Una celda vacía queda pendiente de completar."}
       </p>
       {!canWrite && (
         <p role="status">
@@ -667,7 +667,9 @@ export function CatalogImportsPanel({
             <div className="catalog-toolbar">
               {["REVIEW_READY", "CONFIRMED", "UNDONE"].includes(item.status) && (
                 <button type="button" disabled={busy} onClick={() => void openReview(item)}>
-                  {item.status === "REVIEW_READY" ? "Revisar fuente y cambios" : "Ver fuente"}
+                  {item.status === "REVIEW_READY"
+                    ? "Revisar referencia y cambios"
+                    : "Ver referencia"}
                 </button>
               )}
               {canWrite && item.status === "CONFIRMED" && (
@@ -688,8 +690,8 @@ export function CatalogImportsPanel({
             </button>
           </header>
           <p>
-            Las filas con dudas o errores están desmarcadas. Lo ausente queda Sin dato; selecciona
-            una fila solo después de contrastarla con la fuente.
+            Las filas con dudas o errores están desmarcadas. Lo ausente queda pendiente de
+            completar; selecciona una fila solo después de contrastarla con la referencia.
           </p>
           {canWrite ? (
             <button
@@ -771,7 +773,7 @@ export function CatalogImportsPanel({
                       </span>
                       <span>
                         {row.confidence === "HIGH_CANDIDATE"
-                          ? "Lectura con fuente"
+                          ? "Lectura con referencia"
                           : row.confidence === "LOW"
                             ? "Lectura dudosa"
                             : "Requiere revisión"}
@@ -789,7 +791,7 @@ export function CatalogImportsPanel({
                 <div className="catalog-review-heading">
                   <span>Campo</span>
                   <span>Valor revisado</span>
-                  <span>Fuente del proveedor</span>
+                  <span>Ficha del proveedor</span>
                 </div>
                 {sheet.columns.map((column) => {
                   if (column.key === "paired_leaf_rule") return null;
@@ -840,7 +842,8 @@ export function CatalogImportsPanel({
                                 id: row.key,
                                 sku: String(row.values.sku ?? ""),
                                 name: String(
-                                  row.values.name ?? "Sin dato: falta el nombre del herraje",
+                                  row.values.name ??
+                                    "Falta información: falta el nombre del herraje",
                                 ),
                               }))}
                             onChange={(next) => patch(selected.key, column.key, next)}
@@ -860,7 +863,7 @@ export function CatalogImportsPanel({
                               patch(selected.key, column.key, event.target.value || null)
                             }
                           >
-                            <option value="">Sin dato</option>
+                            <option value="">Completar</option>
                             {Object.entries(column.choices ?? { Sí: "Sí", No: "No" }).map(
                               ([key, label]) => (
                                 <option key={key} value={key}>
@@ -873,7 +876,7 @@ export function CatalogImportsPanel({
                           <input
                             id={id}
                             value={inputText(value)}
-                            placeholder="Sin dato"
+                            placeholder="Completar"
                             inputMode={
                               ["decimal", "positive"].includes(column.kind) ? "decimal" : undefined
                             }
@@ -897,7 +900,7 @@ export function CatalogImportsPanel({
                         column.key === "finishes" ||
                         /\d+[.,]\d{4,}/u.test(evidence.quote ?? "") ? (
                           <details>
-                            <summary>Ver texto original de la fuente</summary>
+                            <summary>Ver texto original de la referencia</summary>
                             <div>
                               <SourceHighlight quote={evidence.quote} literal={evidence.literal} />
                             </div>
@@ -908,8 +911,8 @@ export function CatalogImportsPanel({
                         {evidence.confidence !== "HIGH" && (
                           <strong>
                             {evidence.confidence === "LOW"
-                              ? "Lectura dudosa · revisa la fuente"
-                              : "Sin dato · la fuente no lo declara"}
+                              ? "Lectura dudosa · revisa la referencia"
+                              : "Falta · la referencia no lo declara"}
                           </strong>
                         )}
                         {evidence.proposed != null && value == null && (
@@ -1008,7 +1011,8 @@ export function CatalogImportsPanel({
                       onChange={(event) => setReviewed(event.target.checked)}
                     />
                     <span>
-                      Revisé la fuente y los cambios seleccionados. Autorizo su publicación técnica.
+                      Revisé la referencia y los cambios seleccionados. Autorizo su publicación
+                      técnica.
                     </span>
                   </label>
                   <button
@@ -1091,7 +1095,7 @@ function ComponentFields({
                   value={inputText(component[field])}
                   onChange={(event) => patch(index, field, event.target.value)}
                 >
-                  <option value="">Sin dato</option>
+                  <option value="">Completar</option>
                   {Object.entries({
                     EA: "Unidad",
                     unit: "Unidad del proveedor",
@@ -1226,7 +1230,7 @@ function DiffFields({
                         />
                       </fieldset>
                     ) : (
-                      <p>Sin autoridad de accesorios.</p>
+                      <p>Faltan accesorios. Agrégalos desde el manual.</p>
                     )}
                   </details>
                 ))}
@@ -1262,7 +1266,7 @@ function DiffFields({
                 description: "Descripción",
                 category: "Clasificación",
                 qty: "Cantidad",
-                source: "Fuente",
+                source: "Documento",
               } as Record<string, string>
             )[key] ??
             "Dato de catálogo";

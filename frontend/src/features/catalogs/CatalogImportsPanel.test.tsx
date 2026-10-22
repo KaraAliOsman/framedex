@@ -47,8 +47,8 @@ async function openReview() {
     </ConfirmProvider>,
   );
   fireEvent.click(screen.getByRole("button", { name: "Importar catálogo" }));
-  fireEvent.click(await screen.findByRole("button", { name: "Revisar fuente y cambios" }));
-  await screen.findByText("Fuente del proveedor");
+  fireEvent.click(await screen.findByRole("button", { name: "Revisar referencia y cambios" }));
+  await screen.findByText("Ficha del proveedor");
 }
 describe("CatalogImportsPanel", () => {
   beforeEach(() => {
@@ -110,7 +110,7 @@ describe("CatalogImportsPanel", () => {
     fireEvent.click(screen.getByRole("button", { name: "Comparar cambios" }));
     const publish = await screen.findByRole("button", { name: "Publicar catálogo revisado" });
     expect(publish).toBeDisabled();
-    fireEvent.click(screen.getByLabelText(/Revisé la fuente/));
+    fireEvent.click(screen.getByLabelText(/Revisé la referencia/));
     fireEvent.click(publish);
     await waitFor(() => expect(api.catalogImportPublish).toHaveBeenCalledTimes(1));
     expect(vi.mocked(api.catalogImportPublish).mock.calls[0]?.[1]).toMatchObject({
@@ -124,7 +124,7 @@ describe("CatalogImportsPanel", () => {
     fireEvent.click(screen.getByLabelText("Incluir fila 1"));
     fireEvent.click(screen.getByRole("button", { name: "Comparar cambios" }));
     await screen.findByRole("button", { name: "Publicar catálogo revisado" });
-    fireEvent.click(screen.getByLabelText(/Revisé la fuente/));
+    fireEvent.click(screen.getByLabelText(/Revisé la referencia/));
     fireEvent.change(screen.getByLabelText(/^Profundidad/), { target: { value: "70.00" } });
     expect(
       screen.queryByRole("button", { name: "Publicar catálogo revisado" }),

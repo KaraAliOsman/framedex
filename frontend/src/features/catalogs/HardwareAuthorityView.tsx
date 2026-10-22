@@ -37,10 +37,10 @@ export function HardwareAuthorityView({ value }: { value: unknown }): JSX.Elemen
         </strong>
         {authority.synthetic ? " · DEMO, sin certificación" : ""}
       </p>
-      <p>Fuente: {authority.source}</p>
+      <p>Documento: {authority.source}</p>
       <p>
         Modifica las reglas con la plantilla de catálogo. Revisa el diff antes de publicar; la
-        revisión emitida conserva su autoridad.
+        revisión emitida conserva sus datos.
       </p>
       <ul>
         {authority.components.map((component, index) => (
@@ -49,7 +49,7 @@ export function HardwareAuthorityView({ value }: { value: unknown }): JSX.Elemen
             <p className="catalog-hardware-rule">
               {component.quantity.base} unidades declaradas
               {component.quantity.axis
-                ? ` + ${component.quantity.increment ?? "Sin dato"} por cada ${fmtMm(component.quantity.step)} ${component.quantity.axis === "WEIGHT" ? "kg" : "mm"} de ${axes[component.quantity.axis]} sobre ${fmtMm(component.quantity.threshold)} ${component.quantity.axis === "WEIGHT" ? "kg" : "mm"}`
+                ? ` + ${component.quantity.increment ?? "Completar"} por cada ${fmtMm(component.quantity.step)} ${component.quantity.axis === "WEIGHT" ? "kg" : "mm"} de ${axes[component.quantity.axis]} sobre ${fmtMm(component.quantity.threshold)} ${component.quantity.axis === "WEIGHT" ? "kg" : "mm"}`
                 : ""}
               .
               {component.length
@@ -57,7 +57,7 @@ export function HardwareAuthorityView({ value }: { value: unknown }): JSX.Elemen
                 : ""}
             </p>
             <details>
-              <summary>Fuente del componente</summary>
+              <summary>Ficha del componente</summary>
               <p>{component.source}</p>
             </details>
           </li>

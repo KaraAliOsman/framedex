@@ -2237,3 +2237,13 @@ Treinta y una unitarias y dos E2E integrados pasan, con doce capturas revisadas,
 axe y extremos de 300 perfiles. La ruta se conecta en P02e y la verificación
 persistida permanece en P03. Referencias: [catálogo](product/catalog-authority.md),
 [evidencia](../redesign/captures/dk2-p02/aceptacion-ficha.md).
+
+
+## 2026-10-21 · P02d: glosario y ejemplos optativos
+
+El catálogo aplica el lenguaje de taller y una guarda AST con pruebas impide
+reintroducir términos prohibidos en sus textos y traducciones. Los selectores
+del editor requieren «Mostrar ejemplos»; las ventanas históricas conservan su
+serie. La edición avanzada mantiene rutas profundas y regresión de navegador.
+La enmienda de Constitución registra el encargo actual sin cambiar permisos.
+Véase [catálogo](product/catalog-authority.md).

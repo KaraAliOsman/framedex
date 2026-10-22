@@ -243,7 +243,7 @@ export const schemas: Record<Resource, Group[]> = {
           kind: "select",
           options: ["UP", "DOWN", "NEAREST"],
         },
-        { ...text("cut_rule.source", 1000), label: "Fuente de la regla de corte" },
+        { ...text("cut_rule.source", 1000), label: "Manual de la regla de corte" },
       ],
     },
     {
@@ -257,7 +257,7 @@ export const schemas: Record<Resource, Group[]> = {
         },
         {
           ...text("coupling_rule.source", 1000),
-          label: "Fuente del fabricante o revisión técnica",
+          label: "Manual o revisión del taller",
         },
       ],
     },
@@ -293,7 +293,7 @@ export const schemas: Record<Resource, Group[]> = {
           ...decimal("reinforcement_rule.screw_weight_kg", 6, true),
           label: "Masa del tornillo (kg)",
         },
-        { ...text("reinforcement_rule.source", 1000), label: "Fuente de la regla de refuerzo" },
+        { ...text("reinforcement_rule.source", 1000), label: "Manual de la regla de refuerzo" },
       ],
     },
     {

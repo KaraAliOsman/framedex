@@ -20,7 +20,7 @@ const labels = {
   max_leaf_weight_kg: "Peso máximo de hoja (kg)",
   min_aspect_ratio: "Relación alto/ancho mínima",
   max_aspect_ratio: "Relación alto/ancho máxima",
-  source: "Fuente del límite",
+  source: "Manual de estos límites",
 };
 export function CatalogLimitsEditor({
   family,
@@ -50,11 +50,11 @@ export function CatalogLimitsEditor({
   }
   return (
     <fieldset className="catalog-group">
-      <legend>Límites dimensionales y fuente</legend>
+      <legend>Límites de tamaño y manual</legend>
       {!limits.length && (
         <p>
-          Sin dato: declara los límites del proveedor por apertura antes de calcular productos
-          nuevos.
+          Falta información: declara los límites del proveedor por apertura antes de calcular
+          productos nuevos.
         </p>
       )}
       {limits.map((limit, index) => (
@@ -91,7 +91,7 @@ export function CatalogLimitsEditor({
                 <input
                   type="text"
                   inputMode={field === "source" ? undefined : "decimal"}
-                  placeholder="Sin dato"
+                  placeholder="Completar"
                   value={limit[field as keyof typeof limit] ?? ""}
                   onChange={(event) => patch(index, field, event.target.value)}
                 />

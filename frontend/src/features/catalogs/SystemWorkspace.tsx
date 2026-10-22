@@ -129,7 +129,7 @@ function ArticleCard({
             <dt>Pérdida de soldadura</dt>
             <dd>
               {article.welding_loss_mm == null
-                ? "Sin dato"
+                ? "Completar"
                 : `${fmtMm(article.welding_loss_mm)} mm`}
             </dd>
           </div>
@@ -327,7 +327,7 @@ export function SystemWorkspaceView({
       .catch(() => {
         if (alive)
           setEvidenceError(
-            "No se pudieron cargar las fuentes. Reintenta antes de revisar sus valores.",
+            "No se pudieron cargar las referencias. Reintenta antes de revisar sus valores.",
           );
       });
     return () => {
@@ -433,7 +433,7 @@ export function SystemWorkspaceView({
     beadsByArticle.set(bead.bead_article_id, (beadsByArticle.get(bead.bead_article_id) ?? 0) + 1);
   }
 
-  // Fuentes: human-readable name for the row each evidence attests.
+  // Documentos: human-readable name for the row each evidence attests.
   const targetName = (row: EvidenceRow): string => {
     if (row.authority_table === "profile_systems" && row.row_id === system.id) return system.name;
     const article = articles.find((a) => a.id === row.row_id);
@@ -716,17 +716,17 @@ export function SystemWorkspaceView({
                     ) : kit.authority_provenance?.state === "VERIFIED" ? (
                       "Verificado con evidencia"
                     ) : (
-                      "Declarado; consulta su fuente"
+                      "Declarado; consulta su referencia"
                     )}
                   </span>
                   <span>
                     {kit.min_leaf_width_mm == null || kit.max_leaf_width_mm == null
-                      ? "Ancho de hoja: Sin dato"
+                      ? "Completar ancho de hoja"
                       : `${fmtMm(kit.min_leaf_width_mm)}–${fmtMm(kit.max_leaf_width_mm)} mm`}
                   </span>
                   <span>
                     {kit.min_leaf_height_mm == null || kit.max_leaf_height_mm == null
-                      ? "Alto de hoja: Sin dato"
+                      ? "Completar alto de hoja"
                       : `${fmtMm(kit.min_leaf_height_mm)}–${fmtMm(kit.max_leaf_height_mm)} mm`}
                   </span>
                 </button>
@@ -840,8 +840,8 @@ export function SystemWorkspaceView({
           <section id="ws.policies" className="catalog-field-target" tabIndex={-1}>
             <h3>Políticas de fabricación</h3>
             <p>
-              Estas autoridades versionadas se sellan al emitir. Una corrección requiere una nueva
-              política del responsable técnico; las revisiones emitidas conservan la anterior.
+              Estos ajustes se fijan al emitir. Una corrección requiere una nueva política del
+              responsable técnico; las revisiones emitidas conservan la anterior.
             </p>
             {(workspace.manufacturing_policies ?? []).map((policy) => {
               const sources = (evidenceRows ?? []).filter((row) => row.row_id === policy.id);
@@ -857,13 +857,13 @@ export function SystemWorkspaceView({
                   </h4>
                   <p>
                     {policy.id === null
-                      ? "Sin dato: falta una política declarada por el responsable técnico."
+                      ? "Falta información: falta una política declarada por el responsable técnico."
                       : policy.valid
                         ? `Declarada · revisión ${policy.version}`
                         : "Bloqueada: la política no cumple el contrato del motor. El responsable técnico debe publicar una revisión válida."}
                   </p>
                   {policy.global_authority ? (
-                    <p>Autoridad de plataforma; la organización puede consultarla.</p>
+                    <p>Configuración de la aplicación; tu taller puede consultarla.</p>
                   ) : null}
                   {sources.length ? (
                     sources.map((source) => (
@@ -877,8 +877,8 @@ export function SystemWorkspaceView({
                     ))
                   ) : (
                     <p>
-                      Fuente documental: Sin dato. La validez del contrato no acredita certificación
-                      del fabricante.
+                      Documento documental: Completar. La validez del contrato no acredita
+                      certificación del fabricante.
                     </p>
                   )}
                 </article>
@@ -1115,7 +1115,7 @@ export function SystemWorkspaceView({
             <h3>{wst("sources")}</h3>
           </header>
           <p className="ws-hint">
-            Cada evidencia conserva su fuente, revisor y fecha. Una corrección no se atribuye al
+            Cada evidencia conserva su referencia, revisor y fecha. Una corrección no se atribuye al
             fabricante.
           </p>
           {evidenceError ? <p role="alert">{evidenceError}</p> : null}
@@ -1144,7 +1144,7 @@ export function SystemWorkspaceView({
                     <td>
                       <details>
                         <summary>Valor declarado</summary>
-                        <p>{row.value_text ?? "Sin dato"}</p>
+                        <p>{row.value_text ?? "Completar"}</p>
                         <SourceHighlight quote={row.source_quote} literal={row.source_literal} />
                       </details>
                     </td>
@@ -1178,7 +1178,7 @@ export function SystemWorkspaceView({
                         SERIES: "Serie",
                         GLOBAL: "Catálogo global",
                         ORG: "Organización",
-                      }[row.scope ?? ""] ?? "Sin dato"}
+                      }[row.scope ?? ""] ?? "Completar"}
                     </td>
                     <td>
                       <StatusBadge
