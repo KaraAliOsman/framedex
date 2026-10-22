@@ -1,0 +1,6 @@
+/* The visual-review selector stays separate from the enlarged product text. */
+.supplier-prices-page__modes .ui-button {
+  font-size: 13px;
+  min-height: 32px;
+  padding: 4px 8px;
+}

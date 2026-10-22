@@ -20,6 +20,16 @@ let readAuthContext: () => Promise<ApiAuthContext> = async () => ({
   organizationId: null,
 });
 
+type CatalogReviewHandler = (payload: unknown) => Promise<string | null>;
+let reviewCatalogChange: CatalogReviewHandler | null = null;
+
+export function configureCatalogChangeReview(handler: CatalogReviewHandler): () => void {
+  reviewCatalogChange = handler;
+  return () => {
+    if (reviewCatalogChange === handler) reviewCatalogChange = null;
+  };
+}
+
 export function configureApiAuthContext(provider: () => Promise<ApiAuthContext>): () => void {
   readAuthContext = provider;
   return () => {
@@ -48,6 +58,21 @@ export async function apiMutator<T>(url: string, options: RequestInit): Promise<
   const payload: unknown =
     text.length === 0 ? null : contentType.includes("application/json") ? JSON.parse(text) : text;
   if (!response.ok) {
+    const rejection = payload as { error?: { code?: string }; golden_review?: unknown } | null;
+    if (
+      response.status === 409 &&
+      rejection?.error?.code === "catalog_reference_changed" &&
+      rejection.golden_review &&
+      reviewCatalogChange &&
+      !headers.has("X-Catalog-Review")
+    ) {
+      const accepted = await reviewCatalogChange(rejection.golden_review);
+      if (accepted && !options.signal?.aborted) {
+        headers.set("X-Catalog-Review", accepted);
+        // Same URL, body and tenant; a second rejection returns to the caller.
+        return apiMutator<T>(url, { ...options, headers });
+      }
+    }
     throw new ApiError(response.status, payload);
   }
   return { data: payload, status: response.status, headers: response.headers } as T;
