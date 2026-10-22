@@ -7,15 +7,36 @@
       "rounds": {
         "start": {
           "reply": "Creo la obra borrador de Rodrigo Soto y agrego las ventanas de su mensaje.",
-          "steps": [{"kind": "create_project", "name": "Casa Soto", "client": "Rodrigo Soto"}],
+          "steps": [
+            {
+              "kind": "create_project",
+              "name": "Casa Soto",
+              "client": "Rodrigo Soto"
+            }
+          ],
           "plan": [
-            {"label": "Crear la obra borrador"},
-            {"label": "Agregar las ventanas del mensaje"},
-            {"label": "Calcular el precio y el PDF borrador"}
+            {
+              "label": "Crear la obra borrador"
+            },
+            {
+              "label": "Agregar las ventanas del mensaje"
+            },
+            {
+              "label": "Calcular el precio y el PDF borrador"
+            }
           ],
           "warnings": [],
           "questions": [],
-          "claims": []
+          "claims": [],
+          "tool_calls": [
+            {
+              "name": "list_catalog_options",
+              "arguments": {
+                "system_id": "{{usual.system_id}}",
+                "kind": "opening"
+              }
+            }
+          ]
         },
         "project": {
           "reply": "Agregué las ventanas del mensaje a la obra y preparé el precio con tus reglas. No envié nada: el envío queda para ti.",
@@ -25,27 +46,83 @@
               "label": "Ventanas del mensaje",
               "apply": true,
               "ops": [
-                {"op": "add_position", "system_id": "{{usual.system_id}}", "template": "TILT_TURN_LEFT",
-                 "dims": {"width_mm": "1200", "height_mm": "1400"}, "location": "Living", "quantity": 2,
-                 "glass_sku": "{{usual.glass_article_sku}}", "color": "{{usual.color}}",
-                 "origin": {"quote": "2 ventanas oscilobatientes para el living de 1,20 por 1,40"}},
-                {"op": "add_position", "system_id": "{{usual.system_id}}", "template": "FIXED",
-                 "dims": {"width_mm": "600", "height_mm": "600"}, "location": "Baño", "quantity": 1,
-                 "glass_sku": "{{usual.glass_article_sku}}", "color": "{{usual.color}}",
-                 "origin": {"quote": "una del baño chiquita de 60 x 60 fija"}},
-                {"op": "add_position", "system_id": "{{usual.system_id}}", "template": "TILT_TURN_LEFT",
-                 "dims": {"width_mm": "1200", "height_mm": "1000"}, "location": "Dormitorio", "quantity": 1,
-                 "glass_sku": "{{usual.glass_article_sku}}", "color": "{{usual.color}}",
-                 "origin": {"quote": "una para el dormitorio de 1,20 x 1,00",
-                            "reasons": {"template": "El mensaje no dice cómo abre; usé oscilobatiente como en el living."}}},
-                {"op": "add_position", "system_id": "{{usual.system_id}}", "template": "FIXED",
-                 "dims": {"width_mm": "900", "height_mm": "1100"}, "location": "Cocina", "quantity": 1,
-                 "glass_sku": "{{usual.glass_article_sku}}", "color": "{{usual.color}}",
-                 "origin": {"quote": "otra para la cocina de 90 x 1,10",
-                            "reasons": {"template": "El mensaje no dice cómo abre; la dejé fija."}}}
+                {
+                  "op": "add_position",
+                  "system_id": "{{usual.system_id}}",
+                  "template": "{{opening:oscilobatiente}}",
+                  "dims": {
+                    "width_mm": "1200",
+                    "height_mm": "1400"
+                  },
+                  "location": "Living",
+                  "quantity": 2,
+                  "glass_sku": "{{usual.glass_article_sku}}",
+                  "color": "{{usual.color}}",
+                  "origin": {
+                    "quote": "2 ventanas oscilobatientes para el living de 1,20 por 1,40"
+                  }
+                },
+                {
+                  "op": "add_position",
+                  "system_id": "{{usual.system_id}}",
+                  "template": "{{opening:fij|FIXED}}",
+                  "dims": {
+                    "width_mm": "600",
+                    "height_mm": "600"
+                  },
+                  "location": "Baño",
+                  "quantity": 1,
+                  "glass_sku": "{{usual.glass_article_sku}}",
+                  "color": "{{usual.color}}",
+                  "origin": {
+                    "quote": "una del baño chiquita de 60 x 60 fija"
+                  }
+                },
+                {
+                  "op": "add_position",
+                  "system_id": "{{usual.system_id}}",
+                  "template": "{{opening:oscilobatiente}}",
+                  "dims": {
+                    "width_mm": "1200",
+                    "height_mm": "1000"
+                  },
+                  "location": "Dormitorio",
+                  "quantity": 1,
+                  "glass_sku": "{{usual.glass_article_sku}}",
+                  "color": "{{usual.color}}",
+                  "origin": {
+                    "quote": "una para el dormitorio de 1,20 x 1,00",
+                    "reasons": {
+                      "template": "El mensaje no dice cómo abre; usé oscilobatiente como en el living."
+                    }
+                  }
+                },
+                {
+                  "op": "add_position",
+                  "system_id": "{{usual.system_id}}",
+                  "template": "{{opening:fij|FIXED}}",
+                  "dims": {
+                    "width_mm": "900",
+                    "height_mm": "1100"
+                  },
+                  "location": "Cocina",
+                  "quantity": 1,
+                  "glass_sku": "{{usual.glass_article_sku}}",
+                  "color": "{{usual.color}}",
+                  "origin": {
+                    "quote": "otra para la cocina de 90 x 1,10",
+                    "reasons": {
+                      "template": "El mensaje no dice cómo abre; la dejé fija."
+                    }
+                  }
+                }
               ]
             },
-            {"kind": "quote_draft", "label": "Precio y PDF borrador", "apply": true}
+            {
+              "kind": "quote_draft",
+              "label": "Precio y PDF borrador",
+              "apply": true
+            }
           ],
           "plan": [],
           "warnings": [],

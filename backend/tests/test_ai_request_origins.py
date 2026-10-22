@@ -114,11 +114,18 @@ def test_recorded_request_replays_start_then_project_with_usual_values():
     payload = {"goal": REQUEST, "context": {"usual": USUAL}, "observations": []}
     start = _recorded_round(payload)
     assert start["steps"][0]["kind"] == "create_project"
-    payload["observations"] = [{"surface": "create_project", "context": {"project_id": str(uuid4())}}]
+    assert start["tool_calls"][0]["arguments"]["system_id"] == SYSTEM
+    payload["observations"] = [
+        {"surface": "create_project", "context": {"project_id": str(uuid4())}},
+        {"surface": "list_catalog_options", "context": {
+            "opening_choices": [{"label": "Oscilobatiente de una hoja"}], "openings": ["FIXED"]}},
+    ]
     project = _recorded_round(payload)
     ops = project["steps"][0]["ops"]
     assert {op["system_id"] for op in ops} == {SYSTEM}
     assert {op["glass_sku"] for op in ops} == {GLASS}
+    assert [op["template"] for op in ops] == [
+        "Oscilobatiente de una hoja", "FIXED", "Oscilobatiente de una hoja", "FIXED"]
     assert _recorded_round({"goal": "otra cosa", "context": {}, "observations": []}) is None
 
 
