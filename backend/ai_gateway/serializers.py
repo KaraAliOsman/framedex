@@ -250,6 +250,10 @@ class AiAgentRunSerializer(serializers.Serializer):
     # charges, committed purchases, catalog publication and physical release
     # always keep the human action the domain requires.
     autonomy = serializers.ChoiceField(choices=["propose", "approve", "draft"], required=False, default="propose")
+    # Sealed by the server at enqueue from the verified token, never from the
+    # client: an owner's run keeps the second factor of the session that
+    # delegated it (owner decision, 22-10-2026).
+    session_aal = serializers.ChoiceField(choices=["aal1", "aal2"], required=False, default="aal1")
 
 
 class AiAgentResultSerializer(serializers.Serializer):

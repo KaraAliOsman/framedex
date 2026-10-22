@@ -36,8 +36,10 @@ Verificado en la rama (no en main todavía):
 - UI: Ctrl K ofrece «Pedir a DEKOPEN» (prefija, no envía); el asistente se
   acopla como panel lateral (`VITE_AGENTE_PANEL_LATERAL`); la propuesta muestra
   el mensaje con frases numeradas, supuestos y «Deshacer todo».
-- Límite conocido: el trabajador corre con `aal1`; un OWNER con «Omitir todo»
-  no puede crear la obra (la base exige `aal2`). Decisión del dueño pendiente.
+- Decisión del dueño (22-10-2026): el trabajo del agente hereda el `aal2` de la
+  sesión que lo delegó. El servidor lo sella al encolar desde el token
+  verificado (`session_aal`); la cola genérica descarta cualquier valor del
+  cliente. Sin sello corre en `aal1`. Un OWNER con «Omitir todo» crea la obra.
 
 ## Adjuntos compatibles · 18-10-2026 · alcance por implementar
 
