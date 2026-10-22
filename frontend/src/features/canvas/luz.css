@@ -8,6 +8,7 @@
     grid-template-columns: minmax(0, 1fr) 320px;
     grid-template-rows: minmax(0, 1fr) 28px;
     grid-template-areas: "canvas side" "status side";
+    container: assembly-editor / inline-size;
   }
   .assembly-editor.assembly-editor .assembly-canvas {
     background:
@@ -35,9 +36,9 @@
   }
   .assembly-editor.assembly-editor .assembly-tools.assembly-tools .tool-button {
     flex: none;
-    width: 40px;
-    height: 40px;
-    min-height: 40px;
+    width: 36px;
+    height: 36px;
+    min-height: 36px;
     padding: 0;
     justify-content: center;
     border-radius: var(--r-1);
@@ -108,5 +109,15 @@
   }
   .assembly-editor.assembly-editor .assembly-side.is-open {
     margin: var(--space-3);
+  }
+}
+/* A narrow editor (1280 px screen with the window list open) has no room for
+   zoom, pill and readout in one row: the pill rises above the zoom row. */
+@container assembly-editor (max-width: 1117px) {
+  .assembly-editor.assembly-editor .assembly-tools.assembly-tools {
+    bottom: calc(28px + var(--space-3) + 48px);
+  }
+  .assembly-editor.assembly-editor .editor-issue-chips {
+    bottom: calc(28px + var(--space-3) + 48px + 48px + var(--space-3));
   }
 }
