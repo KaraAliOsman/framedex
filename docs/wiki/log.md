@@ -2294,3 +2294,12 @@ corregir libremente conserva origen del taller. La integración detectó y corri
 el enlace de evidencias a campos anidados de corte/refuerzo. Las propuestas de
 calibración también respetan los rangos de almacenamiento. P03 sigue pendiente
 de mapeo de precios e interfaz; véase product/catalog-authority.md.
+
+## 2026-10-21 · Preparación P03d: precios mapeados
+
+Inspección de XLSX/CSV, sugerencias de columnas y muestra de diez filas. Una
+confirmación ligada al archivo completo aplica costos del taller con auditoría
+y sin sobrescritura implícita. Verificado con 44 unitarias y ocho integraciones
+PostgreSQL; la interfaz del asistente sigue pendiente. El CI de P03b detectó
+tres grupos sin traducción; el glosario se completó conservando su guarda.
+Véase product/catalog-authority.md.

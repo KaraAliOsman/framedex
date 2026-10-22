@@ -350,3 +350,19 @@ a P03; P01 deja preparado su contrato y su bloqueo.
   antes de ofrecerse; el motor puro mantiene sus capacidades originales.
 - Validación: 74 unitarias de ingesta/intercambio y 11 integraciones de
   publicación, intercambio y ajustes. Faltan el mapeo de precios y la interfaz.
+
+### P03d · Mapeo exacto de precios del proveedor
+
+- Inspección de XLSX/CSV con sugerencias por encabezado y diez filas de muestra.
+  Los códigos conservan ceros iniciales; los precios de Excel se leen del XML y
+  los de texto usan el separador declarado. No se convierten kilos a metros.
+- La vista previa valida todo el archivo y devuelve diez filas y el total.
+  Confirmar exige un token ligado al archivo, mapeo y lista revisados; aplica
+  todas las filas en una transacción. No sobrescribe códigos ya existentes.
+- Solo el dueño puede inspeccionar o guardar costos. Los precios son del taller
+  y la auditoría registra actor, motivo, archivo y SHA256. No hay tabla paralela
+  ni nuevos permisos SQL. El importador XLSX anterior conserva su contrato.
+- 44 unitarias de precios/importación y ocho integraciones PostgreSQL aprobadas;
+  API/OpenAPI regenerados. La interfaz del asistente se conecta a continuación.
+- El CI de P03b detectó tres grupos nuevos sin traducción. Se añadieron al
+  glosario sin debilitar su prueba exhaustiva: 211 comprobaciones aprobadas.
