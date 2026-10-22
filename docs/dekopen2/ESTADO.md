@@ -292,3 +292,8 @@ a P03; P01 deja preparado su contrato y su bloqueo.
   un código de proveedor adicional.
 - P02 espera sus cuatro controles por sub-PR y fusiones ordenadas. P03–P11
   continúan pendientes; no hay activación de producción ni precios comerciales.
+- Database Gate detectó que la vista previa de marca usaba la zona predeterminada
+  de Django para la vigencia, distinta del día de Santiago usado al preparar la
+  emisión. La vista previa ahora declara Santiago explícitamente. Dos regresiones
+  con reloj fijo a ambos lados de medianoche comprueban la fecha del PDF, incluso
+  con otra zona activa, y conservan precio, moneda y huella de la revisión.
