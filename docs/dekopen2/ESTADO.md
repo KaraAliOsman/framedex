@@ -8,7 +8,7 @@ Producción y precios comerciales requieren autorización aparte.
 | ---- | -------------------------------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | P01  | Catálogo v2: backend, origen, niveles y plantillas | Hecha                                                                                    | [P01a #164](https://github.com/KaraAliOsman/framedex/pull/164), [P01b #165](https://github.com/KaraAliOsman/framedex/pull/165), [P01c #166](https://github.com/KaraAliOsman/framedex/pull/166), [P01d #167](https://github.com/KaraAliOsman/framedex/pull/167) y [P01e #168](https://github.com/KaraAliOsman/framedex/pull/168) fusionadas |
 | P02  | Ficha de serie editable                            | Hecha                                                                                    | Sub-PR [#169](https://github.com/KaraAliOsman/framedex/pull/169)–[#173](https://github.com/KaraAliOsman/framedex/pull/173) fusionadas                                                                                                                                                                                                      |
-| P03 | Alta de serie y ventana de prueba | Implementada; fusiones en curso | [#174](https://github.com/KaraAliOsman/framedex/pull/174)–[#176](https://github.com/KaraAliOsman/framedex/pull/176) fusionadas; #177–#181 pendientes |
+| P03 | Alta de serie y ventana de prueba | Implementada; fusión final en curso | #174–#180 fusionadas; [P03h #181](https://github.com/KaraAliOsman/framedex/pull/181) espera sus cuatro controles |
 | P04 | Precio simple automático | En curso: configuración de Empresa lista; interfaz de obra pendiente | [#182](https://github.com/KaraAliOsman/framedex/pull/182)–[#186](https://github.com/KaraAliOsman/framedex/pull/186), `gpt/dk2-p04f-empresa-precios` |
 | P05  | Navegación, Hoy y Obras                            | Pendiente                                                                                | —                                                                                                                                                                                                                                                                                                                                          |
 | P06  | Mesa de la obra y edición directa                  | Pendiente                                                                                | —                                                                                                                                                                                                                                                                                                                                          |
@@ -411,3 +411,154 @@ a P03; P01 deja preparado su contrato y su bloqueo.
   pruebas aprobadas y dos xfail existentes; mypy y Ruff aprobados.
 - Faltan persistencia/RLS del caso del taller, protección de ediciones, doble
   lectura, mapeo de precios y asistente visual; P03 no está terminada.
+
+### P03b · Verificación persistida y protección de la prueba
+
+- API de comparación, propuestas, confirmación, historial de pruebas y progreso
+  reanudable. Los resultados se recalculan en el servidor; un token liga la
+  confirmación a entrada, resultado y catálogo vigentes. El clic puede confirmar
+  explícitamente los valores sugeridos; nunca los atribuye al fabricante.
+- Caso por empresa inmutable con entrada, salida esperada y autor. RLS impide
+  leer otra empresa; ni el backend ni el usuario privilegiado reescriben o borran
+  el caso. La referencia impide borrar la serie que lo originó.
+- La ficha, el CRUD avanzado y publicación/deshacer de importaciones comparan el
+  lote completo antes del commit. Si cambia la ventana, devuelven antes/después
+  y un token de revisión ligado al cambio exacto. La edición no confirmada se
+  revierte íntegra; la confirmada conserva el caso original e invalida la
+  verificación de fabricación hasta volver a comprobar la serie.
+- Progreso con revisión optimista y borrador técnico. Los costos no se guardan
+  en ese estado compartido: conservan la API y permisos del dueño.
+- Pruebas locales: 24 integraciones de prueba/ficha/precios más una nueva de
+  publicación protegida; 23 pgTAP de RLS/inmutabilidad; 12 unitarias del contrato.
+  La suite completa del backend aprobó 1.669 pruebas y detectó el inventario de
+  cinco rutas nuevas; corregido ese inventario, sus 17 comprobaciones dirigidas
+  pasan. Ruff, guardas, tipos, formato y build aprobados; API regenerada.
+- Falta interfaz, doble lectura y mapeo de precios. Sin activación de producción.
+
+### P03c · Dos lecturas independientes del manual
+
+- Dos llamadas con instrucciones distintas y claves idempotentes separadas. La
+  segunda nunca recibe la respuesta de la primera. Cada celda conserva ambas
+  lecturas, citas, confianza y auditorías; el acuerdo exige soporte literal en
+  ambas y una identidad completa y única, sin depender del orden de las filas.
+- Solo los acuerdos quedan como propuestas. Las diferencias no publican un
+  valor hasta la elección humana. Elegir una lectura citada conserva su origen
+  documental tras publicar; corregir libremente queda como dato del taller.
+  Fallar la segunda lectura no devuelve propuestas de una sola extracción.
+- Se rechazan números binarios y no finitos antes de crear candidatos. La
+  integración comprueba que la base no cambia antes del clic y que la elección
+  citada termina con origen MANUAL, conservando las dos lecturas.
+- Corregido el enlace de evidencias de corte/refuerzo a sus campos anidados:
+  una revisión real ahora confirma el campo correcto, sin reescribir evidencia
+  histórica. Las propuestas de ajuste también validan los rangos del catálogo
+  antes de ofrecerse; el motor puro mantiene sus capacidades originales.
+- Validación: 74 unitarias de ingesta/intercambio y 11 integraciones de
+  publicación, intercambio y ajustes. Faltan el mapeo de precios y la interfaz.
+
+### P03d · Mapeo exacto de precios del proveedor
+
+- Inspección de XLSX/CSV con sugerencias por encabezado y diez filas de muestra.
+  Los códigos conservan ceros iniciales; los precios de Excel se leen del XML y
+  los de texto usan el separador declarado. No se convierten kilos a metros.
+- La vista previa valida todo el archivo y devuelve diez filas y el total.
+  Confirmar exige un token ligado al archivo, mapeo y lista revisados; aplica
+  todas las filas en una transacción. No sobrescribe códigos ya existentes.
+- Solo el dueño puede inspeccionar o guardar costos. Los precios son del taller
+  y la auditoría registra actor, motivo, archivo y SHA256. No hay tabla paralela
+  ni nuevos permisos SQL. El importador XLSX anterior conserva su contrato.
+- 44 unitarias de precios/importación y ocho integraciones PostgreSQL aprobadas;
+  API/OpenAPI regenerados. La interfaz del asistente se conecta a continuación.
+- El CI de P03b detectó tres grupos nuevos sin traducción. Se añadieron al
+  glosario sin debilitar su prueba exhaustiva: 211 comprobaciones aprobadas.
+
+### P03e · Ventana de prueba y revisión de ediciones
+
+- Comparación editable con cortes, refuerzos, vidrios, cantidades y ángulos del
+  motor. El taller elige entre ajustes exactos, revisa las piezas afectadas y
+  aplica/recalcula. Confirmar exige revisar el despiece y aceptar expresamente
+  los valores sugeridos. Un cálculo vacío o fallido no permite verificar.
+- Ediciones protegidas muestran antes/después y todos los cambios físicos,
+  incluidos ángulos y componentes. Cancelar conserva el borrador; aceptar
+  reenvía una sola vez la misma mutación y el token del cambio exacto. Un cambio
+  de empresa impide reintentar la escritura con otra empresa.
+- El ensayo móvil detectó contenido del fondo expuesto al lector de pantalla.
+  El diálogo compartido ahora aísla y restaura el fondo, incluidos otros
+  diálogos y portales. La tabla usa scroll local accesible y páginas de 50 filas.
+- Validación local: 1.188 pruebas de frontend aprobadas; cinco E2E reales/de
+  extremos aprobados, con Magic Link y TOTP, a 1440/390 y 320 px, texto al 200 %,
+  0/1/500 piezas, códigos largos y números grandes. ESLint, TypeScript, formato,
+  guardas y build aprobados. [Evidencia](../redesign/captures/dk2-p03e/aceptacion.md).
+- Faltan el asistente completo de cinco pasos, su lectura documental integrada,
+  la UI de precios mapeados y la aceptación del alta desde plantilla. P03 sigue
+  en curso; ninguna de sus sub-PR se fusionará antes de completar P02.
+
+### P03f · Importación visual de precios del proveedor
+
+- La pestaña Precios abre el mapeo de XLSX/CSV. El dueño elige o crea una lista
+  con proveedor, moneda y vigencia explícitos. Crear lista guarda solo esa lista
+  vacía; inspeccionar y revisar el archivo no publica precios.
+- Cuatro columnas sugeridas por el servidor, separador decimal explícito y una
+  muestra de diez filas. Revisar valida todo el archivo; el clic posterior guarda
+  con su token. Cambiar archivo, columna, separador o lista exige otra revisión.
+  Códigos con ceros y precios de cuatro decimales se conservan como cadenas.
+- La confirmación anuncia los precios guardados como datos del taller y recarga
+  la ficha. Solo el dueño ve la acción; el backend conserva sus permisos. Un
+  fallo de lectura permite reintentar el mismo archivo sin volver a seleccionarlo.
+- 1.197 pruebas de frontend aprobadas en la suite completa y 19 dirigidas tras
+  añadir la recuperación de lectura. E2E con Excel sintético comprueba 12 precios,
+  ausencia de escrituras antes del clic, token descartado al cambiar columnas y
+  exactitud en PostgreSQL a 1440/390 px. Tres E2E de extremos pasan a 1440/390/320,
+  texto al 200 %, códigos de 100 caracteres y 0/1/500 precios. ESLint, TypeScript,
+  guardas y build aprobados. [Evidencia](../redesign/captures/dk2-p03f/aceptacion.md).
+- La muestra tiene altura acotada y desplazamiento local por teclado. Los montos
+  enormes pueden distribuirse entre grupos de miles para permanecer completos a
+  320 px con texto al 200 %. La ruta de ensayo no entra al build de producción.
+- Falta integrar los cinco pasos reanudables, revisión de discrepancias del manual
+  y apertura de la primera cotización. La aceptación integral de P03 sigue pendiente.
+
+### P03g · Revisión de diferencias del manual
+
+- Las dos lecturas se contrastan con sus páginas, citas y valores. Los acuerdos
+  se resumen como propuestas; las diferencias requieren elección o corrección.
+  Elegir no incluye la fila ni publica. La revisión completa permanece accesible.
+- Los enlaces de fuente cargan solo su importación, esquema e historial; ya no
+  esperan las cuatro colecciones del catálogo avanzado. Se conserva esa ruta
+  avanzada para editar el catálogo completo. Hay recuperación de errores.
+- 1.209 pruebas frontend y 19 dirigidas aprobadas. Dos E2E publican sobre
+  PostgreSQL con lecturas simuladas, Magic Link/TOTP y almacenamiento reales;
+  tres ensayos prueban 0/1/500 filas, 1440/390/320 y texto al 200 %, con axe.
+  ESLint, TypeScript, Prettier, Ruff, guardas y build aprobados.
+- Seis capturas inspeccionadas en [aceptación](../redesign/captures/dk2-p03g/aceptacion.md).
+  No se añadió movimiento. Se corrigió el contraste de la fecha de importación.
+- P03 no termina aquí: faltan el asistente reanudable, la primera obra con serie
+  preseleccionada y la aceptación integral desde plantilla. P02e espera su gate
+  de base; el formato de P03f señalado por CI se corrigió en `488dc936` y vuelve
+  a ejecutar sus cuatro controles.
+
+### P03h · Cinco pasos reanudables y primera obra
+
+- El alta integra serie, revisión del manual, precios mapeados, ventana de
+  prueba y primera cotización. Conserva archivos y decisiones al cambiar de
+  paso; cerrar o recuperar advierte del descarte de borradores sin publicar.
+  Los pasos ocultos permanecen fuera del foco y de la pantalla.
+- El progreso usa revisiones consecutivas y detiene la cola ante conflicto.
+  Reabrir espera el estado actual. La confirmación de la ventana incrementa
+  también esa revisión, preserva el borrador técnico y conduce al paso cinco.
+- El asistente solo publica filas con la identidad exacta de esta serie.
+  Los costos conservan los permisos del dueño. El final exige capacidad real
+  de cotización y ninguna tarea sin guardar; visitar el paso no verifica nada.
+- La obra guarda la serie inicial y el primer editor la hereda, sin alterar
+  la empresa. Corregido que la creación aceptaba `design_defaults` pero no
+  los persistía. Otra empresa no puede aportar su serie ni dejar una obra parcial.
+- Tres E2E finales aprobados: alta 1440/390 con 12 precios, corrección exacta
+  1206 → 1208 mm, caso inmutable y obra; extremos 1440/390/320, 0/1/500 perfiles
+  y pendientes, texto al 200 %, teclado y axe. Los perfiles/precios son
+  sintéticos y las dos lecturas están simuladas; no son aceptación del manual
+  real de Proline. [Capturas y límites](../redesign/captures/dk2-p03h/aceptacion.md).
+- Frontend completo 1.218 PASS y 43 regresiones finales; backend 1.702 PASS;
+  motor 1.086 PASS y dos xfail previos, bytes dorados intactos; 16 integraciones
+  PostgreSQL aprobadas. Tipos, lint, formato, API reproducible, guardas y build
+  aprobados. La apertura local tarda unos 3,8 s; el rendimiento final queda en P11.
+- P03a #174 está fusionada. P03b #175 actualiza su base y repite CI por la
+  protección de GitHub; las siguientes se fusionarán en orden, con sus cuatro
+  controles. P03 permanece en curso hasta que toda la cadena esté fusionada.

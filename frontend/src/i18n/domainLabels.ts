@@ -10,6 +10,9 @@ export const domainLabels: Readonly<Record<string, string>> = {
   articles: "Perfiles",
   glazing: "Vidrios y junquillos",
   "hardware-kits": "Herrajes",
+  profile_cuts: "Cortes de perfiles",
+  reinforcements: "Refuerzos",
+  glasses: "Vidrios",
   // v1 06–07: document compositions, acceptance policy, assistant autonomy,
   // cut draft and finish samples.
   NONE: "Ninguno",
