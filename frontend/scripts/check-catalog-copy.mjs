@@ -127,6 +127,12 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   detectorTests();
   const candidates = [
     ...files(path.join(root, "frontend/src/features/catalogs")),
+    // Shared editors and labels rendered inside catalog surfaces.
+    ...[
+      "frontend/src/features/projects/ExtraDefinitionEditor.tsx",
+      "frontend/src/features/projects/extraModel.ts",
+      "frontend/src/i18n/domainLabels.ts",
+    ].map((name) => path.join(root, name)),
     path.join(root, "frontend/src/i18n/es-CL.ts"),
   ];
   let count = 0;
