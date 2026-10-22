@@ -6,6 +6,12 @@ El stack y checkout del dueño se conservan.
 
 ## Cambio
 
+Corrección del Database Gate (22-10): el E2E SHOT-07 conserva la verificación
+real del motor, la previsualización, el rollback de red y la aprobación solo
+con semáforo verde. Su selector pasa a «Coordenadas de desagües inferiores»,
+la etiqueta contextual de esta fase. **1 E2E aprobado, 18,5 s**, sin reintentos.
+Integra además la espera de `/projects/works/` corregida en P05g.
+
 Los textos distinguen ventana, paño interior, abertura de obra y coordenada de
 mecanizado. Las medidas de obra se presentan separadas de las de fabricación.
 Los servicios se aplican por ventana; los cobros tienen comprobantes y las
