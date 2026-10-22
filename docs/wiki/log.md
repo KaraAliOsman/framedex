@@ -2391,3 +2391,13 @@ RLS, privacidad y conservación de aplicado se verificaron en PostgreSQL local.
 El motor incorpora extras y servicios sin duplicar instalación ni merma, con
 casos dorados nuevos. Hooks, HTTP y emisión siguen pendientes. Véase
 [precio](product/price-workspace.md).
+
+## 2026-10-22 · P04d: guardado y emisión directa automáticos
+
+`gpt/dk2-p04d-automatismo-emision` conecta la proyección al guardado canónico,
+los lotes y el detalle de obra. La preparación admite precio listo; emitir
+puede registrar/aplicar en la misma transacción repetible que guarda la revisión.
+57 integraciones comprobaron cantidades, rollback, idempotencia, dueño/estimador
+y conservación del emitido al cambiar el margen. PDF privado y envío guiado,
+configuración y totales visuales siguen pendientes. Véase
+[precio](product/price-workspace.md).

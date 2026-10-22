@@ -330,25 +330,25 @@ def _save(org_id, project_id, before, after):
     calculation_cache = {}
     for identity, position in existing.items():
         if identity not in wanted:
-            service.delete_position(org_id, UUID(identity), datetime.fromisoformat(position["updated_at"]))
+            service.delete_position(org_id, UUID(identity), datetime.fromisoformat(position["updated_at"]), refresh_price=False)
     for position in after:
         source = existing.get(position["id"])
         if source and _edit_values(position) == _edit_values(source):
             continue
         if source and position["design"] == source["design"]:
-            service.save_position_metadata(org_id, project_id, {**position, "updated_at": source["updated_at"]})
+            service.save_position_metadata(org_id, project_id, {**position, "updated_at": source["updated_at"]}, refresh_price=False)
             continue
         data = {key: position[key] for key in ("location_tag", "quantity", "design")}
         data["placement"] = position.get("placement", {})
         if source:
             data["expected_updated_at"] = source["updated_at"]
             data = validate(PositionUpdateSerializer, data)
-            saved = service.save_position(org_id, project_id, data, position_id=UUID(position["id"]), apply_defaults=False, calculation_cache=calculation_cache)
+            saved = service.save_position(org_id, project_id, data, position_id=UUID(position["id"]), apply_defaults=False, calculation_cache=calculation_cache, refresh_price=False)
         else:
             data = validate(PositionWriteSerializer, data)
-            saved = service.save_position(org_id, project_id, data, create_id=UUID(position["id"]), create_index=position["position_index"], apply_defaults=False, calculation_cache=calculation_cache)
+            saved = service.save_position(org_id, project_id, data, create_id=UUID(position["id"]), create_index=position["position_index"], apply_defaults=False, calculation_cache=calculation_cache, refresh_price=False)
         if saved["display_order"] != position.get("display_order", position["position_index"]):
-            service.save_position_metadata(org_id, project_id, {**position, "updated_at": saved["updated_at"]})
+            service.save_position_metadata(org_id, project_id, {**position, "updated_at": saved["updated_at"]}, refresh_price=False)
 
 
 def apply_project_operations(org_id, user_id, project_id, data):

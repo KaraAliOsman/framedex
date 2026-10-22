@@ -3,7 +3,7 @@ type: state
 status: active
 updated: 2026-10-22
 volatility: high
-verified_ref: gpt/dk2-p04c-precio-vigente
+verified_ref: gpt/dk2-p04d-automatismo-emision
 sources:
   - backend/pricing/working.py
   - backend/tests/integration/test_working_prices.py
@@ -22,6 +22,19 @@ sources:
 ---
 
 # Precio del proyecto y confianza en el número
+
+## Conexión a guardado y emisión directa · P04d
+
+Verificada el 22-10-2026 en `gpt/dk2-p04d-automatismo-emision`. El guardado
+canónico de ventanas y cantidades y su borrado refrescan la proyección; los
+lotes la calculan una vez al devolver la obra. El detalle expone `working_price`
+y venta por ventana sin cambiar el significado histórico de `pricing_current`.
+La preparación documental admite una proyección lista. La emisión directa
+puede omitir `pricing_operation_id`; confirmarla registra y aplica el precio
+dentro de la transacción repetible de emisión. Error documental revierte todo
+y repetir emisión devuelve la misma revisión. Dueño y estimador se verificaron
+en PostgreSQL, incluida la privacidad del desglose y la conservación de emitido.
+El PDF privado y el envío guiado aún necesitan su adaptación antes de cerrar P04.
 
 ## Proyección privada del borrador · P04c
 

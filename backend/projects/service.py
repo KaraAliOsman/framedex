@@ -271,6 +271,9 @@ def project_public(org_id, row, *, detail=False, authority=_UNSET,
         )[0]["count"]
     value["position_count"] = position_count
     if detail:
+        if authority is None and row['status'] == 'DRAFT':
+            from pricing.working import refresh_for_member
+            value['working_price'] = refresh_for_member(org_id, row['id'])
         value["effective_design_defaults"] = design_defaults.effective(org_id, value)
         value["positions"] = positions(org_id, row["id"])
         value["versions"] = project_versions(org_id, row["id"])
@@ -296,6 +299,14 @@ def project_public(org_id, row, *, detail=False, authority=_UNSET,
                 "line_net": line.get("line_net"), "source": "Precio aplicado de esta revisión; motor comercial."} for line in lines}
         for item in value["positions"]:
             item["commercial"] = commercial.get(item["position_index"])
+        working = value.get('working_price')
+        if working and working['state'] in ('READY', 'PENDING'):
+            sale = {line['position_index']: line for line in working['lines']}
+            for item in value['positions']:
+                line = sale.get(item['position_index'])
+                item['commercial'] = ({'unit_net': line['unit_price'], 'line_net': line['line_net'],
+                    'source': 'Precio de trabajo calculado con los datos vigentes.',
+                    **{key: line[key] for key in ('breakdown', 'catalog_use') if key in line}} if line else None)
     if accepted is _UNSET and row['status'] in ('APPROVED','IN_PRODUCTION','COMPLETED'):
         from projects.accepted_quote import selected_projects
         accepted = selected_projects(org_id, [row['id']]).get(str(row['id']))
@@ -564,7 +575,7 @@ def _typology(tree):
 
 
 def save_position(org_id, project_id, data, *, position_id=None, apply_defaults=True,
-                  create_id=None, create_index=None, calculation_cache=None):
+                  create_id=None, create_index=None, calculation_cache=None, refresh_price=True):
     editable(org_id, project_id)
     current = None
     if position_id:
@@ -642,10 +653,13 @@ def save_position(org_id, project_id, data, *, position_id=None, apply_defaults=
     )
     from projects.mounting import save_measurements
     save_measurements(org_id,position_row(org_id,position_id),data)
+    if refresh_price:
+        from pricing.working import refresh_for_member
+        refresh_for_member(org_id, project_id)
     return position_public(position_row(org_id, position_id), org_id=org_id)
 
 
-def save_position_metadata(org_id, project_id, position):
+def save_position_metadata(org_id, project_id, position, *, refresh_price=True):
     """Presentation edits never replace a saved BOM or its catalog authority."""
     editable(org_id, project_id)
     current = position_row(org_id, UUID(str(position["id"])), lock=True)
@@ -662,9 +676,12 @@ def save_position_metadata(org_id, project_id, position):
           position.get("display_order", position["position_index"]), position["id"], org_id])
     rows("UPDATE public.projects SET updated_at=clock_timestamp() WHERE id=%s AND org_id=%s RETURNING id",
          [project_id, org_id])
+    if refresh_price:
+        from pricing.working import refresh_for_member
+        refresh_for_member(org_id, project_id)
 
 
-def delete_position(org_id, position_id, expected):
+def delete_position(org_id, position_id, expected, *, refresh_price=True):
     original = position_row(org_id, position_id)
     editable(org_id, original["project_id"])
     current = position_row(org_id, position_id, lock=True)
@@ -677,6 +694,9 @@ def delete_position(org_id, position_id, expected):
             "UPDATE public.projects SET updated_at=clock_timestamp() WHERE id=%s AND org_id=%s",
             [original["project_id"], org_id],
         )
+    if refresh_price:
+        from pricing.working import refresh_for_member
+        refresh_for_member(org_id, original['project_id'])
 
 
 def _same_documentary_value(left, right):

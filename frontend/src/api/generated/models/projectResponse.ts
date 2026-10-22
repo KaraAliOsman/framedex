@@ -11,6 +11,7 @@ import type { EffectiveDesignDefaults } from "./effectiveDesignDefaults";
 import type { PositionResponse } from "./positionResponse";
 import type { ProjectResponseStatusEnum } from "./projectResponseStatusEnum";
 import type { ProjectVersionResponse } from "./projectVersionResponse";
+import type { WorkingPrice } from "./workingPrice";
 
 export interface ProjectResponse {
   /** @maxLength 255 */
@@ -36,6 +37,7 @@ export interface ProjectResponse {
   notes_commercial?: string;
   notes_internal?: string;
   design_defaults?: DesignDefaults;
+  working_price?: WorkingPrice | null;
   effective_design_defaults?: EffectiveDesignDefaults;
   /** @nullable */
   accepted_version_id?: string | null;
