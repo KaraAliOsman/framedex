@@ -79,25 +79,8 @@ test("a pasted request becomes a cited draft work, nothing is sent and undo remo
   });
   expect(saved.status, JSON.stringify(saved.body)).toBe(200);
 
-  // The worker runs the job without the owner's second factor, so the quote
-  // is delegated by an estimator, the role that prepares quotations.
-  const supabase = environment("SUPABASE_URL")!;
-  const serviceKey = environment("SUPABASE_SERVICE_ROLE_KEY")!;
-  const me = await api("auth/me/");
-  const demoted = await fetch(
-    `${supabase}/rest/v1/tenancy_memberships?org_id=eq.${catalog.organizationId}&user_id=eq.${me.body.user.id}`,
-    {
-      method: "PATCH",
-      headers: {
-        apikey: serviceKey,
-        Authorization: `Bearer ${serviceKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ role: "ESTIMATOR" }),
-    },
-  );
-  expect(demoted.ok).toBe(true);
-
+  // The owner delegates with the second factor of this session; the run
+  // inherits it (sealed at enqueue) and creates the work itself.
   await page.goto("/dashboard");
   await page.getByRole("button", { name: "Buscar o ejecutar un comando", exact: true }).click();
   await page
