@@ -154,8 +154,8 @@ jobs:
         env:
           POSTGRES16_CONTAINER: ${{ job.services.postgres16.id }}
           # ghcr.io throttles the shared runners; the same Supabase images are
-          # published on Amazon ECR Public.
-          SUPABASE_INTERNAL_IMAGE_REGISTRY: public.ecr.aws
+          # published on Docker Hub, which GitHub-hosted runners pull with higher limits.
+          SUPABASE_INTERNAL_IMAGE_REGISTRY: docker.io
         run: make test-db
 
     services:
