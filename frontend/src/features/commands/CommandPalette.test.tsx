@@ -418,6 +418,19 @@ it("offers to ask the assistant only when the copilot is available, prefilled an
   window.removeEventListener(COPILOT_DELEGATE_EVENT, listener);
   cleanup();
 
+  // A text that names a command runs the command; only the rest is asked.
+  render(
+    <CopilotProvider available>
+      <Harness commands={[{ id: "split", title: "Partir en tres", run: vi.fn() }]} />
+    </CopilotProvider>,
+  );
+  openPalette();
+  fireEvent.change(screen.getByPlaceholderText(t("cmd.placeholder")), {
+    target: { value: "partir en tres" },
+  });
+  expect(screen.queryByRole("option", { name: /Pedir a DEKOPEN/ })).toBeNull();
+  cleanup();
+
   render(<Harness commands={[]} />);
   openPalette();
   fireEvent.change(screen.getByPlaceholderText(t("cmd.placeholder")), {

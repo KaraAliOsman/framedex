@@ -263,6 +263,7 @@ export function CommandPalette({
         },
       });
     }
+    const matchedCommands = listed.length;
     for (const result of searchResults) {
       const group = t(SEARCH_GROUP_LABEL[result.group] ?? "search.groupResults");
       listed.push({
@@ -278,7 +279,7 @@ export function CommandPalette({
     // P08: what is not a command can be asked. The copilot opens with the
     // text prefilled; the person still sends it.
     const request = query.trim();
-    if (copilot.available && request.length >= 3) {
+    if (copilot.available && request.length >= 3 && matchedCommands === 0) {
       listed.push({
         key: "ask.dekopen",
         title: `Pedir a DEKOPEN: «${request}»`,
