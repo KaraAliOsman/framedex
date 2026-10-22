@@ -5,6 +5,7 @@ from datetime import timedelta
 import hashlib
 import secrets
 from urllib.parse import urlencode
+from zoneinfo import ZoneInfo
 
 import httpx
 from django.conf import settings
@@ -199,7 +200,8 @@ def preview(org_id, data):
     snapshot["project"]["commercial_terms"] = prefs["commercial_terms"]
     snapshot["project"]["quotation_valid_days"] = prefs["quotation_valid_days"]
     snapshot["project"]["quotation_valid_until"] = (
-        timezone.localdate() + timedelta(days=prefs["quotation_valid_days"])
+        timezone.localdate(timezone=ZoneInfo("America/Santiago"))
+        + timedelta(days=prefs["quotation_valid_days"])
     ).isoformat()
     # The preview always retains the exact sealed price and currency of reference.
     snapshot["quotation_alternatives"] = []
