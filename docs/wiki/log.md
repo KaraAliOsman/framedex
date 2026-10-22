@@ -2482,3 +2482,16 @@ de Hoy, las etapas de Obras y la purga global siguen en P05. Se conserva el
   API reproducible, Ruff/ESLint/tipos, formato, guardas y build aprobados. El
   recorrido completo backend detectó únicamente la allowlist de la ruta nueva;
   se añade esa ruta concreta y su control vuelve a pasar. Sin reducir guardas.
+
+## [2026-10-22] DEKOPEN 2 P05f | Cotizaciones dentro de Obras
+
+- Obras consume el índice paginado y los recuentos de servidor. La ruta antigua
+  conserva filtros, hash y offsets exactos al redirigir a emitidas, con revisión,
+  seguimiento, vistas y vigencia. Los permisos comerciales permanecen por rol.
+- La búsqueda conserva foco y cancela peticiones; la caché se separa por usuario,
+  empresa y rol. Se conserva el formulario completo con cliente/serie iniciales.
+- 1.254 pruebas frontend, 69 regresiones finales y seis E2E finales aprobados;
+  tres roles en escritorio/móvil, 500 obras, 320 px, texto 200 % y axe. Dieciséis
+  capturas seleccionadas; carga local caliente 271–304 ms. Sin movimiento nuevo.
+- P03h #181 está fusionada. P04a integró main y repite sus cuatro controles.
+  La purga global de lenguaje y P06–P11 siguen pendientes; no se declara P05 hecha.

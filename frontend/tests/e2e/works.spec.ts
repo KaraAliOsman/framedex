@@ -1,10 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page, type TestInfo } from "@playwright/test";
-import type {
-  MembershipRoleEnum,
-  ProjectListResponse,
-  StageEnum,
-} from "../../src/api/generated/models";
+import type { MembershipRoleEnum, WorksResponse, StageEnum } from "../../src/api/generated/models";
 import { test } from "./support/catalog-series-fixture";
 
 async function capture(page: Page, info: TestInfo, name: string) {
@@ -37,12 +33,12 @@ for (const role of ["OWNER", "ESTIMATOR", "WORKSHOP_MANAGER"] as MembershipRoleE
         test.setTimeout(180_000);
         const response = page.waitForResponse(
           (response) =>
-            new URL(response.url()).pathname === "/api/v1/projects/" &&
+            new URL(response.url()).pathname === "/api/v1/projects/works/" &&
             response.request().method() === "GET",
         );
         const start = Date.now();
         await page.goto("/projects");
-        const real = (await (await response).json()) as ProjectListResponse;
+        const real = (await (await response).json()) as WorksResponse;
         const works = page.getByRole("list", { name: "Obras", exact: true });
         await expect(works.getByRole("link")).toHaveCount(2);
         expect(real.items).toHaveLength(2);
@@ -70,6 +66,31 @@ for (const role of ["OWNER", "ESTIMATOR", "WORKSHOP_MANAGER"] as MembershipRoleE
         await expect(works.getByRole("link")).toContainText("Ventanas de la terraza");
         await page.getByRole("searchbox", { name: "Buscar obra o cliente" }).fill("");
 
+        if (role !== "WORKSHOP_MANAGER") {
+          await page.goto("/quotes?q=REV-A&attention=unshared&phase=QUOTED&currency=CLP&offset=0");
+          await expect(page).toHaveURL(/\/projects\?.*view=quotes/);
+          const legacy = new URL(page.url()).searchParams;
+          for (const [key, value] of Object.entries({
+            q: "REV-A",
+            attention: "unshared",
+            phase: "QUOTED",
+            currency: "CLP",
+            offset: "0",
+          }))
+            expect(legacy.get(key)).toBe(value);
+          await expect(works.getByRole("link")).toHaveCount(1);
+          await expect(works.getByRole("link")).toHaveAttribute(
+            "href",
+            `/projects/${catalog.projects!.issued}?section=quote`,
+          );
+          await expect(works).toContainText("Pendiente de envío");
+          await capture(page, info, "01b-works-quotation");
+          await page.getByLabel("Seguimiento", { exact: true }).selectOption("viewed");
+          await expect(page.getByText("Ninguna obra coincide", { exact: true })).toBeVisible();
+          await page.goto("/projects");
+          await expect(works.getByRole("link")).toHaveCount(2);
+        }
+
         // API-bound stress evidence only: no numeric fixture or picker ships.
         const stages: StageEnum[] = [
           "QUOTING",
@@ -81,7 +102,7 @@ for (const role of ["OWNER", "ESTIMATOR", "WORKSHOP_MANAGER"] as MembershipRoleE
           "CLOSED",
           "CANCELLED",
         ];
-        const worst: ProjectListResponse = {
+        const worst = {
           items: Array.from({ length: 500 }, (_, index) => ({
             ...issued,
             id: `fixture-${String(index).padStart(3, "0")}`,
@@ -90,6 +111,7 @@ for (const role of ["OWNER", "ESTIMATOR", "WORKSHOP_MANAGER"] as MembershipRoleE
               index === 0 ? "Ñ".repeat(255) : `Obra sintética ${String(index).padStart(3, "0")}`,
             client_name: index === 1 ? "W".repeat(255) : "Cliente de prueba",
             position_count: index === 0 ? 0 : 500,
+            quotation: null,
             progress: {
               stage: stages[index % stages.length]!,
               reason: "Etapa sintética para romper la vista",
@@ -98,16 +120,32 @@ for (const role of ["OWNER", "ESTIMATOR", "WORKSHOP_MANAGER"] as MembershipRoleE
             },
           })),
         };
-        await page.route("**/api/v1/projects/", (route) =>
-          route.fulfill({
-            json:
-              new URL(page.url()).searchParams.get("data") === "empty"
-                ? { items: [] }
-                : new URL(page.url()).searchParams.get("data") === "worst"
-                  ? worst
-                  : real,
-          }),
-        );
+        await page.route("**/api/v1/projects/works/**", (route) => {
+          const query = new URL(route.request().url()).searchParams;
+          const data = new URL(page.url()).searchParams.get("data");
+          if (!data || data === "demo") return route.fulfill({ json: real });
+          const matching = data === "empty" ? [] : worst.items;
+          const counts = Object.fromEntries(
+            stages.map((stage) => [
+              stage,
+              matching.filter((item) => item.progress.stage === stage).length,
+            ]),
+          );
+          const filtered = matching.filter(
+            (item) => !query.get("stage") || item.progress.stage === query.get("stage"),
+          );
+          const offset = Number(query.get("offset") ?? 0);
+          return route.fulfill({
+            json: {
+              items: filtered.slice(offset, offset + 50),
+              counts,
+              matching: matching.length,
+              total: filtered.length,
+              offset,
+              limit: 50,
+            },
+          });
+        });
         await page.addInitScript(() => {
           window.addEventListener("DOMContentLoaded", () => {
             const picker = document.createElement("select");

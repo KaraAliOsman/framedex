@@ -2,6 +2,9 @@
 
 ## DEKOPEN 2
 
+- [P05f · Cotizaciones dentro de Obras](dk2-p05f/aceptacion.md): índice del
+  servidor, filtros históricos, permisos y dieciséis capturas finales.
+
 - [P05d · Obras por etapa](dk2-p05d/aceptacion.md): lista densa, enlaces de
   fila, filtros persistentes y 500 obras en tres roles autorizados.
 

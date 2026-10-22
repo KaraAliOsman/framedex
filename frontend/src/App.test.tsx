@@ -8,9 +8,14 @@ import { AuthSessionContext, type AuthSessionContextValue } from "./auth/AuthSes
 import { ConfirmProvider } from "./ui";
 // Compile the real lazy destination during test setup. The route assertion
 // verifies navigation/rendering, independently of concurrent Vite transforms.
-import "./features/projects/ProjectPages";
+import "./features/projects/WorksPage";
 vi.mock("./api/generated/dekopen", () => ({
   projectsList: vi.fn().mockResolvedValue({ status: 200, data: { items: [] } }),
+  projectsWorks: vi.fn().mockResolvedValue({
+    status: 200,
+    data: { items: [], total: 0, matching: 0, counts: {}, offset: 0, limit: 50 },
+  }),
+  engineSystems: vi.fn().mockResolvedValue({ status: 200, data: { systems: [] } }),
   analyticsToday: vi.fn().mockResolvedValue({
     status: 200,
     data: { today: "2026-10-09", actions: [], pipeline: [], source: "Compromisos" },

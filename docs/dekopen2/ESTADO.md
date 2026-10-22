@@ -8,7 +8,7 @@ Producción y precios comerciales requieren autorización aparte.
 | ---- | -------------------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | P01  | Catálogo v2: backend, origen, niveles y plantillas | Hecha                                | [P01a #164](https://github.com/KaraAliOsman/framedex/pull/164), [P01b #165](https://github.com/KaraAliOsman/framedex/pull/165), [P01c #166](https://github.com/KaraAliOsman/framedex/pull/166), [P01d #167](https://github.com/KaraAliOsman/framedex/pull/167) y [P01e #168](https://github.com/KaraAliOsman/framedex/pull/168) fusionadas |
 | P02  | Ficha de serie editable                            | Hecha                                | Sub-PR [#169](https://github.com/KaraAliOsman/framedex/pull/169)–[#173](https://github.com/KaraAliOsman/framedex/pull/173) fusionadas                                                                                                                                                                                                      |
-| P03  | Alta de serie y ventana de prueba                  | Implementada; fusión final en curso  | #174–#180 fusionadas; [P03h #181](https://github.com/KaraAliOsman/framedex/pull/181) espera sus cuatro controles                                                                                                                                                                                                                           |
+| P03  | Alta de serie y ventana de prueba                  | Hecha | #174–#181 fusionadas; [P03h #181](https://github.com/KaraAliOsman/framedex/pull/181) fusionada el 22-10-2026 |
 | P04  | Precio simple automático                           | Implementada; CI y fusiones en curso | [#182](https://github.com/KaraAliOsman/framedex/pull/182)–[#187](https://github.com/KaraAliOsman/framedex/pull/187), [#188](https://github.com/KaraAliOsman/framedex/pull/188)                                                                                                                                                             |
 | P05  | Navegación, Hoy y Obras                            | En curso                             | [P05a #189](https://github.com/KaraAliOsman/framedex/pull/189), [P05b #190](https://github.com/KaraAliOsman/framedex/pull/190); P05c `gpt/dk2-p05c-hoy`                                                                                                                                                                                    |
 | P06  | Mesa de la obra y edición directa                  | Pendiente                            | —                                                                                                                                                                                                                                                                                                                                          |
@@ -19,6 +19,21 @@ Producción y precios comerciales requieren autorización aparte.
 | P11  | Pulido y cierre                                    | Pendiente                            | —                                                                                                                                                                                                                                                                                                                                          |
 
 ## P05 · Navegación, Hoy y Obras
+
+- P05e publicada en [#193](https://github.com/KaraAliOsman/framedex/pull/193).
+  P05f `gpt/dk2-p05f-cotizaciones-obras` conecta el índice de servidor y lleva
+  las cotizaciones emitidas a Obras. `/quotes` conserva filtros, hash y offset
+  exacto al redirigir; las filas conservan seguimiento y revisión de destino.
+  La búsqueda mantiene foco, cancela consultas y separa caché por usuario,
+  empresa y rol. El formulario completo de alta conserva cliente y serie.
+  1.254 unitarias frontend y 69 regresiones finales aprobadas; seis E2E finales
+  con roles, filtros, 500 obras, 320 px, texto 200 % y axe aprobados. Lint,
+  tipos, formato, guardas y build aprobados. Carga local 271–304 ms.
+  [Dieciséis capturas y límites](../redesign/captures/dk2-p05f/aceptacion.md).
+  Queda la purga global de lenguaje con su guardián. P06–P11 pendientes.
+- P03h ya está fusionada en `main` (`45c190a6`). P04a integró esa base en
+  `d7998257` y repite los cuatro controles; las siguientes fusiones esperan
+  ese orden. Un gate verde de un head anterior no autoriza el nuevo.
 
 - P05d se publica en [#192](https://github.com/KaraAliOsman/framedex/pull/192)
   con los seis recorridos integrados aprobados y doce capturas seleccionadas.

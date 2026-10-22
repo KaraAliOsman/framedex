@@ -1,5 +1,13 @@
 import { lazy, Suspense, type PropsWithChildren } from "react";
-import { createBrowserRouter, Navigate, Route, RouterProvider, Routes } from "react-router-dom";
+import {
+  createBrowserRouter,
+  Navigate,
+  Route,
+  RouterProvider,
+  Routes,
+  useSearchParams,
+} from "react-router-dom";
+import { LegacyQuotesRedirect } from "./features/quotations/LegacyQuotesRedirect";
 
 import { t } from "./i18n/es-CL";
 
@@ -114,8 +122,8 @@ const ClientsPage = lazy(async () => ({
 const CatalogPage = lazy(async () => ({
   default: (await import("./features/catalogs/SeriesCatalogPage")).SeriesCatalogPage,
 }));
-const QuotationsPage = lazy(async () => ({
-  default: (await import("./features/quotations/QuotationsPage")).QuotationsPage,
+const WorksPage = lazy(async () => ({
+  default: (await import("./features/projects/WorksPage")).WorksPage,
 }));
 const FinishSamplesPage = lazy(async () => ({
   default: (await import("./features/catalogs/FinishSamplesPage")).FinishSamplesPage,
@@ -140,6 +148,22 @@ function ProjectSurface(): JSX.Element {
       <AppShell>
         <Suspense fallback={<p role="status">{t("projects.loading")}</p>}>
           <ProjectPages />
+        </Suspense>
+      </AppShell>
+    </ReadyGuard>
+  );
+}
+
+function WorksSurface(): JSX.Element {
+  const [params] = useSearchParams();
+  // Existing customer/catalog links open the full metadata creation form.
+  // Opening that form still requires its human submit; redirecting never creates.
+  if (params.get("create") === "1") return <ProjectSurface />;
+  return (
+    <ReadyGuard>
+      <AppShell>
+        <Suspense fallback={<p role="status">Cargando obras…</p>}>
+          <WorksPage />
         </Suspense>
       </AppShell>
     </ReadyGuard>
@@ -499,7 +523,7 @@ export function AppRoutes(): JSX.Element {
             </ReadyGuard>
           }
         />
-        <Route path="/projects" element={<ProjectSurface />} />
+        <Route path="/projects" element={<WorksSurface />} />
         <Route path="/catalogs" element={<Navigate to="/catalogs/systems" replace />} />
         <Route
           path="/catalogs/finish-samples"
@@ -602,11 +626,7 @@ export function AppRoutes(): JSX.Element {
           path="/quotes"
           element={
             <ReadyGuard>
-              <AppShell>
-                <Suspense fallback={<p role="status">Cargando cotizaciones…</p>}>
-                  <QuotationsPage />
-                </Suspense>
-              </AppShell>
+              <LegacyQuotesRedirect />
             </ReadyGuard>
           }
         />

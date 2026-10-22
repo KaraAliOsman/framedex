@@ -3,7 +3,7 @@ type: state
 status: active
 updated: 2026-10-22
 volatility: high
-verified_ref: gpt/dk2-p05d-obras
+verified_ref: gpt/dk2-p05f-cotizaciones-obras
 sources:
   - docs/redesign/P03-ACEPTACION.md
   - engine/src/dekopen_engine/work_queue.py
@@ -14,6 +14,9 @@ sources:
   - frontend/tests/e2e/today.spec.ts
   - frontend/src/features/projects/worksList.ts
   - frontend/tests/e2e/works.spec.ts
+  - backend/projects/works.py
+  - frontend/src/features/projects/WorksPage.tsx
+  - frontend/src/features/quotations/LegacyQuotesRedirect.tsx
   - frontend/scripts/verify-p03.mjs
 ---
 
@@ -25,8 +28,8 @@ P05a dispone Hoy · Obras · Taller · Catálogo · Empresa en ese orden, oculta
 los destinos que cada rol no puede leer. Hoy es el inicio de los cinco roles;
 operario e instalador conservan acceso directo a taller y agenda. Clientes
 continúa en `/clients` y la búsqueda de oficina. Informes y Funciones avanzadas
-viven en Empresa. El índice antiguo de cotizaciones mantiene su ruta y filtros
-hasta integrar las etapas de la lista única en P05.
+viven en Empresa. P05f integra cotizaciones en Obras; el enlace antiguo
+redirige conservando sus filtros, offset y hash.
 
 Diez E2E con sesiones reales, cinco roles y 1440/390 px comprueban navegación,
 clientes en la paleta y límites de acceso. Véase la [aceptación P05a](../../redesign/captures/dk2-p05a/aceptacion.md).
@@ -60,12 +63,12 @@ comprobable queda Instalada. No se modifica el estado persistido al leer.
 P05d conecta esas etapas a Obras: todas las filas son enlaces completos,
 utilizables con teclado; búsqueda y orden se guardan en URL, y las páginas
 muestran 50 filas. Los recuentos siguen la búsqueda y el estado heredado antes
-de aplicar el segmento. La consulta actual del backend limita a las 500 obras
-más recientes y la pantalla lo informa al alcanzar ese límite. No declara un
-recuento global del tenant. El total de la oferta elegida vigente tiene
+de aplicar el segmento. En P05d la consulta limitaba a las 500 obras
+más recientes y la pantalla informaba ese límite; P05e/f lo reemplazan.
+El total de la oferta elegida vigente tiene
 prioridad; sin él solo se muestra precio aplicado comprobable de esa revisión.
 Un borrador sin precio invita a abrir para calcular, sin reutilizar venta vieja.
-`/quotes` conserva el índice anterior hasta integrar seguimiento/fase/moneda;
+P05d conservaba `/quotes` en el índice anterior; P05f integra sus filtros.
 el parámetro histórico `status` sigue filtrando exactamente su estado guardado.
 Seis E2E de tres roles autorizados ejercitan obras reales y 500 casos extremos
 en 1440/390, 320 px y texto al 200 %; [aceptación P05d](../../redesign/captures/dk2-p05d/aceptacion.md).
@@ -76,8 +79,8 @@ sin truncar a 500. Carga los detalles públicos de esa página, sin consultas
 por fila. La vista comercial reutiliza selección, orden y filtros de
 `analytics/quotations`; el jefe de taller no puede solicitarla, ni siquiera
 mediante un filtro de moneda o seguimiento. Una edición entre las lecturas
-de selección y detalle produce 409 para volver a consultar. La pantalla y
-la redirección de `/quotes` aún no consumen este endpoint en esta sub-PR.
+de selección y detalle produce 409 para volver a consultar. P05f conecta
+la pantalla y la redirección de `/quotes` a este endpoint.
 
 El motor ordena compromisos vencidos, bloqueos, trabajo del día y seguimiento.
 El backend lee bajo RLS revisión actual, solicitudes/recibos de precio, ledger
@@ -95,6 +98,15 @@ Búsqueda por códigos humanos dirige a proyecto, cotización, compra, OT y
 retazo. Cambio de organización/selección cancela consultas y comandos
 capturados. Paleta, ayuda y drawer contienen y restauran foco. Stock muestra
 especificaciones declaradas, nunca identidades internas del catálogo.
+
+P05f conecta el índice del servidor sin truncar a 500 obras. Sus recuentos
+preceden al segmento y la página. La vista de cotizaciones conserva filtros,
+pertenencia y orden de emisión, revisión, respuesta, visitas y vigencia.
+La consulta se separa por usuario/empresa/rol y cancela búsquedas anteriores
+sin desmontar el control enfocado. El alta completa conserva cliente y serie.
+Seis E2E finales cubren tres roles, 1440/390, 500 obras, 320 px y texto al
+200 %, con axe. La purga global de lenguaje sigue pendiente. Véase la
+[aceptación P05f](../../redesign/captures/dk2-p05f/aceptacion.md).
 
 ## Intención y límites
 
