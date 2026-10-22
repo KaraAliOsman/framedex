@@ -1,9 +1,33 @@
 """Populated v1-v7 catalog, money and sealed documents survive D08 exactly."""
 from pathlib import Path
-import local_gates
+import json
+
+from scripts import local_gates
 
 ROOT = Path(__file__).resolve().parents[1]
 FIRST = "20270126000000_advanced_opening_authority.sql"
+
+
+def assert_historical_rows(before: dict, after: dict) -> None:
+    # Explicit additions only: never ignore an unknown column or any old
+    # price, actor, reason, timestamp, snapshot, record or document byte.
+    added = {"projects": {"design_defaults": {}, "commercial_number": None},
+             "document_artifacts": {"layout": "STANDARD"}}
+    for table, previous in before.items():
+        current = {row["id"]: row for row in after[table]}
+        if table == "price_audit_logs":
+            assert set(current) == {row["id"] for row in previous}, "Price audit rows changed during upgrade"
+            ordinals = [row.get("event_order") for row in current.values()]
+            assert all(type(value) is int and value > 0 for value in ordinals), "Invalid price audit ordinal"
+            assert len(ordinals) == len(set(ordinals)), "Price audit ordinals must be distinct"
+        for row in previous:
+            defaults = {key: value for key, value in added.get(table, {}).items() if key not in row}
+            found = dict(current[row["id"]])
+            if table == "price_audit_logs" and "event_order" not in row:
+                # Identity backfills stable ordinals, not recovered chronology.
+                # Its type, uniqueness and immutability are independently gated.
+                found.pop("event_order")
+            assert found == {**row, **defaults}, f"D08 rewrote historical {table}"
 
 
 def verify(container: str) -> None:
@@ -27,17 +51,14 @@ def verify(container: str) -> None:
         if path.name >= FIRST:
             sql(path.read_text(encoding="utf-8"))
     after = capture()
-    import json
     # Columns added by later migrations carry their declared empty default on
     # historical rows; every pre-existing field stays byte-identical.
-    added = {"projects": {"design_defaults": {}, "commercial_number": None},
-             "document_artifacts": {"layout": "STANDARD"}}
-    for table in tables:
-        current = {row["id"]: row for row in json.loads(after[table])}
-        for row in json.loads(before[table]):
-            defaults = {key: value for key, value in added.get(table, {}).items() if key not in row}
-            assert current[row["id"]] == {**row, **defaults}, f"D08 rewrote historical {table}"
+    assert_historical_rows({table: json.loads(before[table]) for table in tables},
+        {table: json.loads(after[table]) for table in tables})
     sql("""DO $$ BEGIN
+      IF NOT EXISTS(SELECT 1 FROM pg_attribute WHERE attrelid='public.price_audit_logs'::regclass
+        AND attname='event_order' AND attidentity='a' AND attnotnull AND atttypid='bigint'::regtype)
+      THEN RAISE EXCEPTION 'Price audit ordinal must be a nonnull bigint always identity'; END IF;
       IF (SELECT count(*) FROM profile_systems WHERE version=8 AND is_demo)<>7
         OR EXISTS(SELECT 1 FROM profile_systems WHERE version<8 AND opening_capabilities::TEXT LIKE '%advanced_recipes%')
       THEN RAISE EXCEPTION 'Advanced capability inferred on historical catalog'; END IF;
