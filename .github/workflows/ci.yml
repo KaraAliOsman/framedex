@@ -153,6 +153,9 @@ jobs:
       - name: Live DB gate (pgTAP, RLS integration, auth e2e, PostgreSQL 16)
         env:
           POSTGRES16_CONTAINER: ${{ job.services.postgres16.id }}
+          # ghcr.io throttles the shared runners; the same Supabase images are
+          # published on Amazon ECR Public.
+          SUPABASE_INTERNAL_IMAGE_REGISTRY: public.ecr.aws
         run: make test-db
 
     services:
