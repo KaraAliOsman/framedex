@@ -12,6 +12,7 @@ type CatalogFixture = {
   stressId: string;
   pasteValues: (string | null)[];
   organizationId: string;
+  projects?: { issued: string; draft: string };
 };
 
 function required(name: string): string {
@@ -26,10 +27,15 @@ function local(name: string): string {
   return url.origin;
 }
 
-export const test = base.extend<{ catalog: CatalogFixture; catalogRole: MembershipRoleEnum }>({
+export const test = base.extend<{
+  catalog: CatalogFixture;
+  catalogRole: MembershipRoleEnum;
+  catalogProjects: boolean;
+}>({
   catalogRole: ["OWNER", { option: true }],
+  catalogProjects: [false, { option: true }],
   catalog: [
-    async ({ page, catalogRole }, use) => {
+    async ({ page, catalogRole, catalogProjects }, use) => {
       const supabaseUrl = local("SUPABASE_URL");
       const mailpit = local("MAILPIT_URL");
       const serviceKey = required("SUPABASE_SERVICE_ROLE_KEY");
@@ -86,6 +92,19 @@ export const test = base.extend<{ catalog: CatalogFixture; catalogRole: Membersh
         );
         const seeded = JSON.parse(output.trim()) as Omit<CatalogFixture, "organizationId">;
         expect(seeded.pasteValues).toHaveLength(5);
+        if (catalogProjects)
+          seeded.projects = JSON.parse(
+            execFileSync(
+              environment("PYTHON") ?? "python",
+              ["scripts/seed_today_e2e.py", organizationId, userId],
+              {
+                cwd: fileURLToPath(new URL("../../../../", import.meta.url)),
+                encoding: "utf8",
+                timeout: 120_000,
+                env: { ...process.env, PYTHONUTF8: "1" },
+              },
+            ).trim(),
+          ) as { issued: string; draft: string };
         // Seed only with the fixture's ownership proof, then exercise the real
         // role through its ordinary session. Never relax the seeder's guard.
         if (catalogRole !== "OWNER")

@@ -1614,12 +1614,13 @@ it("explicitly retires current draft pricing with an audit reason before editing
   );
 });
 
-it("persists list search/status/sort in the URL across back navigation", async () => {
+it("persists list search/stage/sort in the URL across back navigation", async () => {
   const quoted = makeProject({
     id: "project-b",
     code: "P-002",
     name: "Casa B",
     status: "QUOTED",
+    progress: { stage: "SENT", reason: "Compartida", quoted_total: "100.00", currency: "CLP" },
     current_revision: "REV-A",
     updated_at: "2026-09-19T09:00:00Z",
   });
@@ -1638,14 +1639,14 @@ it("persists list search/status/sort in the URL across back navigation", async (
   fireEvent.change(screen.getByLabelText("Buscar obra o cliente"), {
     target: { value: "casa" },
   });
-  fireEvent.click(screen.getByRole("radio", { name: "Cotizados" }));
+  fireEvent.click(screen.getByRole("button", { name: "Enviada · 1" }));
   fireEvent.change(screen.getByLabelText("Ordenar"), {
     target: { value: "name" },
   });
 
   const search = router.state.location.search;
   expect(search).toContain("q=casa");
-  expect(search).toContain("status=QUOTED");
+  expect(search).toContain("stage=SENT");
   expect(search).toContain("sort=name");
   expect(screen.queryByRole("link", { name: /Casa A/ })).not.toBeInTheDocument();
 
@@ -1657,7 +1658,10 @@ it("persists list search/status/sort in the URL across back navigation", async (
   await router.navigate(-1);
   await screen.findByLabelText("Buscar obra o cliente");
   expect(screen.getByLabelText("Buscar obra o cliente")).toHaveValue("casa");
-  expect(screen.getByRole("radio", { name: "Cotizados" })).toHaveAttribute("aria-checked", "true");
+  expect(screen.getByRole("button", { name: "Enviada · 1" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
 });
 
 it("lists human timeline events once the activity section opens", async () => {
