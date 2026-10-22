@@ -510,7 +510,6 @@ Evidencia: [aceptación](../redesign/captures/operaciones-herramientas/aceptacio
 [síntesis vigente](quality/ai-outcome-baseline.md). IA3 sigue proveedor/Ajustes;
 P04/P17/P21 siguen cromo/editor heredados. Los datos DEMO no certifican fabricación.
 
-
 ## 2026-10-07 — IA2 · revisión corregida y verificación final
 
 La revisión del PR #126 detectó pérdida de preparación documental al eliminar,
@@ -537,7 +536,6 @@ capturas del lote. Las dos rondas editoriales y R1–R20 se documentan en la
 aceptación. Los procesos propios de app están detenidos; CI/merge pendientes
 de publicar esta revisión en el PR #126.
 
-
 ## 2026-10-07 — IA2 · integración aceptada
 
 El PR [#126](https://github.com/KaraAliOsman/framedex/pull/126) pasa los cuatro
@@ -555,7 +553,6 @@ la actualización del head del PR. Se conservó el mismo PR y se reabrió para
 sincronizarlo con el commit publicado; solo se canceló un run duplicado del
 head anterior. No se modificaron ni omitieron checks. IA3 sigue inmediatamente
 con proveedor/Ajustes. `main` y los recursos del repositorio ajeno no se tocan.
-
 
 ## 2026-10-07 — IA3 · proveedor real y aceptación final local
 
@@ -590,7 +587,6 @@ continúa cargando. Se reproduce en el stack aislado. El test ahora espera
 las cuatro colecciones y verifica HTTP 200 antes de la misma aserción visible,
 con los mismos timeouts y sin reintentos. El recorrido real pasa; producto,
 oráculos de IA y checks no cambian. P16 continúa la optimización de catálogo.
-
 
 ## 2026-10-07 — IA3 · integración aceptada y cierre de D2
 
@@ -731,7 +727,6 @@ Los recorridos existentes detectaron selector abierto y consulta vacía rechazad
 se corrigieron y se repiten los gates antes de integrar. La nueva
 [página](product/editor-canvas.md) distingue intención, evidencia y límites de
 P05/P06/P19. El catálogo DEMO sigue sin certificación.
-
 
 ## 2026-10-08 — P04 · integrado
 
@@ -875,7 +870,6 @@ el focalizado pasa en 43,5 s. No cambia motor, permisos, timeouts globales
 ni retries. El cierre exige CI verde en el nuevo HEAD, sin repetir la
 implementación ni las capturas aceptadas de P03.
 
-
 ## 2026-10-09 — P03 · integrado
 
 PR #134 pasa los cuatro checks sobre `4eb66fbd72c5b2a4ef13c13b6397982a29eb823e` en la corrida `37919211491`
@@ -922,7 +916,7 @@ adicionales también pasa; CI y squash se registrarán al integrar.
 PR #135 pasa los cuatro checks sobre `98a65474a170eb68c75a6c25d7ed36f332c6897a` en la corrida
 `37938719831` y se integra con squash `e59539d1b282fde9c928fcd9e67f970e51995cdc` en `integracion/v1`.
 ESTADO y los refs registran la aceptación; procesos locales detenidos y
- fixture intacto. Continúa P17 sobre esta base.
+fixture intacto. Continúa P17 sobre esta base.
 
 ## 2026-10-09 — P17 · artefactos y presencia privada
 
@@ -1271,7 +1265,6 @@ R1–R20 de proyecto PASA.
 El catálogo DEMO y Uw Sin dato conservan sus límites. Véase
 `docs/redesign/P21-ACEPTACION.md` y `product/project-workspace.md`.
 
-
 ### 2026-10-11 · P21, puerta completa de base de datos
 
 Código `e309768b950539177f7f651d3d59237585e65baf`: 1.325 pgTAP/91 archivos, 502 integraciones,
@@ -1282,7 +1275,6 @@ de duplicar. La limpieza exige rechazo 409/23503 del borrado con historial
 retenido y elimina solo su usuario; el stack aislado destruye sus fixtures
 al terminar. No se altera la retención ni se reduce cobertura.
 CI e integración todavía pendientes de registrarse. Véase P21-ACEPTACION.
-
 
 P21 PR https://github.com/KaraAliOsman/framedex/pull/146, CI 4/4 sobre 50a00fe9e509338cdee706459c17395119e036a8, corrida https://github.com/KaraAliOsman/framedex/actions/runs/38110211964, squash 412029ac1ea688a0f5bf1d560ba9b2e99871fae6, 2026-10-11.
 R1–R20 PASA. Los procesos propios y el stack del gate están detenidos; el fixture persistente se conserva. CodeRabbit, Devin Review y Copilot omitieron su revisión por configuración o cuotas y no se atribuyen como revisión completa.
@@ -1474,8 +1466,8 @@ PG16. El certificado real, revisión profesional y alcance de edificio no
 se atribuyen al fixture. CI y squash quedan por registrar al integrar.
 
 ## 2026-10-12 · P18 integrado
-PR #152 mergeado en d3b86003d69e29089e62463f9f80af7fd0c5dc78 con los cuatro checks verdes. Uw, OGUC, alternativa revisada y anexo sellado conservan sus límites y fuentes; ver product/thermal-authority.md y docs/redesign/P18-ACEPTACION.md. El stack propio se detuvo antes de continuar P24.
 
+PR #152 mergeado en d3b86003d69e29089e62463f9f80af7fd0c5dc78 con los cuatro checks verdes. Uw, OGUC, alternativa revisada y anexo sellado conservan sus límites y fuentes; ver product/thermal-authority.md y docs/redesign/P18-ACEPTACION.md. El stack propio se detuvo antes de continuar P24.
 
 ## 2026-10-12 · P24, evidencia de decisiones y costos
 
@@ -1880,7 +1872,6 @@ en el árbol de trabajo:
 No hubo revisión en navegador ni proveedor IA real. Las pruebas y la verificación se
 concentran en la etapa 10.
 
-
 ## 2026-10-18 · REVIEW con la implementación de Claude
 
 Verificado en el árbol de trabajo de `claude/v1-implementacion`, sin commit:
@@ -2079,7 +2070,6 @@ globales heredadas que repintaban componentes, rehace Inicio, Obra, editor,
 tarjetas de Taller, la vista previa de cotización sin precio aplicado y el 3D
 de PVC (silueta por familia, ingletes soldados). Sin commit todavía.
 
-
 ## 2026-10-19 · Rediseño completo, segunda pasada («rediseñar todo»)
 
 Se recorren todas las superficies con capturas a 1440×900 por rol (estimador,
@@ -2247,7 +2237,6 @@ del ordinal aprobadas; API reproducible, lint y build aprobados. No habilita
 fabricación ni sustituye el flujo de verificación de P03. Referencias:
 [catálogo](product/catalog-authority.md), [estado](../dekopen2/ESTADO.md).
 
-
 ## 2026-10-21 · P02c: ficha de seis pestañas
 
 `gpt/dk2-p02c-ficha-hoja` prepara edición exacta, historial por celda,
@@ -2258,7 +2247,6 @@ axe y extremos de 300 perfiles. La ruta se conecta en P02e y la verificación
 persistida permanece en P03. Referencias: [catálogo](product/catalog-authority.md),
 [evidencia](../redesign/captures/dk2-p02/aceptacion-ficha.md).
 
-
 ## 2026-10-21 · P02d: glosario y ejemplos optativos
 
 El catálogo aplica el lenguaje de taller y una guarda AST con pruebas impide
@@ -2267,7 +2255,6 @@ del editor requieren «Mostrar ejemplos»; las ventanas históricas conservan su
 serie. La edición avanzada mantiene rutas profundas y regresión de navegador.
 La enmienda de Constitución registra el encargo actual sin cambiar permisos.
 Véase [catálogo](product/catalog-authority.md).
-
 
 ## 2026-10-21 · P02e: catálogo integrado
 
@@ -2325,3 +2312,11 @@ puede registrar/aplicar en la misma transacción repetible que guarda la revisi�
 y conservación del emitido al cambiar el margen. PDF privado y envío guiado,
 configuración y totales visuales siguen pendientes. Véase
 [precio](product/price-workspace.md).
+
+## 2026-10-22 · P04e: revisión privada del precio de trabajo
+
+En gpt/dk2-p04e-precio-pdf-revisable se verificaron 26 integraciones de PDF
+revisable sin aplicar, emisión exacta y atómica, cambios de autoridad, replay y
+concurrencia. Se mantiene la auditoría de aprobación en la operación inmutable.
+Actualizados product/price-workspace.md y docs/dekopen2/ESTADO.md. La interfaz
+de precios y la aceptación visual de P04 siguen pendientes.

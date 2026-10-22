@@ -11297,7 +11297,7 @@ export const getQuotationPreparePreviewUrl = (projectId: string) => {
 
 export const quotationPreparePreview = async (
   projectId: string,
-  quotationPreviewRequestRequest: QuotationPreviewRequestRequest,
+  quotationPreviewRequestRequest?: QuotationPreviewRequestRequest,
   options?: Parameters<typeof apiMutator>[1],
 ): Promise<quotationPreparePreviewResponse> => {
   const getHeaders = (

@@ -48,8 +48,8 @@ def private_storage(monkeypatch, settings):
     settings.DEKOPEN_PUBLIC_APP_URL = "https://quotation.example.test"
 
 
-def ready_case(org, actor):
-    project, position, operation = _seed_project(org, actor)
+def ready_case(org, actor, *, apply_pricing=True):
+    project, position, operation = _seed_project(org, actor, apply_pricing=apply_pricing)
     terms = {
         **document_preferences({})["commercial_terms"],
         "delivery_text": "20 días hábiles",

@@ -178,14 +178,10 @@ def refresh_for_member(org_id, project_id):
     return working_public(record, actor.active_organization.role) if record else None
 
 
-def apply_for_issue(org_id, actor, actor_id, project_id, *, confirmed, email=None):
-    """Called only inside the issuance transaction; failure rolls everything back."""
-    from pricing.service import apply_operation
+def prepare_for_issue(org_id, actor, actor_id, project_id, *, email=None):
+    """Persist a reviewable price without applying it or locking the draft."""
     from pricing.repository import audit_reason
     from projects.service import project_row, _pricing_authority
-    if not confirmed:
-        raise ContractAPIException(status_code=409, code='documentary_freeze_confirmation_required',
-            detail='Confirma la emisión de la cotización.')
     project = project_row(org_id, project_id, lock=True)
     applied = _pricing_authority(org_id, project_id, project['current_revision'])
     if applied:
@@ -200,9 +196,12 @@ def apply_for_issue(org_id, actor, actor_id, project_id, *, confirmed, email=Non
         from authentication.errors import contract_error
         error = result['error']
         raise contract_error(422, error['code'], error['detail'])
-    reason = 'Precio registrado al emitir la cotización'
-    request = {**decoded(working['request']), 'confirmed': confirmed, 'reason': reason,
+    reason = 'Precio preparado para revisar la cotización'
+    request = {**decoded(working['request']), 'confirmed': False, 'reason': reason,
+        'application_method': 'AT_ISSUE',
         '_actor_id': actor_id, '_actor_email': email}
+    request.update(project_id=project_id, effective_date=working['effective_date'],
+        discount_pct=D(str(request['discount_pct'])), target_margin=D(str(request['target_margin'])))
     with commercial_backend():
         if read_policy(org_id)['use_advanced']:
             operation_id = preview(org_id, actor, request)['id']
@@ -215,6 +214,50 @@ def apply_for_issue(org_id, actor, actor_id, project_id, *, confirmed, email=Non
                     json_text({key: value for key, value in request.items() if not key.startswith('_')}),
                     json_text(decoded(working['input_snapshot'])), json_text(decoded(working['result'])),
                     working['source_revision'], working['revision_code'], reason])['id']
-    with commercial_backend():
-        apply_operation(org_id, actor_id, actor.active_organization.role, operation_id, reason, confirmed)
     return operation_id
+
+
+def apply_for_issue(org_id, actor, actor_id, project_id, *, confirmed, email=None):
+    """Called only inside the issuance transaction; failure rolls everything back."""
+    from pricing.service import apply_operation
+    if not confirmed:
+        raise ContractAPIException(status_code=409, code='documentary_freeze_confirmation_required',
+            detail='Confirma la emisión de la cotización.')
+    operation_id = prepare_for_issue(org_id, actor, actor_id, project_id, email=email)
+    with commercial_backend():
+        operation = one('SELECT state FROM pricing_operations WHERE id=%s AND org_id=%s', [operation_id, org_id])
+        if operation['state'] != 'APPLIED':
+            apply_operation(org_id, actor_id, actor.active_organization.role, operation_id,
+                'Precio registrado al emitir la cotización', confirmed)
+    return operation_id
+
+
+def assert_reviewed_price(org_id, actor, actor_id, project_id, operation_id):
+    """Fresh costs and policy must reproduce the exact reviewed price."""
+    from authentication.errors import contract_error
+    with commercial_backend():
+        operation = one('SELECT * FROM pricing_operations WHERE id=%s AND org_id=%s AND project_id=%s '
+            'FOR UPDATE', [operation_id, org_id, project_id], 'pricing_operation_not_found')
+    request = decoded(operation['request'])
+    if operation['state'] == 'APPLIED':
+        return False
+    if (operation['state'] != 'PREVIEW' or operation['requested_by'] != actor_id
+            or request.get('application_method') != 'AT_ISSUE'):
+        raise PricingError('owner_approval_required')
+    fresh = refresh_working(org_id, actor, project_id)
+    same = fresh and fresh['state'] == 'READY' and (
+        fresh['source_revision'] == operation['source_revision']
+        and fresh['policy_revision'] == request['simple_policy_revision'])
+    if same:
+        frozen_result, live_result = decoded(operation['result']), decoded(fresh['result'])
+        snapshot = decoded(operation['input_snapshot'])
+        if 'workshop_policy' in snapshot:
+            same = snapshot == decoded(fresh['input_snapshot']) and frozen_result == live_result
+        else:
+            same = (all(frozen_result.get(key) == live_result.get(key) for key in (
+                'project_net', 'project_tax', 'project_gross', 'lines', 'line_detail', 'services', 'workspace'))
+                and snapshot['authorities'] == live_result['authorities'])
+    if not same:
+        raise contract_error(409, 'quotation_preview_stale',
+            'La obra, los precios o la configuración cambiaron. Revisa un PDF nuevo antes de emitir.')
+    return True

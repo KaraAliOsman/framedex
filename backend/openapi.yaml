@@ -10025,7 +10025,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/QuotationPreviewRequestRequest'
-        required: true
       security:
       - SupabaseBearer: []
       responses:
@@ -48100,8 +48099,7 @@ components:
         pricing_operation_id:
           type: string
           format: uuid
-      required:
-      - pricing_operation_id
+          nullable: true
     QuotationTemplateEnum:
       enum:
       - ESENCIAL

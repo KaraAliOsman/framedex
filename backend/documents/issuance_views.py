@@ -27,10 +27,11 @@ from documents.views import (
 )
 from notifications.serializers import MailRecordSerializer
 from pricing.serializers import StrictSerializer
+from pricing.views import public_pricing_errors
 
 
 class QuotationPreviewRequestSerializer(StrictSerializer):
-    pricing_operation_id = serializers.UUIDField()
+    pricing_operation_id = serializers.UUIDField(required=False, allow_null=True, default=None)
 
 
 class QuotationCustomerRequestSerializer(StrictSerializer):
@@ -80,6 +81,7 @@ class QuotationIssueSerializer(FreezeResponseSerializer):
     mail = MailRecordSerializer()
 
 
+@public_pricing_errors()
 def guided_with_retry(*, request, project_id, data, issuing):
     token = verified_request_token(request)
     for attempt in range(3):
@@ -115,7 +117,7 @@ def guided_with_retry(*, request, project_id, data, issuing):
                 if issuing:
                     return issuance.issue_preview(**args, role=role, data=data)
                 return issuance.prepare_preview(
-                    **args, pricing_operation_id=data["pricing_operation_id"]
+                    **args, pricing_operation_id=data.get("pricing_operation_id")
                 )
         except DatabaseError as error:
             if _database_sqlstate(error) not in ("40001", "40P01") or attempt == 2:

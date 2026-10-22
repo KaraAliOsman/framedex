@@ -1045,8 +1045,20 @@ def compose_revision(
     *, org_id: UUID, actor_id: UUID, project_id: UUID,
     pricing_operation_id: UUID, sealed_at: datetime,
     allow_incomplete_workshop: bool = False,
+    allow_working_price: bool = False,
 ) -> PreparedRevision:
     """Compose the same authority for preview and seal, without issuing a revision."""
+    if allow_working_price:
+        from pricing.service import source_revision
+        with commercial_backend():
+            source = one('SELECT * FROM pricing_operations WHERE id=%s AND org_id=%s AND project_id=%s',
+                [pricing_operation_id, org_id, project_id], 'pricing_operation_not_found')
+            if source['state'] != 'APPLIED':
+                live_project = one('SELECT * FROM projects WHERE id=%s AND org_id=%s', [project_id, org_id])
+                live_positions = rows('SELECT * FROM project_positions WHERE project_id=%s AND org_id=%s '
+                    'ORDER BY position_index', [project_id, org_id])
+                if source_revision(live_project, live_positions) != source['source_revision']:
+                    raise DocumentaryError('quotation_preview_stale')
     with documentary_backend():
         project = one(
             "SELECT * FROM public.projects WHERE org_id=%s AND id=%s",
@@ -1063,11 +1075,14 @@ def compose_revision(
             [pricing_operation_id, org_id, project_id],
             "pricing_operation_not_found",
         )
-        if operation["state"] != "APPLIED" or str(
+        request = _json_object(operation['request'], 'invalid_applied_pricing_request')
+        working = (allow_working_price and operation['state'] == 'PREVIEW'
+            and request.get('application_method') == 'AT_ISSUE' and operation['requested_by'] == actor_id)
+        if (operation["state"] != "APPLIED" and not working) or str(
             operation["revision_code"] or "REV-A"
         ) != revision:
             raise DocumentaryError("applied_pricing_authority_required")
-        if project["pricing_reset_at"] is not None and (
+        if not working and project["pricing_reset_at"] is not None and (
             operation["approved_at"] is None or operation["approved_at"] <= project["pricing_reset_at"]
         ):
             raise DocumentaryError("applied_pricing_authority_required")
@@ -1080,11 +1095,22 @@ def compose_revision(
         positions = _position_rows(project_id, org_id)
         if not positions:
             raise DocumentaryError("position_documentary_inputs_required")
-        request = _json_object(operation["request"], "invalid_applied_pricing_request")
         pricing_snapshot = _json_object(
             operation["input_snapshot"], "invalid_applied_pricing_snapshot"
         )
         pricing_result = _json_object(operation["result"], "invalid_applied_pricing_result")
+        if working:
+            # Project the engine's already-computed amounts into the same
+            # documentary read model; no commercial table is written here.
+            costs = _indexed_amounts(pricing_snapshot['cost_lines'], 'invalid_applied_pricing_snapshot')
+            prices = _indexed_amounts(pricing_result['lines'], 'invalid_applied_pricing_result')
+            project = {**project, 'total_cost_net': _stored_money(sum(costs.values(), D('0'))
+                + D(str(pricing_result.get('services_cost', '0')))),
+                **{f'total_price_{key}': _stored_money(D(str(pricing_result[f'project_{key}'])))
+                    for key in ('net', 'tax', 'gross')}}
+            positions = [{**position, 'cost_net': _stored_money(costs[position['position_index']]),
+                'price_net': _stored_money(prices[position['position_index']]),
+                'discount_pct': D(str(request['discount_pct']))} for position in positions]
         _pricing_state_matches(project, positions, request, pricing_snapshot, pricing_result)
         priced_bom = _technical_bom(pricing_snapshot)
         extra_authorities = {str(item['position_id']):item['extra_authority'] for item in pricing_snapshot.get('positions',[])
@@ -1610,8 +1636,11 @@ def compose_revision(
                 "operation_id": operation["id"],
                 "state": "APPLIED",
                 "requested_by": operation["requested_by"],
-                "approved_by": operation["approved_by"],
-                "approved_at": operation["approved_at"],
+                # Automatic issuance stores approval in the immutable operation
+                # audit. Leaving it out of this content identity keeps the exact
+                # reviewed PDF stable until the human issues it.
+                "approved_by": None if request.get('application_method') == 'AT_ISSUE' else operation["approved_by"],
+                "approved_at": None if request.get('application_method') == 'AT_ISSUE' else operation["approved_at"],
                 "request": request,
                 "input_snapshot": pricing_snapshot,
                 "result": pricing_result,

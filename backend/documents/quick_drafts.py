@@ -28,7 +28,6 @@ QUICK_DOCUMENTS = {
 }
 
 PENDING_TERMS = "Por definir"
-REASON = "Borrador rápido: precio calculado con las reglas vigentes, sin guardar"
 
 
 class _Discard(Exception):
@@ -127,30 +126,17 @@ def _ensure_price(*, org_id: UUID, tenant, token, project: dict) -> str:
     """The applied price, or one calculated now with the company's rules."""
     from dekopen_engine.commercial import PricingError
     from documents.repository import DocumentaryError
-    from pricing.repository import commercial_backend, rows
-    from pricing.serializers import PriceRequestSerializer
-    from pricing.service import apply_operation, preview, pricing_public_detail
+    from pricing.service import pricing_public_detail
 
     if project.get("current_pricing_operation_id"):
         return str(project["current_pricing_operation_id"])
-    currency = rows("SELECT currency FROM public.tenancy_organizations WHERE id=%s", [str(org_id)])[0]["currency"]
-    serializer = PriceRequestSerializer(data={
-        "project_id": str(project["id"]),
-        "pricing_mode": "COST_PLUS_MARGIN",
-        "currency": currency if currency in ("CLP", "USD") else "CLP",
-        "effective_date": datetime.now(ZoneInfo("America/Santiago")).date().isoformat(),
-        "reason": REASON,
-    })
-    serializer.is_valid(raise_exception=True)
+    from pricing.working import apply_for_issue
     try:
-        with commercial_backend():
-            operation = preview(org_id, tenant, {**serializer.validated_data,
-                                                 "_actor_id": token.user_id, "_actor_email": token.email})
-            apply_operation(org_id, token.user_id, tenant.active_organization.role,
-                            UUID(str(operation["id"])), REASON, False)
+        return str(apply_for_issue(org_id, tenant, token.user_id, UUID(str(project['id'])),
+            confirmed=True, email=token.email))
     except PricingError as error:
         raise DocumentaryError(error.code, detail=pricing_public_detail(error.code)) from error
-    return str(operation["id"])
+
 
 
 def _compose(*, request, project_id: UUID, kind: str) -> bytes:
