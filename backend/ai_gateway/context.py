@@ -451,7 +451,7 @@ def _project_pricing(org_id: UUID, project: dict) -> dict | None:
 def _project_totals(project: dict, priced: dict | None) -> dict:
     if priced is None:
         return {"net": None, "tax": None, "gross": None,
-                "reason": "Sin dato: calcula y aplica los precios de esta revisión en Precios."}
+                "reason": "Falta completar: calcula y aplica los precios de esta revisión en Precios."}
     return {"net": _cut(project["total_price_net"]), "tax": _cut(project["total_price_tax"]),
             "gross": _cut(project["total_price_gross"])}
 

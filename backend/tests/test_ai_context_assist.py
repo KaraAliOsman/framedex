@@ -57,7 +57,7 @@ def test_unpriced_project_totals_are_absent_even_with_historical_zero_or_stale_a
     stored = {"total_price_net": "99.00", "total_price_tax": "0.00", "total_price_gross": "0.00"}
     missing = context._project_totals(stored, None)
     assert missing["net"] is missing["tax"] is missing["gross"] is None
-    assert "Sin dato" in missing["reason"] and "Precios" in missing["reason"]
+    assert "Falta completar" in missing["reason"] and "Precios" in missing["reason"]
     assert context._project_totals(stored, {"currency": "CLP"})["net"] == "99.00"
 
 

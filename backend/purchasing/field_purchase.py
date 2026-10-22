@@ -9,7 +9,7 @@ from production.field import reject
 
 def replacement_order(org, actor, version_id, case, data):
     if not data.get("requirement_id") or not data.get("quantity"):
-        reject("Elige el requerimiento sellado y la cantidad física faltante.")
+        reject("Elige el requerimiento de la orden y la cantidad física faltante.")
     requirement = one(
         "SELECT order_type::text FROM public.purchase_requirement_lines WHERE org_id=%s AND project_version_id=%s AND id=%s",
         [org, version_id, data["requirement_id"]],

@@ -81,7 +81,7 @@ def proposal(*, org_id: UUID) -> dict:
                     bar_needs[(oid, need['sku'], need['variant_key'])] += Decimal(str(need['needed']))
             except (DocumentaryError, ValueError, KeyError) as error:
                 blockers.append({'order_id': oid, 'order_code': order['order_code'],
-                                 'cause': 'Falta un plan vigente con autoridad de corte. Abre la OT y revisa su catálogo.',
+                                 'cause': 'Falta un plan de corte vigente con reglas verificadas. Abre la orden de taller y revisa su catálogo.',
                                  'code': getattr(error, 'code', 'purchase_plan_incomplete')})
         lines = []
         for version_id, version_orders in grouped.items():
@@ -144,8 +144,8 @@ def proposal(*, org_id: UUID) -> dict:
                 until = decoded(assignment['evidence']).get('valid_until') if assignment else None
                 if until and str(until) < datetime.now(ZoneInfo('America/Santiago')).date().isoformat():
                     assignment = None
-                cause = ('Sin dato · hay fuentes históricas sin vínculo a una posición. Revisa la revisión.' if missing else
-                         'El plan de OT requiere más material que la compra sellada. Revisa la consolidación o emite una revisión adicional.'
+                cause = ('Falta completar · hay registros históricos sin vínculo a una ventana. Revisa la revisión.' if missing else
+                         'El plan de la orden de taller requiere más material que la compra emitida. Revisa la consolidación o emite una revisión adicional.'
                          if uncovered > ZERO else None)
                 lines.append({'requirement_id': rid, 'version_id': version_id,
                     'project_code': version_orders[0]['project_code'], 'project_id': str(version_orders[0]['project_id']),

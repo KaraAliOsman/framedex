@@ -53,7 +53,7 @@ def compatible(definition: ExtraDefinition, leaves: list[LeafOpeningFact] | list
 def selected_definition(authority: ExtraAuthority | None, selection: ExtraSelection, scope: str) -> ExtraDefinition:
     candidates = [item for item in authority.definitions if item.code == selection.code and item.scope == scope] if authority else []
     if len(candidates) != 1:
-        raise ValueError("Sin dato: el extra no tiene una autoridad compatible; revisa el catálogo o Ajustes.")
+        raise ValueError("Falta completar: el extra no tiene una regla compatible; revisa el catálogo o Ajustes.")
     return candidates[0]
 
 
@@ -87,13 +87,13 @@ def position_lines(authority: ExtraAuthority | None, selections: list[ExtraSelec
         for selection in selections:
             key = (selection.code, selection.bay_id, selection.leaf_id)
             if key in keys:
-                raise ValueError("No repitas el mismo extra sobre el mismo vano u hoja.")
+                raise ValueError("No repitas el mismo extra sobre el mismo paño u hoja.")
             keys.add(key)
             definition = selected_definition(authority, selection, "POSITION")
             if selection.decision == "DISMISS":
                 continue
             if not compatible(definition, leaves):
-                raise ValueError("El extra no es compatible con la apertura de esta posición.")
+                raise ValueError("El extra no es compatible con la apertura de esta ventana.")
             if definition.basis != "SIDES" and selection.sides:
                 raise ValueError("Este extra no se aplica por lado.")
             if definition.basis == "SIDES" and selection.sides == []:
@@ -101,14 +101,14 @@ def position_lines(authority: ExtraAuthority | None, selections: list[ExtraSelec
             if definition.basis != "SILL" and (selection.overhang_left_mm or selection.overhang_right_mm):
                 raise ValueError("Solo el vierteaguas lleva vuelos.")
             if definition.basis != "LEAF" and (selection.bay_id is not None or selection.leaf_id is not None):
-                raise ValueError("Este extra se aplica al vano completo.")
+                raise ValueError("Este extra se aplica a la ventana completa.")
             if definition.basis == "LEAF":
                 targets = [leaf for leaf in leaves if
                     (selection.bay_id is None or leaf.bay_id == selection.bay_id) and
                     (selection.leaf_id is None or leaf.leaf_id == selection.leaf_id) and
                     (not definition.allowed_movements or leaf.opening.movement.value in definition.allowed_movements)]
                 if not targets:
-                    raise ValueError("El extra no tiene una hoja compatible en esta posición.")
+                    raise ValueError("El extra no tiene una hoja compatible en esta ventana.")
                 for leaf in targets:
                     physical = (definition.code, leaf.bay_id, leaf.leaf_id)
                     if physical in covered:
@@ -131,7 +131,7 @@ def position_lines(authority: ExtraAuthority | None, selections: list[ExtraSelec
             }[definition.basis]()
             result.append(line(definition, selection, quantity, width=width, height=height))
     if sum(item.installation for item in result) > 1:
-        raise ValueError("Selecciona una sola regla de instalación para la posición.")
+        raise ValueError("Selecciona una sola regla de instalación para la ventana.")
     return result
 
 
@@ -144,14 +144,14 @@ def suggestions(authority: ExtraAuthority | None, selections: list[ExtraSelectio
             continue
         cause = ""
         if definition.suggestion == "WINDOW" and any(leaf.use.value == "WINDOW" for leaf in leaves):
-            cause = "La posición contiene una ventana; revisa si la fachada necesita vierteaguas."
+            cause = "Hay una ventana compatible; revisa si la fachada necesita vierteaguas."
         elif definition.suggestion == "MOVING_LEAF" and any(leaf.opening.movement.value != "FIXED" for leaf in leaves):
             cause = "Hay hojas móviles compatibles; puedes proteger su abertura con este accesorio."
         elif definition.suggestion == "OPENING_GAP" and context is not None:
             dw = (context.opening_width_mm - width) if context.opening_width_mm is not None else D(0)
             dh = (context.opening_height_mm - height) if context.opening_height_mm is not None else D(0)
             if dw > 0 or dh > 0:
-                cause = f"El vano de obra declarado excede el marco en {dw} mm de ancho y {dh} mm de alto; revisa los ensanches."
+                cause = f"La abertura de obra declarada excede el marco en {dw} mm de ancho y {dh} mm de alto; revisa los ensanches."
         if cause:
             result.append(ExtraSuggestion(name=definition.name, cause=cause, source=definition.source,
                 selection=ExtraSelection(code=definition.code, sides=definition.default_sides,
@@ -166,7 +166,7 @@ def project_lines(authority: ExtraAuthority, selections: list[ExtraSelection],
     if len({item.code for item in selections}) != len(selections):
         raise ValueError("No repitas un servicio del proyecto.")
     if not positions:
-        raise ValueError("Agrega una posición antes de calcular los servicios.")
+        raise ValueError("Agrega una ventana antes de calcular los servicios.")
     with localcontext() as context:
         context.prec = 80
         for selection in selections:
@@ -202,7 +202,7 @@ def partition_price(total: Decimal, base: Decimal, extras: list[tuple[ExtraLine,
         weights = [base, *(amount for _, amount in extras)]
         weight = sum(weights, D(0))
         if weight < 0 or (weight == 0 and total != 0) or any(value < 0 for value in weights):
-            raise ValueError("Falta autoridad de precio para distribuir las sublíneas.")
+            raise ValueError("Faltan precios válidos para distribuir las sublíneas.")
         q = quantum(currency)
         exact = [total*value/weight for value in weights] if weight else [D(0) for _ in weights]
         amounts = [(value//q)*q for value in exact]
@@ -264,7 +264,7 @@ def glass_bar_lines(priced: GlassPrice, product: GlassProduct | None, *, bay_id:
             if charge.kind not in {'Palillaje por metro','Cruce de palillaje'}:
                 continue
             if product is None or not product.billing.source:
-                raise ValueError('Sin dato: el palillaje requiere la fuente y tarifas de la receta de vidrio.')
+                raise ValueError('Falta completar: el palillaje requiere el documento y las tarifas de la receta de vidrio.')
             rate = charge.unit_cost*(D(1)+waste)
             selling = rate/(D(1)-margin)
             rows.append(ExtraLine(code=f'GLASS-BARS-{bay_id}-{index}',name=charge.kind,scope='POSITION',kind='SERVICE',

@@ -152,13 +152,13 @@ REGISTRY = [
     spec("add_stacked_unit", "Agrega un fijo superior conectado al borde libre del marco.", {"module": REF}, ["module"], {"module": "m1"}),
     spec("insert_module", "Inserta un marco dentro de una unión recta existente.", {"coupling": REF}, ["coupling"], {"coupling": "c1"}),
     spec("remove_coupling", "Desconecta una unión conservando sus marcos.", {"coupling": REF}, ["coupling"], {"coupling": "c1"}),
-    spec("set_bay_spec", "Declara herraje, tratamiento y clasificación de un paño; el motor comprueba la autoridad.",
+    spec("set_bay_spec", "Declara herraje, tratamiento y clasificación de un paño; el motor comprueba los datos del catálogo.",
          {**TARGET, "patch": BAY_PATCH}, ["module", "bay", "patch"], {"module": "m1", "bay": "b1", "patch": {"hardware_set_sku": None}}),
     spec("clear_glass_thickness", "Retira el espesor declarado y deja su ausencia explícita.",
          {"module": REF}, ["module"], {"module": "m1"}),
     spec("set_module_tree", "Aplica una especificación declarada o copiada conservando la identidad del marco; el motor la valida completa.",
          {"module": REF, "tree": {"type": "object"}}, ["module", "tree"], {"module": "m1", "tree": {"id": "b1", "type": "BAY", "opening_type": "FIXED"}}),
-    spec("set_extras", "Declara accesorios y medidas del vano sobre el marco; las cantidades salen del motor.",
+    spec("set_extras", "Declara accesorios y medidas de la abertura de obra sobre el marco; las cantidades salen del motor.",
          {"module": REF, "extras": {"type": "array", "maxItems": 30, "items": model_schema(ExtraSelection)}, "context": optional(model_schema(ExtraContext))},
          ["module", "extras"], {"module": "m1", "extras": []}),
     spec("set_frameless", "Declara soportes y herrajes del paño sin marco; la evaluación comprueba su catálogo.",
@@ -175,14 +175,14 @@ REGISTRY = [
          {"module": REF, "other": REF}, ["module", "other"], {"module": "m1", "other": "m2"}),
     spec("set_coupler_sku", "Declara el acople real de una unión, o retira su selección.",
          {"coupling": REF, "sku": optional(REF)}, ["coupling", "sku"], {"coupling": "c1", "sku": None}),
-    spec("set_location", "Cambia la ubicación de una posición.", {"position_id": REF, "location": TEXT}, ["position_id", "location"], {"position_id": "id-visible", "location": "Cocina"}, scope="project"),
-    spec("set_quantity", "Cambia la cantidad exacta de una posición.", {"position_id": REF, "quantity": {**COUNT, "maximum": 2147483647}}, ["position_id", "quantity"], {"position_id": "id-visible", "quantity": 4}, scope="project"),
-    spec("add_position", "Crea una posición desde una plantilla real o apertura catalogada y dimensiones explícitas.",
+    spec("set_location", "Cambia la ubicación de una ventana.", {"position_id": REF, "location": TEXT}, ["position_id", "location"], {"position_id": "id-visible", "location": "Cocina"}, scope="project"),
+    spec("set_quantity", "Cambia la cantidad exacta de una ventana.", {"position_id": REF, "quantity": {**COUNT, "maximum": 2147483647}}, ["position_id", "quantity"], {"position_id": "id-visible", "quantity": 4}, scope="project"),
+    spec("add_position", "Crea una ventana desde una plantilla real o apertura catalogada y dimensiones explícitas.",
          {"system_id": REF, "template": TEXT, "dims": {"type": "object", "additionalProperties": False, "properties": {"width_mm": MM, "height_mm": MM}, "required": ["width_mm", "height_mm"]}, "location": TEXT, "quantity": COUNT, "glass_sku": REF, "color": TEXT},
          ["system_id", "template", "dims", "location", "glass_sku", "color"], {"system_id": "id-visible", "template": "SLIDING_2L", "dims": {"width_mm": "1600", "height_mm": "1100"}, "location": "Cocina", "glass_sku": "VIDRIO-BASE", "color": "WHITE"}, scope="project"),
-    spec("duplicate_position", "Crea copias exactas de una posición; count es el número de copias nuevas.", {"position_id": REF, "count": COUNT, "location": TEXT}, ["position_id", "count", "location"], {"position_id": "id-visible", "count": 4, "location": "Dormitorios"}, scope="project"),
-    spec("remove_position", "Quita una posición de la revisión editable.", {"position_id": REF}, ["position_id"], {"position_id": "id-visible"}, scope="project"),
-    spec("duplicate_positions", "Duplica exactamente un lote de posiciones; conserva su ubicación y agrupación.",
+    spec("duplicate_position", "Crea copias exactas de una ventana; count es el número de copias nuevas.", {"position_id": REF, "count": COUNT, "location": TEXT}, ["position_id", "count", "location"], {"position_id": "id-visible", "count": 4, "location": "Dormitorios"}, scope="project"),
+    spec("remove_position", "Quita una ventana de la revisión editable.", {"position_id": REF}, ["position_id"], {"position_id": "id-visible"}, scope="project"),
+    spec("duplicate_positions", "Duplica exactamente un lote de ventanas; conserva su ubicación y agrupación.",
          {"position_ids": {"type": "array", "minItems": 1, "maxItems": 100, "items": REF}},
          ["position_ids"], {"position_ids": ["id-visible"]}, scope="project"),
     spec("add_design_position", "Agrega la receta completa de la biblioteca después de validarla con el catálogo y el motor.",
@@ -192,16 +192,16 @@ REGISTRY = [
     spec("remove_positions", "Quita un lote de la revisión editable con vista previa y deshacer.",
          {"position_ids": {"type": "array", "minItems": 1, "maxItems": 100, "items": REF}},
          ["position_ids"], {"position_ids": ["id-visible"]}, scope="project"),
-    spec("set_positions", "Declara cantidad, ubicación o piso/recinto/eje para posiciones seleccionadas.",
+    spec("set_positions", "Declara cantidad, ubicación o piso/recinto/eje para ventanas seleccionadas.",
          {"position_ids": {"type": "array", "minItems": 1, "maxItems": 100, "items": REF},
           "quantity": {**COUNT, "maximum": 2147483647}, "location": TEXT,
           "placement": {"type": "object", "additionalProperties": False,
                         "properties": {key: {"type": "string", "maxLength": 80} for key in ("floor", "room", "axis")}}},
          ["position_ids"], {"position_ids": ["id-visible"], "placement": {"floor": "Piso 2"}}, scope="project"),
-    spec("reorder_positions", "Reordena la lista completa sin cambiar el número ni la identidad física de una posición.",
+    spec("reorder_positions", "Reordena la lista completa sin cambiar el número ni la identidad física de una ventana.",
          {"position_ids": {"type": "array", "minItems": 1, "maxItems": 100, "items": REF}},
          ["position_ids"], {"position_ids": ["id-visible"]}, scope="project"),
-    spec("apply_to_positions", "Propone un cambio sobre posiciones filtradas por ubicación, tipología o ids.", {"filter": {"type": "object", "additionalProperties": False, "properties": {"location_contains": TEXT, "typology": TEXT, "position_ids": {"type": "array", "items": REF}}}, "ops": {"type": "array", "minItems": 1, "maxItems": 50, "items": {"type": "object"}}}, ["filter", "ops"], {"filter": {"location_contains": "segundo piso"}, "ops": [{"op": "set_glass", "module": "*", "sku": "VIDRIO-BASE"}]}, scope="project"),
+    spec("apply_to_positions", "Propone un cambio sobre ventanas filtradas por ubicación, tipología o ids.", {"filter": {"type": "object", "additionalProperties": False, "properties": {"location_contains": TEXT, "typology": TEXT, "position_ids": {"type": "array", "items": REF}}}, "ops": {"type": "array", "minItems": 1, "maxItems": 50, "items": {"type": "object"}}}, ["filter", "ops"], {"filter": {"location_contains": "segundo piso"}, "ops": [{"op": "set_glass", "module": "*", "sku": "VIDRIO-BASE"}]}, scope="project"),
     *[spec(name, description, {"project_id": REF}, ["project_id"], {"project_id": "id-visible"}, scope="prepare",
            precondition="Solo prepara la ruta; la acción consecuente exige un clic humano independiente.")
       for name, description in [("prepare_emit", "Prepara emisión de cotización."), ("prepare_release", "Prepara liberación de producción."),
@@ -699,7 +699,7 @@ def _apply(product: dict[str, Any], op: dict[str, Any], params: SystemParams, ca
             height -= decimal(op["sill_height_mm"]) + bottom_above_frame
         if height <= 0 or height >= leaf_height:
             limit = format(leaf_height, ".2f").replace(".", ",")
-            raise OperationError("handle_height_invalid", f"La manilla queda fuera de la hoja: debe estar entre 0 y {limit} mm, sin incluir los bordes. Fuente: geometría de fabricación del motor para esta serie.")
+            raise OperationError("handle_height_invalid", f"La manilla queda fuera de la hoja: debe estar entre 0 y {limit} mm, sin incluir los bordes. Origen: geometría de fabricación del motor para esta serie.")
         if reference == "LEAF_TOP":
             height = leaf_height - height
         node["handle_height_mm"] = mm(height)
@@ -889,7 +889,7 @@ def apply_operations(product: dict[str, Any], ops: list[dict[str, Any]], *, para
                     if 0 <= index < len(origin[field]):
                         op[field] = origin[field][index]
         if BY_NAME[op["op"]]["scope"] != "design":
-            raise OperationError("operation_scope_invalid", "Usa la vista previa de posiciones para ese cambio.")
+            raise OperationError("operation_scope_invalid", "Usa la vista previa de ventanas para ese cambio.")
         before = fingerprint(current)
         _apply(current, op, params, catalog, finish)
         for field, collection in (("module", "modules"), ("coupling", "couplings")):

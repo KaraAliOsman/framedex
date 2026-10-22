@@ -155,7 +155,7 @@ def derive_fabrication(survey: OpeningSurvey, rule: MountingRule) -> MountingRes
         if spread > rule.tolerance_mm:
             warnings.append(f"{label}: la dispersión supera la tolerancia declarada.")
         if abs(deviation) > rule.tolerance_mm:
-            warnings.append(f"{label}: la fijación manual no es coherente con el vano y el montaje.")
+            warnings.append(f"{label}: la fijación manual no es coherente con la abertura de obra y el montaje.")
         return AxisDerivation(opening_mm=opening, spread_mm=spread, first=first, second=second,
                               first_adjustment_mm=first.adjustment, second_adjustment_mm=second.adjustment,
                               derived_mm=derived, fabrication_mm=fabrication, deviation_mm=deviation)

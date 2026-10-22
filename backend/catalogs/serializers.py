@@ -80,7 +80,7 @@ class CompleteAuthoritySerializer(StrictSerializer):
     def validate(self, attrs):
         missing = {key for key, field in self.fields.items() if field.required} - attrs.keys()
         if missing:
-            raise serializers.ValidationError({key: "Falta este dato de la fuente." for key in sorted(missing)})
+            raise serializers.ValidationError({key: "Falta este dato del documento de referencia." for key in sorted(missing)})
         return attrs
 
 
@@ -167,7 +167,7 @@ class SystemWriteSerializer(StrictSerializer):
         try:
             return ExtraAuthority.model_validate_json(json_text(value)).model_dump(mode="json")
         except (ValueError, TypeError):
-            raise serializers.ValidationError("Declara las reglas, artículos, tarifas exactas y fuentes de los extras.") from None
+            raise serializers.ValidationError("Declara las reglas, artículos, tarifas exactas y referencias de los extras.") from None
 
     system_family = serializers.ChoiceField(choices=[item.value for item in SystemFamily])
     sliding_parameters = SlidingSystemParametersSerializer(required=False, allow_null=True)
@@ -185,7 +185,7 @@ class SystemWriteSerializer(StrictSerializer):
             # numbers after human-reviewed publication.
             return FinishAuthority.model_validate_json(json_text(value)).model_dump(mode="json")
         except (ValueError, TypeError):
-            raise serializers.ValidationError("Completa la carta, los colores lineales, las caras permitidas, la base, las reglas y sus fuentes con decimales exactos.") from None
+            raise serializers.ValidationError("Completa la carta, los colores lineales, las caras permitidas, la base, las reglas y sus referencias con decimales exactos.") from None
 
     def validate_opening_capabilities(self, value):
         if value is None:
@@ -200,7 +200,7 @@ class SystemWriteSerializer(StrictSerializer):
                 raise ValueError("Capacidades contradictorias.")
             return [cap.model_dump() for cap in capabilities]
         except (ValueError, TypeError):
-            raise serializers.ValidationError("Completa las capacidades con movimiento, bisagras, dirección, rol, herrajes y fuente.") from None
+            raise serializers.ValidationError("Completa las capacidades con movimiento, bisagras, dirección, rol, herrajes y documento de referencia.") from None
 
     def validate_paired_leaf_rule(self, value):
         if value is None:
@@ -208,7 +208,7 @@ class SystemWriteSerializer(StrictSerializer):
         try:
             return PairedLeafRule.model_validate_json(json_text(value)).model_dump()
         except (ValueError, TypeError):
-            raise serializers.ValidationError("Completa los traslapes y descuentos del inversor con su fuente.") from None
+            raise serializers.ValidationError("Completa los traslapes y descuentos del inversor con su documento de referencia.") from None
 
     def validate(self, attrs):
         effective = {**(self.instance or {}), **attrs}
@@ -236,7 +236,7 @@ class SystemWriteSerializer(StrictSerializer):
                     for key in legacy if effective.get(key) is not None})
             sliding = effective.get("sliding_parameters")
             if family in ("SLIDING", "LIFT_SLIDE") and sliding is None:
-                raise serializers.ValidationError({"sliding_parameters": "Faltan los parámetros de corredera de la fuente."})
+                raise serializers.ValidationError({"sliding_parameters": "Faltan los parámetros de corredera del documento de referencia."})
             if family not in ("SLIDING", "LIFT_SLIDE") and sliding is not None:
                 raise serializers.ValidationError({"sliding_parameters": "Esta familia no admite parámetros de corredera."})
             from dekopen_engine.catalog_rules import FAMILY_OPENINGS
@@ -465,7 +465,7 @@ class ArticleWriteSerializer(StrictSerializer):
     def validate(self, attrs):
         effective = {**(self.instance or {}), **attrs}
         if effective.get("coupling_rule") is not None and effective.get("role") != "COUPLER":
-            raise serializers.ValidationError({"coupling_rule": "La autoridad angular corresponde a un acoplador."})
+            raise serializers.ValidationError({"coupling_rule": "La regla angular corresponde a un acoplador."})
         return attrs
 
 
@@ -498,7 +498,7 @@ class KitWriteSerializer(StrictSerializer):
             if lower in effective and upper in effective and effective[lower] > effective[upper]:
                 raise serializers.ValidationError({upper: "El máximo debe ser mayor o igual al mínimo."})
         if effective.get("class_authority") is not None and effective.get("contents"):
-            raise serializers.ValidationError({"contents": "Una clase expandible declara sus componentes en la autoridad. Deja vacío el contenido histórico para evitar dos fuentes."})
+            raise serializers.ValidationError({"contents": "Una clase expandible declara sus componentes en su ficha. Deja vacío el contenido histórico para evitar dos listas distintas."})
         return attrs
 
     system_id = serializers.UUIDField(allow_null=True)

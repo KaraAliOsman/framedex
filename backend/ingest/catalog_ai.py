@@ -15,11 +15,11 @@ Devuelve SOLO JSON {"records":[{"sheet":"nombre de hoja","values":{"campo":"valo
 "literal":"valor literal dentro de la cita","confidence":"HIGH|LOW|UNKNOWN"}}}] }.
 Usa exactamente las hojas y claves del schema recibido. Los decimales son strings exactos en la
 unidad de la columna. No inventes parámetros ausentes, capacidades, descuentos ni reglas.
-No conviertas nombres o notas en autoridad numérica. Ausente o ambiguo = null y UNKNOWN.
+No conviertas nombres o notas en valores numéricos confirmados. Ausente o ambiguo = null y UNKNOWN.
 HIGH exige una única lectura explícita, cita y referencia. Conserva todas las dudas en LOW.
 Un sistema puede producir filas en las hojas declaradas en schema. No omitas las reglas
 de corte, secciones ni límites explícitos. No completes una serie con conocimientos externos.
-Los códigos, SKU y versiones deben estar en la fuente. Para source usa el archivo y página.
+Los códigos, SKU y versiones deben estar en el documento. Para source usa el archivo y página.
 Omite de values y evidence las columnas ausentes; el servidor las marcará UNKNOWN.
 """
 

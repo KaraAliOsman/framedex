@@ -26,7 +26,7 @@ _YELLOW_RULES = {"R02", "R07", "R08", "R13"}
 _BLOCKED_RULES = {"R01", "R05", "R09", "R12", "R14"}
 _MESSAGES = {
     "R01": ("Carga de la hoja", "La hoja supera la carga admitida por el herraje.",
-            "La hoja puede descolgarse.", "Revisar un kit autorizado de mayor capacidad o dividir el vano."),
+            "La hoja puede descolgarse.", "Revisar un kit autorizado de mayor capacidad o dividir el paño."),
     "R02": ("Proporción de la hoja", "La proporción de la hoja está fuera del rango recomendado.",
             "Puede dificultar la apertura y el cierre.", "Revisar la distribución y la proporción recomendada."),
     "R03": ("Dimensiones de la hoja", "La hoja está fuera de los límites del sistema y su herraje.",
@@ -37,16 +37,16 @@ _MESSAGES = {
             "La resistencia al viento no está verificada.", "Solicitar revisión estructural del travesaño y su refuerzo."),
     "R06": ("Retención del relleno", "No hay junquillo compatible con el espesor del relleno.",
             "El vidrio o panel no puede sujetarse correctamente.", "Elegir un relleno compatible con la matriz del sistema."),
-    "R07": ("Desagües inferiores", "El vano necesita un desagüe inferior adicional.",
-            "Puede acumularse agua en el marco.", "Completar los desagües inferiores del vano."),
+    "R07": ("Desagües inferiores", "El paño necesita un desagüe inferior adicional.",
+            "Puede acumularse agua en el marco.", "Completar los desagües inferiores del paño."),
     "R08": ("Puntos de cierre", "Hay demasiada separación entre puntos de cierre.",
-            "El sellado puede quedar incompleto.", "Revisar la distribución de cerraderos con el taller."),
+            "La estanqueidad puede quedar incompleta.", "Revisar la distribución de cerraderos con el taller."),
     "R09": ("Dilatación del conjunto", "El tramo continuo necesita un acople de dilatación.",
             "La dilatación puede deformar el conjunto.", "Revisar la división del tramo y el acople autorizado."),
     "R10": ("Escuadra del marco", "Las diagonales medidas están fuera de tolerancia.",
             "El marco puede estar fuera de escuadra.", "Revisar físicamente el marco y volver a medir."),
     "R11": ("Holgura de cámara", "La holgura declarada del sistema está fuera de tolerancia.",
-            "Puede impedir el correcto cierre de la hoja.", "Revisar la autoridad de holgura; el solape no la sustituye."),
+            "Puede impedir el correcto cierre de la hoja.", "Revisar la holgura declarada en el catálogo; el solape no la sustituye."),
     "R12": ("Refuerzo de corredera triple", "El refuerzo de la corredera triple es insuficiente.",
             "Puede deformarse el conjunto.", "Solicitar un refuerzo estructural autorizado."),
     "R13": ("Compases de la proyectante", "La hoja alta necesita dos compases.",
@@ -196,8 +196,8 @@ def inspect(data: InspectorInput, config: InspectorConfig) -> InspectorResult:
             failed = any(check.blocking for check in checks)
             record("R04", _MISSING if unknown else _FAIL if failed else _PASS,
                 infill.bay_id, infill.leaf_id,
-                diagnosis=("Sin dato · falta un límite de área o dimensiones máximas con fuente, o el peso de la composición."
-                    if unknown else "La pieza supera los límites de vidrio declarados. Fuente: " + str(limits.source)))
+                diagnosis=("Falta completar · declara un límite de área o dimensiones máximas con documento de referencia, o el peso de la composición."
+                    if unknown else "La pieza supera los límites de vidrio declarados. Origen: " + str(limits.source)))
         else:
             glass_class = _glass_class(infill.glass_spec)
             limit = (config.R04.monolithic_4_max_area_m2 if glass_class == "MONOLITHIC_4" else

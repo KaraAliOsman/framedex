@@ -2555,3 +2555,20 @@ de Hoy, las etapas de Obras y la purga global siguen en P05. Se conserva el
   de cinco roles y creación pasan en su propio build; `4ac52381` repite CI.
   P04c #184 está fusionada (`85bb9151`); P04d repite controles. P05 sigue con
   el motor y mensajes restantes; P06–P11 pendientes.
+
+## [2026-10-22] DEKOPEN 2 P05k | Diagnósticos y cierre contextual
+
+- 55 módulos Python y las instrucciones del agente distinguen ventana, paño,
+  abertura de obra, ubicación de piezas, origen, revisión emitida y comprobante.
+  La comparación AST conserva SQL, claves, números y estructura; el evaluador
+  acepta el vocabulario nuevo con causa técnica y rechaza pesos inventados.
+- 2.860 unitarias de motor/backend y dos xfail previos, 81 integraciones
+  PostgreSQL, 229 regresiones finales y 94 de prompts pasan. Dos E2E recorren
+  catorce superficies en 1440/390; seis capturas y los tiempos quedan en
+  [aceptación](../redesign/captures/dk2-p05k/aceptacion.md). Montaje/Servicios
+  conservan deuda de carga en P11; móvil emulado, sin prueba de fabricante real.
+- Revisión previa de los 22 archivos dorados: nueve textos de vierteaguas en
+  un archivo, sin cifras ni estructura distintas. Escritor canónico y comprobación
+  de bytes aprobados. Encabezados y marcadores históricos conservados.
+- P05j actualiza dos expectativas antiguas en `4beeb8d1`, con 95 pruebas verdes.
+  P04d aún espera Database Gate sobre `f79926de`; no se adelantan sus fusiones.

@@ -126,11 +126,11 @@ def resolve_capability(node: ParametricNode, params: SystemParams) -> OpeningCap
         legacy_from_opening(opening, use=use, legacy_hint=node.opening_type)
         return None  # Exact one-version migration retains the old authority.
     if opening.movement not in IMPLEMENTED_MOVEMENTS:
-        raise OpeningCapabilityError("Esta apertura necesita la autoridad de geometría avanzada. "
+        raise OpeningCapabilityError("Esta apertura necesita reglas de geometría avanzada declaradas en el catálogo. "
             "Elige una tipología implementada por el sistema.", bay=node.id)
     if opening.hinge_side is HingeSide.NONE and opening.movement in (
             OpeningMovement.TURN, OpeningMovement.TILT_TURN):
-        raise OpeningCapabilityError("Sin dato: declara el lado de las bisagras.", bay=node.id)
+        raise OpeningCapabilityError("Falta completar: declara el lado de las bisagras.", bay=node.id)
     matches = [cap for cap in params.opening_capabilities if matches_capability(cap, opening, use)]
     from dekopen_engine.catalog_assumptions import system_inputs
     system_inputs("opening_capabilities")
@@ -139,7 +139,7 @@ def resolve_capability(node: ParametricNode, params: SystemParams) -> OpeningCap
     compatible = tuple(name for name, caps in params.compatible_opening_systems
                        if any(matches_capability(cap, opening, use) for cap in caps))
     suggestion = ("Elige " + ", ".join(compatible) + "." if compatible else
-                  "Completa la capacidad con su fuente en Catálogo › Sistema.")
+                  "Completa la capacidad con su documento de referencia en Catálogo › Serie.")
     reason = ("El catálogo declara capacidades contradictorias." if len(matches) > 1 else
               "El sistema no admite esta combinación de movimiento, dirección y rol.")
     raise OpeningCapabilityError(f"{reason} {suggestion}", bay=node.id, compatible_systems=compatible)
@@ -170,7 +170,7 @@ def normalize_opening_tree(node: ParametricNode, params: SystemParams) -> Parame
                 leaf.opening for leaf in updated.hinged_layout.leaves):
             raise OpeningCapabilityError("La apertura de la composición debe identificar su hoja activa.", bay=node.id)
         if params.paired_leaf_rule is None:
-            raise OpeningCapabilityError("Sin dato: falta la regla del encuentro con inversor.", bay=node.id)
+            raise OpeningCapabilityError("Falta completar: declara la regla del encuentro con inversor.", bay=node.id)
         for leaf in updated.hinged_layout.leaves:
             resolve_capability(updated.model_copy(update={"opening": leaf.opening}), params)
     elif opening.leaf_role is not LeafRole.SINGLE:
@@ -225,7 +225,7 @@ def handle_fact(opening: Opening, capability: OpeningCapability, *, width_mm: De
         y = (height_mm - rule.default_height_mm if rule.vertical_reference == "LEAF_BOTTOM"
              else rule.default_height_mm)
     if side in (HingeSide.LEFT, HingeSide.RIGHT) and not minimum <= y <= maximum:
-        raise ValueError("La manilla queda fuera del rango de la fuente. Ajusta su altura dentro de la hoja.")
+        raise ValueError("La manilla queda fuera del rango del documento de referencia. Ajusta su altura dentro de la hoja.")
     if requested_height_mm is not None and side in (HingeSide.TOP, HingeSide.BOTTOM) and y != (
             rule.closing_edge_offset_mm if side is HingeSide.TOP else height_mm - rule.closing_edge_offset_mm):
         raise ValueError("La manilla de esta apertura debe quedar en su borde de cierre.")
@@ -234,7 +234,7 @@ def handle_fact(opening: Opening, capability: OpeningCapability, *, width_mm: De
     x = (width_mm - rule.closing_edge_offset_mm if side is HingeSide.RIGHT else
          rule.closing_edge_offset_mm if side is HingeSide.LEFT else width_mm / Decimal("2"))
     if not Decimal("0") <= x <= width_mm or not Decimal("0") <= y <= height_mm:
-        raise ValueError("La regla de manilla queda fuera de la hoja. Revisa la fuente del catálogo.")
+        raise ValueError("La regla de manilla queda fuera de la hoja. Revisa el documento del catálogo.")
     return OpeningHandleFact(side=side, x_mm=x, y_mm=y,
         height_from_bottom_mm=height_mm-y,
         minimum_height_from_bottom_mm=height_mm-maximum,
@@ -264,5 +264,5 @@ def opening_label(opening: Opening, use: OpeningUse = OpeningUse.WINDOW,
         "Oscilobatiente" if opening.movement is OpeningMovement.TILT_TURN else "Abatible")
     direction = "hacia adentro" if opening.direction is OpeningDirection.INWARD else "hacia afuera"
     hinge = {HingeSide.LEFT: "bisagras a la izquierda", HingeSide.RIGHT: "bisagras a la derecha"}.get(
-        opening.hinge_side, "Sin dato: falta el lado de las bisagras")
+        opening.hinge_side, "Falta completar: declara el lado de las bisagras")
     return f"{kind} {direction} — {hinge}"

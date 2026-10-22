@@ -62,14 +62,14 @@ def _project_ops_check(org_id: UUID, step: dict) -> tuple[bool, str]:
             continue
         if kind == "remove":
             if identity in saved:
-                problems.append(f"posición {before.get('position_index')} sigue presente")
+                problems.append(f"ventana {before.get('position_index')} sigue presente")
             continue
         current = saved.get(identity)
         if current is None:
-            problems.append(f"posición {after.get('position_index')} no quedó guardada")
+            problems.append(f"ventana {after.get('position_index')} no quedó guardada")
             continue
         if int(current.get("quantity") or 0) != int(after.get("quantity") or 0):
-            problems.append(f"posición {after.get('position_index')}: cantidad distinta a la propuesta")
+            problems.append(f"ventana {after.get('position_index')}: cantidad distinta a la propuesta")
     if problems:
         return False, "; ".join(problems[:4])
     return True, f"{len(simulation.get('diff') or [])} cambio(s) verificados en la obra."
@@ -189,7 +189,7 @@ def build_receipt(*, org_id: UUID, result: dict, interaction_mode: str, autonomy
     gated = [item for item in objects if item["kind"] != "action"]
     if not gated and not created and not questions and not attachment_notes and not pending_any:
         outcome = "answer"
-        summary = "Respuesta con fuentes; sin cambios en tus datos."
+        summary = "Respuesta con referencias; sin cambios en tus datos."
     elif blocked_any and not applied_any and not pending_any and not questions and not attachment_notes:
         outcome = "blocked"
         summary = "No se pudo completar: revisa la causa de cada paso."
@@ -200,7 +200,7 @@ def build_receipt(*, org_id: UUID, result: dict, interaction_mode: str, autonomy
     elif autonomy == "approve" and pending_any and not applied_any:
         outcome = "partial" if questions or attachment_notes else "proposal"
         summary = "Conjunto preparado; se aplica con tu aprobación." if outcome == "proposal" else \
-            "Conjunto parcial: faltan datos para completar el encargo."
+            "Conjunto parcial: faltan datos para completar la tarea."
     elif empty_destination or blocked_any or questions or attachment_notes or any(item["status"] == "proposed" for item in gated):
         outcome = "partial"
         summary = "Parcial: lo independiente quedó hecho; revisa lo pendiente."

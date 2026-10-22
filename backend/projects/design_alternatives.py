@@ -36,7 +36,7 @@ ALTERNATIVES_SYSTEM = """Eres el diseñador de alternativas de DEKOPEN, un edito
 
 Recibes un JSON con:
 - "brief": la intención del usuario en lenguaje natural (español chileno).
-- "width_mm" y "height_mm": las medidas fijas de la posición — nunca las cambies.
+- "width_mm" y "height_mm": las medidas fijas de la ventana — nunca las cambies.
 - "count": cuántas alternativas distintas proponer.
 - "openings_contract": las aperturas permitidas por módulo.
 - "catalog": los SKU y espesores que existen en el catálogo del cliente.

@@ -106,7 +106,7 @@ def _product(value):
     try:
         return GlassProduct.model_validate_json(json_text(value))
     except (ValueError, TypeError) as error:
-        raise contract_error(400, "glass_composition_invalid", "Revisa espesores, cámaras, PVB y fuentes de la composición.") from error
+        raise contract_error(400, "glass_composition_invalid", "Revisa espesores, cámaras, PVB y documentos de la composición.") from error
 
 
 def _rates(repo, product, sku, processing):
@@ -163,7 +163,7 @@ class GlassPreviewView(APIView):
                         if not owner:
                             price = {key: price[key] for key in ("area_m2", "billable_area_m2", "bars_length_m", "bars_crossings")}
                     except (ValueError, PricingError):
-                        price_error = "Sin dato · falta una tarifa vigente para el producto o sus procesos. Completa la lista de costos."
+                        price_error = "Falta completar · agrega una tarifa vigente para el producto y sus procesos en la lista de costos."
             alternatives = []
             for item in glass.load_products(data["system_id"], org_id):
                 candidate = item["resolved_product"]

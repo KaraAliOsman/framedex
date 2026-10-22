@@ -84,17 +84,17 @@ tool coordinate, which current point/longitudinal declarations do not supply.
             setups = authority.get("profile_setups")
             setup = next((s for s in setups if isinstance(s, dict) and s.get("profile_sku") == profile_sku), None) if isinstance(setups, list) else None
             if not setup or setup.get("section_fingerprint") != section_fingerprint(section):
-                block("profile_setup_undeclared", profile_sku=profile_sku or "Sin dato")
+                block("profile_setup_undeclared", profile_sku=profile_sku or "Falta completar")
             elif (setup.get("loading_orientation") not in ("EXTERIOR_UP", "EXTERIOR_DOWN", "EXTERIOR_LEFT", "EXTERIOR_RIGHT")
                   or setup.get("axial_datum") != "MEMBER_START" or not str(setup.get("source") or "").strip()):
-                block("profile_loading_undeclared", profile_sku=profile_sku or "Sin dato")
+                block("profile_loading_undeclared", profile_sku=profile_sku or "Falta completar")
         if op.face not in (MemberFace.START_EDGE, MemberFace.END_EDGE):
             # x/y are assembly plan coordinates. u is a longitudinal coordinate;
             # none of these specifies a tool's transverse point on the section.
             block("transverse_coordinate_undeclared")
         tool = by_tool.get(op.tool_id or "")
         if tool is None:
-            block("no_compatible_tool", tool_id=op.tool_id or "Sin dato")
+            block("no_compatible_tool", tool_id=op.tool_id or "Falta completar")
         else:
             sources = authority.get("tool_sources")
             if not isinstance(sources, dict) or not sources.get(tool.tool_id):

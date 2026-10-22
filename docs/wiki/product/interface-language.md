@@ -3,7 +3,7 @@ type: concept
 status: active
 updated: 2026-10-22
 volatility: high
-verified_ref: gpt/dk2-p05j-documentos-taller
+verified_ref: gpt/dk2-p05k-diagnosticos
 sources:
   - docs/research/2026-10-21-competencia/prompts/P05-navegacion-hoy-obras.md
   - docs/design/CONSTITUCION.md
@@ -19,6 +19,10 @@ sources:
   - backend/analytics/metrics.py
   - backend/search/service.py
   - docs/redesign/captures/dk2-p05j/aceptacion.md
+  - docs/redesign/captures/dk2-p05k/aceptacion.md
+  - backend/ai_gateway/prompts/agent-v2.md
+  - backend/ai_gateway/evals/outcomes.py
+  - engine/src/dekopen_engine/inspector.py
   - backend/documents/quotation.py
   - backend/production/cut_documents.py
   - backend/production/field_pdf.py
@@ -86,7 +90,18 @@ estancas conserva el hecho físico. Los campos vacíos históricos se omiten sin
 reescribir snapshots ni documentos. Nueve PDF se revisan en 49 páginas; 288
 unitarias dirigidas y 74 integraciones documentales y de terreno pasan.
 
-Los demás textos generados por backend y motor requieren la ronda siguiente; el recuento cero de TypeScript no acredita esas respuestas.
+P05k completa la revisión contextual de los diagnósticos y de otros mensajes
+del servidor en 55 módulos Python. Las instrucciones del agente usan el mismo
+vocabulario sin alterar claves ni habilitar acciones externas. Su evaluador
+acepta el texto nuevo con causa técnica y rechaza pesos inventados. Se conservan
+marcadores históricos, encabezados de intercambio y sinónimos de entrada.
+
+La auditoría AST confirma cadenas como único cambio en esos módulos, con SQL,
+claves y números idénticos. De los 22 archivos dorados, solo cambia el texto de
+nueve avisos de vierteaguas; se revisa antes de regenerar con el escritor
+canónico. Las 81 integraciones PostgreSQL y los dos E2E de catorce superficies
+pasan. La aceptación y sus límites están en P05k.
+
 No se reescribe evidencia emitida ni prosa aportada por clientes para conseguir
 un recuento de cadenas. P05 sigue en curso hasta cerrar esa revisión y sus PR.
 

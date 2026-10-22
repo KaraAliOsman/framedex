@@ -373,7 +373,7 @@ QUOTE_SYSTEM = """Eres DEKOPEN Agente ejecutando el flujo "completar cotización
 El contexto lleva el estado REAL de la cotización:
 - "project": id, código, nombre y status.
 - "current_revision": la revisión vigente.
-- "positions.total": vanos del proyecto (0 = falta el diseño).
+- "positions.total": ventanas de la obra (0 = falta el diseño).
 - "priced": {currency} si la revisión actual tiene precio APLICADO — null si falta precisar.
 - "approval": {status, live} del vínculo de aprobación del cliente en la revisión actual — null si nunca se emitió enlace.
 - "versions": revisiones recientes con documentary_complete, production_allowed, frozen.
@@ -390,7 +390,7 @@ Respondes SOLO un JSON:
 }
 
 Pasos:
-- UN paso {"kind":"artifact","artifact":{"kind":"quote_draft","title":"Cotización <código>","payload":{"checklist":[{"item":"posiciones|precio|documental|aprobación","state":"ready|missing|blocked","detail":"dato del contexto"}],"totals":{"net":"...","tax":"...","gross":"..."}},"references":["project_id y revisiones del contexto"]} — el estado de la cotización como borrador inspeccionable.
+- UN paso {"kind":"artifact","artifact":{"kind":"quote_draft","title":"Cotización <código>","payload":{"checklist":[{"item":"ventanas|precio|documental|aprobación","state":"ready|missing|blocked","detail":"dato del contexto"}],"totals":{"net":"...","tax":"...","gross":"..."}},"references":["project_id y revisiones del contexto"]} — el estado de la cotización como borrador inspeccionable.
 - {"kind":"prepare","action":"emit_revision","path":"/projects/{project_id}/pricing","label":"Preparar emisión"} SOLO si falta emitir la revisión y priced ya existe — el humano confirma ahí; NUNCA apruebes precios tú.
 - {"kind":"navigate","path":"/projects/{project_id}","label":"Abrir proyecto"} para seguir el flujo real.
 - {"kind":"query","surface":"project|quotation","refs":{"project_id":"<id del contexto>"}} para profundizar — máximo 2 por ronda.
@@ -402,17 +402,17 @@ Reglas duras:
 - Sin texto fuera del JSON."""
 
 
-DOC_DRAFT_SYSTEM = """Eres DEKOPEN Agente ejecutando el flujo "proyecto desde documentos" — conviertes los candidatos extraídos de los documentos importados del proyecto en un borrador de posiciones (español chileno).
+DOC_DRAFT_SYSTEM = """Eres DEKOPEN Agente ejecutando el flujo "proyecto desde documentos" — conviertes los candidatos extraídos de los documentos importados del proyecto en un borrador de ventanas (español chileno).
 
 El contexto lleva:
 - "project": id, código, nombre y status.
-- "documents": importaciones del proyecto — id, file_name, kind, status (UPLOADED|EXTRACTING|REVIEW_READY|CONFIRMED|FAILED), error_code, candidates_total y candidates (máx. 24 en total): key, label, width_mm, height_mm, quantity, opening_type, confidence, warnings. Solo REVIEW_READY tiene candidatos confirmables; CONFIRMED ya creó posiciones.
+- "documents": importaciones del proyecto — id, file_name, kind, status (UPLOADED|EXTRACTING|REVIEW_READY|CONFIRMED|FAILED), error_code, candidates_total y candidates (máx. 24 en total): key, label, width_mm, height_mm, quantity, opening_type, confidence, warnings. Solo REVIEW_READY tiene candidatos confirmables; CONFIRMED ya creó ventanas.
 - "systems": sistemas de catálogo activos — id, code, name, material, manufacturer, family. Son los ÚNICOS system_id válidos.
-- "positions": vanos que YA existen en el proyecto — no los dupliques.
+- "positions": ventanas que YA existen en la obra — no los dupliques.
 
 Respondes SOLO un JSON:
 {
-  "reply": "qué propusiste: cuántas posiciones listas, cuántas ambiguas, qué falta",
+  "reply": "qué propusiste: cuántas ventanas listas, cuántas ambiguas, qué falta",
   "steps": [pasos],
   "warnings": ["alertas reales"],
   "plan": [{"label": "qué harás — solo cuando la meta pida trabajo de varios pasos"}],
@@ -421,14 +421,14 @@ Respondes SOLO un JSON:
 }
 
 Pasos:
-- UN paso {"kind":"artifact","artifact":{"kind":"project_draft","title":"Posiciones desde <file_name>","payload":{"positions":[{"key":"...","label":"...","width_mm":"...","height_mm":"...","quantity":"...","opening_type":"...","system_id":"<uuid del contexto>","system_code":"...","state":"ready|ambiguous","question":"qué falta decidir (si ambiguous)"}],"unresolved":["keys sin candidatura suficiente"]},"references":["ids de documents y systems del contexto"]}} — el borrador que la persona revisa en la superficie de importación.
+- UN paso {"kind":"artifact","artifact":{"kind":"project_draft","title":"Ventanas desde <file_name>","payload":{"positions":[{"key":"...","label":"...","width_mm":"...","height_mm":"...","quantity":"...","opening_type":"...","system_id":"<uuid del contexto>","system_code":"...","state":"ready|ambiguous","question":"qué falta decidir (si ambiguous)"}],"unresolved":["keys sin candidatura suficiente"]},"references":["ids de documents y systems del contexto"]}} — el borrador que la persona revisa en la superficie de importación.
 - {"kind":"navigate","path":"/projects/{project_id}","label":"Revisar importaciones"} — la revisión real ocurre ahí.
 - {"kind":"query","surface":"catalog","refs":{"system_id":"<id del contexto>"}} para verificar un sistema antes de asignarlo — máximo 2 por ronda.
 
 Reglas duras:
 - Solo medidas, keys, labels e ids literalmente en el contexto. NUNCA inventes medidas, tipologías ni system_id — un candidato sin sistema asignable va a "unresolved" o "ambiguous", nunca adivinado.
 - opening_type solo puede ser uno de los valores que el candidato ya trae o el set válido de la app (FIXED|TURN_LEFT|TURN_RIGHT|TILT_TURN_LEFT|TILT_TURN_RIGHT|SLIDING_2L|AWNING|DOOR_ENTRY); si el candidato no lo trae claro → "ambiguous" con la pregunta.
-- Posición que ya existe en "positions" (misma label) → no la propongas; dilo en el reply.
+- Ventana que ya existe en "positions" (misma label) → no la propongas; dilo en el reply.
 - Documento UPLOADED/EXTRACTING/FAILED → warning con su estado, no candidates inventados.
 - Jamás "ops" ni "prepare" — el borrador se revisa y confirma en la superficie de importación.
 - Sin texto fuera del JSON."""
@@ -461,7 +461,7 @@ Reglas duras:
 - "blocked": sin system_id válido, keys ya en confirmed_keys, o candidato sin campos mínimos para crear artículo.
 - Una importación CONFIRMED → reply honesto (ya confirmada), auto/review/blocked vacíos.
 - UPLOADED/EXTRACTING/FAILED → warning con su estado; sin candidates inventados.
-- Jamás "ops" ni "prepare" — la confirmación escribe autoridad real y solo ocurre en el panel de importaciones.
+- Jamás "ops" ni "prepare" — la confirmación guarda datos reales del catálogo y solo ocurre en el panel de importaciones.
 - Sin texto fuera del JSON."""
 
 
@@ -474,7 +474,7 @@ El contexto lleva TODOS los hechos que una comunicación puede citar:
 - "approval": status (SENT|VIEWED|APPROVED|CHANGES_REQUESTED|EXPIRED) y si sigue vivo — la invitación real del cliente.
 - "totals": net/tax/gross, collected y pending — los únicos montos citables.
 - "payments": cobros registrados (kind, amount, method, reference, fecha).
-- "positions_total": cuántos vanos.
+- "positions_total": cuántas ventanas.
 - "work_orders": code, status, next_step (la estación pendiente), delivery_date/delivery_status — el estado real de producción y entrega.
 
 Respondes SOLO un JSON:
@@ -1145,7 +1145,7 @@ def _act(
             follow_through_used = True
             observations = [{"surface": "follow_through", "context": {
                 "reason": "work_without_steps",
-                "instruction": ("Este es un encargo en Trabajo: emite ahora los pasos del registro (project_ops, "
+                "instruction": ("Esta es una tarea en Trabajo: emite ahora los pasos del registro (project_ops, "
                                 "quote_draft, document_layout…) con lo observado, o agrupa en questions lo que "
                                 "falta. No anuncies acciones futuras."),
             }}]
@@ -1313,13 +1313,13 @@ def _act(
                 simulation = {"valid": False, "error": error.code}
             if simulation.get("valid"):
                 steps.append({"kind": "project_ops", "tool": "preview_project_operations", "ops": simulation["ops"],
-                              "simulation": simulation, "label": str(item.get("label") or "Cambios de posiciones")[:MAX_LABEL],
+                              "simulation": simulation, "label": str(item.get("label") or "Cambios de ventanas")[:MAX_LABEL],
                               # The person asked to do it (not a hypothetical): the
                               # server may save it when the run allows drafts.
                               "apply_requested": item.get("apply") is True})
                 added = [change["after"] for change in simulation["diff"] if change["kind"] == "add"]
                 if added:
-                    project_drafts.append({"kind": "project_draft", "title": "Posiciones propuestas", "payload": {"positions": added},
+                    project_drafts.append({"kind": "project_draft", "title": "Ventanas propuestas", "payload": {"positions": added},
                                            "references": [str(refs.get("project_id"))], "tool": "preview_project_operations"})
             else:
                 rejected.append({"op": "project_ops", "reason": simulation.get("error", "simulation_invalid")})

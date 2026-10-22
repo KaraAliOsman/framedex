@@ -45,7 +45,7 @@ class GlassInterlayer(GlassModel):
     @model_validator(mode="after")
     def density_has_source(self) -> GlassInterlayer:
         if self.density_kg_m3 is not None and not self.source:
-            raise ValueError("La densidad del PVB necesita una fuente.")
+            raise ValueError("La densidad del PVB necesita un documento de referencia.")
         return self
 
 
@@ -125,7 +125,7 @@ class GlassLimits(GlassModel):
     @model_validator(mode="after")
     def source_and_order(self) -> GlassLimits:
         if any(value is not None for key, value in self.model_dump().items() if key != "source") and not self.source:
-            raise ValueError("Los límites del vidrio necesitan una fuente.")
+            raise ValueError("Los límites del vidrio necesitan un documento de referencia.")
         for low, high in ((self.min_width_mm, self.max_width_mm), (self.min_height_mm, self.max_height_mm)):
             if low is not None and high is not None and low > high:
                 raise ValueError("El mínimo no puede superar el máximo.")
@@ -146,7 +146,7 @@ class GlassBilling(GlassModel):
         if (self.minimum_area_m2 or any(self.model_dump().get(key) for key in (
             "tempering_sku", "polishing_sku", "drilling_sku", "bars_per_m_sku", "bars_per_crossing_sku"
         ))) and not self.source:
-            raise ValueError("El área mínima y los recargos necesitan una fuente.")
+            raise ValueError("El área mínima y los recargos necesitan un documento de referencia.")
         return self
 
 
@@ -412,7 +412,7 @@ def assess_glass_safety(*, safety_class: SupplierSafety | None, synthetic: bool,
             and (not synthetic or rule.synthetic))
         if rule.zone == "LOW_PANE" and sill_mm is None and not safety_supported:
             findings.append(GlassAssessment(code=rule.code + "_height_unknown",
-                message="Sin dato · declara la altura del paño sobre el piso para revisar su seguridad.",
+                message="Falta completar · declara la altura del paño sobre el piso para revisar su seguridad.",
                 source=rule.source, blocking=rule.mandatory, synthetic=rule.synthetic))
         applies = ((rule.zone == "DOOR" and door) or (rule.zone == "SIDELIGHT" and sidelight)
             or (rule.zone == "LOW_PANE" and sill_mm is not None and rule.maximum_sill_mm is not None and sill_mm < rule.maximum_sill_mm)
@@ -433,11 +433,11 @@ def assess_glass(product: GlassProduct, *, width_mm: Decimal, height_mm: Decimal
     findings = []
     thickness = total_glass_thickness(product.composition)
     if thickness is None:
-        findings.append(GlassAssessment(code="interlayer_unknown", message="Sin dato · falta el espesor del PVB. Completa la composición.", blocking=True))
+        findings.append(GlassAssessment(code="interlayer_unknown", message="Falta completar · declara el espesor del PVB en la composición.", blocking=True))
     elif thickness not in bead_thicknesses:
         findings.append(GlassAssessment(code="bead_incompatible", message="El espesor total no tiene un junquillo declarado en esta serie.", blocking=True, source=product.source))
     if glass_mass_per_m2(product) is None:
-        findings.append(GlassAssessment(code="mass_unknown", message="Sin dato · falta la densidad del PVB o el peso declarado por el proveedor."))
+        findings.append(GlassAssessment(code="mass_unknown", message="Falta completar · declara la densidad del PVB o el peso indicado por el proveedor."))
     limits = product.limits
     area = width_mm * height_mm / D("1000000")
     failed = any((value is not None and observed < value) for observed, value in (
@@ -452,7 +452,7 @@ def assess_glass(product: GlassProduct, *, width_mm: Decimal, height_mm: Decimal
         rules=rules, door=door, sidelight=sidelight, sill_mm=sill_mm))
     if hardware_limit_kg is not None:
         if leaf_weight_kg is None:
-            findings.append(GlassAssessment(code="hardware_mass_unknown", message="Sin dato · falta el peso completo de la hoja para comprobar el herraje."))
+            findings.append(GlassAssessment(code="hardware_mass_unknown", message="Falta completar · declara el peso completo de la hoja para comprobar el herraje."))
         elif leaf_weight_kg > hardware_limit_kg:
             findings.append(GlassAssessment(code="hardware_mass_limit", message="El peso de la hoja supera la capacidad declarada del herraje.", blocking=True))
     if any(ply.type == "TEMPERED" for layer in product.composition.layers if isinstance(layer, GlassPane) for ply in layer.plies):
@@ -494,7 +494,7 @@ def price_glass(*, product: GlassProduct | None, sku: str, width_mm: Decimal,
         if qty == 0:
             return
         if rate_sku is None or rate_sku not in rates:
-            raise ValueError(f"Sin dato · falta la tarifa de {kind}.")
+            raise ValueError(f"Falta completar · declara la tarifa de {kind}.")
         rate = rates[rate_sku]
         if rate < 0 or not rate.is_finite():
             raise ValueError("La tarifa debe ser un Decimal finito no negativo.")
@@ -556,8 +556,8 @@ def glass_section(composition: GlassComposition) -> list[dict[str, str]]:
     x = D("0")
     for layer in composition.layers:
         if isinstance(layer, GlassChamber):
-            gas = {"AIR": "Aire", "ARGON": "Argón"}.get(layer.gas or "", "Sin dato · gas")
-            spacer = {"ALUMINIUM": "Separador de aluminio", "WARM_EDGE": "Separador de borde cálido"}.get(layer.spacer or "", "Sin dato · separador")
+            gas = {"AIR": "Aire", "ARGON": "Argón"}.get(layer.gas or "", "Falta completar · gas")
+            spacer = {"ALUMINIUM": "Separador de aluminio", "WARM_EDGE": "Separador de borde cálido"}.get(layer.spacer or "", "Falta completar · separador")
             parts.append({"kind": "CHAMBER", "x_mm": str(x), "width_mm": str(layer.width_mm),
                 "label": gas + " · " + spacer})
             x += layer.width_mm
@@ -570,7 +570,7 @@ def glass_section(composition: GlassComposition) -> list[dict[str, str]]:
                 if index < len(layer.interlayers):
                     interlayer = layer.interlayers[index]
                     if interlayer.thickness_mm is None:
-                        raise ValueError("Sin dato · falta el espesor del PVB para dibujar el corte a escala.")
+                        raise ValueError("Falta completar · declara el espesor del PVB para dibujar el corte a escala.")
                     parts.append({"kind": "PVB", "x_mm": str(x), "width_mm": str(interlayer.thickness_mm), "label": "PVB"})
                     x += interlayer.thickness_mm
     return parts

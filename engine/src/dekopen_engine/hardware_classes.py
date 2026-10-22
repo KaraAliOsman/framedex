@@ -49,7 +49,7 @@ def _component(rule: HardwareComponentRule, *, width: Decimal, height: Decimal,
         dimension = {"WIDTH": width, "HEIGHT": height, "PERIMETER": D(2)*(width+height),
                      "WEIGHT": base_weight}[count.axis]
         if dimension is None:
-            raise HardwareRuleViolation("Sin dato: falta masa de hoja para la regla de cantidad.", "undecidable")
+            raise HardwareRuleViolation("Falta completar: declara la masa de la hoja para la regla de cantidad.", "undecidable")
         assert count.threshold is not None and count.step is not None
         extra = (max(D(0), dimension-count.threshold)/count.step).to_integral_value(rounding=ROUND_CEILING)
         quantity += extra * count.increment
@@ -65,7 +65,7 @@ def _component(rule: HardwareComponentRule, *, width: Decimal, height: Decimal,
         length = base-rule.length.deduction_mm
         if length <= 0:
             raise HardwareRuleViolation(
-                f"{rule.name}: largo {base} − {rule.length.deduction_mm} = {length} mm; aumenta la medida o revisa la fuente.", "length")
+                f"{rule.name}: largo {base} − {rule.length.deduction_mm} = {length} mm; aumenta la medida o revisa el documento de referencia.", "length")
         reason += f"; largo {base} − {rule.length.deduction_mm} = {length} mm"
     mass = rule.weight_kg
     if rule.weight_kg_m is not None:
@@ -88,7 +88,7 @@ def expand_hardware(kit: HardwareKitRule, *, width_mm: Decimal, height_mm: Decim
                     requested_handle_height_mm: Decimal | None = None) -> HardwareExpansion:
     authority = kit.class_authority
     if authority is None:
-        raise ValueError("La expansión requiere autoridad de clase.")
+        raise ValueError("El despiece requiere una clase declarada en el catálogo.")
     selection = selection or HardwareSelection()
     unknown = set(selection.option_codes) - {option.code for option in authority.options}
     if unknown:
@@ -100,7 +100,7 @@ def expand_hardware(kit: HardwareKitRule, *, width_mm: Decimal, height_mm: Decim
     rules = [rule for rule in authority.components if rule.sku not in replacements]
     rules.extend(rule for option in options for rule in option.components)
     if len({rule.sku for rule in rules}) != len(rules):
-        raise HardwareRuleViolation("Las opciones repiten un componente. Revisa su combinación y fuente de catálogo.", "option")
+        raise HardwareRuleViolation("Las opciones repiten un componente. Revisa su combinación y documento de catálogo.", "option")
     handle = None
     color = None
     height = minimum = maximum = None
@@ -128,7 +128,7 @@ def expand_hardware(kit: HardwareKitRule, *, width_mm: Decimal, height_mm: Decim
         assert minimum is not None and maximum is not None
         if not minimum <= height <= maximum:
             raise HardwareRuleViolation(
-                f"Manilla a {height} mm desde la base; {handle.name} admite {minimum}–{maximum} mm. Ajusta la altura dentro del rango de su fuente.", "handle")
+                f"Manilla a {height} mm desde la base; {handle.name} admite {minimum}–{maximum} mm. Ajusta la altura dentro del rango de su documento de referencia.", "handle")
         rules.append(color.component)
     elif selection.handle_code is not None or selection.color_code is not None:
         raise HardwareRuleViolation("Esta clase no declara manilla de accionamiento.", "handle")
@@ -192,7 +192,7 @@ def hardware_picking(items: Sequence[tuple[HardwareItem, int, str]]) -> list[dic
     rows: dict[tuple[str, str, Decimal | None, str | None], dict[str, object]] = {}
     for kit, repetitions, target in items:
         if repetitions < 1:
-            raise ValueError("El picking requiere cantidad positiva de posiciones.")
+            raise ValueError("La preparación de herrajes requiere una cantidad positiva de ventanas.")
         for component in kit.contents:
             key = (component.sku, component.unit, component.cut_length_mm, component.source)
             row = rows.setdefault(key, {"sku": component.sku, "name": component.name,

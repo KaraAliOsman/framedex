@@ -57,4 +57,4 @@ def commercial_projection(version, positions):
             "payment_schedule": schedule, "display_total_gross": total,
             "rounding_adjustment": str(result.rounding_adjustment) if result else None,
             "price_cause": cause, "consent_text": consent,
-            "price_source": "Motor comercial: venta e impuesto de esta revisión sellada; reparto exacto y ajuste de moneda explícito."}
+            "price_source": "Motor comercial: venta e impuesto de esta revisión emitida; reparto exacto y ajuste de moneda explícito."}

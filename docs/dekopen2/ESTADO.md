@@ -20,6 +20,17 @@ Producción y precios comerciales requieren autorización aparte.
 
 ## P05 · Navegación, Hoy y Obras
 
+- P05k `gpt/dk2-p05k-diagnosticos` cierra la revisión contextual de los
+  diagnósticos del motor y mensajes del servidor en 55 módulos Python.
+  Suite completa 2.860 PASS y dos xfail previos; 81 integraciones PostgreSQL,
+  229 regresiones finales, 94 de prompts y dos E2E de catorce superficies pasan.
+  SQL, claves, números y estructura ejecutable idénticos. Solo nueve avisos
+  de vierteaguas cambian en los 22 archivos dorados revisados; se regenera
+  con el escritor canónico y se comprueban bytes. Encabezados, marcadores
+  históricos y sinónimos se conservan. [Evidencia](../redesign/captures/dk2-p05k/aceptacion.md).
+  P05j corrige dos expectativas textuales en `4beeb8d1`, con 95 pruebas verdes;
+  P05 queda a la espera del CI y las fusiones de su cadena.
+
 - P05j `gpt/dk2-p05j-documentos-taller`: veintiún módulos de documentos,
   corte, CNC y terreno con glosario contextual. 288 unitarias dirigidas,
   19 finales de cotización, 74 integraciones PostgreSQL y cuatro E2E pasan.

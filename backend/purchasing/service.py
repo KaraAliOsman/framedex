@@ -532,7 +532,7 @@ def confirm_order_type_batch(
             source_ledger = purchase_source_ledger(source_snapshot)
             if any(rid not in offered or not any(entry in source_ledger and source_ledger[entry][0] == str(case['position_id']) for entry in
                    _array(offered[rid]['source_trace'], 'invalid_purchase_requirement')) for rid in quantities):
-                reject('El requerimiento no pertenece a la posición del faltante.')
+                reject('El requerimiento no pertenece a la ventana del faltante.')
         if quantities is not None:
             offered={str(r['id']):r for r in requirement_rows}
             if any(rid not in offered or qty<=0 or qty>Decimal(str(offered[rid]['open_qty']))

@@ -437,6 +437,9 @@ def test_technical_weight_is_exact_and_unknown_requires_cause():
     assert verdict("E09", before, before, result={"reply": "Sin dato: falta la masa del perfil."})["passed"]
     assert verdict("E09", before, before, result={"reply": "Sin dato: el contexto no trae el peso del motor."})["passed"]
     assert not verdict("E09", before, before, result={"reply": "Sin dato."})["passed"]
+    assert verdict("E09", before, before, result={"reply": "Falta completar: declara la masa del perfil."})["passed"]
+    assert not verdict("E09", before, before, result={"reply": "Falta completar."})["passed"]
+    assert not verdict("E09", before, before, result={"reply": "Falta completar la masa del perfil; estimo 24 kg."})["passed"]
 
 
 def test_preparation_needs_right_deeplink_and_no_issue_write():

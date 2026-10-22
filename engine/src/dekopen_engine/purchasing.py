@@ -617,7 +617,7 @@ def project_purchase_requirements_v1(
             if hardware.contents and all(component.purchasing_sku is not None for component in hardware.contents):
                 for component in hardware.contents:
                     if component.qty != component.qty.to_integral_value() or not component.manufacturer_name or not component.source:
-                        raise PurchaseAuthorityError("El componente requiere cantidad entera y autoridad de compra.")
+                        raise PurchaseAuthorityError("El componente requiere cantidad entera y datos de compra declarados.")
                     source_id = documentary_sha256_v1({"kind": "hardware_component",
                         "position_id": position.position_id, "repetition_index": hardware.repetition_index,
                         "bay_id": hardware.bay_id, "leaf_id": hardware.leaf_id,

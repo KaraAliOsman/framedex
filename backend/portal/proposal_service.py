@@ -179,7 +179,7 @@ def decide(*, token, decision, decided_by, note=None, decided_rut=None, selected
                     raise DocumentaryError("quote_option_committed", detail="El fabricante debe conciliar los cobros, documentos de cobro o la fabricación existentes antes de aceptar otra solución. Contáctelo para emitir una revisión nueva.")
         elif decision == "CHANGES_REQUESTED":
             if not (note or "").strip():
-                raise DocumentaryError("quote_change_note_required", detail="Describa el cambio que necesita; puede indicar su posición exacta.")
+                raise DocumentaryError("quote_change_note_required", detail="Describa el cambio que necesita e indique qué ventana desea modificar.")
         elif decision != "DECLINED":
             raise DocumentaryError("quote_decision_invalid")
         if position_id and str(position_id) not in {str(p["id"]) for p in projected["positions"]}:

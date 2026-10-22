@@ -2,6 +2,9 @@
 
 ## DEKOPEN 2
 
+- [P05k · Diagnósticos y servidor](dk2-p05k/aceptacion.md): glosario contextual,
+  compatibilidad de intercambio y revisión textual de nueve avisos dorados.
+
 - [P05j · Documentos y taller](dk2-p05j/aceptacion.md): nueve PDF nuevos,
   49 páginas revisadas y compatibilidad con documentos históricos.
 

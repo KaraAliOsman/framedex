@@ -26,7 +26,7 @@ def change_deadline(*, org_id: UUID, project_id: UUID, approval_id: UUID, actor_
         raise DocumentaryError("quote_link_confirmation_required", detail="Confirma el cambio de vencimiento del enlace indicado.")
     now = datetime.now(timezone.utc)
     if not now < data["expires_at"] <= now + timedelta(days=365):
-        raise DocumentaryError("quote_link_deadline_invalid", detail="Elige un vencimiento futuro dentro de 365 días. La vigencia comercial del PDF conserva su fecha sellada.")
+        raise DocumentaryError("quote_link_deadline_invalid", detail="Elige un vencimiento futuro dentro de 365 días. La vigencia comercial del PDF conserva la fecha guardada al emitir.")
     with documentary_backend():
         approval = _locked_link(org_id=org_id, project_id=project_id, approval_id=approval_id)
         if approval["status"] != "PENDING":

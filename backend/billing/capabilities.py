@@ -30,9 +30,9 @@ WRITE_ROLES = ("OWNER", "ESTIMATOR")
 # Common core: identical for every AI plan. `route` is the gateway route that
 # executes it; `roles` the domain permission to start it.
 CORE = (
-    {"id": "copilot.chat", "label": "Chat con fuentes", "route": "agent", "roles": AI_ROLES},
+    {"id": "copilot.chat", "label": "Chat con referencias", "route": "agent", "roles": AI_ROLES},
     {"id": "copilot.task", "label": "Trabajo delegado", "route": "agent", "roles": AI_ROLES},
-    {"id": "ai.document_extract", "label": "Documento a posiciones y borrador", "route": "agent", "roles": WRITE_ROLES},
+    {"id": "ai.document_extract", "label": "Documento a ventanas y borrador", "route": "agent", "roles": WRITE_ROLES},
     {"id": "ai.catalog_draft", "label": "Candidatos de catálogo con evidencia", "route": "catalog_import", "roles": ("OWNER", "ESTIMATOR", "WORKSHOP_MANAGER")},
     {"id": "ai.batch_transform", "label": "Cambios sobre ventanas", "route": "agent", "roles": WRITE_ROLES},
     {"id": "ai.plan_compare", "label": "Comparar revisiones y propagar diferencias", "route": "agent", "roles": WRITE_ROLES},

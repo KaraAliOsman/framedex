@@ -205,7 +205,7 @@ def _spec_text(attributes: object) -> str:
     if width and height:
         parts.append(f"{width} × {height} mm")
     elif width or height:
-        parts.append(f"{'Ancho' if width else 'Alto'} {width or height} mm · Sin dato en la otra medida")
+        parts.append(f"{'Ancho' if width else 'Alto'} {width or height} mm · Falta completar la otra medida")
     for key, label in (("stock_length_mm", "Largo"), ("thickness_mm", "Espesor")):
         value = mm(key)
         if value:

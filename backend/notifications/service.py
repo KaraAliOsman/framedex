@@ -105,7 +105,7 @@ def _logo(org: dict):
     if not uri:
         raise DocumentaryError(
             "brand_logo_integrity_failed",
-            detail="El logo sellado no pudo verificarse. Revisa la identidad antes de enviar.",
+            detail="El logo guardado con la cotización no pudo verificarse. Revisa la identidad antes de enviar.",
         )
     media, data = uri[5:].split(";base64,", 1)
     return base64.b64decode(data), media
@@ -177,7 +177,7 @@ def payment_source(*, org_id: UUID, project_id: UUID, payment_id: UUID) -> dict:
             )
     payload = decoded(receipt["payload_json"])
     if payload["payment"].get("simulated"):
-        raise DocumentaryError("mail_payment_simulated", detail="El recibo corresponde a una prueba. Descárgalo desde Cobranza; no se envía como confirmación de dinero real.")
+        raise DocumentaryError("mail_payment_simulated", detail="El comprobante corresponde a una prueba. Descárgalo desde Cobranza; no se envía como confirmación de dinero real.")
     from documents.renderers import _money
 
     project = payload["project"]
@@ -235,7 +235,7 @@ def _validate_target(source: dict, data: dict):
     if not source["document"]:
         raise DocumentaryError(
             "mail_document_required",
-            detail="Prepara y revisa el PDF sellado de esta emisión antes de enviar el correo.",
+            detail="Prepara y revisa el PDF de esta revisión emitida antes de enviar el correo.",
         )
     if data["expected_document_sha256"] != str(source["document"]["file_sha256"]):
         raise DocumentaryError(

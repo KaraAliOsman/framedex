@@ -180,7 +180,7 @@ def purchase_task(
     "automation.catalog_task",
     roles=_AUTOMATION_ROLES,
     payload_serializer=CatalogTaskSerializer,
-    label="Resolver autoridad de catálogo",
+    label="Completar los datos del catálogo",
 )
 def catalog_task(
     payload: dict[str, Any], context: JobContext, report: ProgressReporter

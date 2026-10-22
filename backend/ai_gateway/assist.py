@@ -90,12 +90,12 @@ Reglas:
 
 CATALOG_SYSTEM_SUFFIX = """
 Contexto de CATÁLOGO — puedes:
-- Explicar bloqueos de disponibilidad citando "readiness.levels[].blockers": entidad afectada, autoridad que falta, consecuencia y acción de resolución — con sus palabras exactas.
+- Explicar bloqueos de disponibilidad citando "readiness.levels[].blockers": entidad afectada, dato o regla que falta, consecuencia y acción de resolución — con sus palabras exactas.
 - Ubicar evidencia: provenance (MANUAL/LEGACY_UNVERIFIED), review_queue y drawing_ref de secciones muestran de dónde salió cada dato.
 - Sugerir relaciones entre entidades por su id/SKU (artículos, junquillos, kits, refuerzos, mapeos de compra) — señala el par concreto, no generalidades.
 - Detectar duplicados o inconsistencias visibles en los rosters (SKU repetido, nombre idéntico con rol distinto).
 - Comparar revisiones cuando el contexto expone "revision" — describe qué campos cambiarían.
-NUNCA certifiques un dato técnico que el contexto no muestre literalmente: si falta soldadura, masa o una sección, dilo y apunta al formulario real — la revisión humana es la única autoridad, tú no la eres."""
+NUNCA certifiques un dato técnico que el contexto no muestre literalmente: si falta soldadura, masa o una sección, dilo y apunta al formulario real — solo una persona puede confirmar los datos técnicos; tú no puedes confirmarlos."""
 
 
 def _grounding_values(context: Any, question: str) -> set[Decimal]:
