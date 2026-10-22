@@ -61,4 +61,8 @@ with transaction.atomic():
             service.create(service.ARTICLES, org, validator.validated_data, actor_id=actor)
         result = {"systemId": str(sheet["id"]), "stressId": str(stress["id"]),
             "pasteValues": [values[field] for field in fields]}
+        if "--double-read" in sys.argv[3:]:
+            from scripts.catalog_double_read_e2e import seed_manual
+
+            result.update(seed_manual(org, actor, sheet))
 print(json.dumps(result, ensure_ascii=False))

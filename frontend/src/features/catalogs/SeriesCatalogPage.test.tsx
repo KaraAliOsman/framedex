@@ -27,6 +27,11 @@ vi.mock("./SeriesSheetView", () => ({
 }));
 vi.mock("./SeriesTrialDialog", () => ({ SeriesTrialDialog: () => null }));
 vi.mock("./CatalogPage", () => ({ CatalogPage: () => <h1>Ajustes del catálogo</h1> }));
+vi.mock("./CatalogImportReviewPage", () => ({
+  CatalogImportReviewPage: ({ importId }: { importId: string }) => (
+    <h1>Revisar manual {importId}</h1>
+  ),
+}));
 const ok = <T,>(data: T) => ({ status: 200 as const, data, headers: new Headers() });
 const system = (extra: Partial<SystemResponse> = {}): SystemResponse => ({
   ...sheetFixture().tabs.rules,
@@ -143,9 +148,9 @@ describe("catalog home", () => {
     );
   });
 
-  it("preserves old import links in the advanced catalog", async () => {
+  it("opens a source link directly without fetching the full catalog", async () => {
     mount([], "/catalogs/systems?import=existing");
-    await screen.findByRole("heading", { name: "Ajustes del catálogo" });
+    await screen.findByRole("heading", { name: "Revisar manual existing" });
     expect(api.catalogSystemList).not.toHaveBeenCalled();
   });
 

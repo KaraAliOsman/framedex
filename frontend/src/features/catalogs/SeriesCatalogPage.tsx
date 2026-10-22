@@ -21,6 +21,9 @@ import { SeriesTrialDialog } from "./SeriesTrialDialog";
 const AdvancedCatalog = lazy(async () => ({
   default: (await import("./CatalogPage")).CatalogPage,
 }));
+const ImportReviewPage = lazy(async () => ({
+  default: (await import("./CatalogImportReviewPage")).CatalogImportReviewPage,
+}));
 
 function manufacturerKey(value: string | null | undefined): string {
   return (value ?? "").trim().replace(/\s+/g, " ").toLocaleLowerCase("es-CL");
@@ -56,6 +59,17 @@ export function SeriesCatalogPage(): JSX.Element {
   if (status !== "ready") return <Loading label="Cargando el catálogo" />;
   if (!organization || !["OWNER", "WORKSHOP_MANAGER", "ESTIMATOR"].includes(organization.role))
     return <DeniedState reason="Tu rol no permite abrir el catálogo." />;
+  if (params.has("import") && params.get("advanced") !== "1")
+    return (
+      <Suspense fallback={<Loading label="Cargando la revisión del manual" />}>
+        <ImportReviewPage
+          key={`${session?.user.id}:${organization.id}:${params.get("import")}`}
+          orgId={organization.id}
+          importId={params.get("import")!}
+          canWrite={organization.role !== "ESTIMATOR"}
+        />
+      </Suspense>
+    );
   if (
     params.get("advanced") !== "1" &&
     ["import", "reference", "record", "resource", "shelf", "create"].some((key) => params.has(key))

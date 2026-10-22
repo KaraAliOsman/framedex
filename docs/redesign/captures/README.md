@@ -2,6 +2,9 @@
 
 ## DEKOPEN 2
 
+- [P03g · doble lectura visible](dk2-p03g/aceptacion.md): diferencias, ambas
+  citas, elección humana, publicación real y extremos de 0/1/500 filas.
+
 - [P03f · precios del proveedor](dk2-p03f/aceptacion.md): mapeo, revisión del
   archivo completo, confirmación explícita y extremos de precios exactos.
 

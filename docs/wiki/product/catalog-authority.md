@@ -460,3 +460,22 @@ con la sesión real y comprueba el límite de publicación y la exactitud de
 PostgreSQL. Los extremos de 0/1/500 precios, nombres largos, Unicode y montos
 grandes se ejercitan a 1440/390/320 px y texto al 200 %, con scroll accesible.
 El asistente completo y la aceptación integral de P03 siguen pendientes.
+
+## Revisión visible de doble lectura · preparación P03g
+
+Verificado el 22-10-2026 en `gpt/dk2-p03g-asistente-serie`: las diferencias
+abren la revisión; los acuerdos quedan como propuestas sin confirmación por
+celda. Se muestran ambas citas y valores. Elegir una lectura no incluye la fila
+ni publica; una corrección libre o una lectura dudosa se identifica como dato
+del taller. La comparación real conserva su token y la publicación exige clic.
+
+El enlace de una fuente carga solo esa importación y su esquema/historial,
+sin las cuatro colecciones completas del catálogo. Los cambios invalidan las
+fichas y el inicio del catálogo de esa empresa. Los borradores mantienen la
+edición completa a un clic y las diferencias se paginan por diez filas.
+
+La [aceptación](../../redesign/captures/dk2-p03g/aceptacion.md) distingue las
+dos respuestas simuladas del modelo de las APIs, almacenamiento y PostgreSQL
+reales. Comprueba el límite humano de escritura y el origen MANUAL de una
+lectura citada. El asistente y la primera obra siguen pendientes; no se declara
+una aceptación de datos reales del fabricante ni de rendimiento en producción.
