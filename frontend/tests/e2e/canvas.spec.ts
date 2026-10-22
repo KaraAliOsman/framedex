@@ -316,7 +316,9 @@ for (const theme of ["light"] as const) {
     await expect(modal.locator(".inspector-semaphore")).toHaveAttribute("data-status", "RED");
     const approve = modal.getByRole("button", { name: "Aprobar para Taller" });
     await expect(approve).toBeDisabled();
-    const drains = modal.getByLabel("Posiciones de desagües inferiores (mm, separadas por coma)");
+    // P05h reserves «posición» for physical location and names coordinates
+    // explicitly. The correction, rollback and GREEN verdict remain tested.
+    const drains = modal.getByLabel("Coordenadas de desagües inferiores (mm, separadas por coma)");
     await drains.fill("100, 900");
     await modal.getByLabel("Ancho continuo declarado (mm)").fill("1000");
     await modal.getByLabel("¿Existe acople de dilatación?").selectOption("no");
