@@ -367,3 +367,11 @@
     max-width: 100%;
   }
 }
+.today-first-use {
+  display: grid;
+  gap: var(--space-12px);
+  justify-items: start;
+}
+.today-first-use :is(h2, p) {
+  margin: 0;
+}

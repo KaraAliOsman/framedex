@@ -2,7 +2,7 @@ import { fireEvent, render, screen, within, cleanup } from "@testing-library/rea
 import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { analyticsToday, projectsCreate } from "../api/generated/dekopen";
+import { analyticsToday, catalogSystemList, projectsCreate } from "../api/generated/dekopen";
 import type { PreparedQuotations } from "../api/generated/models";
 import { DashboardPage } from "./DashboardPage";
 import { AttentionBell } from "./AttentionBell";
@@ -15,7 +15,11 @@ vi.mock("../auth/AuthSessionProvider", () => ({
     },
   }),
 }));
-vi.mock("../api/generated/dekopen", () => ({ analyticsToday: vi.fn(), projectsCreate: vi.fn() }));
+vi.mock("../api/generated/dekopen", () => ({
+  analyticsToday: vi.fn(),
+  catalogSystemList: vi.fn(),
+  projectsCreate: vi.fn(),
+}));
 const item = (index: number) => ({
   key: `due:${index}`,
   kind: "delivery",
@@ -70,7 +74,13 @@ function show(
     </QueryClientProvider>,
   );
 }
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => {
+  vi.clearAllMocks();
+  vi.mocked(catalogSystemList).mockResolvedValue({
+    status: 200,
+    data: { items: [{ id: "serie" }] },
+  } as never);
+});
 afterEach(cleanup);
 it("keeps exact entity and phase/currency links, and preserves ordered actions across pages", async () => {
   show();
@@ -102,6 +112,17 @@ it("uses one quiet empty state without zero KPI tiles", async () => {
   expect(screen.queryByRole("list", { name: "Acciones pendientes" })).not.toBeInTheDocument();
   expect(screen.queryByRole("region", { name: "Resumen de hoy" })).not.toBeInTheDocument();
   expect(screen.queryByText(/DEKOPEN preparó/)).not.toBeInTheDocument();
+});
+
+it("sends a workshop without its own series to the first-use guide", async () => {
+  vi.mocked(catalogSystemList).mockResolvedValue({ status: 200, data: { items: [] } } as never);
+  show([]);
+  expect(await screen.findByRole("heading", { name: "Prepara tu taller" })).toBeVisible();
+  expect(screen.getByRole("link", { name: "Empezar" })).toHaveAttribute("href", "/onboarding");
+  expect(catalogSystemList).toHaveBeenCalledWith(
+    { summary: true, is_demo: false, owned_only: true },
+    expect.objectContaining({ headers: { "X-Organization-ID": "org" } }),
+  );
 });
 
 it("opens the prepared drafts without applying or sending anything", async () => {
