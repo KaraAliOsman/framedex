@@ -11,3 +11,9 @@ export function environment(name: string): string | undefined {
   const value: unknown = Reflect.get(variables, name);
   return typeof value === "string" ? value : undefined;
 }
+
+/** Today in America/Santiago, the business date the server prices with. A UTC
+ * date runs a day ahead every evening and makes «vigente desde» tomorrow. */
+export function santiagoToday(): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Santiago" }).format(new Date());
+}
