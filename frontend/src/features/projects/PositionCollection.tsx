@@ -47,7 +47,7 @@ export function positionReadiness(position: PositionResponse): {
     return {
       label: "Confirmar medidas",
       cause:
-        "Revisa y confirma las medidas del vano antes de fabricar. El precio usa la fabricación guardada.",
+        "Revisa y confirma las medidas de obra antes de fabricar. El precio usa la fabricación guardada.",
       tone: "warning",
     };
   if (!position.location_tag)
@@ -59,7 +59,7 @@ export function positionReadiness(position: PositionResponse): {
   return {
     label: "Lista",
     cause:
-      "Fuente: cálculo guardado del motor. Al preparar la emisión se comprueba que cada ventana se pueda fabricar.",
+      "Origen: cálculo guardado del motor. Al preparar la emisión se comprueba que cada ventana se pueda fabricar.",
     tone: "success",
   };
 }
@@ -118,7 +118,7 @@ function Dimensions({
               ],
             },
           ],
-          `Medidas de la posición ${position.position_index}`,
+          `Medidas de la ventana ${position.position_index}`,
         );
         setEditing(false);
       }}
@@ -249,14 +249,14 @@ export function PositionCollection({
     if (!targets.length || !editable || busy) return;
     if (
       await confirm({
-        title: `¿Preparar la eliminación de ${targets.length} posiciones?`,
+        title: `¿Preparar la eliminación de ${targets.length} ventanas?`,
         body: "Verás el detalle antes de aplicar. Puedes deshacer mientras no exista una edición posterior.",
         danger: true,
       })
     )
       await operations.propose(
         [{ op: "remove_positions", position_ids: targets }],
-        "Eliminar posiciones seleccionadas",
+        "Eliminar ventanas seleccionadas",
       );
   }
   function toggle(id: string): void {
@@ -279,7 +279,7 @@ export function PositionCollection({
       }
     void operations.propose(
       [{ op: "reorder_positions", position_ids: ordered }],
-      "Reordenar posiciones; conservar números físicos",
+      "Reordenar ventanas; conservar números físicos",
     );
   }
   const rows: PositionRowEntry[] = [];
@@ -439,7 +439,7 @@ export function PositionCollection({
           {group !== "none" && (
             <div>
               <dt>{group === "floor" ? "Piso" : group === "room" ? "Recinto" : "Eje"}</dt>
-              <dd>{position.placement?.[group] || "Sin dato"}</dd>
+              <dd>{position.placement?.[group] || "Falta completar"}</dd>
             </div>
           )}
         </dl>
@@ -503,8 +503,11 @@ export function PositionCollection({
       });
     const count = view === "grid" ? columns : 1;
     for (let index = 0; index < entries.length; index += count) {
+      // Rows are keyed by their place, not by their first window: a column
+      // change (a scrollbar appearing, a resize) regroups the cards without
+      // remounting them, so an open price breakdown stays open.
       const chunk = entries.slice(index, index + count),
-        key = chunk[0]!.id;
+        key = `row:${title}:${index / count}`;
       chunk.forEach((position) => rowForPosition.set(position.id, key));
       rows.push({
         key,

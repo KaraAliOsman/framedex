@@ -20,7 +20,7 @@ export function CommercialTermsEditor({
     <fieldset disabled={disabled} className="commercial-terms-editor">
       <legend>Condiciones comerciales</legend>
       <p>
-        Los montos del calendario se calculan sobre el total sellado. Revisa los hitos antes de
+        Los montos del calendario se calculan sobre el total emitido. Revisa los hitos antes de
         emitir.
       </p>
       <div className="commercial-milestones">
@@ -74,7 +74,7 @@ export function CommercialTermsEditor({
                     update({ due_event: (event.target.value || null) as DueEventEnum | null })
                   }
                 >
-                  <option value="">Fecha declarada o sin dato</option>
+                  <option value="">Fecha declarada o por completar</option>
                   <option value="APPROVAL">Al aprobar</option>
                   <option value="DELIVERY">Contra entrega completa</option>
                 </select>
@@ -176,7 +176,7 @@ export function CommercialTermsEditor({
           </select>
         </label>
         <p>
-          Declara juntos plazo e inicio. Quedarán sellados en esta revisión; las revisiones
+          Declara juntos plazo e inicio. Quedarán emitidos en esta revisión; las revisiones
           anteriores conservan sus condiciones.
         </p>
       </details>

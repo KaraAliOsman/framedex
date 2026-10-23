@@ -29,10 +29,10 @@ describe("workshop vocabulary and large sealed piece lists", () => {
     expect(opKindLabel("HANDLE_PREP")).not.toContain("HANDLE_PREP");
     expect(stockKindLabel("HARDWARE_KIT")).not.toContain("HARDWARE_KIT");
     expect(opBasisLabel("handle_requirement_policy:11111111-2222-3333-4444-555555555555")).toBe(
-      "Política de herraje sellada",
+      "Política de herraje de la orden",
     );
-    expect(opKindLabel("FUTURE_OPERATION")).toContain("Sin dato");
-    expect(cutRoleLabel(null)).toBe("Sin dato");
+    expect(opKindLabel("FUTURE_OPERATION")).toBe("Falta etiqueta de operación");
+    expect(cutRoleLabel(null)).toBe("Falta completar");
   });
   it("renders fewer than 100 DOM rows for 2,000 pieces and finds a late physical label", () => {
     // Declared synthetic UI volume; these measurements do not enter production.

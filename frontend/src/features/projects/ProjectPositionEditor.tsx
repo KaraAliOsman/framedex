@@ -4,7 +4,7 @@ import type { DesignOptions, ProjectResponse } from "../../api/generated/models"
 import { fmtMm } from "../../format";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   engineSystems,
   positionsCreate,
@@ -23,18 +23,20 @@ import type {
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { ApiError } from "../../api/apiMutator";
 import { UnsavedChangesGuard } from "../../app/UnsavedChangesGuard";
+import { obraVistaUnica } from "../../app/productFeatures";
 import { useShellLeaf } from "../../app/shellLeaf";
 import { t, tDynamic, tOptional } from "../../i18n/es-CL";
 import { domainLabel } from "../../i18n/domainLabels";
 import { DeniedState, ErrorState, LoadingState } from "../../ui";
 import { Popover } from "../../ui/Overlays";
 import { EditorPriceChip } from "../canvas/EditorPriceChip";
+import { PositionPrice } from "../pricing/PositionPrice";
 import { EditorBottomPanel } from "../canvas/EditorBottomPanel";
 import { useEditorMedia } from "../canvas/useEditorLayout";
 import { chartFinish } from "../canvas/finishColors";
 import { completeFirstPosition } from "../onboarding/draft";
 import { type CanvasDesignInputs, useCanvasStore } from "../canvas/canvasStore";
-import { useProject } from "./useProject";
+import { projectKey, useProject } from "./useProject";
 import { AssemblyEditor, issueText } from "../canvas/AssemblyEditor";
 import { useAssistantSurface } from "../assistant/assistantContext";
 import { intentBays } from "../canvas/intentEditing";
@@ -86,8 +88,8 @@ export function editLockCause(
     };
   if (project.versions?.some((version) => version.revision_code === project.current_revision))
     return {
-      title: "Revisión sellada: solo lectura",
-      body: "La revisión actual quedó sellada al preparar su emisión. Revisa su estado en Cotización o crea una sucesora.",
+      title: "Revisión preparada: solo lectura",
+      body: "La revisión actual quedó bloqueada al preparar su emisión. Revisa su estado en Cotización o crea una sucesora.",
       action: { label: "Ir a Cotización", section: "quote" },
     };
   if (project.current_pricing_operation_id)
@@ -427,7 +429,10 @@ function PositionWorkspace({
   allowNavigation(next: { pathname: string; search: string }): boolean;
 }): JSX.Element {
   const visible = presentation !== "hidden";
-  const readOnly = useEditorMedia("(max-width: 1023px)");
+  const queryClient = useQueryClient();
+  const unified = obraVistaUnica();
+  const mobile = useEditorMedia("(max-width: 1023px)");
+  const readOnly = mobile && !unified;
   const [loaded, setLoaded] = useState(false);
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [saved, setSaved] = useState<PositionResponse | null>(null);
@@ -781,7 +786,7 @@ function PositionWorkspace({
   // A disabled Guardar must name the first real blocker ("la hoja queda bajo
   // el ancho mínimo del herraje"), not a generic "revisa los parámetros".
   const saveBlockReason = mountingChanged
-    ? "La fabricación cambió: recalcula y aplica Vano y montaje antes de guardar."
+    ? "La fabricación cambió: recalcula y aplica Medidas de obra y montaje antes de guardar."
     : quantityInvalid
       ? t("projects.qtyInvalid")
       : colorUndeclared
@@ -851,6 +856,11 @@ function PositionWorkspace({
       setResult(value.bom);
       setBaseline({ design: designIdentity(inputs), location, quantity });
       setMessage(t("projects.saved"));
+      // Refresh the one shared server projection before selecting the new
+      // window. Otherwise its id is absent from the old list and normalized
+      // out of the URL; the header would also retain the previous total.
+      await queryClient.invalidateQueries({ queryKey: projectKey(orgId, projectId) });
+      if (epoch !== generation.current) return true;
       // The unsaved-changes blocker still sees dirty=true until the baseline
       // commits, so the post-create navigation must wait for the next render.
       if (!positionId) setCreatedId(value.id);
@@ -904,13 +914,13 @@ function PositionWorkspace({
   if (!loaded)
     return message ? (
       <ErrorState
-        title="No se pudo abrir la posición"
+        title="No se pudo abrir la ventana"
         titleAs="h1"
-        body="No se recibió el diseño guardado. Vuelve a consultar para abrir esta posición."
+        body="No se recibió el diseño guardado. Vuelve a consultar para abrir esta ventana."
         onRetry={() => setLoadAttempt((attempt) => attempt + 1)}
       />
     ) : (
-      <LoadingState label="Cargando la posición" />
+      <LoadingState label="Cargando la ventana" />
     );
   const dirty = isDirty;
   const restoreDraft = (draft: PositionDraft) => {
@@ -958,28 +968,214 @@ function PositionWorkspace({
       : `${finish.interior.name} / ${finish.exterior.name}`
     : declaredColors.includes(inputs.color)
       ? tDynamic("projects.color", inputs.color)
-      : "Sin dato";
+      : "Falta completar";
+  const quantityField = (
+    <label className="editor-quantity">
+      <span>Cant.</span>
+      <input
+        inputMode="numeric"
+        aria-label={t("pricing.quantity")}
+        value={quantity}
+        disabled={busy || readOnly}
+        onChange={(e) => setQuantity(e.target.value)}
+        aria-invalid={quantityInvalid || undefined}
+      />
+    </label>
+  );
+  const seriesPicker = (
+    <Popover
+      label="Serie de perfiles"
+      trigger={
+        <button type="button" className="editor-chip editor-system-chip" title={systemName}>
+          <Icon name="catalogs" size={16} />
+          {systemId ? systemName : "Elegir serie"}
+        </button>
+      }
+    >
+      <label className="editor-system-field">
+        <span>
+          <input
+            type="checkbox"
+            checked={showExamples}
+            onChange={(event) => setShowExamples(event.target.checked)}
+          />{" "}
+          Mostrar ejemplos
+        </span>
+      </label>
+      <label className="editor-system-field">
+        <span>{t("projects.system")}</span>
+        <select
+          className="assembly-select"
+          aria-label={t("projects.system")}
+          disabled={busy || readOnly}
+          value={systemId}
+          onChange={(e) => chooseSystem(e.target.value || null)}
+        >
+          <option value="">{t("projects.chooseSystem")}</option>
+          {systemId &&
+            systems.data &&
+            !systems.data.some(
+              (system) =>
+                system.id === systemId && isDrawable(system) && (!system.is_demo || showExamples),
+            ) && (
+              <option value={systemId}>
+                Serie de esta ventana{options.data?.is_demo ? " · Ejemplo" : ""}
+              </option>
+            )}
+          {systems.data?.some(isCompanySeries) ? (
+            <optgroup label="Series de la empresa">
+              {systems.data?.filter(isCompanySeries).map((system) => (
+                <option key={system.id} value={system.id}>
+                  {system.name}
+                </option>
+              ))}
+            </optgroup>
+          ) : null}
+          {showExamples && systems.data?.some((system) => isDrawable(system) && system.is_demo) ? (
+            <optgroup label="Ejemplos sintéticos, sin certificación">
+              {systems.data
+                ?.filter((system) => isDrawable(system) && system.is_demo)
+                .map((system) => (
+                  <option key={system.id} value={system.id}>
+                    {system.name.replace(/\s*·\s*DEMO\s*$/u, "")} · DEMO
+                  </option>
+                ))}
+            </optgroup>
+          ) : null}
+        </select>
+      </label>
+      {(systems.isError || options.isError) && (
+        <p className="editor-catalog-status" role="alert">
+          {t("projects.catalogError")}
+          <button
+            type="button"
+            onClick={() => {
+              void systems.refetch();
+              if (systemId) void options.refetch();
+            }}
+          >
+            Reintentar catálogo
+          </button>
+        </p>
+      )}
+      {(systems.isPending || (systemId && options.isPending)) && (
+        <p className="editor-catalog-status" role="status">
+          {t("projects.loading")}
+        </p>
+      )}
+    </Popover>
+  );
+  const finishPicker = (
+    <Popover
+      label="Acabado"
+      trigger={
+        <button
+          type="button"
+          className="editor-chip"
+          title={finishName}
+          aria-label={`Acabado: ${finishName}`}
+        >
+          <Icon name="swatch" size={16} />
+          {finishName}
+        </button>
+      }
+    >
+      {!options.data?.finish_authority && (
+        <label className="editor-system-field">
+          <span>{t("projects.color")}</span>
+          <select
+            className="assembly-select"
+            aria-label={t("projects.color")}
+            disabled={busy || readOnly || declaredColors.length === 0}
+            value={inputs.color}
+            onChange={(event) =>
+              useCanvasStore.getState().commitInputs({
+                ...inputs,
+                color: event.target.value as CanvasDesignInputs["color"],
+              })
+            }
+          >
+            {colorChoices.length === 0 && <option value={inputs.color}>{inputs.color}</option>}
+            {colorChoices.map((color) => (
+              <option key={color} value={color}>
+                {tDynamic("projects.color", color)}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      {options.data?.finish_authority && (
+        <FinishSelector
+          authority={presentedOptions?.finish_authority ?? options.data.finish_authority}
+          value={inputs.color}
+          design={designPayload(inputs, declaredColors)}
+          organizationId={orgId}
+          disabled={busy || readOnly}
+          onChange={(color) => useCanvasStore.getState().commitInputs({ ...inputs, color })}
+        />
+      )}
+    </Popover>
+  );
+  const priceChip = (
+    <EditorPriceChip
+      organizationId={orgId}
+      inputs={inputs}
+      quantity={quantity}
+      pending={calculationState.pending}
+      ready={Boolean(
+        result && options.data && !assemblyUnsaveable && !quantityInvalid && !colorUndeclared,
+      )}
+    />
+  );
   const positionPanel = (
     <section className="assembly-inspector position-panel" aria-label={t("projects.positionData")}>
       <header className="assembly-inspector__header">
         <h4>{t("projects.positionData")}</h4>
       </header>
-      <dl className="inspector-summary__list">
-        <div className="inspector-summary__row">
-          <dt>{t("projects.location")}</dt>
-          <dd>{location.trim() || "—"}</dd>
+      {unified ? (
+        <div className="work-properties">
+          <div className="work-property">
+            <span>Serie</span>
+            {seriesPicker}
+          </div>
+          <div className="work-property">
+            <span>Color</span>
+            {finishPicker}
+          </div>
+          {quantityField}
         </div>
-        <div className="inspector-summary__row">
-          <dt>{t("pricing.quantity")}</dt>
-          <dd>{quantity || "1"}</dd>
-        </div>
-        <div className="inspector-summary__row">
-          <dt>{t("projects.system")}</dt>
-          <dd>{systemName}</dd>
-        </div>
-      </dl>
+      ) : (
+        <dl className="inspector-summary__list">
+          <div className="inspector-summary__row">
+            <dt>{t("projects.location")}</dt>
+            <dd>{location.trim() || "—"}</dd>
+          </div>
+          <div className="inspector-summary__row">
+            <dt>{t("pricing.quantity")}</dt>
+            <dd>{quantity || "1"}</dd>
+          </div>
+          <div className="inspector-summary__row">
+            <dt>{t("projects.system")}</dt>
+            <dd>{systemName}</dd>
+          </div>
+        </dl>
+      )}
     </section>
   );
+  const workingPosition = project.data?.positions?.find((position) => position.id === saved?.id);
+  const pricePanel = unified ? (
+    <section className="assembly-inspector work-price" aria-label="Precio de la ventana">
+      {!dirty && workingPosition?.commercial && project.data ? (
+        <div className="work-price__saved">
+          <span>Precio neto · {workingPosition.quantity} u.</span>
+          <PositionPrice project={project.data} position={workingPosition} />
+        </div>
+      ) : (
+        priceChip
+      )}
+      <Link to={`/projects/${projectId}?section=production`}>Ver despiece y materiales</Link>
+    </section>
+  ) : undefined;
   function chooseSystem(next: string | null): void {
     if (inputs.systemId === next) return;
     useCanvasStore.getState().commitInputs({ ...inputs, systemId: next });
@@ -989,6 +1185,7 @@ function PositionWorkspace({
   return (
     <section
       className={`projects-page position-editor position-editor--${presentation}`}
+      data-simple={unified || undefined}
       hidden={!visible}
     >
       <UnsavedChangesGuard
@@ -1017,150 +1214,13 @@ function PositionWorkspace({
           disabled={busy || readOnly}
           onChange={(e) => setLocation(e.target.value)}
         />
-        <label className="editor-quantity">
-          <span>Cant.</span>
-          <input
-            inputMode="numeric"
-            aria-label={t("pricing.quantity")}
-            value={quantity}
-            disabled={busy || readOnly}
-            onChange={(e) => setQuantity(e.target.value)}
-            aria-invalid={quantityInvalid || undefined}
-          />
-        </label>
-        <Popover
-          label="Serie de perfiles"
-          trigger={
-            <button type="button" className="editor-chip editor-system-chip" title={systemName}>
-              <Icon name="catalogs" size={16} />
-              {systemId ? systemName : "Elegir serie"}
-            </button>
-          }
-        >
-          <label className="editor-system-field">
-            <span>
-              <input
-                type="checkbox"
-                checked={showExamples}
-                onChange={(event) => setShowExamples(event.target.checked)}
-              />{" "}
-              Mostrar ejemplos
-            </span>
-          </label>
-          <label className="editor-system-field">
-            <span>{t("projects.system")}</span>
-            <select
-              className="assembly-select"
-              aria-label={t("projects.system")}
-              disabled={busy || readOnly}
-              value={systemId}
-              onChange={(e) => chooseSystem(e.target.value || null)}
-            >
-              <option value="">{t("projects.chooseSystem")}</option>
-              {systemId &&
-                systems.data &&
-                !systems.data.some(
-                  (system) =>
-                    system.id === systemId &&
-                    isDrawable(system) &&
-                    (!system.is_demo || showExamples),
-                ) && (
-                  <option value={systemId}>
-                    Serie de esta ventana{options.data?.is_demo ? " · Ejemplo" : ""}
-                  </option>
-                )}
-              {systems.data?.some(isCompanySeries) ? (
-                <optgroup label="Series de la empresa">
-                  {systems.data?.filter(isCompanySeries).map((system) => (
-                    <option key={system.id} value={system.id}>
-                      {system.name}
-                    </option>
-                  ))}
-                </optgroup>
-              ) : null}
-              {showExamples &&
-              systems.data?.some((system) => isDrawable(system) && system.is_demo) ? (
-                <optgroup label="Ejemplos sintéticos, sin certificación">
-                  {systems.data
-                    ?.filter((system) => isDrawable(system) && system.is_demo)
-                    .map((system) => (
-                      <option key={system.id} value={system.id}>
-                        {system.name.replace(/\s*·\s*DEMO\s*$/u, "")} · DEMO
-                      </option>
-                    ))}
-                </optgroup>
-              ) : null}
-            </select>
-          </label>
-          {(systems.isError || options.isError) && (
-            <p className="editor-catalog-status" role="alert">
-              {t("projects.catalogError")}
-              <button
-                type="button"
-                onClick={() => {
-                  void systems.refetch();
-                  if (systemId) void options.refetch();
-                }}
-              >
-                Reintentar catálogo
-              </button>
-            </p>
-          )}
-          {(systems.isPending || (systemId && options.isPending)) && (
-            <p className="editor-catalog-status" role="status">
-              {t("projects.loading")}
-            </p>
-          )}
-        </Popover>
-        <Popover
-          label="Acabado"
-          trigger={
-            <button
-              type="button"
-              className="editor-chip"
-              title={finishName}
-              aria-label={`Acabado: ${finishName}`}
-            >
-              <Icon name="swatch" size={16} />
-              {finishName}
-            </button>
-          }
-        >
-          {!options.data?.finish_authority && (
-            <label className="editor-system-field">
-              <span>{t("projects.color")}</span>
-              <select
-                className="assembly-select"
-                aria-label={t("projects.color")}
-                disabled={busy || readOnly || declaredColors.length === 0}
-                value={inputs.color}
-                onChange={(event) =>
-                  useCanvasStore.getState().commitInputs({
-                    ...inputs,
-                    color: event.target.value as CanvasDesignInputs["color"],
-                  })
-                }
-              >
-                {colorChoices.length === 0 && <option value={inputs.color}>{inputs.color}</option>}
-                {colorChoices.map((color) => (
-                  <option key={color} value={color}>
-                    {tDynamic("projects.color", color)}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-          {options.data?.finish_authority && (
-            <FinishSelector
-              authority={presentedOptions?.finish_authority ?? options.data.finish_authority}
-              value={inputs.color}
-              design={designPayload(inputs, declaredColors)}
-              organizationId={orgId}
-              disabled={busy || readOnly}
-              onChange={(color) => useCanvasStore.getState().commitInputs({ ...inputs, color })}
-            />
-          )}
-        </Popover>
+        {!unified && (
+          <>
+            {quantityField}
+            {seriesPicker}
+            {finishPicker}
+          </>
+        )}
         <span className="editor-save-state" role="status">
           {busy
             ? "Guardando…"
@@ -1192,19 +1252,7 @@ function PositionWorkspace({
         </button>
         {systemId ? (
           <>
-            <EditorPriceChip
-              organizationId={orgId}
-              inputs={inputs}
-              quantity={quantity}
-              pending={calculationState.pending}
-              ready={Boolean(
-                result &&
-                options.data &&
-                !assemblyUnsaveable &&
-                !quantityInvalid &&
-                !colorUndeclared,
-              )}
-            />
+            {!unified && priceChip}
             <button
               type="button"
               className="editor-chip editor-verdict"
@@ -1321,7 +1369,7 @@ function PositionWorkspace({
       <div className="position-body">
         <div className="position-workspace" role="region" aria-labelledby="position-design-title">
           <h2 id="position-design-title" className="visually-hidden">
-            Diseño de la posición
+            Diseño de la ventana
           </h2>
           <AssemblyEditor
             organizationId={orgId}
@@ -1334,6 +1382,7 @@ function PositionWorkspace({
             quantity={quantityInvalid ? 1 : Number(quantity)}
             libraryOpen={libraryOpen}
             onLibraryToggle={() => setLibraryOpen((open) => !open)}
+            onLibraryClose={() => setLibraryOpen(false)}
             libraryTitle={systemId ? "Biblioteca de tipologías" : "¿Con qué serie la fabricas?"}
             library={
               options.isError ? (
@@ -1374,6 +1423,7 @@ function PositionWorkspace({
             onEvaluationChange={onAssemblyEvaluation}
             positionId={saved?.id ?? null}
             positionPanel={positionPanel}
+            pricePanel={pricePanel}
             contentEpoch={viewEpoch}
           />
         </div>

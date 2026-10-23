@@ -1,10 +1,11 @@
 ---
 type: concept
 status: active
-updated: 2026-10-11
+updated: 2026-10-22
 volatility: medium
-verified_ref: 412029ac1ea688a0f5bf1d560ba9b2e99871fae6
+verified_ref: gpt/dk2-p06a-obra-unica
 sources:
+  - docs/redesign/captures/dk2-p06a/aceptacion.md
   - P21 PR https://github.com/KaraAliOsman/framedex/pull/146, CI 4/4 sobre 50a00fe9e509338cdee706459c17395119e036a8, corrida https://github.com/KaraAliOsman/framedex/actions/runs/38110211964, squash 412029ac1ea688a0f5bf1d560ba9b2e99871fae6, 2026-10-11.
   - docs/cola/prompts/P21-proyecto-hub.md
   - docs/redesign/P21-ACEPTACION.md
@@ -13,7 +14,31 @@ sources:
 
 # Centro de trabajo del proyecto
 
-## Nueva composición del dueño · 18-10-2026 · pendiente de implementación
+## DEKOPEN 2 P06a · mesa única propuesta · 22-10-2026
+
+Implementación comprobada en `gpt/dk2-p06a-obra-unica`, sobre P05k `1e1ead31`.
+La bandera `VITE_OBRA_VISTA_UNICA` está activa por defecto; `false`, `off` o `0`
+recuperan las presentaciones anteriores. Es una propuesta del encargo P06,
+sin atribuir al dueño aceptación visual de la vista única.
+
+El borrador editable abre lista de ventanas, dibujo e inspector en la misma
+mesa. Cabecera compacta, total con IVA del servidor y preparación de cotización
+comparten el proyecto; «Pedir a DEKOPEN» abre el compositor sin enviar nada.
+«Más → Organizar ventanas» conserva la colección con lotes, filtros y trazas.
+Los roles sin edición y las revisiones bloqueadas conservan su acceso existente.
+
+Visitar Actividad u otra sección mantiene la sesión y el historial de la ventana,
+incluido el borrador nuevo. Cambiar de ventana o abandonar la obra conserva el
+aviso de cambios pendientes. Guardar refresca la consulta compartida antes de
+seleccionar la ventana creada: así el id nuevo no se normaliza contra la lista
+anterior y el total no queda obsoleto. La reapertura desde la colección reutiliza
+la sesión; la prueba recarga expresamente para comprobar datos persistidos.
+
+La [aceptación de P06a](../../redesign/captures/dk2-p06a/aceptacion.md) separa
+esta composición del trabajo pendiente de P06: respuesta menor de 100 ms,
+chips de corrección, precio vivo simple y extremos de la lista persistente.
+
+## Dirección previa del dueño · 18-10-2026
 
 [Mesa de obra + Estudio](../../research/2026-10-18-direccion-final/01-producto-y-dos-vistas.md)
 son dos vistas del mismo proyecto y sesión manual; Mesa es el inicio recomendado.

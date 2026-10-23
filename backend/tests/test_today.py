@@ -46,6 +46,13 @@ def test_customer_response_preserves_note_and_does_not_invent_a_change_request()
     assert not today.quote_attention(item, "viewed", DAY)
 
 
+def test_delivered_email_without_portal_link_has_no_invented_link_expiry():
+    item = today.quote_public(quotation(expires_at=None, view_count=0, last_viewed_at=None), DAY)
+    assert item['state'] == 'pending'
+    assert not today.quote_attention(item, 'viewed', DAY)
+    assert today.quote_attention(item, 'expiring', DAY)
+
+
 def test_pipeline_links_open_exact_phase_currency_and_balance_uses_live_receipts(monkeypatch):
     paid = quotation(status="IN_PRODUCTION", total="120.005", currency="USD")
     missing = quotation(status="IN_PRODUCTION", code="P-000013", total=None, currency="USD")
@@ -98,7 +105,7 @@ def test_draft_assembly_blocker_uses_engine_even_when_survey_confirmed(monkeypat
         modules=[],issues=[SimpleNamespace(params={'reason':'frame inset collapsed the glass pocket 6000.00 FRAME'})])
     monkeypatch.setattr(today,'evaluate_assembly_from_api',lambda **kwargs:result)
     action, = today.position_actions(uuid4())
-    assert action['kind']=='position_engine_blocked' and 'autoridad técnica' in action['reason']
+    assert action['kind']=='position_engine_blocked' and 'referencias técnicas' in action['reason']
     assert 'FRAME' not in action['reason'] and '6000.00' not in action['reason']
     assert action['href']==f'/projects/{project}/positions/{position}/edit'
     result.status.value='VALID'

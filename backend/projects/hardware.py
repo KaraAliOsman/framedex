@@ -79,7 +79,7 @@ def preview_hardware(org_id, data):
             "children": [automatic(child) for child in node.children]})
     root = automatic(original).model_copy(update={"width_mm": data["width_mm"], "height_mm": data["height_mm"]})
     if target is None:
-        raise contract_error(400, "hardware_bay_missing", "El vano ya no existe. Selecciona una hoja del diseño actual.")
+        raise contract_error(400, "hardware_bay_missing", "El paño ya no existe. Selecciona una hoja del diseño actual.")
     from dekopen_engine.advanced_openings import resolve_recipe
     recipe = resolve_recipe(target, params)
     # A passage kit and a folding kit are disjoint authored classes. A global
@@ -108,7 +108,7 @@ def preview_hardware(org_id, data):
                 bay_id=leaf.bay_id, leaf_id=leaf.leaf_id, contents=contents,
                 **({"resolution": expansion.resolution} if expansion is not None else {}))
             if candidate.kit.class_authority is not None and expansion is None:
-                reason = "Sin dato: la selección no permite expandir los componentes."
+                reason = "Falta completar · la selección no permite expandir los componentes."
             else:
                 try:
                     with commercial_backend():
@@ -121,7 +121,7 @@ def preview_hardware(org_id, data):
                         price = hardware_sale_price(item, rates, waste_pct=rules[0]["waste_factor_pct"], margin_pct=rules[0]["default_margin_pct"])
                         prices[candidate.kit.sku] = price
                 except PricingError:
-                    reason = "Sin dato: completa la lista de costos, su vigencia y las reglas de precio."
+                    reason = "Falta completar · completa la lista de costos, su vigencia y las reglas de precio."
             failures = [*catalog_failures, *[message for _, message in candidate.violations]]
             if not candidate.width_match or not candidate.height_match:
                 failures.append(f"Hoja {leaf.finished_width_mm} × {leaf.finished_height_mm} mm; rango {candidate.kit.min_leaf_width_mm}–{candidate.kit.max_leaf_width_mm} × {candidate.kit.min_leaf_height_mm}–{candidate.kit.max_leaf_height_mm} mm. Ajusta la medida o divide la bahía.")
@@ -134,7 +134,7 @@ def preview_hardware(org_id, data):
                     "missing_infill_mass": "vidrio o panel", "missing_screw_mass": "tornillos"}
                 missing = sorted({labels.get(reason.split(":")[0], "un componente de la hoja")
                     for reason in candidate.exact_total_weight.weight_unknown_reasons})
-                failures.append("Sin dato: falta masa de " + ", ".join(missing) + ". Completa las fuentes del catálogo.")
+                failures.append("Falta completar · falta masa de " + ", ".join(missing) + ". Completa las referencias del catálogo.")
             candidates.append({"sku": candidate.kit.sku, "name": candidate.kit.name,
                 "compatible": candidate.compatible and not catalog_failures, "selected": candidate.kit.sku == selected_sku,
                 "violations": failures, "resolution": None if expansion is None else expansion.resolution.model_dump(mode="json"),
@@ -159,7 +159,7 @@ def preview_hardware(org_id, data):
             except (NoCompatibleHardwareKit, AmbiguousHardwareKit):
                 pass
         if selected is None and not any(candidate["compatible"] for candidate in candidates):
-            message = " ".join(candidates[0]["violations"]) if candidates else "Sin dato: no hay una clase declarada para esta apertura. Completa el catálogo."
+            message = " ".join(candidates[0]["violations"]) if candidates else "Falta completar · no hay una clase declarada para esta apertura. Completa el catálogo."
         if editable and message and recommended is None and division is None:
             alternative = split_hardware_bay(root,params,bay_id=data["bay_id"],dimensions=computation.node_dimensions)
             if alternative is not None:
@@ -176,11 +176,11 @@ def preview_hardware(org_id, data):
                             for item in items for component in item.contents}
                         split_price = hardware_total_sale_price(items,rates,waste_pct=rule[0]["waste_factor_pct"],margin_pct=rule[0]["default_margin_pct"])
                 except PricingError:
-                    split_reason = "Sin dato: completa los costos de los componentes y las reglas de precio."
+                    split_reason = "Falta completar · completa los costos de los componentes y las reglas de precio."
                 division = {"tree": tree.model_dump(mode="json"), "price_net": None if split_price is None else str(split_price),
                     "delta_net": None if split_price is None or reference is None else str(hardware_price_delta(reference,split_price)),
                     "price_reason": split_reason,
-                    "description": "Una hoja → dos hojas con montante. El motor acepta su apertura, clase y componentes; cotiza la posición para comparar el precio completo."}
+                    "description": "Una hoja → dos hojas con montante. El motor acepta su apertura, clase y componentes; cotiza la ventana para comparar el precio completo."}
         result.append({"leaf_id": leaf.leaf_id,
             "editable": editable,
             "width_mm": str(leaf.finished_width_mm),
@@ -199,7 +199,7 @@ class HardwarePreviewView(APIView):
             with scope(request, allowed=("OWNER", "ESTIMATOR", "WORKSHOP_MANAGER")) as (_, _, org_id):
                 result = preview_hardware(org_id, data)
         except (InvalidEngineRequest, ValueError, SystemNotFound, UnsupportedCatalogContract) as error:
-            raise contract_error(422, "hardware_authority_required", "Sin dato: revisa las medidas, el vidrio y las fuentes del catálogo antes de resolver herrajes.") from error
+            raise contract_error(422, "hardware_authority_required", "Falta completar · revisa las medidas, el vidrio y las referencias del catálogo antes de resolver herrajes.") from error
         except DatabaseError as error:
-            raise contract_error(409, "hardware_preview_unavailable", "No se pudo leer la autoridad. Vuelve a cargar el catálogo.") from error
+            raise contract_error(409, "hardware_preview_unavailable", "No se pudieron leer las reglas de fabricación. Vuelve a cargar el catálogo.") from error
         return Response(result)

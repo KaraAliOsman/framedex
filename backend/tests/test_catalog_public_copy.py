@@ -16,3 +16,18 @@ def test_public_labels_and_required_errors_use_workshop_language():
         assert not forbidden.search(error["message"]), error
     # The canonical input workbook retains its headers and therefore its parser.
     assert next(column for column in SCHEMAS["Sistemas"] if column.key == "source").label == "Fuente"
+
+
+def test_process_picker_preserves_custom_names_and_the_stored_catalog(monkeypatch):
+    from catalogs import service
+
+    stored = [
+        {"id": "global", "org_id": None, "code": "GENERIC_LEGACY", "label": "Nombre histórico", "version": 1},
+        {"id": "own", "org_id": "org", "code": "GENERIC_LEGACY", "label": "Ruta propia del taller", "version": 2},
+        {"id": "pvc", "org_id": None, "code": "PVC_WELDED", "label": "PVC", "version": 1},
+    ]
+    monkeypatch.setattr(service, "_rows_dicts", lambda query, params: stored)
+    options = service.process_profile_options("org")
+    assert options[0] == {**stored[0], "label": "Genérico · proceso por completar"}
+    assert options[1:] == stored[1:]
+    assert stored[0]["label"] == "Nombre histórico"

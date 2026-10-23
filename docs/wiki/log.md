@@ -2416,3 +2416,175 @@ de 500 ventanas detectó contraste, columnas y texto largo; los extremos y
 texto al 200 % pasan. Corregida la lectura de líneas simples emitidas y el
 reloj mutable en la regresión de clonación (`9223078d`, propagado a P04d–f).
 La fase espera CI/fusión. Véase [precio](product/price-workspace.md).
+
+## 2026-10-22 · P05a: destinos cotidianos por rol
+
+En `gpt/dk2-p05a-navegacion` se implementan Hoy, Obras, Taller, Catálogo y
+Empresa, con inicio Hoy y acceso a Clientes desde la búsqueda. Empresa reúne
+Informes y Funciones avanzadas según rol. Diez E2E reales en 1440/390 pasan;
+la Constitución §5.1/5.2 registra la enmienda del encargo. El contenido nuevo
+de Hoy, las etapas de Obras y la purga global siguen en P05. Se conserva el
+índice anterior de cotizaciones hasta reemplazar sus filtros. Véase
+[trabajo de Hoy](product/today-workflow.md).
+
+## 2026-10-22 · P05b: etapas comprobadas y trabajo preparado
+
+- Se incorpora proyección por revisión elegida, instalación completa y cobros
+  reales calculados por el motor, con lectura en lote para 500 obras.
+- Hoy separa emisión de envío y consulta sugeridos vigentes y cotizaciones
+  preparadas por trabajos verificados del usuario, conservando RLS.
+- Fuentes: `backend/projects/progress.py`, `backend/analytics/prepared.py`,
+  `backend/tests/integration/test_project_progress.py`.
+
+## [2026-10-22] DEKOPEN 2 P05c | Hoy para revisar y continuar
+
+- Saludo, fecha, hasta tres métricas reales por rol, preparadas verificadas y
+  cola compacta de 50 acciones por página. Se conservan decisiones humanas,
+  importes del motor, origen y enlaces de fase/moneda.
+- Catorce unitarias y doce E2E reales cubren cinco roles, revisión sin envío,
+  creación por clic, extremos de 1.000 acciones, 320 px y texto al 200 %.
+  La campana acota el contador visual y conserva el total accesible.
+- La aceptación registra mockup, capturas y mediciones locales; distingue el
+  trabajo IA sintético del seeder de una llamada real al proveedor. El editor
+  móvil sigue siendo de lectura hasta P06. Obras/glosario global y las
+  fusiones con los cuatro controles siguen pendientes.
+
+## [2026-10-22] DEKOPEN 2 P05d | Obras con etapas comprobadas
+
+- Lista densa con enlace de fila completo, búsqueda/orden en URL, recuentos
+  por etapa y páginas de 50. La consulta sigue limitada a las 500 obras más
+  recientes y lo declara; no se inventa un recuento global.
+- La venta elegida emitida prevalece; sin precio vigente, el borrador pide
+  abrir para calcular. Se preservan estados de enlaces antiguos. `/quotes`
+  conserva su índice hasta integrar seguimiento/fase/moneda en la siguiente
+  sub-PR. Purga global y P06–P11 siguen pendientes.
+- Seis E2E de dueño/vendedor/jefe de taller cubren obras reales, 500 registros,
+  nombres e importes extremos, 320 px y texto al 200 %, con axe. Se corrigió
+  un desborde de botón y el color heredado de las filas.
+- Las dependencias completas P03h se integran mediante merges en P04/P05;
+  se regenera OpenAPI/orval en el conflicto de rutas y se comprueba paridad.
+  Los cuatro gates se vuelven a exigir en cada nuevo head.
+
+## [2026-10-22] DEKOPEN 2 P05e | Índice de Obras sin truncar cotizaciones
+
+- Nuevo endpoint de solo lectura con recuentos por etapa y detalles de una
+  página. Consulta las obras que coinciden, sin truncar a las 500 recientes.
+  La proyección de etapas sigue usando el motor para saldos reales.
+- Comparte filtros y orden con el índice histórico de cotizaciones. Conserva
+  offsets arbitrarios, búsqueda por revisión y pertenencia comercial exacta;
+  una sucesora deja de pertenecer. Los permisos se mantienen por rol y RLS.
+- La comprobación final de revisión, estado y actividad impide combinar una
+  edición nueva con el precio proyectado antes de ella. Devuelve 409 y pide
+  recargar. No se escribe estado ni se altera una oferta emitida.
+- P05d se publica con seis E2E integrados y doce capturas en #192. La conexión
+  de la pantalla al índice nuevo y la redirección de `/quotes` siguen pendientes.
+- Veinticuatro integraciones PostgreSQL y setenta unitarias dirigidas aprobadas,
+  API reproducible, Ruff/ESLint/tipos, formato, guardas y build aprobados. El
+  recorrido completo backend detectó únicamente la allowlist de la ruta nueva;
+  se añade esa ruta concreta y su control vuelve a pasar. Sin reducir guardas.
+
+## [2026-10-22] DEKOPEN 2 P05f | Cotizaciones dentro de Obras
+
+- Obras consume el índice paginado y los recuentos de servidor. La ruta antigua
+  conserva filtros, hash y offsets exactos al redirigir a emitidas, con revisión,
+  seguimiento, vistas y vigencia. Los permisos comerciales permanecen por rol.
+- La búsqueda conserva foco y cancela peticiones; la caché se separa por usuario,
+  empresa y rol. Se conserva el formulario completo con cliente/serie iniciales.
+- 1.254 pruebas frontend, 69 regresiones finales y seis E2E finales aprobados;
+  tres roles en escritorio/móvil, 500 obras, 320 px, texto 200 % y axe. Dieciséis
+  capturas seleccionadas; carga local caliente 271–304 ms. Sin movimiento nuevo.
+- P03h #181 está fusionada. P04a integró main y repite sus cuatro controles.
+  La purga global de lenguaje y P06–P11 siguen pendientes; no se declara P05 hecha.
+
+## [2026-10-22] DEKOPEN 2 P05g | Textos globales y pendientes explícitos
+
+- El detector AST se amplía a todos los textos del producto y valores del
+  diccionario, con pruebas de las fronteras de contratos y accesibilidad.
+  Las cinco voces controladas quedan en cero; no se reescribe historia emitida.
+- Once superficies se ejercitan a 1440/390, con texto final y contenido cargado.
+  Se corrigen avisos térmicos y de Hoy en origen, y etiquetas solapadas en las
+  pestañas móviles. Se conservan 22 capturas en la aceptación P05g.
+- 1.254 unitarias frontend y 2.858 Python pasan, con dos xfail anteriores y
+  bytes dorados intactos. El editor bow descubre lecturas repetidas de costos
+  DEMO: un prefetch propio del cálculo conserva el resultado exacto y recoge
+  tarifas nuevas en la siguiente consulta. Pasan 46 unitarias dirigidas,
+  25 integraciones y las ocho interacciones existentes del editor. Véase
+  [lenguaje de interfaz](product/interface-language.md).
+- Se retroporta a P05a #189 la fixture asíncrona ya probada, con catálogo mínimo
+  en navegación y 300 perfiles conservados en estrés. Sus diez recorridos pasan;
+  el nuevo CI evalúa `ff2b87e2`. P04a #182 está fusionada; P04b espera Database
+  Gate. P05h contextual y P06–P11 siguen pendientes.
+
+## [2026-10-22] DEKOPEN 2 P05h | Ventana, obra y coordenada
+
+- Revisión contextual del glosario: ventana y paño, medidas de obra y fabricación,
+  ubicación de manilla y coordenada CNC; comprobante financiero y resumen de IA.
+  Guardián ampliado con fronteras de contratos, enlaces y búsqueda probadas.
+- 1.254 unitarias frontend, 55 Python dirigidas, ocho integraciones PostgreSQL
+  y 21 E2E aprobados. Catorce superficies a 1440/390, con 28 capturas en
+  [aceptación P05h](../redesign/captures/dk2-p05h/aceptacion.md). Bytes dorados intactos.
+- El selector del proceso genérico proyecta su etiqueta sin reescribir catálogo
+  ni nombres del taller. La prueba de obra consulta el índice real de P05f.
+- Se mide una carga de 8,5–10,0 s en ajustes de montaje y 2,1–3,3 s en Comercial;
+  queda para P11. P05 continúa con mensajes/documentos de servidor. P04b está
+  fusionada; P04c repite controles tras integrar main. P06–P11 pendientes.
+
+## [2026-10-22] DEKOPEN 2 P05i | Mensajes públicos del servidor
+
+- Obras, precios, búsqueda e informes: diecinueve módulos con glosario contextual,
+  códigos de error estables y ausencia explícita. Se evita duplicar la explicación
+  de moneda faltante; la selección y el precio no disponible se conservan.
+- 1.737 unitarias backend y 18 finales aprobadas. Integraciones PostgreSQL de
+  siete dominios; 31 regresiones finales de servicios, acabados y precios pasan.
+  Cuatro E2E recorren catorce superficies y precios/extremos a 1440/390/320,
+  texto al 200 % y axe. [Evidencia P05i](../redesign/captures/dk2-p05i/aceptacion.md).
+- SQL, claves y literales numéricos idénticos; snapshots antiguos sin reescritura.
+  Documentos, diagnósticos del motor y otras respuestas siguen pendientes. P05h
+  se publicó como #196; la cadena se fusiona en orden con cuatro controles verdes.
+
+## [2026-10-22] DEKOPEN 2 P05j | Documentos y taller
+
+- Veintiún módulos usan ventana, paño, ubicación en barra, revisión emitida y
+  comprobante. Las juntas estancas conservan el hecho físico de instalación.
+  El CSV canónico mantiene su encabezado y la cotización reconoce marcadores
+  históricos sin reescribir bytes ni prosa del cliente. SQL/claves/números iguales.
+- 288 pruebas dirigidas, 19 finales de cotización, 74 integraciones PostgreSQL
+  y cuatro E2E pasan. Nueve PDF y 49 páginas revisadas con Poppler; trece páginas
+  y ocho pantallas seleccionadas en [aceptación](../redesign/captures/dk2-p05j/aceptacion.md).
+- P05f retroporta las expectativas del índice real y conserva pruebas: once E2E
+  de cinco roles y creación pasan en su propio build; `4ac52381` repite CI.
+  P04c #184 está fusionada (`85bb9151`); P04d repite controles. P05 sigue con
+  el motor y mensajes restantes; P06–P11 pendientes.
+
+## [2026-10-22] DEKOPEN 2 P05k | Diagnósticos y cierre contextual
+
+- 55 módulos Python y las instrucciones del agente distinguen ventana, paño,
+  abertura de obra, ubicación de piezas, origen, revisión emitida y comprobante.
+  La comparación AST conserva SQL, claves, números y estructura; el evaluador
+  acepta el vocabulario nuevo con causa técnica y rechaza pesos inventados.
+- 2.860 unitarias de motor/backend y dos xfail previos, 81 integraciones
+  PostgreSQL, 229 regresiones finales y 94 de prompts pasan. Dos E2E recorren
+  catorce superficies en 1440/390; seis capturas y los tiempos quedan en
+  [aceptación](../redesign/captures/dk2-p05k/aceptacion.md). Montaje/Servicios
+  conservan deuda de carga en P11; móvil emulado, sin prueba de fabricante real.
+- Revisión previa de los 22 archivos dorados: nueve textos de vierteaguas en
+  un archivo, sin cifras ni estructura distintas. Escritor canónico y comprobación
+  de bytes aprobados. Encabezados y marcadores históricos conservados.
+- P05j actualiza dos expectativas antiguas en `4beeb8d1`, con 95 pruebas verdes.
+  P04d aún espera Database Gate sobre `f79926de`; no se adelantan sus fusiones.
+
+## [2026-10-22] DEKOPEN 2 P06a | Mesa e inspector móvil
+
+- La propuesta bajo `VITE_OBRA_VISTA_UNICA` reúne lista, dibujo e inspector;
+  2D/3D y cara comparten el lienzo. La edición desde 390 px pasa por el servidor.
+  La colección conserva sus lotes en «Más → Organizar ventanas».
+- Guardar refresca la obra antes de seleccionar la ventana nueva. Las visitas
+  a secciones conservan la identidad del borrador; Escape cancela sin simular.
+  Precio guardado y desglose comparten la proyección comercial de P04.
+- Suite completa del frontend: 1.257 PASS (cuatro workers); 89 regresiones dirigidas.
+  No se debilita un guardián; dos expresiones se reescriben para evitar que su
+  detector léxico interprete operadores TypeScript como exclamaciones de texto.
+- [Aceptación](../redesign/captures/dk2-p06a/aceptacion.md) mantiene pendientes
+  los avisos con corrección, precio vivo simple, respuesta menor de 100 ms y
+  extremos de la lista. P06 sigue en curso. Las fusiones esperan cuatro controles
+  verdes sobre cada head actual; las correcciones heredadas se propagan sin force.

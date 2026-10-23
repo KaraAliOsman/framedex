@@ -193,15 +193,13 @@ export const verdictLabel = (value: Verdict) =>
   ({ PASS: "Verificado", WARN: "Requiere revisión", BLOCK: "Bloqueado" })[value];
 export const opLabel = (kind: string) => operationLabels[kind] ?? "Operación sin nombre declarado";
 export const faceLabel = (face: string | null) =>
-  face
-    ? (faceLabels[face] ?? "Sin dato · cara no reconocida")
-    : "Sin dato · falta declarar la cara";
+  face ? (faceLabels[face] ?? "Falta completar · cara no reconocida") : "Falta declarar la cara";
 export const datumLabel = (datum: string | null) =>
   datum === "member_start"
     ? "Origen en extremo inicial"
     : datum === "member_end"
       ? "Trabajo en extremo final; X desde el inicio"
-      : "Sin dato · falta declarar el origen";
+      : "Falta declarar el origen";
 export const loadingLabels: Record<string, string> = {
   EXTERIOR_UP: "Exterior hacia arriba",
   EXTERIOR_DOWN: "Exterior hacia abajo",
@@ -223,7 +221,7 @@ const authorityLabels: Record<string, string> = {
   clamps_declared: "mordazas revisadas",
   max_member_length_mm: "carrera",
   safe_margin_mm: "margen de seguridad",
-  authority_source: "fuente técnica",
+  authority_source: "referencia técnica",
 };
 export function findingText(finding: CncFinding): string {
   const d = finding.detail,
@@ -236,36 +234,34 @@ export function findingText(finding: CncFinding): string {
     no_compatible_tool: `Herramienta ${d.tool_id ?? "sin declarar"} para ${operation.toLocaleLowerCase("es-CL")} no disponible en ${machine}.`,
     tool_depth_exceeded: "La profundidad supera la capacidad declarada de la herramienta.",
     tool_working_length_exceeded: "La profundidad supera el largo útil de la herramienta.",
-    tool_undeclared: "Sin dato · falta declarar la herramienta.",
-    tool_source_undeclared: "Sin dato · falta la fuente de la herramienta.",
-    tool_capability_undeclared:
-      "Sin dato · falta vincular el código de herramienta a sus operaciones.",
-    tool_geometry_undeclared:
-      "Sin dato · faltan diámetro, largo útil o profundidad máxima de la herramienta.",
-    depth_undeclared: "Sin dato · falta profundidad autorizada de la operación.",
-    face_undeclared: "Sin dato · falta la cara de trabajo.",
-    member_length_undeclared: "Sin dato · falta el largo físico de la pieza.",
-    member_coordinate_undeclared: "Sin dato · falta X desde el extremo inicial.",
+    tool_undeclared: "Falta declarar la herramienta.",
+    tool_source_undeclared: "Falta el origen de la herramienta.",
+    tool_capability_undeclared: "Falta vincular el código de herramienta a sus operaciones.",
+    tool_geometry_undeclared: "Faltan diámetro, largo útil o profundidad máxima de la herramienta.",
+    depth_undeclared: "Falta profundidad autorizada de la operación.",
+    face_undeclared: "Falta la cara de trabajo.",
+    member_length_undeclared: "Falta el largo físico de la pieza.",
+    member_coordinate_undeclared: "Falta X desde el extremo inicial.",
     member_coordinate_outside: "La coordenada cae fuera del largo de la pieza.",
-    member_datum_undeclared: "Sin dato · falta el origen físico de la operación.",
+    member_datum_undeclared: "Falta el origen físico de la operación.",
     transverse_coordinate_undeclared:
-      "Sin dato · faltan coordenadas de herramienta sobre la sección. Las coordenadas del vano no las reemplazan.",
-    section_undeclared: "Sin dato · esta revisión no selló una sección de perfil.",
+      "Faltan coordenadas de herramienta sobre la sección. Las coordenadas de la ventana no las reemplazan.",
+    section_undeclared: "Falta completar · esta revisión no guardó una sección de perfil.",
     section_orientation_undeclared:
-      "Sin dato · falta orientación u origen explícito de la sección sellada.",
-    profile_setup_undeclared: `Sin dato · falta un montaje de ${d.profile_sku ?? "este perfil"} revisado para la sección sellada.`,
+      "Falta orientación u origen explícito de la sección de la orden.",
+    profile_setup_undeclared: `Falta un montaje de ${d.profile_sku ?? "este perfil"} revisado para la sección de la orden.`,
     profile_loading_undeclared:
-      "Sin dato · falta orientación mecánica de carga, origen inicial o fuente del montaje. La orientación del dibujo no la reemplaza.",
+      "Falta orientación mecánica de carga, origen inicial o origen del montaje. La orientación del dibujo no la reemplaza.",
     end_datum_inconsistent:
       "El extremo declarado no coincide con X y el origen. Revisa la regla antes de generar.",
     depth_invalid: "La profundidad no es positiva o supera el largo de la pieza.",
-    machine_authority_missing: `Sin dato · falta ${authorityLabels[d.field ?? ""] ?? "autoridad de máquina"} en ${machine}.`,
+    machine_authority_missing: `Falta ${authorityLabels[d.field ?? ""] ?? "origen de máquina"} en ${machine}.`,
     machine_axis_missing: `Falta el eje ${d.axis ?? "longitudinal"} en ${machine}.`,
     machine_format_unsupported: "La salida requiere milímetros y codificación Unicode.",
-    postprocessor_undeclared: "Sin dato · no hay un postprocesador declarado y disponible.",
+    postprocessor_undeclared: "Falta completar · no hay un postprocesador declarado y disponible.",
     postprocessor_controller_unsupported: d.controller_family
       ? "No hay un adaptador disponible para ese controlador propietario."
-      : "Sin dato · falta declarar el controlador de la máquina.",
+      : "Falta declarar el controlador de la máquina.",
     envelope_exceeded: "La pieza supera la carrera declarada de la máquina.",
     clamp_conflict: `La operación coincide con ${d.clamp_label || "una mordaza"}. Revisa la sujeción antes de generar.`,
     margin_violation: "La operación entra en el margen de seguridad declarado.",
@@ -274,6 +270,6 @@ export function findingText(finding: CncFinding): string {
   };
   return (
     labels[finding.code] ??
-    "Falta resolver una autoridad física. Revisa los detalles técnicos con el jefe de taller."
+    "Falta resolver una referencia física. Revisa los detalles técnicos con el jefe de taller."
   );
 }

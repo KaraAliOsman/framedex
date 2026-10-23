@@ -104,7 +104,7 @@ def catalog_readiness(system_id, org_id) -> dict[str, Any]:
         policies.append(values[0]["id"] if values else None)
     if None in policies:
         mfg_b.append(_blocker(
-            "manufacturing", "políticas de fabricación (posición, manilla, refuerzo)",
+            "manufacturing", "reglas de fabricación (ubicación de piezas, manilla, refuerzo)",
             str(system_id),
             "sin políticas el taller no puede derivar mecanizados ni herrajes",
             "completar las políticas de fabricación del sistema"))
@@ -114,7 +114,7 @@ def catalog_readiness(system_id, org_id) -> dict[str, Any]:
                 placement_id=policies[0], handle_id=policies[1], reinforcement_id=policies[2])
         except (DocumentaryError, ValueError):
             mfg_b.append(_blocker(
-                "manufacturing", "políticas de fabricación (posición, manilla, refuerzo)",
+                "manufacturing", "reglas de fabricación (ubicación de piezas, manilla, refuerzo)",
                 str(system_id),
                 "sin políticas el taller no puede derivar mecanizados ni herrajes",
                 "completar las políticas de fabricación del sistema"))
@@ -151,7 +151,7 @@ def catalog_readiness(system_id, org_id) -> dict[str, Any]:
             mfg_b.append(_blocker(
                 "fabrication", "reglas de fabricación (soldadura, refuerzo, masa)",
                 ", ".join(sorted(set(fabrication_missing))[:8]),
-                "sin datos de fabricación el taller recibiría valores inventados",
+                "faltan datos de fabricación para obtener medidas comprobables para el taller",
                 "declarar soldadura, refuerzo y masa en los artículos afectados"))
         # Production authority must not ride on values nobody ever verified:
         # LEGACY_UNVERIFIED rows and rows whose technical values changed after

@@ -18,7 +18,7 @@ from ingest.serializers import ExtractPayloadSerializer
     "ingest.document.extract",
     roles=("OWNER", "ESTIMATOR"),
     payload_serializer=ExtractPayloadSerializer,
-    label="Extraer posiciones del documento",
+    label="Extraer ventanas del documento",
 )
 def extract_document_job(
     payload: dict[str, Any], context: JobContext, report: ProgressReporter

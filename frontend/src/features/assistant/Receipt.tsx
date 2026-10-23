@@ -44,7 +44,7 @@ export function Receipt({
   if (receipt.outcome === "answer" && !receipt.objects.length) return null;
   const outcome = outcomeOf(receipt.outcome);
   return (
-    <section className={`copilot-receipt is-${receipt.outcome}`} aria-label="Recibo del trabajo">
+    <section className={`copilot-receipt is-${receipt.outcome}`} aria-label="Resumen del trabajo">
       <header className="copilot-receipt__head">
         <Companion state={outcome.pose} size={20} />
         <strong>{outcome.label}</strong>

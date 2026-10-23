@@ -183,8 +183,10 @@ describe("CutPlanView", () => {
     expect(cut.angle_left).toBe("22.5000");
     cut.angle_right = null;
     rerender(<CutPlanView optimization={plan} />);
-    expect(legend().textContent).toContain("22,5° / Sin dato");
+    expect(legend().textContent).toContain("22,5° / Falta completar");
     fireEvent.click(legend());
-    expect(container.querySelector(".cutplan-detail")!.textContent).toContain("22,5° / Sin dato");
+    expect(container.querySelector(".cutplan-detail")!.textContent).toContain(
+      "22,5° / Falta completar",
+    );
   });
 });

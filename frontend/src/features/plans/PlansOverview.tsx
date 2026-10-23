@@ -53,7 +53,7 @@ export function PlansOverview(): JSX.Element | null {
         <article className="plans-overview__card">
           <h3>Manual completo</h3>
           <p>
-            Cotizador profesional sin IA: catálogos, obras, posiciones y aperturas, Mesa de obra y
+            Cotizador profesional sin IA: catálogos, obras, ventanas y aperturas, Mesa de obra y
             Estudio, motor de cálculo, precios, PDF, cortes, compras, taller y terreno. No depende
             del asistente ni consume créditos.
           </p>
@@ -63,7 +63,7 @@ export function PlansOverview(): JSX.Element | null {
           <p>
             Todos los planes con IA tienen el mismo núcleo, el mismo modelo
             {data.model_selection ? ` (${data.model_selection})` : ""} y el mismo control: Chat y
-            Trabajo, Solo proponer, Con aprobación y Omitir todo, historial, adjuntos, recibo y
+            Trabajo, Solo proponer, Con aprobación y Omitir todo, historial, adjuntos, resumen y
             deshacer. Cambia el uso incluido.
           </p>
           <ul className="plans-overview__core">
@@ -149,7 +149,7 @@ export function PlansOverview(): JSX.Element | null {
           ) : null}
           <p className="plans-overview__note">
             Cada intercambio con la IA descuenta un costo fijo por ruta (
-            {data.consumption_policy_version}); el cargo final aparece en el recibo de cada tarea.
+            {data.consumption_policy_version}); el cargo final aparece en el resumen de cada tarea.
           </p>
         </div>
       ) : null}

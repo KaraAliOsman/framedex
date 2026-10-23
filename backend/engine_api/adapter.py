@@ -121,7 +121,7 @@ def parse_parametric_node(payload: object) -> ParametricNode:
         try:
             values["extra_context"] = ExtraContext.model_validate_json(json.dumps(raw["extra_context"], allow_nan=False))
         except (ValueError, TypeError) as error:
-            raise InvalidEngineRequest("Revisa las medidas declaradas del vano de obra.") from error
+            raise InvalidEngineRequest("Revisa las medidas declaradas de la abertura de obra.") from error
     for field, model in (("opening", Opening), ("hinged_layout", HingedLayout), ("hardware_selection", HardwareSelection)):
         if raw.get(field) is not None:
             try:

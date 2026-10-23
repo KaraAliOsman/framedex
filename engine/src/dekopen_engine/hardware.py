@@ -107,7 +107,7 @@ def evaluate_hardware_candidates(
                     expansion.unknown_reasons, expansion.resolution.model_copy(update={"exact_leaf_weight_kg": exact.total_weight_kg}))
         else:
             if selection is not None and (selection.handle_code or selection.color_code or selection.option_codes):
-                violations.append(("option", "Este kit histórico no declara opciones ni modelos de manilla. Selecciona una clase con autoridad de catálogo."))
+                violations.append(("option", "Este kit histórico no declara opciones ni modelos de manilla. Selecciona una clase declarada en el catálogo."))
             exact = with_hardware_weight(base_weight, kit, params)
         total = exact.total_weight_kg
         normalized = ("DOOR" if opening_use is OpeningUse.DOOR and physical_opening.movement is OpeningMovement.TURN else

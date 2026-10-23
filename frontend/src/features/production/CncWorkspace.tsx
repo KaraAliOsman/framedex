@@ -100,7 +100,7 @@ const labels: Record<string, string> = {
   postprocessor_version: "Versión del postprocesador",
   axes: "Ejes",
   clamps_declared: "Sujeción revisada",
-  authority_source: "Fuente técnica",
+  authority_source: "Referencia técnica",
   profile_setups: "Montajes de perfil",
   units: "Unidad",
   encoding: "Codificación",
@@ -121,7 +121,7 @@ function Choices({
     <fieldset className="cnc-choices">
       <legend>{label}</legend>
       {value === null ? (
-        <p className="cnc-person">Sin dato · no se declaró una lista de capacidades.</p>
+        <p className="cnc-person">Falta completar · no se declaró una lista de capacidades.</p>
       ) : null}
       <div>
         {Object.entries(options).map(([key, text]) => (
@@ -172,7 +172,7 @@ export function CncWorkspace({ orderId }: { orderId: string }) {
       }
     } catch (err) {
       setError(
-        actionErrorDetail(err, "No se pudo cargar la autoridad de la planta. Vuelve a intentar."),
+        actionErrorDetail(err, "No se pudieron cargar los datos de la planta. Vuelve a intentar."),
       );
     } finally {
       setLoading(false);
@@ -202,7 +202,7 @@ export function CncWorkspace({ orderId }: { orderId: string }) {
     setConfirmed(false);
   }
   function valueText(key: string, value: unknown): string {
-    if (value == null || value === "") return "Sin dato";
+    if (value == null || value === "") return "Falta completar";
     if (key.endsWith("_mm")) return mm(String(value));
     if (key === "active") return value ? "Activa" : "Retirada";
     if (typeof value === "boolean") return value ? "Sí" : "No";
@@ -227,16 +227,16 @@ export function CncWorkspace({ orderId }: { orderId: string }) {
             (s) =>
               s.profile_sku +
               " · " +
-              (loadingLabels[s.loading_orientation] ?? "Sin dato") +
+              (loadingLabels[s.loading_orientation] ?? "Falta completar") +
               " · origen inicial · " +
               s.source +
-              " · sección sellada vinculada",
+              " · sección de la orden vinculada",
           )
           .join("; ");
       return value
         .map((v) =>
           key === "tool_ids"
-            ? (data?.tools.find((t) => t.id === v)?.code ?? "Herramienta sin dato")
+            ? (data?.tools.find((t) => t.id === v)?.code ?? "Herramienta por completar")
             : (operationLabels[String(v)] ??
               faceLabels[String(v)] ??
               coordinateLabels[String(v)] ??
@@ -281,7 +281,9 @@ export function CncWorkspace({ orderId }: { orderId: string }) {
           const v = tool[k],
             parsed = v == null || v === "" ? null : parseDecimalInput(v, 4);
           if (v && (parsed === null || parsed.startsWith("-") || /^0(?:\.0+)?$/.test(parsed)))
-            throw new Error("Revisa " + labels[k] + ": usa milímetros positivos o deja Sin dato.");
+            throw new Error(
+              "Revisa " + labels[k] + ": usa milímetros positivos o deja el campo vacío.",
+            );
           after[k] = parsed;
         }
         setReview({
@@ -302,7 +304,9 @@ export function CncWorkspace({ orderId }: { orderId: string }) {
               parsed.startsWith("-") ||
               (k === "max_member_length_mm" && /^0(?:\.0+)?$/.test(parsed)))
           )
-            throw new Error("Revisa " + labels[k] + ": usa milímetros válidos o deja Sin dato.");
+            throw new Error(
+              "Revisa " + labels[k] + ": usa milímetros válidos o deja el campo vacío.",
+            );
           after[k] = parsed;
         }
         after.clamp_zones = after.clamp_zones.map((z) => {
@@ -314,7 +318,7 @@ export function CncWorkspace({ orderId }: { orderId: string }) {
         });
         if (after.profile_setups.some((s) => !s.loading_orientation || !s.source.trim()))
           throw new Error(
-            "Cada montaje necesita orientación de carga y fuente técnica. Retíralo si aún no tiene autoridad.",
+            "Cada montaje necesita orientación de carga y referencia técnica. Retíralo si aún no tiene una referencia técnica.",
           );
         setReview({
           kind: "MACHINE",
@@ -354,7 +358,7 @@ export function CncWorkspace({ orderId }: { orderId: string }) {
       setError(
         actionErrorDetail(
           err,
-          "No se pudo guardar la autoridad. Revisa los datos y vuelve a intentar.",
+          "No se pudieron guardar los datos. Revisa los datos y vuelve a intentar.",
         ),
       );
     } finally {
@@ -399,14 +403,14 @@ export function CncWorkspace({ orderId }: { orderId: string }) {
         <>
           <strong className="cnc-number">{t.code}</strong>
           <p>
-            {t.name} · {toolLabels[t.kind] ?? "Sin dato · tipo"}
+            {t.name} · {toolLabels[t.kind] ?? "Falta completar · tipo"}
           </p>
         </>
       ),
     },
     {
       id: "authority",
-      label: "Autoridad declarada",
+      label: "Origen declarado",
       value: (t) =>
         t.name + " " + (t.compatible_kinds ?? []).map((k) => operationLabels[k]).join(" "),
       render: (t) => (
@@ -416,7 +420,7 @@ export function CncWorkspace({ orderId }: { orderId: string }) {
             Diámetro {mm(t.diameter_mm)} · útil {mm(t.working_length_mm)} · profundidad{" "}
             {mm(t.max_depth_mm)}
           </p>
-          <small>Fuente: {t.authority_source || "Sin dato · falta fuente"}</small>
+          <small>Origen: {t.authority_source || "Falta origen"}</small>
         </>
       ),
     },
@@ -454,7 +458,7 @@ export function CncWorkspace({ orderId }: { orderId: string }) {
         <>
           <strong className="cnc-number">{m.code}</strong>
           <p>
-            {m.name} · {machineTypeLabels[m.machine_type] ?? "Sin dato · tipo"}
+            {m.name} · {machineTypeLabels[m.machine_type] ?? "Falta completar · tipo"}
           </p>
         </>
       ),
@@ -466,10 +470,10 @@ export function CncWorkspace({ orderId }: { orderId: string }) {
       render: (m) => (
         <>
           <p className="cnc-number">
-            Ejes {m.axes?.join(" · ") || "Sin dato"} · carrera {mm(m.max_member_length_mm)}
+            Ejes {m.axes?.join(" · ") || "Falta completar"} · carrera {mm(m.max_member_length_mm)}
           </p>
           <p>
-            {m.clamps_declared ? "Sujeción revisada" : "Sin dato · falta revisar mordazas"} ·{" "}
+            {m.clamps_declared ? "Sujeción revisada" : "Falta revisar mordazas"} ·{" "}
             {valueText("tool_ids", m.tool_ids)}
           </p>
           <p>
@@ -477,12 +481,14 @@ export function CncWorkspace({ orderId }: { orderId: string }) {
               ? m.profile_setups
                   .map(
                     (s) =>
-                      s.profile_sku + ": " + (loadingLabels[s.loading_orientation] ?? "Sin dato"),
+                      s.profile_sku +
+                      ": " +
+                      (loadingLabels[s.loading_orientation] ?? "Falta completar"),
                   )
                   .join("; ")
-              : "Sin dato · falta montaje por perfil"}
+              : "Falta montaje por perfil"}
           </p>
-          <small>Fuente: {m.authority_source || "Sin dato · falta fuente"}</small>
+          <small>Origen: {m.authority_source || "Falta origen"}</small>
         </>
       ),
     },
@@ -518,24 +524,24 @@ export function CncWorkspace({ orderId }: { orderId: string }) {
         <header className="cnc-heading">
           <p>
             El código de herramienta se vincula a la operación. Cada perfil necesita un montaje
-            revisado para su sección sellada.
+            revisado para su sección de la orden.
           </p>
           <Button disabled={busy} onClick={() => void load()}>
-            Actualizar autoridad
+            Actualizar datos
           </Button>
         </header>
         {error ? (
-          <ErrorState title="Revisa la autoridad" body={error} onRetry={() => void load()} />
+          <ErrorState title="Revisa los datos" body={error} onRetry={() => void load()} />
         ) : null}
         {notice ? <p role="status">{notice}</p> : null}
         {!canWrite ? (
           <p className="cnc-permission">
-            Puedes leer la autoridad. El dueño o jefe de taller declara, retira y reactiva máquinas
-            y herramientas.
+            Puedes consultar los datos. El dueño o jefe de taller declara, retira y reactiva
+            máquinas y herramientas.
           </p>
         ) : null}
         {loading && !data ? (
-          <LoadingState label="Cargando autoridad de la planta" />
+          <LoadingState label="Cargando datos de la planta" />
         ) : data ? (
           <>
             <section data-region="herramientas">
@@ -604,7 +610,7 @@ export function CncWorkspace({ orderId }: { orderId: string }) {
                 <>
                   <Field label="Tipo de herramienta">
                     <Select value={tool.kind} onChange={(e) => editTool({ kind: e.target.value })}>
-                      <option value="">Sin dato · elige el tipo</option>
+                      <option value="">Elige el tipo</option>
                       {Object.entries(toolLabels).map(([k, l]) => (
                         <option value={k} key={k}>
                           {l}
@@ -617,7 +623,7 @@ export function CncWorkspace({ orderId }: { orderId: string }) {
                       <Field
                         key={k}
                         label={labels[k] + " · mm"}
-                        help="Vacío significa Sin dato y bloquea la generación."
+                        help="Dejarlo vacío bloquea la generación."
                       >
                         <TextInput
                           inputMode="decimal"
@@ -643,7 +649,7 @@ export function CncWorkspace({ orderId }: { orderId: string }) {
                         value={machine.machine_type}
                         onChange={(e) => editMachine({ machine_type: e.target.value })}
                       >
-                        <option value="">Sin dato · elige el tipo</option>
+                        <option value="">Elige el tipo</option>
                         {Object.entries(machineTypeLabels).map(([k, l]) => (
                           <option value={k} key={k}>
                             {l}
@@ -664,7 +670,7 @@ export function CncWorkspace({ orderId }: { orderId: string }) {
                         value={machine.controller_family}
                         onChange={(e) => editMachine({ controller_family: e.target.value })}
                       >
-                        <option value="">Sin dato · elige la familia</option>
+                        <option value="">Elige la familia</option>
                         <option value="NEUTRAL">Intercambio neutro</option>
                         {machine.controller_family && machine.controller_family !== "NEUTRAL" ? (
                           <option value={machine.controller_family}>
@@ -678,7 +684,7 @@ export function CncWorkspace({ orderId }: { orderId: string }) {
                         value={machine.postprocessor_id}
                         onChange={(e) => editMachine({ postprocessor_id: e.target.value })}
                       >
-                        <option value="">Sin dato · no disponible</option>
+                        <option value="">Falta completar · no disponible</option>
                         <option value="neutral-ops-v1">Intercambio neutro revisado</option>
                         {machine.postprocessor_id &&
                         machine.postprocessor_id !== "neutral-ops-v1" ? (
@@ -746,7 +752,7 @@ export function CncWorkspace({ orderId }: { orderId: string }) {
                     onChange={(v) => editMachine({ tool_ids: v })}
                   />
                   <section>
-                    <h5>Mordazas · X desde el origen inicial</h5>
+                    <h5>Mordazas · X desdel origen inicial</h5>
                     {machine.clamp_zones.map((z, i) => (
                       <div className="cnc-form-fields" key={i}>
                         {(["label", "start_mm", "end_mm"] as const).map((k) => (
@@ -798,11 +804,11 @@ export function CncWorkspace({ orderId }: { orderId: string }) {
                         onChange={(e) => editMachine({ clamps_declared: e.target.checked })}
                       />
                       Revisé toda la sujeción. Una lista vacía declara que no hay mordazas sobre el
-                      eje y necesita fuente técnica.
+                      eje y necesita referencia técnica.
                     </label>
                   </section>
                   <section>
-                    <h5>Montaje por perfil y sección sellada</h5>
+                    <h5>Montaje por perfil y sección de la orden</h5>
                     {machine.profile_setups.map((s, i) => (
                       <div key={s.profile_sku} className="cnc-setup">
                         <strong className="cnc-number">{s.profile_sku}</strong>
@@ -812,8 +818,8 @@ export function CncWorkspace({ orderId }: { orderId: string }) {
                               p.workshop_sku === s.profile_sku &&
                               p.preview.section_fingerprint === s.section_fingerprint,
                           )
-                            ? "Vinculado a la sección sellada de esta OT"
-                            : "Vinculado a otra sección sellada; revisa la pieza"}{" "}
+                            ? "Vinculado a la sección de la orden de esta OT"
+                            : "Vinculado a otra sección de la orden; revisa la pieza"}{" "}
                           · origen longitudinal en extremo inicial.
                         </p>
                         <div className="cnc-form-fields">
@@ -828,7 +834,7 @@ export function CncWorkspace({ orderId }: { orderId: string }) {
                                 })
                               }
                             >
-                              <option value="">Sin dato · elige la orientación</option>
+                              <option value="">Elige la orientación</option>
                               {Object.entries(loadingLabels).map(([k, l]) => (
                                 <option key={k} value={k}>
                                   {l}
@@ -836,7 +842,7 @@ export function CncWorkspace({ orderId }: { orderId: string }) {
                               ))}
                             </Select>
                           </Field>
-                          <Field label="Fuente del montaje revisado">
+                          <Field label="Origen del montaje revisado">
                             <TextInput
                               value={s.source}
                               onChange={(e) =>
@@ -862,7 +868,7 @@ export function CncWorkspace({ orderId }: { orderId: string }) {
                     ))}
                     <Field
                       label="Agregar un perfil de esta OT"
-                      help="Solo se ofrecen secciones selladas; un histórico sin sección requiere una revisión nueva."
+                      help="Solo se ofrecen secciones de la orden; un histórico sin sección requiere una revisión nueva."
                     >
                       <Select
                         value=""
@@ -885,7 +891,7 @@ export function CncWorkspace({ orderId }: { orderId: string }) {
                             });
                         }}
                       >
-                        <option value="">Elige un perfil con sección sellada</option>
+                        <option value="">Elige un perfil con sección de la orden</option>
                         {profiles.map((p) => (
                           <option key={p.workshop_sku} value={p.workshop_sku!}>
                             {p.workshop_sku}
@@ -943,7 +949,7 @@ export function CncWorkspace({ orderId }: { orderId: string }) {
                 checked={confirmed}
                 onChange={(e) => setConfirmed(e.target.checked)}
               />
-              Revisé el cambio y su fuente. Confirmo guardar esta declaración.
+              Revisé el cambio y su origen. Confirmo guardar esta declaración.
             </label>
             <Button variant="primary" disabled={!confirmed || busy} onClick={() => void save()}>
               Guardar declaración revisada
@@ -951,7 +957,7 @@ export function CncWorkspace({ orderId }: { orderId: string }) {
           </section>
         ) : null}
         <section data-region="historial-autoridad">
-          <h4>Historial de autoridad</h4>
+          <h4>Historial de cambios</h4>
           <p>Últimas 100 declaraciones; los datos anteriores se conservan.</p>
           {data?.history.length ? (
             <ol className="cnc-history">
@@ -965,7 +971,7 @@ export function CncWorkspace({ orderId }: { orderId: string }) {
                         RETIRE: "Retirada",
                         REACTIVATE: "Reactivada",
                       } as Record<string, string>
-                    )[event.action] ?? "Cambio de autoridad"}{" "}
+                    )[event.action] ?? "Cambio de datos"}{" "}
                     · {String(event.current.code)} · {String(event.current.name)}
                   </strong>
                   <p>

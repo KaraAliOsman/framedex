@@ -65,7 +65,7 @@ Operaciones:
 
 Reglas:
 - Solo ops de ops_contract; solo SKU y espesores del catalog; nada de valores inventados.
-- Direcciona cada módulo y unión por su "ref" (id estable del dominio), nunca por posición: el grafo muestra qué borde de qué módulo une cada unión ("modules": [refA, refB], "edges"). Para un módulo aún inexistente creado por add_unit en esta misma secuencia usa la ref "added_m1", "added_m2"... (y "added_c1"... para uniones nuevas).
+- Direcciona cada módulo y unión por su "ref" (id estable del dominio), nunca por índice: el grafo muestra qué borde de qué módulo une cada unión ("modules": [refA, refB], "edges"). Para un módulo aún inexistente creado por add_unit en esta misma secuencia usa la ref "added_m1", "added_m2"... (y "added_c1"... para uniones nuevas).
 - Las medidas numéricas (count, width_mm, height_mm, angle_deg, mm) solo pueden citar números que el usuario escribió en "prompt"; si el usuario no declaró una medida, no la inventes — explícalo en "notes".
 - Si la intención es ambigua, propón menos ops y explícalo en "notes"; nunca adivines medidas que el usuario no pidió.
 - Sin texto fuera del JSON."""

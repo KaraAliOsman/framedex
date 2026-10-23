@@ -767,16 +767,14 @@ export function InventorySection({
                 <td className="ui-value" data-label={t("inventory.dims")}>
                   {remnantDims(r)}
                 </td>
-                <td data-label={t("inventory.rack")}>
-                  {r.rack_location || "Sin dato · registra el rack"}
-                </td>
+                <td data-label={t("inventory.rack")}>{r.rack_location || "Registra el rack"}</td>
                 <td data-label={t("inventory.origin")}>
                   {remnantOriginLabel(r.origin)}
                   {r.origin_order_code ? ` · ${r.origin_order_code}` : ""}
                 </td>
                 <td data-label={t("inventory.reservedFor")}>
                   {r.status === "RESERVED"
-                    ? (r.reserved_order_code ?? "Sin dato · orden no disponible")
+                    ? (r.reserved_order_code ?? "Falta completar · orden no disponible")
                     : "—"}
                 </td>
                 <td data-label={t("inventory.registered")}>
@@ -896,7 +894,7 @@ export function InventorySection({
                   <td data-label={t("inventory.movementWhen")}>{formatDateTime(m.created_at)}</td>
                   <td data-label={t("inventory.movementType")}>{movementLabel(m.movement_type)}</td>
                   <td data-label={t("inventory.movementItem")}>
-                    {itemNames.get(m.item_id) ?? "Sin dato · artículo no disponible"}
+                    {itemNames.get(m.item_id) ?? "Falta completar · artículo no disponible"}
                   </td>
                   <td className="ui-value" data-label={t("inventory.movementQty")}>
                     {formatDecimal(
@@ -958,7 +956,9 @@ export function InventorySection({
                     {e.previous_rack ? `${e.previous_rack} → ` : ""}
                     {e.rack_location || "Sin ubicación declarada"}
                   </td>
-                  <td data-label="Actor">{e.actor_label || "Sin dato · registro histórico"}</td>
+                  <td data-label="Actor">
+                    {e.actor_label || "Falta completar · registro histórico"}
+                  </td>
                   <td data-label="Motivo">{e.reason || "Movimiento del plan de producción"}</td>
                 </tr>
               ))}

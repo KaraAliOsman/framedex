@@ -33,7 +33,7 @@ def label_data(*, org_id: UUID, order_id: UUID, grouped: bool = False) -> dict:
                      [str(order_id), str(org_id)])
         cut_steps = [step["sequence"] for step in route if step["code"] in ("CUT", "CUT_STEEL")]
         following = next((step["label"] for step in route if cut_steps and step["sequence"] > max(cut_steps)),
-                         "Sin dato · consulta la ruta de la OT")
+                         "Falta completar · consulta la ruta de la OT")
         fingerprint = _optimization_fingerprint(optimization)
         display = add_remnant_codes(addressed_plan(snapshot, optimization, order_id=order_id),org_id)
         labels = physical_labels(display,snapshot=snapshot,order_code=order["order_code"],
@@ -54,7 +54,7 @@ def label_data(*, org_id: UUID, order_id: UUID, grouped: bool = False) -> dict:
                 "order_code":order["order_code"],"role_label":"Retazo", "length_mm":entry.get("remainder_mm"),
                 "width_mm":entry.get("width_mm"),"height_mm":entry.get("height_mm"),
                 "color":optimization.get("color"),"fingerprint":fingerprint[:16],
-                "next_station":entry.get("rack_location") or "Sin dato · declara destino",
+                "next_station":entry.get("rack_location") or "Falta declarar el destino",
                 "stock_notice":"Alta en stock al completar corte"})
     return {"order_code":order["order_code"],"fingerprint":fingerprint,"paper":preferences["piece_label_paper"],
             "is_demo": bool(snapshot.get("is_demo") or any(pos.get("is_demo") for pos in snapshot.get("positions") or [])),
@@ -98,11 +98,11 @@ body {{ margin: 0; font-size: 8pt; }}
                         label.get("bay_code"),label.get("leaf_code")) if value)
             body += f'<article class="physical-label{ " physical-roll" if roll else ""}"><h2>{escape(label["code"])}</h2>'
             body += f'<div class="label-qr">{label["qr_svg"]}</div><p class="label-address">{escape(label["order_code"])}</p>'
-            body += f'<p>{escape(location or label.get("stock_notice") or "Sin dato · consulta la OT")}</p>'
-            body += f'<p>{escape(label.get("role_label") or "Sin dato · función histórica")}</p><p class="label-measure">{escape(measure)}</p>'
+            body += f'<p>{escape(location or label.get("stock_notice") or "Falta completar · consulta la OT")}</p>'
+            body += f'<p>{escape(label.get("role_label") or "Función no registrada en el histórico")}</p><p class="label-measure">{escape(measure)}</p>'
             if label.get("length_mm") is not None and label.get("role_label") != "Retazo":
                 body += f'<p class="label-address">Izq. {angle(label.get("angle_left"))} · Der. {angle(label.get("angle_right"))}</p>'
-            body += f'<p>{escape(_COLOR_ES.get(str(label.get("color")),str(label.get("color") or "Sin dato")))}</p>'
+            body += f'<p>{escape(_COLOR_ES.get(str(label.get("color")),str(label.get("color") or "Falta completar")))}</p>'
             body += f'<p>Siguiente: {escape(label["next_station"])}</p>'
             if data.get("is_demo"):
                 body += '<p>DEMO · Catálogo sintético, sin certificación.</p>'

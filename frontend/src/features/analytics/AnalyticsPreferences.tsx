@@ -33,10 +33,10 @@ export function AnalyticsPreferences({
   }, [orgId, attempt]);
   return (
     <section className="settings-card">
-      <h2>Período de Analítica</h2>
+      <h2>Período de Informes</h2>
       <p>
         La cohorte inicial cubre los últimos días hasta hoy, en la zona horaria de tu organización.
-        Puedes elegir otras fechas en Analítica.
+        Puedes elegir otras fechas en Informes.
       </p>
       {days === undefined && !error ? (
         <LoadingState label="Leyendo el período de analítica" />

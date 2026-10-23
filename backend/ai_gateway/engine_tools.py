@@ -25,7 +25,7 @@ TOOLS = [
         ("calculate_position", "Calcula con el motor medidas, pesos de hojas y validez del diseño actual."),
         ("validate_position", "Devuelve la validez y todas las causas del motor."),
         ("price_position", "Devuelve exclusivamente venta neta indicativa calculada; nunca costos de compra."),
-        ("price_project", "Lee precios aplicados vigentes del proyecto; si faltan, explica la autoridad ausente."),
+        ("price_project", "Lee precios aplicados vigentes del proyecto; si faltan, explica qué dato o regla falta."),
         ("explain_price_delta", "Simula operaciones y compara venta antes/después con la misma configuración."),
         ("list_catalog_options", "Lista opciones reales de serie, apertura, receta y caras de acabado."),
         ("get_blockers", "Lista exacta de impedimentos del motor o de preparación documental."),
@@ -174,7 +174,7 @@ class EngineTools:
             identity = self._reference(arguments, "project_id")
             project = service.project_public(self.org_id, service.project_row(self.org_id, identity), detail=True)
             if not project["pricing_current"]:
-                return {"project_id": str(identity), "prices": None, "reason": "Sin dato: calcula y aplica los precios del proyecto antes de comparar posiciones."}
+                return {"project_id": str(identity), "prices": None, "reason": "Falta completar: calcula y aplica los precios de la obra antes de comparar ventanas."}
             return {"project_id": str(identity), "currency": project["currency"],
                     "totals": {key: project[key] for key in ("total_price_net", "total_price_tax", "total_price_gross")},
                     "prices": [{"position_id": str(position["id"]), "index": position["position_index"],

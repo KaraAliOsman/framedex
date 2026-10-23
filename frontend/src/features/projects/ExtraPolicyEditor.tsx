@@ -80,8 +80,8 @@ export function ExtraPolicyEditor({
         value && (
           <fieldset disabled={busy} className="extra-policy">
             <p>
-              Estas tarifas tienen fuente propia. La plantilla se aplica a posiciones nuevas; las
-              revisiones emitidas conservan su autoridad sellada.
+              Estas tarifas tienen origen propio. La plantilla se aplica a ventanas nuevas; las
+              revisiones emitidas conservan las tarifas y su origen.
             </p>
             <label>
               Precios de extras en la cotización
@@ -95,13 +95,13 @@ export function ExtraPolicyEditor({
                 }
               >
                 <option value="ITEMIZED">Mostrar cada sublínea con precio</option>
-                <option value="GROUPED">Agrupar en el precio de la posición</option>
+                <option value="GROUPED">Agrupar en el precio de la ventana</option>
               </select>
             </label>
             <h3>Servicios declarados</h3>
             {!value.services.length && (
               <p>
-                Sin servicios. Declara costo, venta y fuente antes de ofrecer instalación, retiro o
+                Sin servicios. Declara costo, venta y origen antes de ofrecer instalación, retiro o
                 flete.
               </p>
             )}
@@ -135,11 +135,11 @@ export function ExtraPolicyEditor({
               type="button"
               onClick={() => edit({ ...value, services: [...value.services, emptyExtra()] })}
             >
-              Agregar servicio con fuente
+              Agregar servicio con origen
             </button>
-            <h3>Plantilla para posiciones nuevas</h3>
+            <h3>Plantilla para ventanas nuevas</h3>
             <p>
-              Elige servicios por posición o importa los códigos de accesorios declarados por tus
+              Elige servicios por ventana o importa los códigos de accesorios declarados por tus
               series.
             </p>
             {value.position_defaults.map((item, index) => (
@@ -157,7 +157,7 @@ export function ExtraPolicyEditor({
                       })
                     }
                   >
-                    <option value="">Elige un servicio por posición</option>
+                    <option value="">Elige un servicio por ventana</option>
                     {!value.services.some((v) => v.code === item.code) && item.code && (
                       <option value={item.code}>Accesorio de catálogo · {item.code}</option>
                     )}
@@ -214,7 +214,7 @@ export function ExtraPolicyEditor({
                   <input
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
-                    placeholder="Indica la fuente o condición que cambió"
+                    placeholder="Indica el origen o condición que cambió"
                   />
                 </label>
                 <button type="button" disabled={!reason.trim()} onClick={() => setReview(true)}>
@@ -264,7 +264,7 @@ export function ExtraPolicyEditor({
                   </tbody>
                 </table>
                 <p>
-                  Posiciones predeterminadas: {saved?.position_defaults.length ?? 0} →{" "}
+                  Servicios predeterminados: {saved?.position_defaults.length ?? 0} →{" "}
                   {draft.position_defaults.length}. Política:{" "}
                   {draft.document_prices === "ITEMIZED"
                     ? "Sublíneas con precio"

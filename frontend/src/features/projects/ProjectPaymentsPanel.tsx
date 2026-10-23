@@ -603,7 +603,7 @@ export function ProjectPaymentsPanel({
           )}
       </div>
       {message && <p className="form-error">{message}</p>}
-      {paymentsQuery.isPending && <LoadingState label="Consultando el saldo y los recibos" />}
+      {paymentsQuery.isPending && <LoadingState label="Consultando el saldo y los comprobantes" />}
       {paymentsQuery.isError && (
         <ErrorState
           title="No se cargó la cobranza"
@@ -618,7 +618,7 @@ export function ProjectPaymentsPanel({
         </p>
       )}
       {summary && !summary.sealed_revision && (
-        <p>Emite una revisión para registrar cobros y generar su calendario sellado.</p>
+        <p>Emite una revisión para registrar cobros y generar su calendario emitido.</p>
       )}
       {summary && (
         <div className="payments-summary">
@@ -681,7 +681,7 @@ export function ProjectPaymentsPanel({
             <ul>
               {payments.map((payment) => (
                 <li key={payment.id}>
-                  {payment.receipt_code ?? "Recibo sin dato"} ·{" "}
+                  {payment.receipt_code ?? "Comprobante por completar"} ·{" "}
                   <Money value={payment.amount} currency={summary.currency} /> ·{" "}
                   {payment.voided_at ? "Anulado · no se suma" : "Vigente"}
                   {payment.simulated ? " · Simulado" : ""}
@@ -690,7 +690,7 @@ export function ProjectPaymentsPanel({
             </ul>
           </details>
           {summary.schedule?.length > 0 ? (
-            <section className="collection-calendar" aria-label="Calendario del acuerdo sellado">
+            <section className="collection-calendar" aria-label="Calendario del acuerdo emitido">
               <h3>Calendario del acuerdo</h3>
               <Stepper
                 completed={summary.schedule.every((item) => item.status === "PAID")}
@@ -715,7 +715,7 @@ export function ProjectPaymentsPanel({
                       ) : item.due_source === "DELIVERY_PENDING" ? (
                         "Contra entrega completa · pendiente"
                       ) : (
-                        "Sin dato · falta fecha acordada"
+                        "Falta fecha acordada"
                       )}
                     </dd>
                     <dd>
@@ -818,7 +818,8 @@ export function ProjectPaymentsPanel({
         <DataTable
           rows={payments}
           rowKey={(payment) => payment.id}
-          label="Movimientos y recibos"
+          label="Movimientos y comprobantes"
+          emptyTitle="Todavía no hay movimientos ni comprobantes"
           emptyReason="Todavía no hay pagos registrados en este proyecto."
           columns={[
             {
@@ -851,7 +852,7 @@ export function ProjectPaymentsPanel({
               value: (p) => p.actor_label,
               render: (p) => (
                 <>
-                  {p.actor_label ?? "Sin dato · registro histórico"}
+                  {p.actor_label ?? "Falta completar · registro histórico"}
                   {p.simulated && <p>Simulado · sin dinero real</p>}
                 </>
               ),
@@ -862,10 +863,10 @@ export function ProjectPaymentsPanel({
               value: (p) => p.reference,
               render: (p) => (
                 <>
-                  {p.reference ?? "Sin dato"}
+                  {p.reference ?? "Falta completar"}
                   <p>
                     {p.voided_at
-                      ? `Anulado · ${p.void_reason ?? "motivo sin dato"}`
+                      ? `Anulado · ${p.void_reason ?? "motivo por completar"}`
                       : (p.note ?? "Vigente")}
                   </p>
                 </>
@@ -881,7 +882,7 @@ export function ProjectPaymentsPanel({
                     {p.receipt_code}
                   </button>
                 ) : (
-                  "Sin dato · recibo histórico"
+                  "Falta completar · comprobante histórico"
                 ),
             },
             ...(canWrite

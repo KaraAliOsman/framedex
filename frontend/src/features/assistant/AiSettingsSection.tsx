@@ -128,7 +128,7 @@ export function AiSettingsSection({ orgId }: { orgId: string }): JSX.Element {
       )
     ) {
       setNotice({
-        text: "Revisa el modelo y el presupuesto. Declara ambas tarifas en USD con coma decimal, o deja ambas sin dato.",
+        text: "Revisa el modelo y el presupuesto. Declara ambas tarifas en USD con coma decimal, o deja ambas por completar.",
         error: true,
       });
       return;
@@ -356,7 +356,7 @@ export function AiSettingsSection({ orgId }: { orgId: string }): JSX.Element {
                           inputMode="decimal"
                           value={route.inputRate}
                           onChange={(event) => change(index, { inputRate: event.target.value })}
-                          placeholder="Sin dato"
+                          placeholder="Falta completar"
                         />
                       </label>
                       <label>
@@ -365,7 +365,7 @@ export function AiSettingsSection({ orgId }: { orgId: string }): JSX.Element {
                           inputMode="decimal"
                           value={route.outputRate}
                           onChange={(event) => change(index, { outputRate: event.target.value })}
-                          placeholder="Sin dato"
+                          placeholder="Falta completar"
                         />
                       </label>
                     </div>
@@ -446,7 +446,7 @@ export function AiSettingsSection({ orgId }: { orgId: string }): JSX.Element {
                 <p>
                   Los débitos anteriores a este registro cuentan en el presupuesto, sin duplicar las
                   llamadas nuevas. Si su medición no está completa, los tokens y el costo del mes
-                  quedan sin dato.
+                  quedan por completar.
                 </p>
                 <Link to="/jobs?capability=all_ai">Revisar las llamadas del mes</Link>
               </details>

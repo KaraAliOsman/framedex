@@ -218,7 +218,7 @@ export function PurchaseNeeds({
                         <details>
                           <summary>Ver de qué OT sale</summary>
                           <p>
-                            {line.project_code} · Necesidad del modelo sellado y del plan de corte.
+                            {line.project_code} · Necesidad del modelo emitido y del plan de corte.
                             Las mermas y la compatibilidad las decide el motor.
                           </p>
                           <ul>
@@ -293,7 +293,7 @@ export function PurchaseNeeds({
                               type="number"
                               min="0"
                               step="0.01"
-                              placeholder="Sin dato"
+                              placeholder="Falta completar"
                               value={choices[line.requirement_id]?.price ?? ""}
                               onChange={(e) =>
                                 setChoices((p) => ({
@@ -307,7 +307,7 @@ export function PurchaseNeeds({
                             />
                           </label>
                         ) : (
-                          "Sin dato · falta cotización del proveedor"
+                          "Falta cotización del proveedor"
                         )}
                       </td>
                     </tr>
@@ -321,7 +321,7 @@ export function PurchaseNeeds({
                                 {" "}
                                 Faltan{" "}
                                 <Qty value={line.uncovered} unit={units[line.unit] ?? "un."} />{" "}
-                                fuera de la compra sellada.
+                                fuera de la compra emitida.
                               </>
                             )}{" "}
                             <Link to={`/production?order=${line.orders[0]?.id ?? ""}`}>
@@ -431,7 +431,7 @@ export function PurchaseMail({
       </summary>
       {preview && (
         <>
-          <p>Para: {preview.recipient || "Sin dato · falta correo en la elegibilidad sellada"}</p>
+          <p>Para: {preview.recipient || "Falta el correo registrado para esta compra"}</p>
           <p>{preview.subject}</p>
           <p>{preview.text}</p>
           <button
@@ -442,7 +442,7 @@ export function PurchaseMail({
               void (async () => {
                 const ok = await confirm({
                   title: "¿Enviar la OC por correo?",
-                  body: `Se adjunta el PDF sellado para ${preview.recipient}. Consulta el resultado en la bandeja de correo de esta revisión.`,
+                  body: `Se adjunta el PDF emitido para ${preview.recipient}. Consulta el resultado en la bandeja de correo de esta revisión.`,
                   confirmLabel: "Enviar correo y PDF",
                 });
                 if (!ok) return;

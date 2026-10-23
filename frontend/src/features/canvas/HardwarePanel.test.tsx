@@ -169,7 +169,7 @@ describe("hardware explanation and proposals", () => {
   });
   it("states missing authority without a numeric default", () => {
     setup({ options: { ...options, hardware_kits: [] } });
-    expect(screen.getByText(/Sin dato: esta serie/)).toBeInTheDocument();
+    expect(screen.getByText(/Falta completar: esta serie/)).toBeInTheDocument();
     expect(preview).not.toHaveBeenCalled();
   });
   it("states permission failure", async () => {

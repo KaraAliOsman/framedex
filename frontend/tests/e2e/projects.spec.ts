@@ -4,6 +4,7 @@ import type {
   EngineAssemblyCalculateResponse,
   PositionResponse,
   ProjectResponse,
+  WorksResponse,
 } from "../../src/api/generated/models";
 import { fmtMm } from "../../src/format";
 import { test } from "./support/manual-project-fixture";
@@ -96,18 +97,25 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   // Navigation uses the editor's accessible project backlink. React
   // Query may serve the project from its fresh cache without a fetch, so the
   // reload makes the backend round-trip (and in-memory reset) explicit.
-  const back = () => page.getByRole("button", { name: "Volver a la obra", exact: true }).click();
+  // Batch organization remains an explicit advanced destination in P06;
+  // the default now opens the persistent list, drawing and inspector.
+  const back = async () => {
+    await page.locator(".project-head").getByRole("button", { name: "Más", exact: true }).click();
+    await page.getByRole("menuitem", { name: "Organizar ventanas", exact: true }).click();
+  };
   const toProjects = () =>
     page
       .getByRole("navigation", { name: "Ruta de navegación" })
-      .getByRole("link", { name: "Proyectos", exact: true })
+      .getByRole("link", { name: "Obras", exact: true })
       .click();
   const freshRead = () => page.reload();
 
-  const emptyProjects = await responseTo<{ items: ProjectResponse[] }>(
+  // Obras reads its stage-aware projection since P05e. Keep the real GET
+  // assertion on that endpoint before exercising the complete editing flow.
+  const emptyProjects = await responseTo<WorksResponse>(
     page,
     "GET",
-    "/api/v1/projects/",
+    "/api/v1/projects/works/",
     200,
     () => page.goto("/projects"),
   );
@@ -157,11 +165,12 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   });
   await expect(page).toHaveURL(new RegExp(`${projectPath}([?][^/]*)?$`));
   await expect(page.getByRole("heading", { level: 1 })).toContainText(projectName);
-  await expect(page.getByRole("link", { name: "Agregar vanos", exact: true })).toBeVisible();
+  await back();
+  await expect(page.getByRole("link", { name: "Agregar ventanas", exact: true })).toBeVisible();
   await screenshot(page, info, "01-project-created");
 
-  await page.getByRole("link", { name: "Agregar vanos", exact: true }).click();
-  await page.getByLabel("Ubicación del vano", { exact: true }).fill("Cocina original");
+  await page.getByRole("link", { name: "Agregar ventanas", exact: true }).click();
+  await page.getByLabel("Ubicación de la ventana", { exact: true }).fill("Cocina original");
   await page.getByLabel("Cantidad", { exact: true }).fill("2");
 
   await page.locator(".editor-system-chip").click();
@@ -201,9 +210,8 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   expect(initial.bom?.profile_cuts?.length).toBeGreaterThan(0);
   expect(initial.quantity).toBe(2);
   const positionApi = `/api/v1/positions/${initial.id}/`;
-  const editPath = `${projectPath}/positions/${initial.id}/edit`;
-  // The editor keeps its presentation (Mesa/Estudio) in the query string.
-  await expect(page).toHaveURL(new RegExp(`${editPath}(\\?view=\\w+)?$`));
+  // The unified work selects the new saved window in its URL.
+  await expect(page).toHaveURL(new RegExp(`${projectPath}\\?position=${initial.id}`));
   await expect(page.getByText("Guardado", { exact: true })).toBeVisible();
 
   // The shared registry refuses invalid edits atomically. The field returns
@@ -351,10 +359,12 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   );
   expect(reopenedProject.client_email).toBe("cliente-e2e@example.test");
   expect(reopenedProject.position_count).toBe(1);
+  await back();
 
-  const reopened = await responseTo<PositionResponse>(page, "GET", positionApi, 200, () =>
-    card(page, "Cocina original").then((open) => open.click()),
-  );
+  // The one editor session survives the collection visit. Reload explicitly
+  // to verify the persisted position rather than expecting a redundant GET.
+  await (await card(page, "Cocina original")).click();
+  const reopened = await responseTo<PositionResponse>(page, "GET", positionApi, 200, freshRead);
   expect(reopened).toEqual(saved);
   await expect(page.getByRole("textbox", { name: "Ancho", exact: true })).toHaveValue("1100,25");
   await expect(page.getByRole("textbox", { name: "Alto", exact: true })).toHaveValue("1050,5");
@@ -422,7 +432,7 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
     copyRow.press("Enter"),
   );
   await expect(page.getByText("Guardado", { exact: true })).toBeVisible();
-  await page.getByLabel("Ubicación del vano", { exact: true }).fill("Cocina duplicada");
+  await page.getByLabel("Ubicación de la ventana", { exact: true }).fill("Cocina duplicada");
   await expect(page.getByText("Cambios sin guardar", { exact: true })).toBeVisible();
 
   const duplicate = await responseTo<PositionResponse>(

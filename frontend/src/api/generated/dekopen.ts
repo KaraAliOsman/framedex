@@ -345,6 +345,7 @@ import type {
   ProjectOpsState,
   ProjectResponse,
   ProjectWriteRequest,
+  ProjectsWorksParams,
   PurchaseMailPreview,
   PurchaseMailRequestRequest,
   PurchaseMailResult,
@@ -449,6 +450,7 @@ import type {
   WorkOrderOptimizeCompare,
   WorkOrderOptimizeCompareRequestRequest,
   WorkOrderOptimizeRequestRequest,
+  WorksResponse,
   WorkspaceResponse,
 } from "./models";
 
@@ -28801,6 +28803,89 @@ export const projectPaymentIntegrationSave = async (
     method: "PUT",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(paymentIntegrationRequest),
+  });
+};
+
+export type projectsWorksResponse200 = {
+  data: WorksResponse;
+  status: 200;
+};
+
+export type projectsWorksResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectsWorksResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectsWorksResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectsWorksResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectsWorksResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectsWorksResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectsWorksResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectsWorksResponseSuccess = projectsWorksResponse200 & {
+  headers: Headers;
+};
+export type projectsWorksResponseError = (
+  | projectsWorksResponse400
+  | projectsWorksResponse401
+  | projectsWorksResponse403
+  | projectsWorksResponse404
+  | projectsWorksResponse409
+  | projectsWorksResponse422
+  | projectsWorksResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectsWorksResponse = projectsWorksResponseSuccess | projectsWorksResponseError;
+
+export const getProjectsWorksUrl = (params?: ProjectsWorksParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/projects/works/?${stringifiedParams}`
+    : `/api/v1/projects/works/`;
+};
+
+export const projectsWorks = async (
+  params?: ProjectsWorksParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectsWorksResponse> => {
+  return apiMutator<projectsWorksResponse>(getProjectsWorksUrl(params), {
+    ...options,
+    method: "GET",
   });
 };
 

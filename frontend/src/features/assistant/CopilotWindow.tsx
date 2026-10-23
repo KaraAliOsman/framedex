@@ -678,7 +678,7 @@ function ThreadHistory({
                 >
                   <strong>{item.title}</strong>
                   <span>
-                    {item.interaction_mode === "work" ? "Encargo" : "Pregunta"} ·{" "}
+                    {item.interaction_mode === "work" ? "Tarea" : "Pregunta"} ·{" "}
                     {relativeDay(item.last_activity_at)}
                   </span>
                 </button>

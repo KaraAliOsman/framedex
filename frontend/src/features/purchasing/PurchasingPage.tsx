@@ -1015,13 +1015,13 @@ function RequirementRow({
             {requirement.source_trace.map((entry, index) => {
               const raw = typeof entry === "string" ? entry : traceLine(entry);
               const label = requirement.source_trace_labels?.[index];
-              const shown = label ?? "Sin dato · fuente sin etiqueta";
+              const shown = label ?? "Falta completar · origen sin etiqueta";
               return (
                 <li key={index}>
                   {shown}
                   <details>
                     <summary>Detalles técnicos</summary>
-                    <EntityCode kind="fuente" code={raw} />
+                    <EntityCode kind="origen" code={raw} />
                   </details>
                 </li>
               );
@@ -1170,8 +1170,7 @@ function EligibilityForm({
             {requirements.map((item) => (
               <label key={item.id}>
                 <input type="checkbox" name={`key_${item.id}`} defaultChecked />
-                {categoryLabel(item.category)} ·{" "}
-                {item.purchasing_sku ?? "Sin dato · falta SKU de compra"}
+                {categoryLabel(item.category)} · {item.purchasing_sku ?? "Falta SKU de compra"}
               </label>
             ))}
           </fieldset>
@@ -1232,7 +1231,7 @@ function OrderCard({
       <p>
         Monto neto:{" "}
         {order.net_amount == null ? (
-          "Sin dato · falta cotización del proveedor"
+          "Falta cotización del proveedor"
         ) : (
           <Money value={order.net_amount} currency={order.currency ?? "CLP"} />
         )}
@@ -1535,7 +1534,7 @@ function OrdersIndex({
                   : order.status}
               </td>
               <td data-label={t("purchasing.expectedAt")}>
-                {order.expected_at ? formatDate(order.expected_at) : "Sin dato"}
+                {order.expected_at ? formatDate(order.expected_at) : "Falta completar"}
               </td>
               <td data-label={t("purchasing.indexReceipts")}>
                 {Number(order.receipt_count ?? 0) > 0 ? order.receipt_count : "—"}
@@ -1551,7 +1550,7 @@ function OrdersIndex({
               </td>
               <td data-label="Monto neto">
                 {order.net_amount == null ? (
-                  "Sin dato · falta precio del proveedor"
+                  "Falta precio del proveedor"
                 ) : (
                   <Money value={order.net_amount} currency={order.currency ?? "CLP"} />
                 )}

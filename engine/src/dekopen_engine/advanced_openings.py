@@ -97,7 +97,7 @@ def validate_capability_recipes(capability: OpeningCapability) -> None:
     advanced = requires_recipe(capability.movement, capability.use)
     if advanced != bool(capability.advanced_recipes):
         raise ValueError(
-            "La apertura avanzada exige recetas con autoridad; una básica no las admite."
+            "La apertura avanzada exige recetas declaradas en el catálogo; una básica no las admite."
         )
     if not advanced:
         return
@@ -106,7 +106,7 @@ def validate_capability_recipes(capability: OpeningCapability) -> None:
     if capability.hinge_sides != (HingeSide.NONE,):
         raise ValueError("La receta declara sus ejes y cierre; no infiere una bisagra lateral.")
     if capability.handle_rule is None:
-        raise ValueError("La apertura avanzada requiere regla de manilla con fuente.")
+        raise ValueError("La apertura avanzada requiere una regla de manilla con documento de referencia.")
     codes = [recipe.code for recipe in capability.advanced_recipes]
     if len(codes) != len(set(codes)):
         raise ValueError("Las recetas deben tener códigos distintos.")
@@ -131,7 +131,7 @@ def validate_capability_recipes(capability: OpeningCapability) -> None:
         ):
             raise ValueError("La elevable necesita elevación y umbral específicos.")
         if movement is OpeningMovement.PARALLEL_SLIDE and recipe.parallel_offset_mm is None:
-            raise ValueError("La osciloparalela necesita la separación paralela de su fuente.")
+            raise ValueError("La osciloparalela necesita la separación paralela de su documento de referencia.")
         if (
             capability.use is OpeningUse.DOOR
             and movement is OpeningMovement.SLIDE
@@ -231,13 +231,13 @@ def validate_recipe_bindings(cap: OpeningCapability, params: SystemParams) -> No
         if recipe.interlock_required:
             roles.add("INTERLOCK")
         if not roles.issubset({role.value for role in params.effective_profile_articles}):
-            raise ValueError("Sin dato: faltan perfiles específicos de la receta avanzada.")
+            raise ValueError("Falta completar: declara los perfiles específicos de la receta avanzada.")
         for sku in (*recipe.hardware_kit_skus, *recipe.pass_through_hardware_kit_skus):
             kit = next((kit for kit in params.available_hardware_kits if kit.sku == sku), None)
             expected = "SLIDING" if cap.movement is OpeningMovement.SLIDE else cap.movement.value
             if kit is None or kit.opening_type != expected or kit.class_authority is None:
                 raise ValueError(
-                    "Sin dato: la receta avanzada requiere un herraje específico con autoridad de clase."
+                    "Falta completar: la receta avanzada requiere un herraje específico con su clase declarada."
                 )
             if cap.movement in (
                 OpeningMovement.LIFT_SLIDE,
@@ -252,10 +252,10 @@ def validate_recipe_bindings(cap: OpeningCapability, params: SystemParams) -> No
                     or kit.max_leaf_weight_kg > kit.carriage_capacity_kg * kit.carriages_qty
                 ):
                     raise ValueError(
-                        "Sin dato: los carros requieren cantidad y capacidad coherentes con el peso de hoja."
+                        "Falta completar: los carros requieren cantidad y capacidad coherentes con el peso de hoja."
                     )
             if cap.movement is OpeningMovement.PARALLEL_SLIDE and kit.stay_arms_qty <= 0:
-                raise ValueError("Sin dato: la osciloparalela requiere compases declarados.")
+                raise ValueError("Falta completar: declara los compases de la osciloparalela.")
 
 
 def resolve_recipe(node: ParametricNode, params: SystemParams) -> AdvancedOpeningRecipe | None:
@@ -273,7 +273,7 @@ def resolve_recipe(node: ParametricNode, params: SystemParams) -> AdvancedOpenin
     matches = [recipe for recipe in cap.advanced_recipes if recipe.code == node.opening_recipe_code]
     if len(matches) != 1:
         raise OpeningCapabilityError(
-            "Sin dato: elige un esquema avanzado declarado en el catálogo del sistema.", bay=node.id
+            "Falta completar: elige un esquema avanzado declarado en el catálogo de la serie.", bay=node.id
         )
     if (
         node.opening_type is not None
@@ -308,7 +308,7 @@ def validate_recipe_limits(
     ):
         raise CatalogRuleError(
             "system_dimensional_limit",
-            "La hoja está fuera de los límites de la receta avanzada. Revisa medidas, peso y fuente del catálogo.",
+            "La hoja está fuera de los límites de la receta avanzada. Revisa medidas, peso y documento del catálogo.",
             {
                 "bay": bay_id,
                 "source": recipe.source,
@@ -323,7 +323,7 @@ def validate_recipe_limits(
         )
     if check_weight and weight_kg is None:
         raise MissingFabricationAuthority(
-            "Sin dato: falta la masa de la hoja avanzada para verificar el límite de su receta."
+            "Falta completar: declara la masa de la hoja avanzada para verificar el límite de su receta."
         )
 
 

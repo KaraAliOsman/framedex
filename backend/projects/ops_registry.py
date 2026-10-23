@@ -30,6 +30,7 @@ from dekopen_engine.snapshot import evaluation_response
 from engine_api.adapter import InvalidEngineRequest, UnsupportedEngineContract, evaluate_assembly_from_api, parse_product_model
 from engine_api.repository import SystemParamsRepository
 from pricing.repository import PricingRepository, commercial_backend, json_text, rows
+from pricing.resolved import financial_bundle
 from pricing.serializers import StrictSerializer
 from pricing.service import configured_unit_price, position_cost, pricing_public_detail
 from pricing.views import DecimalJSONParser, ERRORS, scope, validate
@@ -130,7 +131,11 @@ def sale_price(org_id, product, system_id, color, quantity=1):
         if not rules:
             return {"net": None, "currency": currency, "reason": "Completa las reglas de precio en Ajustes."}
         rules = rules[0]
-        repo = PricingRepository(org_id, datetime.now(ZoneInfo("America/Santiago")).date(), currency, None)
+        # One read-only calculation owns this repository. Reuse its exact input
+        # snapshot across components; the next request builds a fresh one.
+        repo = PricingRepository(org_id, datetime.now(ZoneInfo("America/Santiago")).date(), currency, None,
+                                 request_cache=True)
+        repo.preload_costs(financial_bundle(repo))
         def quote(value, count):
             design = design_from_product(value, system_id, color)
             mode = PricingMode(rules["pricing_mode"])
@@ -160,7 +165,7 @@ def sale_price(org_id, product, system_id, color, quantity=1):
                     except (PricingError, ContractAPIException, InvalidEngineRequest, UnsupportedEngineContract,
                             CatalogRuleError, OpeningCapabilityError, MissingFabricationAuthority) as error:
                         component = {"net": None, "reason": pricing_public_detail(error.code)
-                                     if isinstance(error, PricingError) else "Completa la tarifa y autoridad de este módulo."}
+                                     if isinstance(error, PricingError) else "Completa la tarifa y las reglas de fabricación de este módulo."}
                     component_prices.append({"module_id":module["id"], "net":component.get("net"), "reason":component.get("reason")})
                 common = assembly_sale_adjustment(Decimal(price["unit_net"]), [Decimal(item["net"]) for item in component_prices], currency) if all(item["net"] is not None for item in component_prices) else None
                 price.update({"modules":component_prices, "assembly_adjustment_net":str(common) if common is not None else None,
@@ -171,7 +176,7 @@ def sale_price(org_id, product, system_id, color, quantity=1):
             return {"net": None, "currency": currency, "reason": detail}
         except (InvalidEngineRequest, UnsupportedEngineContract, CatalogRuleError, OpeningCapabilityError, MissingFabricationAuthority):
             return {"net": None, "currency": currency,
-                    "reason": "Sin dato: completa el vidrio y la autoridad de fabricación del diseño en el editor."}
+                    "reason": "Falta completar · revisa el vidrio y las reglas de fabricación del diseño en el editor."}
 
 
 def _diff(before, after, path=""):

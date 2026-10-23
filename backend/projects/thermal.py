@@ -73,7 +73,7 @@ def catalog_reports(org_id, system_id):
             "SELECT DISTINCT ON(sku) sku,name,role FROM public.profile_articles WHERE system_id=%s "
             "AND (org_id=%s OR org_id IS NULL) ORDER BY sku,org_id NULLS LAST", [system_id, org_id])],
         "glasses": glasses,
-        "specimens": [{"id": str(r["id"]), "label": f'{r["code"]} · posición {r["position_index"]} · {r["location_tag"]}'}
+        "specimens": [{"id": str(r["id"]), "label": f'{r["code"]} · ventana {r["position_index"]} · {r["location_tag"]}'}
             for r in rows("SELECT p.id,p.position_index,p.location_tag,j.code FROM public.project_positions p "
                 "JOIN public.projects j ON j.id=p.project_id AND j.org_id=p.org_id "
                 "WHERE p.org_id=%s AND p.system_id=%s ORDER BY p.updated_at DESC,p.id LIMIT 200", [org_id,system_id])],
@@ -89,7 +89,7 @@ def declare_report(org_id, system_id, actor_id, values):
                "synthetic": bool(values.get("synthetic") or system["is_demo"] or system["data_provenance"] == "SEED_SYNTHETIC")}
     if values["kind"] == "PERFORMANCE":
         if not specimen_id:
-            raise contract_error(422, "thermal_specimen_required", "Elige la posición que reproduce exactamente el producto ensayado.")
+            raise contract_error(422, "thermal_specimen_required", "Elige la ventana que reproduce exactamente el producto ensayado.")
         specimen = service.position_row(org_id, specimen_id)
         geometry, reason = _position_geometry(org_id, specimen, params=params)
         if str(specimen["system_id"]) != str(system_id) or geometry is None or geometry.reasons:
@@ -132,7 +132,7 @@ def review_report(org_id, system_id, report_id, actor_id, state):
             "WHERE id=%s AND org_id=%s AND system_id=%s AND review_state=%s RETURNING *",
             [state, actor_id, report_id, org_id, system_id, expected])
     if not found:
-        raise contract_error(409, "thermal_review_conflict", "El informe ya cambió de estado o no pertenece a tu organización. Recarga sus fuentes.")
+        raise contract_error(409, "thermal_review_conflict", "El informe ya cambió de estado o no pertenece a tu organización. Recarga sus referencias.")
     return authority_public(_authority(found[0]), org_id)
 
 
@@ -246,7 +246,7 @@ def project_report(org_id, project_id, *, sealed=True):
             if thermal:
                 return {**thermal, "sealed": True, "updated_at": None}
             return {"inputs": ThermalProjectInput().model_dump(mode="json"), "updated_at": None, "sealed": True,
-                "assessment": {**assess_project(ThermalProjectInput(), []), "causes": ["Esta revisión histórica no contiene un informe térmico sellado. Inicia una revisión para agregarlo."]}}
+                "assessment": {**assess_project(ThermalProjectInput(), []), "causes": ["Esta revisión histórica no contiene un informe térmico emitido. Inicia una revisión para agregarlo."]}}
     inputs, updated_at = project_inputs(org_id, project)
     positions = [position_metric(org_id, position) for position in _live_positions(org_id, project_id)]
     return {"inputs": inputs.model_dump(mode="json"), "updated_at": updated_at, "sealed": False,
@@ -261,17 +261,17 @@ def save_inputs(org_id, project_id, actor_id, values, expected_updated_at):
         versions = rows("SELECT id FROM public.project_versions WHERE project_id=%s AND org_id=%s AND revision_code=%s",
                        [project_id, org_id, project["current_revision"]])
         if versions:
-            raise contract_error(409, "thermal_revision_required", "Inicia una revisión para cambiar el informe térmico sellado.")
+            raise contract_error(409, "thermal_revision_required", "Inicia una revisión para cambiar el informe térmico emitido.")
         _, timestamp = project_inputs(org_id, project)
         if timestamp != expected_updated_at:
             raise contract_error(409, "thermal_inputs_stale", "Otra persona cambió los datos térmicos. Recarga antes de guardar.")
         try:
             inputs = ThermalProjectInput.model_validate_json(json_text(values))
         except ValueError as error:
-            raise contract_error(400, "thermal_inputs_invalid", "Revisa la zona, la fuente y las superficies de muro declaradas.") from error
+            raise contract_error(400, "thermal_inputs_invalid", "Revisa la zona, su referencia oficial y las superficies de muro declaradas.") from error
         ids = {str(p["id"]) for p in _live_positions(org_id, project_id)}
         if not {p.position_id for p in inputs.positions} <= ids:
-            raise contract_error(400, "thermal_position_invalid", "Una orientación no corresponde a las posiciones de este proyecto.")
+            raise contract_error(400, "thermal_position_invalid", "Una orientación no corresponde a las ventanas de este proyecto.")
         rows("INSERT INTO public.project_thermal_inputs(org_id,project_id,revision_code,inputs,declared_by) VALUES(%s,%s,%s,%s::jsonb,%s) "
             "ON CONFLICT(project_id,revision_code) DO UPDATE SET inputs=EXCLUDED.inputs,declared_by=EXCLUDED.declared_by,updated_at=clock_timestamp() RETURNING id",
             [org_id, project_id, project["current_revision"], inputs.model_dump_json(), actor_id])

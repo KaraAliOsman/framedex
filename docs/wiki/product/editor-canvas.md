@@ -1,10 +1,11 @@
 ---
 type: concept
 status: active
-updated: 2026-10-12
+updated: 2026-10-22
 volatility: medium
-verified_ref: de3e0cba
+verified_ref: gpt/dk2-p06a-obra-unica
 sources:
+  - docs/redesign/captures/dk2-p06a/aceptacion.md
   - P04 acceptance in docs/redesign/P04-ACEPTACION.md
   - frontend/tests/e2e/editor.spec.ts
   - backend/tests/integration/test_project_operations.py
@@ -12,6 +13,32 @@ sources:
 ---
 
 # Editor centrado en el dibujo
+
+## DEKOPEN 2 P06a · edición en la mesa · 22-10-2026
+
+Comprobado en `gpt/dk2-p06a-obra-unica`, sobre P05k `1e1ead31`, con la bandera
+`VITE_OBRA_VISTA_UNICA` activa. Este apartado sustituye el límite móvil de la
+base histórica de abajo únicamente para la propuesta de mesa única.
+
+Desde 390 px se puede editar cantidad, medidas, apertura, vidrio y color y
+guardar mediante el servidor. El inspector es una hoja inferior; lista y dibujo
+se apilan. Las herramientas de división fina y acople requieren una pantalla
+más amplia, con explicación visible y bloqueo de sus atajos de herramienta.
+Permisos y revisiones emitidas conservan la validación del servidor.
+
+El inspector reúne serie, color, cantidad y propiedades de la selección; las
+opciones técnicas y datos de fabricación quedan plegados. El precio guardado
+abre el desglose de P04 de la posición, evitando confundirlo con otra estimación.
+El precio vivo del diseño sin guardar aún requiere la integración simple de P06b.
+
+2D/3D ocupan el mismo espacio del dibujo; Interior/Exterior comparten la cara
+de vista. Escape cancela la edición de una cota antes de blur y no despacha
+una operación. El resto de cambios conserva simulación tipada, rollback,
+undo/redo y rechazo de respuestas obsoletas. No cambia una fórmula ni un catálogo.
+
+No hay transiciones nuevas en edición frecuente. El desplazamiento a los avisos
+respeta `prefers-reduced-motion`; el 3D conserva carga diferida. Véanse
+[capturas, pruebas y límites de P06a](../../redesign/captures/dk2-p06a/aceptacion.md).
 
 La intención del dueño es diseñar desde el lienzo, con cotas editables y
 herramientas reconocibles. P04 convierte esa intención en franja compacta,

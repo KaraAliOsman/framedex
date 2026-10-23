@@ -170,7 +170,7 @@ export function PaymentMailComposer({
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    Abrir PDF sellado · {query.data.document_name}
+                    Abrir PDF emitido · {query.data.document_name}
                   </a>
                   <p>Este es el documento que se adjuntará al correo.</p>
                 </div>

@@ -27,7 +27,7 @@ import "./onboarding.css";
 import { type ClientFields, type Draft, readDraft, storageKey } from "./draft";
 import { CompanySetup } from "./CompanySetup";
 
-const STEPS = ["Serie", "Cliente", "Obra", "Primera posición"] as const;
+const STEPS = ["Serie", "Cliente", "Obra", "Primera ventana"] as const;
 const emptyFields: ClientFields = { rut: "", email: "", phone: "" };
 
 export function OnboardingPage(): JSX.Element {
@@ -189,7 +189,7 @@ export function OnboardingPage(): JSX.Element {
 
   if (!canWrite)
     return (
-      <DeniedState reason="El dueño o el estimador crea la primera obra y sus posiciones. Pide acceso al dueño de tu organización." />
+      <DeniedState reason="El dueño o el estimador crea la primera obra y sus ventanas. Pide acceso al dueño de tu organización." />
     );
   if (!setupComplete)
     return (
@@ -210,7 +210,7 @@ export function OnboardingPage(): JSX.Element {
         <p className="ui-spec-label">{org?.name}</p>
         <h1 id="onboarding-title">Dibuja tu primera ventana</h1>
         <p className="onboarding-sub">
-          Elige la serie y crea la obra. El editor calcula desde el catálogo y conserva la fuente de
+          Elige la serie y crea la obra. El editor calcula desde el catálogo y conserva el origen de
           cada medida.
         </p>
       </header>
@@ -369,7 +369,7 @@ export function OnboardingPage(): JSX.Element {
           <>
             <h2>Obra</h2>
             <p>
-              Agrupa sus ventanas, cotización y órdenes de taller. Cada posición conservará su
+              Agrupa sus ventanas, cotización y órdenes de taller. Cada ventana conservará su
               ubicación dentro de la obra.
             </p>
             {draft.projectId ? (
@@ -412,10 +412,10 @@ export function OnboardingPage(): JSX.Element {
           </>
         ) : (
           <>
-            <h2>Primera posición</h2>
+            <h2>Primera ventana</h2>
             <p>
               El editor abre el dibujo de la serie elegida. Declara tus medidas, apertura, vidrio y
-              color; el motor valida la posición antes de guardarla.
+              color; el motor valida la ventana antes de guardarla.
             </p>
             {draft.projectId && seriesReady ? (
               <>
@@ -427,7 +427,7 @@ export function OnboardingPage(): JSX.Element {
                   className="ui-button ui-button--primary"
                   to={`/projects/${draft.projectId}/positions/new?system=${encodeURIComponent(draft.systemId!)}`}
                 >
-                  Dibujar primera posición
+                  Dibujar primera ventana
                 </Link>
               </>
             ) : (

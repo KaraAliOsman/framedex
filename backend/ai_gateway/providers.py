@@ -913,7 +913,7 @@ def _context_assist_output(input_payload: dict) -> dict:
             parts.append(f"Registra {context['shortages']} línea(s) con escasez de material.")
     if context.get("code") and context.get("positions") is not None:
         parts.append(
-            f"El proyecto {context['code']} tiene {len(context['positions'])} posiciones."
+            f"El proyecto {context['code']} tiene {len(context['positions'])} ventanas."
         )
     warnings: list[str] = []
     if context.get("shortages"):

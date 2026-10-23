@@ -121,17 +121,17 @@ export function MountingRulesSettings({ orgId, canWrite }: { orgId: string; canW
       await query.refetch();
     } catch (cause) {
       setError(
-        actionErrorDetail(cause, "No pudimos guardar. Revisa la regla, su fuente y el motivo."),
+        actionErrorDetail(cause, "No pudimos guardar. Revisa la regla, su origen y el motivo."),
       );
     } finally {
       setBusy(false);
     }
   }
   return (
-    <section className="settings-group mounting-settings" aria-label="Vano y montaje">
-      <h2>Vano y montaje</h2>
+    <section className="settings-group mounting-settings" aria-label="Medidas de obra y montaje">
+      <h2>Medidas de obra y montaje</h2>
       <p>
-        Reglas de esta organización por serie. Cada cambio crea una autoridad nueva; las medidas ya
+        Reglas de esta organización por serie. Cada cambio guarda una regla nueva; las medidas ya
         guardadas conservan su regla exacta.
       </p>
       {!canWrite && (
@@ -178,15 +178,15 @@ export function MountingRulesSettings({ orgId, canWrite }: { orgId: string; canW
           <>
             {!query.data?.length && (
               <p>
-                Sin dato: todavía no se declaró un montaje para esta serie. No se aplica ninguna
-                holgura silenciosa.
+                Falta completar: todavía no se declaró un montaje para esta serie. No se aplica
+                ninguna holgura silenciosa.
               </p>
             )}
             {query.data?.map((item) => (
               <div className="mounting-rule-row" key={item.rule.code}>
                 <p>
                   <strong>{item.rule.name}</strong>
-                  {item.rule.synthetic ? " · DEMO" : ""} · autoridad {item.revision}
+                  {item.rule.synthetic ? " · DEMO" : ""} · origen {item.revision}
                 </p>
                 <p>
                   Holguras:{" "}
@@ -196,7 +196,7 @@ export function MountingRulesSettings({ orgId, canWrite }: { orgId: string; canW
                         `${label.toLowerCase()} ${fmtMm(item.rule[key].clearance_mm)} mm`,
                     )
                     .join(" · ")}
-                  . Fuente: {item.rule.source}
+                  . Origen: {item.rule.source}
                 </p>
                 {canWrite && (
                   <button disabled={busy} onClick={() => edit(item.rule)}>
@@ -214,7 +214,7 @@ export function MountingRulesSettings({ orgId, canWrite }: { orgId: string; canW
               <button
                 disabled={busy}
                 onClick={() =>
-                  void save(previous, "Deshacer cambio de montaje; restaurar autoridad anterior")
+                  void save(previous, "Deshacer cambio de montaje; restaurar origen anterior")
                 }
               >
                 Deshacer último cambio
@@ -254,7 +254,7 @@ export function MountingRulesSettings({ orgId, canWrite }: { orgId: string; canW
                     />
                   </label>
                   <label>
-                    Fuente de montaje
+                    Origen de montaje
                     <input
                       value={draft.source}
                       onChange={(e) => edit({ ...draft, source: e.target.value })}
@@ -267,11 +267,11 @@ export function MountingRulesSettings({ orgId, canWrite }: { orgId: string; canW
                     checked={draft.synthetic}
                     onChange={(e) => edit({ ...draft, synthetic: e.target.checked })}
                   />
-                  Autoridad sintética DEMO, sin certificación
+                  Referencia sintética DEMO, sin certificación
                 </label>
                 <p>
-                  Fabricación = menor medida del vano − holguras − marco − ensanches + traslapes.
-                  Los ceros visibles significan que declaras que ese lado no aplica esa deducción.
+                  Fabricación = menor medida de obra − holguras − marco − ensanches + traslapes. Los
+                  ceros visibles significan que declaras que ese lado no aplica esa deducción.
                 </p>
                 <div className="mounting-rule-sides">
                   {sides.map(([side, label]) => (
@@ -365,8 +365,8 @@ export function MountingRulesSettings({ orgId, canWrite }: { orgId: string; canW
                     })
                   ) : (
                     <p>
-                      Sin dato: declara los ensanches y fijaciones en Catálogo antes de exigirlos en
-                      el montaje.
+                      Declara los ensanches y fijaciones en Catálogo antes de exigirlos en el
+                      montaje.
                     </p>
                   )}
                 </details>
@@ -393,7 +393,7 @@ export function MountingRulesSettings({ orgId, canWrite }: { orgId: string; canW
                       {current
                         ? "Se reemplaza la regla para nuevas mediciones."
                         : "Se declara una nueva regla de montaje."}{" "}
-                      Las revisiones emitidas conservan su autoridad.
+                      Las revisiones emitidas conservan su origen.
                     </p>
                     <div className="mounting-grid">
                       {sides.map(([side, label]) => (
@@ -401,8 +401,8 @@ export function MountingRulesSettings({ orgId, canWrite }: { orgId: string; canW
                           <h4>{label}</h4>
                           {fields.map(([key, name]) => (
                             <p className="mounting-number" key={key}>
-                              {name}: {current ? fmtMm(current.rule[side][key]) : "Sin dato"} →{" "}
-                              {fmtMm(draft[side][key])} mm
+                              {name}: {current ? fmtMm(current.rule[side][key]) : "Falta completar"}{" "}
+                              → {fmtMm(draft[side][key])} mm
                             </p>
                           ))}
                         </div>
@@ -416,7 +416,7 @@ export function MountingRulesSettings({ orgId, canWrite }: { orgId: string; canW
                               const item = catalog.data?.find(
                                 (definition) => definition.code === extra.code,
                               );
-                              return `${item?.name ?? "Accesorio sin dato"}${
+                              return `${item?.name ?? "Accesorio por completar"}${
                                 extra.sides?.length
                                   ? ` · ${extra.sides.map((side) => sideLabels[side].toLowerCase()).join(", ")}`
                                   : ""
@@ -427,7 +427,7 @@ export function MountingRulesSettings({ orgId, canWrite }: { orgId: string; canW
                       .
                     </p>
                     <button className="primary-action" onClick={() => void save(draft)}>
-                      Guardar autoridad de montaje
+                      Guardar regla de montaje
                     </button>
                   </section>
                 )}

@@ -51,67 +51,75 @@ export function StudioStrip({
   activeId,
   canAdd,
   onSelect,
+  unified = false,
 }: {
   project: ProjectResponse;
   activeId: string | null;
   canAdd: boolean;
   onSelect(id: string): void;
+  unified?: boolean;
 }): JSX.Element {
   // Folded by default below the 1440 composition so the canvas keeps its budget.
-  const [collapsed, setCollapsed] = useState(() => window.innerWidth < 1400);
+  const [collapsed, setCollapsed] = useState(() => (unified ? false : window.innerWidth < 1400));
   const positions = project.positions ?? [];
   const index = positions.findIndex((position) => position.id === activeId);
   const previous = index > 0 ? positions[index - 1] : undefined;
   const next = index >= 0 && index < positions.length - 1 ? positions[index + 1] : undefined;
   return (
     <aside
-      className="studio-strip"
+      className={`studio-strip${unified ? " work-window-list" : ""}`}
       data-collapsed={collapsed || undefined}
       aria-label="Ventanas de la obra"
     >
       <div className="studio-strip__head">
-        <button
-          type="button"
-          className="ui-icon-button"
-          aria-expanded={!collapsed}
-          aria-label={collapsed ? "Mostrar ventanas" : "Plegar ventanas"}
-          title={collapsed ? "Mostrar ventanas" : "Plegar ventanas"}
-          onClick={() => setCollapsed((value) => !value)}
-        >
-          <Icon name="sidebar" size={16} />
-        </button>
+        {!unified && (
+          <button
+            type="button"
+            className="ui-icon-button"
+            aria-expanded={!collapsed}
+            aria-label={collapsed ? "Mostrar ventanas" : "Plegar ventanas"}
+            title={collapsed ? "Mostrar ventanas" : "Plegar ventanas"}
+            onClick={() => setCollapsed((value) => !value)}
+          >
+            <Icon name="sidebar" size={16} />
+          </button>
+        )}
         {!collapsed ? <strong>Ventanas · {positions.length}</strong> : null}
       </div>
-      <div className="studio-strip__nav">
-        <button
-          type="button"
-          className="ui-icon-button"
-          disabled={!previous}
-          aria-label="Ventana anterior"
-          title="Ventana anterior"
-          onClick={() => previous && onSelect(previous.id)}
-        >
-          <Icon name="chevronUp" size={16} />
-        </button>
-        <button
-          type="button"
-          className="ui-icon-button"
-          disabled={!next}
-          aria-label="Ventana siguiente"
-          title="Ventana siguiente"
-          onClick={() => next && onSelect(next.id)}
-        >
-          <Icon name="chevronDown" size={16} />
-        </button>
-      </div>
+      {!unified && (
+        <div className="studio-strip__nav">
+          <button
+            type="button"
+            className="ui-icon-button"
+            disabled={!previous}
+            aria-label="Ventana anterior"
+            title="Ventana anterior"
+            onClick={() => previous && onSelect(previous.id)}
+          >
+            <Icon name="chevronUp" size={16} />
+          </button>
+          <button
+            type="button"
+            className="ui-icon-button"
+            disabled={!next}
+            aria-label="Ventana siguiente"
+            title="Ventana siguiente"
+            onClick={() => next && onSelect(next.id)}
+          >
+            <Icon name="chevronDown" size={16} />
+          </button>
+        </div>
+      )}
       {collapsed ? null : (
-        <ol className="studio-strip__list">
+        <ol className="studio-strip__list" aria-label="Ventanas">
           {positions.map((position) => (
             <li key={position.id}>
               <button
                 type="button"
                 className="studio-strip__item"
                 aria-current={position.id === activeId ? "true" : undefined}
+                title={positionName(position)}
+                aria-label={`Abrir ${positionName(position)} en el editor`}
                 onClick={() => onSelect(position.id)}
               >
                 <span className="studio-strip__thumb">
@@ -124,8 +132,9 @@ export function StudioStrip({
                   <strong>{positionName(position)}</strong>
                   <span className="studio-strip__dims">
                     {fmtMm(position.design.nominal_width_mm)} ×{" "}
-                    {fmtMm(position.design.nominal_height_mm)} · {position.quantity} u.
+                    {fmtMm(position.design.nominal_height_mm)} mm
                   </span>
+                  <span className="studio-strip__quantity">{position.quantity} u.</span>
                 </span>
               </button>
             </li>
@@ -135,7 +144,7 @@ export function StudioStrip({
       {canAdd ? (
         <Link
           className="ui-button studio-strip__add"
-          to={`/projects/${project.id}/positions/new?view=estudio`}
+          to={`/projects/${project.id}/positions/new${unified ? "" : "?view=estudio"}`}
           aria-label="Añadir ventana"
           title="Añadir ventana"
         >

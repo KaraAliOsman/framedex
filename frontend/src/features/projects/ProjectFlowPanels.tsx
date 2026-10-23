@@ -250,7 +250,7 @@ function ProjectDocumentPanel({
         </p>
       ) : query.data.length === 0 ? (
         <p>
-          Sin archivos generados. Prepara y emite la cotización para obtener el PDF sellado; los
+          Sin archivos generados. Prepara y emite la cotización para obtener el PDF emitido; los
           documentos de origen están en Importar documento o plano.
         </p>
       ) : (
@@ -271,7 +271,7 @@ function ProjectDocumentPanel({
                   <StatusBadge>Histórico · revisión anterior</StatusBadge>
                 ) : null}
                 <button disabled={Boolean(busy)} onClick={() => void open(artifact.id)}>
-                  {busy === artifact.id ? "Abriendo documento…" : "Abrir documento sellado"}
+                  {busy === artifact.id ? "Abriendo documento…" : "Abrir documento emitido"}
                 </button>
               </li>
             ))}

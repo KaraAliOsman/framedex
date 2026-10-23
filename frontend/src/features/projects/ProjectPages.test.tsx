@@ -306,6 +306,9 @@ async function issueReviewedPdf(): Promise<void> {
 }
 
 beforeEach(() => {
+  // These existing cases exercise the retained legacy composition. The
+  // default unified view has its own cases below and real browser coverage.
+  vi.stubEnv("VITE_OBRA_VISTA_UNICA", "false");
   // The reviewed quotation is dated 09-10-2026 and expires on 19-10-2026.
   // Keep its full emission gate reproducible after that date; real timers stay active.
   vi.setSystemTime(new Date("2026-10-09T12:00:00Z"));
@@ -389,6 +392,22 @@ afterEach(() => {
   }
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
+});
+
+it("opens the unified work by default and preserves its empty creation path", async () => {
+  vi.stubEnv("VITE_OBRA_VISTA_UNICA", undefined);
+  const router = mount("/projects/project-a");
+  await screen.findByRole("heading", { name: "La obra todavía no tiene ventanas" });
+  expect(screen.queryByRole("radiogroup", { name: "Vista de la obra" })).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Enviar cotización" })).toBeDisabled();
+  const list = screen.getByRole("complementary", { name: "Ventanas de la obra" });
+  fireEvent.click(within(list).getByRole("link", { name: "Añadir ventana" }));
+  await waitFor(() =>
+    expect(router.state.location.pathname).toBe("/projects/project-a/positions/new"),
+  );
+  expect(router.state.location.search).not.toContain("view=estudio");
+  expect(projectsCreate).not.toHaveBeenCalled();
 });
 
 it("creates a project, navigates to the server ID and renders persisted metadata", async () => {
@@ -1636,12 +1655,13 @@ it("explicitly retires current draft pricing with an audit reason before editing
   );
 });
 
-it("persists list search/status/sort in the URL across back navigation", async () => {
+it("persists list search/stage/sort in the URL across back navigation", async () => {
   const quoted = makeProject({
     id: "project-b",
     code: "P-002",
     name: "Casa B",
     status: "QUOTED",
+    progress: { stage: "SENT", reason: "Compartida", quoted_total: "100.00", currency: "CLP" },
     current_revision: "REV-A",
     updated_at: "2026-09-19T09:00:00Z",
   });
@@ -1660,14 +1680,14 @@ it("persists list search/status/sort in the URL across back navigation", async (
   fireEvent.change(screen.getByLabelText("Buscar obra o cliente"), {
     target: { value: "casa" },
   });
-  fireEvent.click(screen.getByRole("radio", { name: "Cotizados" }));
+  fireEvent.click(screen.getByRole("button", { name: "Enviada · 1" }));
   fireEvent.change(screen.getByLabelText("Ordenar"), {
     target: { value: "name" },
   });
 
   const search = router.state.location.search;
   expect(search).toContain("q=casa");
-  expect(search).toContain("status=QUOTED");
+  expect(search).toContain("stage=SENT");
   expect(search).toContain("sort=name");
   expect(screen.queryByRole("link", { name: /Casa A/ })).not.toBeInTheDocument();
 
@@ -1679,7 +1699,10 @@ it("persists list search/status/sort in the URL across back navigation", async (
   await router.navigate(-1);
   await screen.findByLabelText("Buscar obra o cliente");
   expect(screen.getByLabelText("Buscar obra o cliente")).toHaveValue("casa");
-  expect(screen.getByRole("radio", { name: "Cotizados" })).toHaveAttribute("aria-checked", "true");
+  expect(screen.getByRole("button", { name: "Enviada · 1" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
 });
 
 it("lists human timeline events once the activity section opens", async () => {

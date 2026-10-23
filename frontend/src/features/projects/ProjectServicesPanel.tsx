@@ -168,8 +168,8 @@ export function ProjectServicesPanel({
           )}
           {!selections.length && (
             <p>
-              No has seleccionado servicios. Revisa si corresponde instalación, sellado, retiro o
-              flete antes de cotizar.
+              No has seleccionado servicios. Revisa si corresponde instalación, aplicación de
+              sellante, retiro o flete antes de cotizar.
             </p>
           )}
           {query.data.reason && <p role="alert">{query.data.reason}</p>}

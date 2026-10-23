@@ -191,7 +191,7 @@ class SystemParamsRepository:
         if system is None:
             raise SystemNotFound
         if len(system) > 25 and system[22] is None and not system[25]:
-            raise UnsupportedCatalogContract("Sin dato: declara la familia del sistema.")
+            raise UnsupportedCatalogContract("Falta completar: declara la familia de la serie.")
 
         articles = self._load_articles(system_id, active_org_id)
         rules = self._load_glazing_rules(system_id, active_org_id)

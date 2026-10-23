@@ -67,11 +67,11 @@ export type ExtraSuggestion = {
 export const extraBasisLabels: Record<string, string> = {
   SILL: "Ancho y vuelos",
   SIDES: "Largos por lado",
-  WINDOW: "Por vano",
+  WINDOW: "Por ventana",
   LEAF: "Por hoja",
   AREA: "Por m²",
   PERIMETER: "Por perímetro",
-  PER_POSITION: "Por posición",
+  PER_POSITION: "Por ventana",
   FIXED: "Fijo",
   ZONE: "Por zona",
 };
@@ -99,7 +99,7 @@ export function extraImportSummary(value: unknown): string[] {
   if (record.document_prices)
     lines.push(record.document_prices === "ITEMIZED" ? "Sublíneas con precio" : "Precio agrupado");
   if (record.position_defaults)
-    lines.push(`${record.position_defaults.length} extras en la plantilla de posiciones nuevas`);
+    lines.push(`${record.position_defaults.length} extras en la plantilla de ventanas nuevas`);
   return lines;
 }
 

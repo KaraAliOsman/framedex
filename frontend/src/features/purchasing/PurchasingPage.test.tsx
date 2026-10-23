@@ -269,7 +269,7 @@ it("renders trace labels and an actionable missing code instead of a digest", as
   // "5".repeat(64) carries the I-01 label; "6".repeat(64) has none and renders
   // as missing authority rather than a technical identity.
   expect(within(cell).getByText("I-01")).toBeInTheDocument();
-  expect(within(cell).getByText(/Sin dato/)).toBeInTheDocument();
+  expect(within(cell).getByText(/Falta completar/)).toBeInTheDocument();
   expect(within(cell).queryByText(`${"6".repeat(12)}…`)).not.toBeInTheDocument();
   expect(within(cell).queryByText(/^0=/)).not.toBeInTheDocument();
 });

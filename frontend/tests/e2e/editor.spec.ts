@@ -480,15 +480,17 @@ test("two tilt-turn leaves 1500×1200 and 4-16-4 take at most six design interac
   ).toContainText("$");
   await page.getByRole("button", { name: "Precio neto indicativo", exact: true }).click();
   await expect(
-    page.getByRole("region", { name: "Fuente del precio indicativo", exact: true }),
+    page.getByRole("region", { name: "Origen del precio indicativo", exact: true }),
   ).toContainText("Motor comercial");
   await page.keyboard.press("Escape");
   await expect(page.getByRole("button", { name: "Guardar", exact: true })).toBeEnabled();
-  await page.getByLabel("Ubicación del vano", { exact: true }).fill("Dormitorio DEMO");
+  await page.getByLabel("Ubicación de la ventana", { exact: true }).fill("Dormitorio DEMO");
   await page.getByRole("button", { name: "Guardar", exact: true }).click();
-  await expect(page).toHaveURL(/\/positions\/[^/]+\/edit([?]view=[a-z]+)?$/);
+  // P06 returns to the same unified work after creation; selection lives in
+  // the URL, and reloading must keep the exact saved physical design.
+  await expect(page).toHaveURL(new RegExp(`/projects/${projectId}\\?position=`));
   await page.reload();
-  await expect(page.getByLabel("Ubicación del vano", { exact: true })).toHaveValue(
+  await expect(page.getByLabel("Ubicación de la ventana", { exact: true })).toHaveValue(
     "Dormitorio DEMO",
   );
   await expect(page.locator(".viewport-status")).toHaveText("1\u2009500 × 1\u2009200 mm");
@@ -503,8 +505,11 @@ test("the sheet fits desktop, all tools are named, and a 10000px pan keeps it re
   await page.getByRole("button", { name: "Cerrar Biblioteca de tipologías" }).click();
   const canvas = page.locator(".canvas-viewport");
   const box = (await canvas.boundingBox())!;
-  expect(box.width).toBeGreaterThanOrEqual(1440 * 0.6);
-  expect(box.height).toBeGreaterThanOrEqual(900 * 0.75);
+  // The three-column workbench reserves the persistent window list. Measure
+  // the sheet against its actual editor region rather than the whole screen.
+  const editorBox = (await page.locator(".assembly-editor").boundingBox())!;
+  expect(box.width).toBeGreaterThanOrEqual(editorBox.width * 0.6);
+  expect(box.height).toBeGreaterThanOrEqual(editorBox.height * 0.8);
   for (const button of await page.locator(".assembly-tools button").all()) {
     expect(await button.getAttribute("aria-label")).toBeTruthy();
     expect(await button.getAttribute("title")).toBeTruthy();
@@ -602,11 +607,11 @@ test("price pending and transport failure hide the previous amount and retry the
     await request.abort("failed");
   });
   await page.getByLabel("Cantidad", { exact: true }).fill("3");
-  await expect(chip).toContainText("Sin dato");
+  await expect(chip).toContainText("Falta completar");
   await expect(chip).not.toContainText("$");
   await chip.click();
   await expect(
-    page.getByRole("region", { name: "Fuente del precio indicativo", exact: true }),
+    page.getByRole("region", { name: "Origen del precio indicativo", exact: true }),
   ).toContainText("No se pudo consultar el precio");
   await page.unroute(route);
   const retriedPrice = waitForIndicativePrice(page, 3, "1400.00", "1400.00");
@@ -680,11 +685,13 @@ test("every editor link opens the unsaved guard and only one footer panel remain
     await dialog.getByRole("button", { name: "Cancelar", exact: true }).click();
     expect(new URL(page.url()).pathname).toBe(editorPath);
   };
-  // Back to the same work keeps the editing session (Mesa and Estudio share
-  // it): no prompt and nothing lost. Leaving the work or switching window asks.
-  await page.getByRole("button", { name: "Volver a la obra", exact: true }).click();
+  // Visiting another section of the same work keeps the one editing session.
+  // P06's compact header exposes these sections from Más.
+  await page.locator(".project-head").getByRole("button", { name: "Más", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Actividad de la obra", exact: true }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
-  await expect(page).not.toHaveURL(/\/edit/);
+  await page.getByRole("tab", { name: "Ventanas", exact: true }).click();
+  await expect(page.locator(".canvas-sheet [aria-label^='Paño']")).toHaveCount(2);
   await twoLeaves(page);
   editorPath = new URL(page.url()).pathname;
   await page.getByRole("button", { name: "Precio neto indicativo", exact: true }).click();
@@ -692,16 +699,18 @@ test("every editor link opens the unsaved guard and only one footer panel remain
     page.getByRole("link", { name: "Revisar reglas de precio", exact: true }).click(),
   );
   await page.keyboard.press("Escape");
-  await page.getByRole("button", { name: "Ventanas de la obra", exact: true }).click();
+  // The window list is persistent. The library now exercises layer exclusion
+  // with the footer instead of the removed redundant window-list flyout.
+  await page.getByRole("button", { name: "Biblioteca de tipologías", exact: true }).click();
   await page.getByRole("button", { name: "Despiece y materiales", exact: true }).click();
   await expect(
-    page.getByRole("button", { name: "Ventanas de la obra", exact: true }),
+    page.getByRole("button", { name: "Biblioteca de tipologías", exact: true }),
   ).toHaveAttribute("aria-expanded", "false");
   await expect(page.locator(".editor-bottom-panel")).toHaveCount(1);
   await expect(page.locator(".editor-bottom-panel table")).not.toHaveCount(0);
 });
 
-test("tablet opening choices stay compatible and mobile blocks editing and save shortcuts", async ({
+test("tablet choices stay compatible and mobile edits and saves through the same engine", async ({
   page,
 }) => {
   await twoLeaves(page);
@@ -714,22 +723,39 @@ test("tablet opening choices stay compatible and mobile blocks editing and save 
   for (const name of await choices.getByRole("button").allTextContents())
     expect(name.trim().length).toBeGreaterThan(4);
   await expect(page.locator(".assembly-side")).toBeVisible();
+  // Escape closes only the top layer (the opening choices); the inspector
+  // stays open until its own close control.
   await page.keyboard.press("Escape");
+  await expect(choices).toHaveCount(0);
+  await page.getByRole("button", { name: "Cerrar inspector", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Inspector", exact: true })).toHaveAttribute(
+    "aria-expanded",
+    "false",
+  );
   await page.setViewportSize({ width: 390, height: 844 });
+  // P06 explicitly removes the width-based write ban; permissions and sealed
+  // revisions remain server checked. The narrow inspector is a bottom sheet.
   await expect(
     page.getByText("Vista de lectura · edición disponible desde 1024 px.", { exact: true }),
-  ).toBeVisible();
-  await expect(page.getByLabel("Ubicación del vano", { exact: true })).toBeDisabled();
-  await expect(page.getByLabel("Cantidad", { exact: true })).toBeDisabled();
-  await expect(page.getByRole("toolbar", { name: "Herramientas", exact: true })).toBeHidden();
+  ).toHaveCount(0);
+  await expect(page.getByLabel("Ubicación de la ventana", { exact: true })).toBeEnabled();
+  await page.getByRole("button", { name: "Inspector", exact: true }).click();
+  await expect(page.getByLabel("Cantidad", { exact: true })).toBeEnabled();
+  const quantityPrice = waitForIndicativePrice(page, 2, "1400.00", "1400.00");
+  await page.getByLabel("Cantidad", { exact: true }).fill("2");
+  await quantityPrice;
+  await page.getByRole("button", { name: "Cerrar inspector", exact: true }).click();
+  await expect(page.getByRole("toolbar", { name: "Herramientas", exact: true })).toBeVisible();
   await expect(page.locator("[data-testid='assembly-sheet']")).toBeVisible();
-  let writes = 0;
-  page.on("request", (request) => {
-    if (request.method() === "POST" && /\/positions\//.test(request.url())) writes++;
-  });
+  const saved = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      response.url().endsWith(`/projects/${projectId}/positions/`),
+  );
   await page.keyboard.press("Control+s");
-  await page.keyboard.press("Delete");
-  expect(writes).toBe(0);
+  const response = await saved;
+  expect(response.status()).toBe(201);
+  expect((await response.json()).quantity).toBe(2);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
   await expect(page.locator(".canvas-sheet .front-module")).toBeVisible();
 });

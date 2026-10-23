@@ -97,7 +97,7 @@ export function PositionPrice({
             fabricar.
           </p>
         )}
-        <p>{sale.source || "Fuente: cálculo del motor de esta revisión."}</p>
+        <p>{sale.source || "Origen: cálculo del motor de esta revisión."}</p>
         {!breakdown && (
           <p>
             El detalle de costos y margen está disponible para el dueño en los ajustes avanzados.

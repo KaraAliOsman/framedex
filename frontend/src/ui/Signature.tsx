@@ -65,7 +65,7 @@ export function SheetSurface({
 }
 
 export function DemoBadge({
-  source = "Datos sintéticos; revisa la autoridad antes de fabricar",
+  source = "Datos sintéticos; revisa el origen antes de fabricar",
 }: {
   source?: string;
 }): JSX.Element {
@@ -77,7 +77,7 @@ export function DemoBadge({
 }
 
 export function UnknownValue({
-  cause = "La fuente todavía no entregó este valor",
+  cause = "Este valor todavía no está disponible",
   action,
 }: {
   cause?: string;
@@ -85,7 +85,7 @@ export function UnknownValue({
 }): JSX.Element {
   return (
     <span className="ui-unknown">
-      <span>Sin dato</span>
+      <span>Falta completar</span>
       <span className="ui-unknown__cause"> · {cause}</span>
       {action ? <span className="ui-unknown__action">{action}</span> : null}
     </span>
@@ -138,7 +138,7 @@ export function TraceButton({
                 </div>
               ))}
               <div>
-                <dt>Autoridad</dt>
+                <dt>Origen</dt>
                 <dd>{trace.authority}</dd>
               </div>
               <div>

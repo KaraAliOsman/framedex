@@ -140,7 +140,7 @@ export function SimulationPreview({
           <figure key={item.label} className="sheet-miter">
             <figcaption>{item.label}</figcaption>
             {!item.product ? (
-              <p>Sin posición</p>
+              <p>Sin ventana</p>
             ) : options[item.system] ? (
               <Drawing
                 product={item.product}
@@ -172,20 +172,22 @@ export function SimulationPreview({
         <dd>
           {before.price?.net != null
             ? formatMoney(before.price.net, before.price.currency)
-            : "Sin dato"}
+            : "Falta completar"}
         </dd>
         <dt>Venta neta propuesta</dt>
-        <dd>{price.net != null ? formatMoney(price.net, price.currency) : "Sin dato"}</dd>
+        <dd>{price.net != null ? formatMoney(price.net, price.currency) : "Falta completar"}</dd>
         <dt>Diferencia neta</dt>
         <dd>
-          {price.delta_net != null ? formatMoney(price.delta_net, price.currency) : "Sin dato"}
+          {price.delta_net != null
+            ? formatMoney(price.delta_net, price.currency)
+            : "Falta completar"}
         </dd>
         <dt>Diferencia de Uw</dt>
-        <dd>Sin dato</dd>
+        <dd>Falta completar</dd>
       </dl>
       <p>
-        Uw pendiente: esta simulación no cuenta con autoridad térmica completa del marco, el vidrio
-        y el borde. Revisa las fichas del sistema en Catálogo antes de declarar un valor.
+        Uw pendiente: esta simulación no cuenta con información térmica completa del marco, el
+        vidrio y el borde. Revisa las fichas del sistema en Catálogo antes de declarar un valor.
       </p>
       {price.reason ? (
         <p>{price.reason}</p>
@@ -208,17 +210,17 @@ export function SimulationPreview({
           Venta anterior:{" "}
           {before.price?.source ??
             before.price?.reason ??
-            "Sin dato: la simulación no adjuntó autoridad comercial anterior."}
+            "Falta el cálculo comercial anterior en esta simulación."}
         </p>
         <p>
           Venta propuesta:{" "}
           {price.source ??
             price.reason ??
-            "Sin dato: la simulación no adjuntó autoridad comercial propuesta."}
+            "Falta el cálculo comercial propuesto en esta simulación."}
         </p>
         <p>
           Diferencia: resta exacta de ambas ventas en el motor, disponible solo cuando ambas tienen
-          autoridad.
+          un cálculo comprobable.
         </p>
       </details>
       <details>

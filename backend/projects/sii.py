@@ -621,7 +621,7 @@ def _dte_xml(*, folio: int, invoice: dict, caf: dict, issued_at) -> str:
     receptor, receptor_name, receptor_extra = _receptor(payload)
     revision = payload.get("revision_code") or "REV-A"
     positions = payload.get("positions") or []
-    item = f"Según cotización {revision} - {len(positions)} posición(es)"
+    item = f"Según cotización {revision} - {len(positions)} ventana(s)"
     neto = int(Decimal(str(payload["deal"]["total_net"])))
     detalles = None
     if positions and all(

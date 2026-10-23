@@ -819,7 +819,7 @@ def _workshop_targets(
         for index, opening in enumerate(computation.openings, 1):
             bays.append({
                 "bay_id": f"{prefix}{opening.bay_id}",
-                "label": f"{unit}Vano {index}",
+                "label": f"{unit}Paño {index}",
                 "width_mm": opening.width_mm,
             })
         for index, leaf in enumerate(computation.leaves, 1):
@@ -1297,7 +1297,7 @@ def compose_revision(
                     # Inspector violations carry no position identity; without
                     # it the estimator must binary-search the vano list.
                     raise ValueError(
-                        f"Vano «{position.get('name') or position.get('position_index')}»: {error}"
+                        f"Ventana «{position.get('name') or position.get('position_index')}»: {error}"
                     ) from error
                 module_allowed = inspection.production_allowed
                 module_complete = not any(
@@ -2203,7 +2203,7 @@ def prepare_documentary_inputs(
                             "detail": "Guarda la preparación documental del diseño vigente."})
         if not position["documentary_ready"]:
             missing.append({"code": "position_documentary_incomplete", "position_id": identity,
-                            "detail": "Completa la autoridad documental indicada por el inspector."})
+                            "detail": "Completa los datos y documentos indicados en la revisión."})
     return {
         "project_id": project["id"],
         "revision_code": project["current_revision"],

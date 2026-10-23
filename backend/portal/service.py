@@ -308,7 +308,7 @@ def _sealed_positions(version: dict[str, object]) -> list[dict[str, object]]:
             glass_specs = []
             finish = ""
         positions.append({
-            'system_name': str(value.get('system_name') or 'Serie sellada'),
+            'system_name': str(value.get('system_name') or 'Serie de la revisión emitida'),
             'is_demo': bool(value.get('is_demo')),
             "id": str(value.get("id") or ""),
             "position_index": value.get("position_index"),

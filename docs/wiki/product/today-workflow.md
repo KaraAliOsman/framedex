@@ -1,14 +1,22 @@
 ---
 type: state
 status: active
-updated: 2026-10-09
+updated: 2026-10-22
 volatility: high
-verified_ref: 5b06ceb12457b297a8748580453695714469c6a0
+verified_ref: gpt/dk2-p05f-cotizaciones-obras
 sources:
   - docs/redesign/P03-ACEPTACION.md
   - engine/src/dekopen_engine/work_queue.py
   - backend/analytics/today.py
   - frontend/src/app/navigation.ts
+  - frontend/src/app/DashboardPage.tsx
+  - frontend/src/app/todaySummary.ts
+  - frontend/tests/e2e/today.spec.ts
+  - frontend/src/features/projects/worksList.ts
+  - frontend/tests/e2e/works.spec.ts
+  - backend/projects/works.py
+  - frontend/src/features/projects/WorksPage.tsx
+  - frontend/src/features/quotations/LegacyQuotesRedirect.tsx
   - frontend/scripts/verify-p03.mjs
 ---
 
@@ -16,10 +24,63 @@ sources:
 
 ## Hechos verificados
 
-La navegación refleja capacidades del backend por rol y agrupa ventas,
-ingeniería, operación, asistente y ajustes. Inventario y cotizaciones tienen
-índices propios; producción conserva sus direcciones. Solo el operario entra
-automáticamente al taller. Todos pueden abrir su cola explícita.
+P05a dispone Hoy · Obras · Taller · Catálogo · Empresa en ese orden, ocultando
+los destinos que cada rol no puede leer. Hoy es el inicio de los cinco roles;
+operario e instalador conservan acceso directo a taller y agenda. Clientes
+continúa en `/clients` y la búsqueda de oficina. Informes y Funciones avanzadas
+viven en Empresa. P05f integra cotizaciones en Obras; el enlace antiguo
+redirige conservando sus filtros, offset y hash.
+
+Diez E2E con sesiones reales, cinco roles y 1440/390 px comprueban navegación,
+clientes en la paleta y límites de acceso. Véase la [aceptación P05a](../../redesign/captures/dk2-p05a/aceptacion.md).
+El contenido nuevo de Hoy y las etapas todavía no forman parte de P05a.
+
+P05c presenta saludo, fecha del calendario recibido y hasta tres recuentos
+pertinentes al rol. Los recuentos salen de tareas reales, deduplicadas por
+código; «Aceptadas por coordinar» no afirma una semana que la API no mide.
+Los ceros desaparecen. La tarjeta de preparadas abre solo borradores guardados
+y verificados del propio usuario; revisar y navegar no emite ni envía nada.
+«Nueva cotización» crea con un clic humano y comparte el mismo comportamiento
+en Hoy y Obras. Un resultado tardío de otra organización no navega.
+
+La cola mantiene decisiones de precio, recordatorios, saldos y origen bajo
+desplegables; orden y paginación de 50 conservan el contrato existente. Venta
+por etapa queda plegada y conserva sus enlaces exactos de fase/moneda.
+Diez recorridos reales por rol y dos flujos completos de Hoy cubren escritorio
+y móvil; incluyen 1.000 acciones sintéticas, 320 px y texto al 200 %.
+Véase la [aceptación P05c](../../redesign/captures/dk2-p05c/aceptacion.md).
+El editor móvil actual sigue siendo de lectura por debajo de 1024 px; ampliar
+su edición corresponde a P06, no se presenta como capacidad de P05c.
+
+P05b incorpora la proyección de etapas, compartición comprobada y las obras
+que el asistente guardó con ventanas para el usuario que consulta. Un PDF
+con enlace DOCUMENT sin vistas no cuenta como envío. Una sucesora vuelve a
+Cotizando; órdenes y pagos se contrastan con la solución elegida vigente.
+La instalación completa más saldo real pendiente lleva a Por cobrar;
+instalación más saldo cubierto por pagos reales lleva a Cerrada. Sin total
+comprobable queda Instalada. No se modifica el estado persistido al leer.
+
+P05d conecta esas etapas a Obras: todas las filas son enlaces completos,
+utilizables con teclado; búsqueda y orden se guardan en URL, y las páginas
+muestran 50 filas. Los recuentos siguen la búsqueda y el estado heredado antes
+de aplicar el segmento. En P05d la consulta limitaba a las 500 obras
+más recientes y la pantalla informaba ese límite; P05e/f lo reemplazan.
+El total de la oferta elegida vigente tiene
+prioridad; sin él solo se muestra precio aplicado comprobable de esa revisión.
+Un borrador sin precio invita a abrir para calcular, sin reutilizar venta vieja.
+P05d conservaba `/quotes` en el índice anterior; P05f integra sus filtros.
+el parámetro histórico `status` sigue filtrando exactamente su estado guardado.
+Seis E2E de tres roles autorizados ejercitan obras reales y 500 casos extremos
+en 1440/390, 320 px y texto al 200 %; [aceptación P05d](../../redesign/captures/dk2-p05d/aceptacion.md).
+
+En `gpt/dk2-p05e-indice-obras`, el nuevo endpoint de lectura
+`/api/v1/projects/works/` obtiene recuentos antes del filtro de etapa y pagina
+sin truncar a 500. Carga los detalles públicos de esa página, sin consultas
+por fila. La vista comercial reutiliza selección, orden y filtros de
+`analytics/quotations`; el jefe de taller no puede solicitarla, ni siquiera
+mediante un filtro de moneda o seguimiento. Una edición entre las lecturas
+de selección y detalle produce 409 para volver a consultar. P05f conecta
+la pantalla y la redirección de `/quotes` a este endpoint.
 
 El motor ordena compromisos vencidos, bloqueos, trabajo del día y seguimiento.
 El backend lee bajo RLS revisión actual, solicitudes/recibos de precio, ledger
@@ -37,6 +98,15 @@ Búsqueda por códigos humanos dirige a proyecto, cotización, compra, OT y
 retazo. Cambio de organización/selección cancela consultas y comandos
 capturados. Paleta, ayuda y drawer contienen y restauran foco. Stock muestra
 especificaciones declaradas, nunca identidades internas del catálogo.
+
+P05f conecta el índice del servidor sin truncar a 500 obras. Sus recuentos
+preceden al segmento y la página. La vista de cotizaciones conserva filtros,
+pertenencia y orden de emisión, revisión, respuesta, visitas y vigencia.
+La consulta se separa por usuario/empresa/rol y cancela búsquedas anteriores
+sin desmontar el control enfocado. El alta completa conserva cliente y serie.
+Seis E2E finales cubren tres roles, 1440/390, 500 obras, 320 px y texto al
+200 %, con axe. La purga global de lenguaje sigue pendiente. Véase la
+[aceptación P05f](../../redesign/captures/dk2-p05f/aceptacion.md).
 
 ## Intención y límites
 

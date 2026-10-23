@@ -1,5 +1,13 @@
 import { lazy, Suspense, type PropsWithChildren } from "react";
-import { createBrowserRouter, Navigate, Route, RouterProvider, Routes } from "react-router-dom";
+import {
+  createBrowserRouter,
+  Navigate,
+  Route,
+  RouterProvider,
+  Routes,
+  useSearchParams,
+} from "react-router-dom";
+import { LegacyQuotesRedirect } from "./features/quotations/LegacyQuotesRedirect";
 
 import { t } from "./i18n/es-CL";
 
@@ -32,6 +40,9 @@ const FieldPage = lazy(async () => ({
 }));
 const SettingsPage = lazy(async () => ({
   default: (await import("./app/SettingsPage")).SettingsPage,
+}));
+const AdvancedFeatures = lazy(async () => ({
+  default: (await import("./app/AdvancedFeatures")).AdvancedFeatures,
 }));
 const LazyLandingPage = lazy(async () => ({
   default: (await import("./features/landing/LandingPage")).LandingPage,
@@ -111,6 +122,9 @@ const ClientsPage = lazy(async () => ({
 const CatalogPage = lazy(async () => ({
   default: (await import("./features/catalogs/SeriesCatalogPage")).SeriesCatalogPage,
 }));
+const WorksPage = lazy(async () => ({
+  default: (await import("./features/projects/WorksPage")).WorksPage,
+}));
 const FinishSamplesPage = lazy(async () => ({
   default: (await import("./features/catalogs/FinishSamplesPage")).FinishSamplesPage,
 }));
@@ -140,15 +154,28 @@ function ProjectSurface(): JSX.Element {
   );
 }
 
+function WorksSurface(): JSX.Element {
+  const [params] = useSearchParams();
+  // Existing customer/catalog links open the full metadata creation form.
+  // Opening that form still requires its human submit; redirecting never creates.
+  if (params.get("create") === "1") return <ProjectSurface />;
+  return (
+    <ReadyGuard>
+      <AppShell>
+        <Suspense fallback={<p role="status">Cargando obras…</p>}>
+          <WorksPage />
+        </Suspense>
+      </AppShell>
+    </ReadyGuard>
+  );
+}
+
 const PurchasingPage = lazy(async () => {
   const module = await import("./features/purchasing/PurchasingPage");
   return { default: module.PurchasingPage };
 });
 const InventoryPage = lazy(async () => ({
   default: (await import("./features/purchasing/InventoryPage")).InventoryPage,
-}));
-const QuotationsPage = lazy(async () => ({
-  default: (await import("./features/quotations/QuotationsPage")).QuotationsPage,
 }));
 
 const ProductionPage = lazy(async () => {
@@ -194,7 +221,7 @@ function HomeRedirect(): JSX.Element {
     return <Navigate to="/select-organization" replace />;
   }
   if (auth.status === "ready") {
-    // The operator starts at the station; other roles start with their work.
+    // Everyone starts at Hoy; role-specific work remains directly reachable.
     const home = homeFor(auth.me?.active_organization?.role);
     // A magic link can land on `/` instead of /auth/callback when the site
     // URL differs from the requested origin — still honor the stashed
@@ -205,8 +232,7 @@ function HomeRedirect(): JSX.Element {
   return <LandingPage />;
 }
 
-/** Hoy authorizes its projection for all five roles. The operator's default
- * entry still opens the station; an explicit Inicio link opens their queue. */
+/** Hoy authorizes its projection for all five roles. */
 function DashboardRoute(): JSX.Element {
   return (
     <AppShell>
@@ -387,7 +413,7 @@ export function AppRoutes(): JSX.Element {
           element={
             <ReadyGuard>
               <AppShell>
-                <Suspense fallback={<Loading label="Cargando Analítica" />}>
+                <Suspense fallback={<Loading label="Cargando Informes" />}>
                   <AnalyticsPage />
                 </Suspense>
               </AppShell>
@@ -497,7 +523,7 @@ export function AppRoutes(): JSX.Element {
             </ReadyGuard>
           }
         />
-        <Route path="/projects" element={<ProjectSurface />} />
+        <Route path="/projects" element={<WorksSurface />} />
         <Route path="/catalogs" element={<Navigate to="/catalogs/systems" replace />} />
         <Route
           path="/catalogs/finish-samples"
@@ -571,6 +597,18 @@ export function AppRoutes(): JSX.Element {
         />
         {/* Keep general settings and inventory entry addresses usable. */}
         <Route path="/settings" element={<Navigate to="/settings/general" replace />} />
+        <Route
+          path="/settings/advanced"
+          element={
+            <ReadyGuard>
+              <AppShell>
+                <Suspense fallback={<Loading label="Cargando funciones avanzadas" />}>
+                  <AdvancedFeatures />
+                </Suspense>
+              </AppShell>
+            </ReadyGuard>
+          }
+        />
         <Route path="/invitation" element={<InvitationPage />} />
         <Route
           path="/inventory"
@@ -588,11 +626,7 @@ export function AppRoutes(): JSX.Element {
           path="/quotes"
           element={
             <ReadyGuard>
-              <AppShell>
-                <Suspense fallback={<p role="status">Cargando cotizaciones…</p>}>
-                  <QuotationsPage />
-                </Suspense>
-              </AppShell>
+              <LegacyQuotesRedirect />
             </ReadyGuard>
           }
         />

@@ -92,7 +92,7 @@ def prepare(*, org_id, project_id, actor_id):
             'tratando de usted. Solicita revisar un pago pendiente sin amenazas. Incluye exactamente los marcadores '
             '{cliente}, {proyecto}, {monto} y {vencimiento}. No escribas cifras, porcentajes, monedas, '
             'plazos propios, URLs ni datos supuestos. No incluyas asunto, firma, corchetes ni marcadores '
-            'de nombre/cargo/contacto. Termina con Gracias. Se sustituyen las cuatro variables con autoridades del sistema después.'})
+            'de nombre/cargo/contacto. Termina con Gracias. Se sustituyen las cuatro variables con datos verificados del sistema después.'})
     try:
         template = json.loads(envelope["output"])["template"]
         body = bind_template(template, current["values"])

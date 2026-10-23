@@ -49,7 +49,7 @@ export function quantize(value: DecimalValue, digits: number): string | null {
 
 export function formatDecimal(value: DecimalValue, digits = 0, separator = THIN_SPACE): string {
   const rounded = quantize(value, digits);
-  if (rounded === null) return "Sin dato";
+  if (rounded === null) return "Falta completar";
   const [integer = "0", fraction] = rounded.replace(/^-/, "").split(".");
   const grouped = integer.replace(/\B(?=(\d{3})+(?!\d))/g, separator);
   return `${rounded.startsWith("-") ? "−" : ""}${grouped}${fraction ? `,${fraction}` : ""}`;
@@ -70,7 +70,7 @@ export function parseDecimalInput(candidate: string, precision = 2): string | nu
 }
 
 export function formatMoney(value: DecimalValue, currency = "CLP"): string {
-  if (canonical(value) === null) return "Sin dato";
+  if (canonical(value) === null) return "Falta completar";
   const digits = currency === "CLP" ? 0 : currency === "UF" ? 4 : 2;
   const prefix = currency === "CLP" ? "$" : currency === "USD" ? "US$ " : `${currency} `;
   return `${prefix}${formatDecimal(value, digits, ".")}`;
@@ -78,7 +78,7 @@ export function formatMoney(value: DecimalValue, currency = "CLP"): string {
 
 export function formatPercent(value: DecimalValue, kind: "fraction" | "points"): string {
   let text = canonical(value);
-  if (text === null) return "Sin dato";
+  if (text === null) return "Falta completar";
   if (kind === "fraction") {
     const negative = text.startsWith("-");
     const [integer = "0", fraction = ""] = text.replace(/^-/, "").split(".");
@@ -89,16 +89,16 @@ export function formatPercent(value: DecimalValue, kind: "fraction" | "points"):
 }
 
 export function formatDate(value: string | null | undefined): string {
-  if (!value) return "Sin dato";
+  if (!value) return "Falta completar";
   const day = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
   if (day) {
     const check = new Date(`${value}T12:00:00Z`);
     if (!Number.isNaN(check.getTime()) && check.toISOString().slice(0, 10) === value)
       return `${day[3]}-${day[2]}-${day[1]}`;
-    return "Sin dato";
+    return "Falta completar";
   }
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Sin dato";
+  if (Number.isNaN(date.getTime())) return "Falta completar";
   const parts = new Intl.DateTimeFormat("es-CL", {
     timeZone: "America/Santiago",
     day: "2-digit",
@@ -110,7 +110,7 @@ export function formatDate(value: string | null | undefined): string {
 }
 
 export function formatDateTime(value: string | null | undefined): string {
-  if (!value || Number.isNaN(new Date(value).getTime())) return "Sin dato";
+  if (!value || Number.isNaN(new Date(value).getTime())) return "Falta completar";
   const time = new Intl.DateTimeFormat("es-CL", {
     timeZone: "America/Santiago",
     hour: "2-digit",
@@ -122,7 +122,7 @@ export function formatDateTime(value: string | null | undefined): string {
 
 export function formatRelativeTimestamp(value: string, now = Date.now()): string {
   const difference = new Date(value).getTime() - now;
-  if (!Number.isFinite(difference)) return "Sin dato";
+  if (!Number.isFinite(difference)) return "Falta completar";
   const unit =
     Math.abs(difference) < 3600000 ? "minute" : Math.abs(difference) < 86400000 ? "hour" : "day";
   const divisor = unit === "minute" ? 60000 : unit === "hour" ? 3600000 : 86400000;

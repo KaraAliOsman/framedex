@@ -201,8 +201,8 @@ def workspace_evidence(repo,project,positions,request,rules,technical,cost_lines
             exact_price = (net / D(quantity) if request['pricing_mode'] == PricingMode.TARGET_GROSS_MARGIN_PROJECT.value
                 else next(line.exact_unit_price for line in priced_lines if line.position_index == index))
             line_traces = {
-                'unit_cost':money_trace('Costo de la posición ÷ cantidad',D(tech['unit_cost_exact']),
-                    [('Costo de la posición',cost_map[index],currency),('Cantidad',D(quantity),'unidad')]),
+                'unit_cost':money_trace('Costo de la ventana ÷ cantidad',D(tech['unit_cost_exact']),
+                    [('Costo de la ventana',cost_map[index],currency),('Cantidad',D(quantity),'unidad')]),
                 'unit_price':money_trace('Precio unitario calculado; lectura a cuatro decimales con mitades alejándose de cero',unit_price,
                     [('Precio unitario exacto',exact_price,currency)]),
                 'line_net':money_trace('Precio unitario exacto × cantidad × (1 − descuento); mitades alejándose de cero por línea',net,
@@ -218,7 +218,7 @@ def workspace_evidence(repo,project,positions,request,rules,technical,cost_lines
                 line_traces['margin'] = deepcopy(reading['traces']['margin'])
             reading['traces']['list_net'] = line_traces['list_net']
             if index in old_lines:
-                line_traces['delta'] = money_trace('Neto propuesto de la posición − neto aplicado',net-old_lines[index],
+                line_traces['delta'] = money_trace('Neto propuesto de la ventana − neto aplicado',net-old_lines[index],
                     [('Neto propuesto',net,currency),('Neto aplicado',old_lines[index],currency)])
             all_components.extend(components)
             line_readings.append({'position_index':index,'location':p.get('location_tag') or '',
@@ -230,8 +230,8 @@ def workspace_evidence(repo,project,positions,request,rules,technical,cost_lines
         all_components.append(('services',service_cost))
         reading = cascade(components=all_components,cost=total_cost,list_net=list_net,net=output.project_net,
                           tax=output.project_tax,gross=output.project_gross,extras_net=manual_extras,currency=request['currency'],tax_rate=rules['tax_rate_pct'])
-        reading['traces']['list_net'] = money_trace('Suma de precios de lista redondeados por posición y servicios',list_net,
-            [(f"Posición {item['position_index']}",D(item['cascade']['list_net']),request['currency']) for item in line_readings]
+        reading['traces']['list_net'] = money_trace('Suma de precios de lista redondeados por ventana y servicios',list_net,
+            [(f"Ventana {item['position_index']}",D(item['cascade']['list_net']),request['currency']) for item in line_readings]
             + [('Servicios del proyecto',service_net,request['currency'])])
         old_cost = current_output.get('workspace',{}).get('cascade',{}).get('cost')
         before = {key:D(str(current_output[field])) if comparable and field in current_output else None
@@ -248,11 +248,11 @@ def workspace_evidence(repo,project,positions,request,rules,technical,cost_lines
             current_trace = current_output.get('workspace',{}).get('cascade',{}).get('traces',{}).get(trace_key)
             if comparable and current_trace:
                 row['traces']['current'] = deepcopy(current_trace)
-    attribution = {'available':False,'reason':'Sin dato: la operación anterior no conserva todas las autoridades de reprecio.','order':list(DRIVERS)}
+    attribution = {'available':False,'reason':'Falta completar · la operación anterior no conserva todos los datos del cálculo de precio.','order':list(DRIVERS)}
     if not current:
-        attribution['reason'] = 'Sin dato: todavía no se ha aplicado un precio al proyecto.'
+        attribution['reason'] = 'Falta completar · todavía no se ha aplicado un precio al proyecto.'
     elif not comparable:
-        attribution['reason'] = 'Sin dato: las operaciones usan monedas distintas; no se comparan sin conversión declarada.'
+        attribution['reason'] = 'Falta completar · las operaciones usan monedas distintas; no se comparan sin conversión declarada.'
     elif current_snapshot.get('replay'):
         before_state,after_state = replay_state(current_snapshot['replay']),replay_state(replay)
         try:
@@ -260,7 +260,7 @@ def workspace_evidence(repo,project,positions,request,rules,technical,cost_lines
             if attribution['current']['net'] != D(str(current_output['project_net'])) or attribution['proposed']['net'] != output.project_net:
                 raise PricingError('repricing_does_not_close')
         except (PricingError,ValueError,KeyError) as error:
-            attribution = {'available':False,'reason':'Sin dato: las autoridades congeladas no admiten este escenario intermedio.','order':list(DRIVERS),
+            attribution = {'available':False,'reason':'Falta completar · los datos guardados no admiten este escenario intermedio.','order':list(DRIVERS),
                            'technical_code':getattr(error,'code','incompatible_counterfactual')}
     sources = []
     def human_date(value):
@@ -269,7 +269,7 @@ def workspace_evidence(repo,project,positions,request,rules,technical,cost_lines
     for authority in repo.authorities:
         if 'cost' in authority:
             item = authority['cost']
-            label = 'Catálogo DEMO' if item.get('is_demo') else f"Lista de costos vigente desde {human_date(item.get('valid_from','Sin dato'))}"
+            label = 'Catálogo DEMO' if item.get('is_demo') else f"Lista de costos vigente desde {human_date(item.get('valid_from','Falta completar'))}"
         elif 'fx' in authority:
             item = authority['fx']
             label = f"FX {item['base_currency']} → {item['quote_currency']} · {human_date(item['observed_date'])} · {str(item['observed_rate']).replace('.',',')}"
@@ -312,20 +312,20 @@ def workspace_evidence(repo,project,positions,request,rules,technical,cost_lines
     workspace['changes'] = [item for item in workspace['changes'] if item['before'] != item['after']]
     for value in [workspace['cascade'],*workspace['positions'],*(item['cascade'] for item in workspace['positions'])]:
         for trace in value.get('traces',{}).values():
-            trace['authority'] = ' · '.join(sources) or 'Autoridad declarada de la operación'
+            trace['authority'] = ' · '.join(sources) or 'Origen de la operación'
     for position in workspace['positions']:
         for item in position.get('composition',[]):
             if 'trace' in item:
-                item['trace']['authority'] = ' · '.join(sources) or 'Autoridad declarada de compra'
+                item['trace']['authority'] = ' · '.join(sources) or 'Origen del costo de compra'
     for item in attribution.get('contributions',[]):
         for trace in item.get('traces',{}).values():
-            trace['authority'] = 'Autoridades congeladas de las operaciones actual y propuesta'
+            trace['authority'] = 'Datos guardados de las operaciones actual y propuesta'
     for row in compare.values():
         for stage,trace in row.get('traces',{}).items():
             if stage == 'proposed':
-                trace['authority'] = ' · '.join(sources) or 'Autoridad declarada de la propuesta'
+                trace['authority'] = ' · '.join(sources) or 'Origen de la propuesta'
             elif stage != 'current':
-                trace['authority'] = 'Operación aplicada y autoridades congeladas de la propuesta'
+                trace['authority'] = 'Operación aplicada y datos guardados de la propuesta'
     return frozen_copy({'workspace':workspace,'replay':replay,'policy':decision})
 
 

@@ -53,9 +53,9 @@ export const SURFACE_LABELS: Record<string, string> = {
   jobs: "trabajos",
   onboarding: "inicio guiado",
   // Read-only engine tools share this dictionary with restored transcripts.
-  calculate_position: "cálculo del vano",
-  validate_position: "validación del vano",
-  price_position: "venta del vano",
+  calculate_position: "cálculo de la ventana",
+  validate_position: "validación de la ventana",
+  price_position: "venta de la ventana",
   price_project: "precios del proyecto",
   explain_price_delta: "diferencia de precio",
   list_catalog_options: "opciones del catálogo",

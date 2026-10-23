@@ -23,6 +23,18 @@
 > AA, turquesa para acción y naranja/ámbar para atención humana. Las decisiones
 > pendientes sobre vista de obra, agente y tarifas siguen bajo sus banderas.
 
+> **Enmienda 2026-10-22 (DEKOPEN 2, P05).** El glosario del
+> [encargo de navegación](../research/2026-10-21-competencia/prompts/P05-navegacion-hoy-obras.md)
+> se aplica a toda la interfaz de producto, incluidas las funciones avanzadas.
+> Los valores ausentes dicen **Falta completar** o una acción concreta, sin
+> convertirse en cero ni en sugeridos inexistentes. Los documentos se describen
+> como **emitidos**; un precio guardado o una revisión preparada conservan su
+> estado preciso. Las referencias se presentan como **Origen**, **Del manual**,
+> **Del taller** o **Sugerido**, según el dato. Las tareas de IA tienen **Resumen**;
+> los comprobantes financieros conservan su significado. La redacción distingue
+> ventana, medida de obra y coordenada física. Esta enmienda sustituye las voces
+> anteriores en P3, §4 y R15. No modifica contratos, cálculos ni evidencia histórica.
+
 ## 0. Por qué existe este documento
 
 Un modelo de lenguaje, cuando no tiene un punto de vista, entrega **el promedio estadístico de lo que ya existe**: tarjetas redondeadas, sombras suaves, un degradado morado, "¡Bienvenido de nuevo!", un dashboard con cuatro KPI. Se ve terminado en segundos y no resuelve nada. Eso es la **UI zombi**: software desechable, sin coherencia y sin alguien detrás que se haya preocupado.
@@ -82,7 +94,7 @@ La ventana y el documento son los protagonistas y deben parecer trabajo profesio
 |---|---|---|---|
 | P1 | **El dibujo es la interfaz.** | El lienzo ocupa ≥ 60 % del editor; se edita sobre la cota, en el lugar | Formularios de ancho completo con el dibujo como miniatura |
 | P2 | **Un número, una fuente.** | Cada monto, medida o peso abre "¿De dónde sale?" con la traza del motor | Cifras calculadas en el frontend o escritas por la IA |
-| P3 | **Lo desconocido se ve.** | "Sin dato · falta el peso del vidrio · Completar" | `0`, `—` sin causa, o un valor por defecto silencioso |
+| P3 | **Lo desconocido se ve.** | "Falta el peso del vidrio · Completar" | `0`, `—` sin causa, o un valor por defecto silencioso |
 | P4 | **Divulgación progresiva.** | Básico: 6 decisiones. Avanzado: perfiles, refuerzos, herrajes, trazas | Las 40 opciones del sistema en la primera pantalla |
 | P5 | **Nada es arbitrario.** | Cada color, radio, espacio y tamaño sale de un token con un rol | `margin: 13px`, `#3b82f6`, `border-radius: 12px` |
 | P6 | **Hablar como el taller.** | Hoja, marco, junquillo, montante, travesaño, termopanel, manilla | `SASH`, `GLAZING_BEAD`, "ítem", "elemento", "objeto" |
@@ -277,17 +289,35 @@ Diseño a **1440 × 900**. Debe funcionar sin scroll horizontal a 1280 × 800 y 
 | Vano · Medida de fabricación · Holgura | Hueco, tamaño |
 | Cotización · Revisión · Emitir | Presupuesto (salvo preferencia del cliente), versión, publicar |
 | Orden de trabajo (OT) · Estación · Lote | Job, tarea, ticket |
-| Sin dato | N/A, null, —, 0 |
+| Falta completar · Acción concreta | Sin dato, N/A, null, — sin causa, 0 inventado |
 
 ---
 
 ## 5. Superficies: anatomía obligatoria
 
 ### 5.1 Shell
-Navegación lateral de 216 px con **cuatro áreas habituales**: Proyectos · Clientes · Catálogos · Taller, y **Empresa** como acceso inferior. Cada rol ve las áreas que puede leer (la API sigue autorizando). Barra superior de 56 px: migas con el **nombre** de la obra (el código va en detalle), búsqueda/paleta (`Ctrl+K`), avisos y, **solo cuando la organización tiene derecho a IA**, el botón «Asistente» con el compañero, que abre el popup global. El plan manual no monta botón, presencia ni sondeo de IA. El logo vuelve a Proyectos. Analítica se abre desde Empresa; el historial del asistente vive en su popup (y en lectura desde la cuenta tras pasar a manual), no en otra aplicación. Las direcciones antiguas redirigen al contexto equivalente.
 
-### 5.2 Proyectos (inicio)
-La entrada habitual del dueño y del estimador: «Nueva cotización», trabajos para retomar y, si no hay ningún sistema utilizable, «Importar catálogo». Debajo, pocas decisiones agrupadas por obra (cotizaciones por vencer, aprobaciones, bloqueos), cada una con un verbo. No es un mural de indicadores ni una consola de incidencias. El taller empieza en sus órdenes, el operario en su estación y el instalador en su agenda.
+Enmienda P05 del encargo DEKOPEN 2 (21-10-2026): navegación lateral de 232 px con
+**Hoy · Obras · Taller · Catálogo**, y **Empresa** como acceso inferior. Cada rol
+ve solo los destinos que puede leer; la API sigue autorizando. El logo vuelve
+a Hoy. Clientes permanece en la obra y en la búsqueda; `/clients` sigue
+funcionando. Cotizaciones se integra en Obras. Informes y Funciones avanzadas
+se abren desde Empresa; CNC, cohortes, cierres de costos y rectificaciones
+conservan sus herramientas y direcciones de contexto.
+
+Barra superior de 56 px: migas con el nombre de la obra, búsqueda/paleta
+(`Ctrl+K`), avisos y, solo con derecho a IA, entrada al popup global opcional.
+El plan manual no monta botón, presencia ni sondeo de IA. Esta enmienda no
+decide la propuesta de panel lateral del agente ni la de vista única de obra.
+
+### 5.2 Hoy y Obras
+
+Todos los roles comienzan en Hoy: saludo y fecha, hasta tres métricas reales,
+trabajo preparado por el asistente y una cola «Para hacer» con verbo y acción.
+Obras reúne cotizaciones y obras en una lista densa por etapa real, con conteos,
+búsqueda, ventanas, importe y última actividad. «Nueva cotización» abre la
+primera ventana; el cliente se completa cuando hace falta. Taller y agenda
+siguen a un clic para operario e instalador.
 
 ### 5.3 Proyecto
 Cabecera compacta: nombre, cliente, estado comercial y **una** acción principal, con el selector textual **Mesa de obra · Estudio** (preferencia por usuario y organización; Mesa por defecto; `?view=mesa|estudio&position=<id>`). Cuatro destinos: **Ventanas · Cotización · Materiales y corte · Actividad**. En **Mesa**, la colección de ventanas es el contenido principal, con dibujo real, ambiente/nombre, medidas, cantidad, acabado y precio, en galería o tabla (formatos locales de la colección, no las vistas). Selección múltiple con alcance visible, cambios en lote y diff antes de aplicar. En **Estudio**, franja de posiciones plegable, dibujo predominante e inspector manual de la misma sesión de edición. Cambiar de vista no guarda, no recalcula y conserva selección, borrador y deshacer.
@@ -405,7 +435,7 @@ Cada superficie debe tener **al menos una** capacidad que vaya más allá de lo 
 | R12 | Foco visible en todo; operable por teclado | Sin foco o anillo azul del navegador |
 | R13 | Movimiento ≤ 280 ms, interrumpible y con origen coherente; reduce-motion respetado | Rebote, fade-up escalonado, shimmer, cifras que bailan |
 | R14 | Una acción principal por región | Varios primarios compitiendo |
-| R15 | Cada número calculado tiene fuente; lo desconocido dice "Sin dato" | Ceros falsos, valores inventados |
+| R15 | Cada número calculado permite consultar su origen; lo desconocido pide completar | Ceros falsos, valores inventados |
 | R16 | **Cero degradados, cero blur, cero brillo, cero morado IA** | Cualquiera = falla automática |
 | R17 | Sin scroll horizontal y nada cortado en los anchos exigidos | Desbordes, textos truncados sin tooltip |
 | R18 | Nada muerto: sin botones sin efecto, sin código viejo paralelo | Botones decorativos, componentes duplicados |

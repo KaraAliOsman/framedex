@@ -39,9 +39,9 @@ def advanced_availability(params: SystemParams) -> list[dict]:
                 if movement is OpeningMovement.SLIDE
                 else ADVANCED_NAMES[movement],
                 "available": available,
-                "reason": "Esquemas con fuente y herrajes declarados."
+                "reason": "Esquemas con referencia y herrajes declarados."
                 if available
-                else "Sin dato: esta serie no declara receta, perfiles y herrajes para esta apertura. Elige una serie compatible o declara su autoridad en Catálogo.",
+                else "Falta completar · esta serie no declara receta, perfiles y herrajes para esta apertura. Elige una serie compatible o completa sus datos en Catálogo.",
                 "compatible_systems": systems,
                 "schemes": [recipe.scheme for cap in caps for recipe in cap.advanced_recipes],
             }
@@ -64,7 +64,7 @@ def advanced_previews(params: SystemParams, glass_choices: list[dict]) -> list[d
             }
             if glass is None:
                 entry["reason"] = (
-                    "Sin dato: declara un vidrio compatible para calcular la vista previa."
+                    "Falta completar · declara un vidrio compatible para calcular la vista previa."
                 )
             else:
                 node = ParametricNode.model_validate_json(

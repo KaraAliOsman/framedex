@@ -134,7 +134,7 @@ def _notes(example: dict) -> list[str]:
             f"({example['source_errors'][0]['value']}) en vez de un número."
         )
     if any(not row.get("position") for row in example["rows"]):
-        notes.append("Algunas filas no indican su posición en la misma página.")
+        notes.append("Algunas filas no indican su ubicación en la misma página.")
     return notes
 
 

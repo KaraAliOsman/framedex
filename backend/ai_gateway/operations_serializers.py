@@ -18,7 +18,7 @@ class AiRouteSettingsSerializer(StrictSerializer):
 
     def validate(self, data):
         if (data["input_usd_per_million"] is None) != (data["output_usd_per_million"] is None):
-            raise serializers.ValidationError("Declara ambas tarifas o deja ambas sin dato.")
+            raise serializers.ValidationError("Completa ambas tarifas o deja ambas vacías.")
         return data
 
 

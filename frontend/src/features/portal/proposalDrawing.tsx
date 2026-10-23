@@ -125,7 +125,7 @@ function Drawing({
             />
           </Suspense>
         ) : (
-          <p>Sin dibujo · solicite la definición de esta posición al fabricante.</p>
+          <p>Sin dibujo · solicite la definición de esta ventana al fabricante.</p>
         )
       ) : (
         <>
@@ -134,7 +134,7 @@ function Drawing({
             style={{ touchAction: large || pose.scale > 1 ? "none" : "pan-y" }}
             tabIndex={0}
             role="group"
-            aria-label={`Dibujo de posición ${position.position_index}. Use más y menos para ampliar, flechas para desplazar y cero para ajustar.`}
+            aria-label={`Dibujo de ventana ${position.position_index}. Use más y menos para ampliar, flechas para desplazar y cero para ajustar.`}
             onKeyDown={(e) => {
               if (
                 ["+", "=", "-", "0", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(
@@ -188,7 +188,7 @@ function Drawing({
                   openingLeaves={(position.opening_leaves ?? []) as OpeningLeafFact[]}
                 />
               ) : (
-                <p>Sin dibujo · solicite la definición de esta posición al fabricante.</p>
+                <p>Sin dibujo · solicite la definición de esta ventana al fabricante.</p>
               )}
             </div>
           </div>
@@ -222,7 +222,7 @@ export function ProposalDrawing({ position }: { position: PortalPosition }): JSX
         <Dialog
           width="l"
           onClose={() => setExpanded(false)}
-          title={`Posición ${position.position_index} · ${position.location_tag || "Ubicación sin declarar"}`}
+          title={`Ventana ${position.position_index} · ${position.location_tag || "Ubicación sin declarar"}`}
         >
           <Drawing position={position} large />
         </Dialog>

@@ -9,7 +9,7 @@ const causes: Record<string, string> = {
   opening_incompatible:
     "La serie no admite esa apertura. Elige una serie compatible en el catálogo.",
   unobserved_ref:
-    "La posición todavía no fue consultada. Abre la posición y vuelve a pedir el cambio.",
+    "La ventana todavía no fue consultada. Abre la ventana y vuelve a pedir el cambio.",
   tool_budget_exceeded: "El trabajo agotó sus consultas. Divide la petición y vuelve a intentar.",
   proposal_stale: "El diseño cambió después de la propuesta. Vuelve a simular antes de aplicar.",
   installation_height_required:

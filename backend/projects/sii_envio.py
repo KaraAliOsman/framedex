@@ -133,7 +133,7 @@ def _load_pfx(pfx: bytes, password: str | None) -> tuple:
         raise contract_error(
             422,
             "sii_cert_self_signed",
-            "El certificado debe ser emitido por una autoridad, no autofirmado.",
+            "El certificado debe ser emitido por una entidad certificadora, no autofirmado.",
         )
     try:
         usage = cert.extensions.get_extension_for_oid(

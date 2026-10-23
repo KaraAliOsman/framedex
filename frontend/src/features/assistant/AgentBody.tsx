@@ -1080,7 +1080,7 @@ export function AgentBody({
                     <>
                       {turn.result.queries?.length ? (
                         <details className="ui-tech">
-                          <summary>Fuentes consultadas</summary>
+                          <summary>Referencias consultadas</summary>
                           <ul className="ask-dock__queries">
                             {turn.result.queries.map((query, i) => (
                               <li key={i}>
@@ -1344,7 +1344,7 @@ export function AgentBody({
                                     {wasUndone
                                       ? "Cambios deshechos"
                                       : applied
-                                        ? "Cambios aplicados en el editor · guarda la posición"
+                                        ? "Cambios aplicados en el editor · guarda la ventana"
                                         : declined
                                           ? "Propuesta descartada"
                                           : "Propuesta preparada · revisa antes de aplicar"}
@@ -1477,7 +1477,7 @@ export function AgentBody({
                   ) : null}
                   {turnIndex === thread.length - 1 && chatProposal && !live ? (
                     <div className="copilot-approve">
-                      <p>En Chat nada se aplica. Puedes pasar este encargo a Trabajo.</p>
+                      <p>En Chat nada se aplica. Puedes pasar esta tarea a Trabajo.</p>
                       <button
                         type="button"
                         className="ui-button ui-button--secondary ui-button--compact"
@@ -1502,7 +1502,7 @@ export function AgentBody({
                       </button>
                       {" · "}
                       <button type="button" className="ask-dock__meta-link" onClick={startFresh}>
-                        Nuevo encargo
+                        Nueva tarea
                       </button>
                     </p>
                   ) : null}
@@ -1615,7 +1615,7 @@ export function AgentBody({
                   ? "Solo proponer: nada se aplica."
                   : autonomy === "approve"
                     ? "Con aprobación: preparo el conjunto y lo apruebas una vez."
-                    : "Omitir todo: aplico lo reversible y te muestro el recibo."}
+                    : "Omitir todo: aplico lo reversible y te muestro el resumen."}
             </span>
             <button
               type="submit"

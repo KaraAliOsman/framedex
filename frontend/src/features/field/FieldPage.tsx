@@ -54,7 +54,7 @@ type Send = (visitId: string, body: Omit<Command, "operation_key">) => Promise<v
 const checkLabels = {
   installed: "Instalada",
   levelled: "Nivelada",
-  sealed: "Sellada",
+  sealed: "Emitida",
   adjusted: "Regulada",
   clean: "Limpia",
 };
@@ -236,7 +236,7 @@ export function FieldPage({ office = false }: { office?: boolean }): JSX.Element
               ? `${selected.code} · ${selected.context.project_name}`
               : office
                 ? "Agenda entregas e instalaciones y sigue la postventa de cada obra."
-                : "Tu ruta, tus posiciones y sus comprobantes"}
+                : "Tu ruta, tus ventanas y sus comprobantes"}
           </p>
         </div>
         <div className="field-tools">
@@ -442,14 +442,14 @@ function Agenda({
                 <h2>
                   {v.context.project_name ||
                     v.context.project_code ||
-                    "Proyecto Sin dato · abrir visita"}
+                    "Obra sin identificar · abre la visita"}
                 </h2>
                 <p>
                   {labels[v.kind]} · {labels[v.status]}
                 </p>
                 <p>{v.context.address}</p>
                 <p>
-                  {v.team} · {v.vehicle || "Vehículo Sin dato · declarar en la planificación"}
+                  {v.team} · {v.vehicle || "Vehículo pendiente · decláralo en la planificación"}
                 </p>
               </div>
               <button type="button" className="secondary-action" onClick={() => open(v.id)}>
@@ -661,13 +661,13 @@ function Planner({
               setAddress(e.target.value);
               operation.current = undefined;
             }}
-            placeholder="Usar la dirección sellada de la revisión"
+            placeholder="Usar la dirección de la revisión emitida"
             maxLength={1000}
           />
         </label>
         <fieldset className="field-checks">
           <legend>
-            {kind === "MEASUREMENT" ? "Posiciones por medir" : "Bultos reales de la revisión"}
+            {kind === "MEASUREMENT" ? "Ventanas por medir" : "Bultos reales de la revisión"}
           </legend>
           {kind === "SERVICE" && (
             <p>Una unidad por servicio: su trabajo, foto y firma quedan juntos.</p>
@@ -747,7 +747,7 @@ function Photo({ change }: { change: (value: string) => void }): JSX.Element {
   return (
     <div>
       <label>
-        Foto de esta posición
+        Foto de esta ventana
         <input
           type="file"
           accept="image/jpeg,image/png"
@@ -776,7 +776,7 @@ function Photo({ change }: { change: (value: string) => void }): JSX.Element {
         <img
           className="field-preview-photo"
           src={preview}
-          alt="Evidencia de esta posición en obra"
+          alt="Evidencia de esta ventana en obra"
         />
       )}
       {error && <p role="alert">{error}</p>}
@@ -900,7 +900,7 @@ function VisitDetail({
       <p>
         {visit.team} · <DateOnly value={visit.planned_on} />
       </p>
-      <nav className="field-tools" aria-label="Posición en obra">
+      <nav className="field-tools" aria-label="Ventana en obra">
         {visit.context.units.map((u, at) => (
           <button
             key={`${u.position_id}:${u.unit_index}`}
@@ -952,7 +952,7 @@ function VisitDetail({
               }}
             >
               <fieldset className="field-checks">
-                <legend>Comprueba la posición</legend>
+                <legend>Comprueba la ventana</legend>
                 {Object.entries(checkLabels).map(([key, label]) => (
                   <label key={key}>
                     <input
@@ -995,7 +995,7 @@ function VisitDetail({
           )}
         {visit.status !== "CANCELLED" && visit.kind !== "DELIVERY" && (
           <details>
-            <summary>Medir y rectificar el vano</summary>
+            <summary>Medir y rectificar la abertura de obra</summary>
             <Survey unit={unit} visit={visit} photo={photo} setPhoto={setPhoto} send={send} />
           </details>
         )}
@@ -1039,7 +1039,7 @@ function VisitDetail({
         .filter((a) => a.kind === "ACT")
         .map((a) => (
           <section key={a.id}>
-            <p>Acta sellada · inmutable</p>
+            <p>Acta emitida · inmutable</p>
             <AssetButton assetId={a.id} online={online} label="Abrir acta PDF" />
           </section>
         ))}
@@ -1099,7 +1099,7 @@ function Survey({
   function currentSurvey(): object {
     const authority = unit.mounting_rules.find((r) => `${r.rule.code}:${r.revision}` === rule);
     if (!authority || [...widths, ...heights].some((v) => !/^\d+(?:[.,]\d{1,2})?$/.test(v)))
-      throw new Error("Completa tres medidas por eje y el montaje con fuente de este marco.");
+      throw new Error("Completa tres medidas por eje y el montaje con origen de este marco.");
     return {
       module_id: module || null,
       rule_code: authority.rule.code,
@@ -1121,7 +1121,7 @@ function Survey({
         [...widths, ...heights].some((v) => !/^\d+(?:[.,]\d{1,2})?$/.test(v))
       )
         throw new Error(
-          "Completa tres medidas por eje, montaje con fuente y foto de esta posición.",
+          "Completa tres medidas por eje, montaje con origen y foto de esta ventana.",
         );
       const all = { ...measured, [module || "single"]: currentSurvey() };
       if (modules && modules.some((m) => !all[m.id]))
@@ -1170,7 +1170,7 @@ function Survey({
         </label>
       )}
       <fieldset>
-        <legend>Ancho del vano · mm</legend>
+        <legend>Ancho de obra · mm</legend>
         <div className="field-survey">
           {["Arriba", "Centro", "Abajo"].map((label, i) => (
             <label key={label}>
@@ -1185,7 +1185,7 @@ function Survey({
         </div>
       </fieldset>
       <fieldset>
-        <legend>Alto del vano · mm</legend>
+        <legend>Alto de obra · mm</legend>
         <div className="field-survey">
           {["Izquierda", "Centro", "Derecha"].map((label, i) => (
             <label key={label}>
@@ -1217,7 +1217,7 @@ function Survey({
         </select>
       </label>
       <label>
-        Montaje con fuente
+        Montaje con origen
         <select value={rule} onChange={(e) => setRule(e.target.value)}>
           <option value="">Elige la regla de la serie</option>
           {unit.mounting_rules.map((r) => (
@@ -1230,8 +1230,8 @@ function Survey({
       </label>
       {unit.mounting_rules.length === 0 && (
         <p>
-          Sin dato · la serie no tiene una regla de montaje. El jefe de taller debe declararla en
-          Vano y montaje.
+          Falta completar · la serie no tiene una regla de montaje. El jefe de taller debe
+          declararla en Medidas de obra y montaje.
         </p>
       )}
       <Photo change={setPhoto} />
@@ -1287,7 +1287,7 @@ function IncidentForm({
     setError("");
     try {
       if (!note.trim() || !photo)
-        throw new Error("Describe la incidencia y toma una foto de esta posición.");
+        throw new Error("Describe la incidencia y toma una foto de esta ventana.");
       await send(visit.id, {
         kind: "INCIDENT",
         position_id: unit.position_id,
@@ -1413,11 +1413,11 @@ function Reception({ visit, send }: { visit: Visit; send: Send }): JSX.Element {
           checked={confirmed}
           onChange={(e) => setConfirmed(e.target.checked)}
         />
-        Confirmo que revisé las unidades y autorizo sellar esta recepción.
+        Confirmo que revisé las unidades y autorizo emitir esta recepción.
       </label>
       {error && <p role="alert">{error}</p>}
       <button type="submit" className="primary-action" disabled={busy}>
-        {busy ? "Guardando recepción…" : "Firmar y sellar recepción"}
+        {busy ? "Guardando recepción…" : "Firmar y emitir recepción"}
       </button>
     </ValidatedForm>
   );
@@ -1582,7 +1582,7 @@ function Review({ visit, refresh }: { visit: Visit; refresh: () => Promise<void>
               "La revisión emitida se conserva; la rectificación abre su sucesora."}
           </p>
           {change?.reason ? (
-            <p>Sin dato · {change.reason}</p>
+            <p>Falta completar · {change.reason}</p>
           ) : (
             <p>
               Antes <Money value={change?.before_net} currency={change?.currency} /> · Después{" "}
@@ -1647,7 +1647,7 @@ function Cases({
       {cases.length === 0 ? (
         <EmptyState
           title="Sin incidencias en este estado"
-          body="Cada reporte de obra conserva posición, unidad y materiales de su revisión."
+          body="Cada reporte de obra conserva ventana, unidad y materiales de su revisión."
           action={
             <button type="button" onClick={() => setFilter("")}>
               Ver todo el historial
@@ -1877,12 +1877,12 @@ function Case({
                     disabled={!online}
                     onClick={() => void loadRequirements()}
                   >
-                    Ver requerimientos sellados
+                    Ver requerimientos emitidos
                   </button>
                   <label>
                     Material faltante
                     <select value={requirement} onChange={(e) => setRequirement(e.target.value)}>
-                      <option value="">Elige el requerimiento de esta posición</option>
+                      <option value="">Elige el requerimiento de esta ventana</option>
                       {requirements.map((r) => (
                         <option value={r.id} key={r.id}>
                           {r.label}
@@ -1906,7 +1906,7 @@ function Case({
               )}
               <p>
                 {action === "REMAKE"
-                  ? "Se creará una OT nueva de una unidad, con plan nuevo y fuente conservada."
+                  ? "Se creará una OT nueva de una unidad, con plan nuevo y datos conservados."
                   : "Se conservará la evidencia de la incidencia y su solución."}
               </p>
               <button type="submit" className="primary-action" disabled={busy}>

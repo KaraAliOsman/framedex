@@ -137,7 +137,7 @@ def save_customer(*, org_id: UUID, project_id: UUID, data: dict) -> dict:
         if project["status"] != "DRAFT" or sealed:
             raise DocumentaryError(
                 "revision_not_available",
-                detail="La revisión ya está sellada. Abre una sucesora para cambiar cliente o dirección de obra.",
+                detail="La revisión ya fue emitida. Abre una sucesora para cambiar cliente o dirección de obra.",
             )
         if project["updated_at"] != data["expected_updated_at"]:
             raise DocumentaryError(

@@ -65,7 +65,7 @@ def derive_design(org_id, design, surveys, *, sealed_rules=None):
                 found = rows('SELECT rule::text FROM public.mounting_rules WHERE org_id=%s AND system_id=%s AND code=%s AND revision=%s',
                              [org_id,design['system_id'],survey.rule_code,survey.rule_revision])
             if not found:
-                raise contract_error(409,'mounting_rule_stale','La regla no está declarada para esta serie. Recarga Vano y montaje.')
+                raise contract_error(409,'mounting_rule_stale','La regla no está declarada para esta serie. Recarga Medidas de obra y montaje.')
             rule = MountingRule.model_validate_json(found[0]['rule'])
         else:
             # Internal field-only authority: the scheduler resolved these
@@ -74,7 +74,7 @@ def derive_design(org_id, design, surveys, *, sealed_rules=None):
             found = next((r for r in sealed_rules if r['revision']==survey.rule_revision and
                           r['rule']['code']==survey.rule_code),None)
             if not found:
-                raise contract_error(409,'mounting_rule_stale','La regla no está en la visita sellada. Agenda con la autoridad actual.')
+                raise contract_error(409,'mounting_rule_stale','La visita no conserva esta regla. Agenda una visita con las reglas actuales.')
             rule = MountingRule.model_validate_json(json_text(found['rule']))
         try:
             validate_mounting_extras(rule,params.extra_authority)
@@ -166,7 +166,7 @@ def save_measurements(org_id, position, data):
         return
     append_measurement(org_id,position,revision,evidence,
                        'SITE' if all(item.origin=='SITE' for item in surveys) else 'CUSTOMER',
-                       data.get('measurement_reason') or 'Medidas de vano guardadas con el diseño')
+                       data.get('measurement_reason') or 'Medidas de obra guardadas con el diseño')
 
 
 def copy_measurements(org_id,project_id,before_revision,after_revision):
@@ -366,7 +366,7 @@ def rectify(org,actor,position_id,data):
                                 delta_net=str(finish_selling_delta(before,after_net)),currency=pricing_request['currency'])
         except PricingError as error:
             if sealed:
-                raise contract_error(422,error.code,'No se puede comparar la venta sellada: revisa la autoridad comercial antes de rectificar.') from error
+                raise contract_error(422,error.code,'No se puede comparar la venta emitida: revisa el precio guardado antes de rectificar.') from error
             from pricing.service import pricing_public_detail
             price_change['reason'] = pricing_public_detail(error.code)
     result = {'design':design,'measurements':evidence,'price_change':price_change,

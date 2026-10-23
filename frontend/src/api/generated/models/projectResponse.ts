@@ -9,6 +9,7 @@ import type { CurrencyEnum } from "./currencyEnum";
 import type { DesignDefaults } from "./designDefaults";
 import type { EffectiveDesignDefaults } from "./effectiveDesignDefaults";
 import type { PositionResponse } from "./positionResponse";
+import type { ProjectProgress } from "./projectProgress";
 import type { ProjectResponseStatusEnum } from "./projectResponseStatusEnum";
 import type { ProjectVersionResponse } from "./projectVersionResponse";
 import type { WorkingPrice } from "./workingPrice";
@@ -37,6 +38,7 @@ export interface ProjectResponse {
   notes_commercial?: string;
   notes_internal?: string;
   design_defaults?: DesignDefaults;
+  progress?: ProjectProgress;
   working_price?: WorkingPrice | null;
   effective_design_defaults?: EffectiveDesignDefaults;
   /** @nullable */

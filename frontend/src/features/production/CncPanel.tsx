@@ -73,7 +73,7 @@ export function GapList({ gaps }: { gaps: CncGap[] }) {
                 <strong>{gap.name ?? gap.declaration ?? opLabel(gap.kind)}</strong>
                 {gap.component_name ? ` · ${gap.component_name}` : ""}
                 {gap.position_index ? (
-                  <span className="cnc-number"> · Posición {gap.position_index}</span>
+                  <span className="cnc-number"> · Ventana {gap.position_index}</span>
                 ) : null}
                 {units.length ? (
                   <span className="cnc-number">
@@ -82,7 +82,7 @@ export function GapList({ gaps }: { gaps: CncGap[] }) {
                   </span>
                 ) : null}
                 <p>{gap.detail}</p>
-                <small>Fuente: {gap.source || "Datos sellados de taller"}</small>
+                <small>Origen: {gap.source || "Datos de la orden de taller"}</small>
               </li>
             );
           })}
@@ -239,7 +239,7 @@ export function CncPanel({ orderId, canWrite }: { orderId: string; canWrite: boo
           .map((b) => b.toString(16).padStart(2, "0"))
           .join("");
         if (!reference || hash !== reference.sha256 || bytes.byteLength !== reference.bytes)
-          throw new Error("El archivo no coincide con su manifiesto sellado.");
+          throw new Error("El archivo no coincide con su manifiesto de la orden.");
       }
       const url = URL.createObjectURL(target.blob),
         anchor = document.createElement("a");
@@ -258,8 +258,7 @@ export function CncPanel({ orderId, canWrite }: { orderId: string; canWrite: boo
       setBusy(false);
     }
   }
-  if (loading && !data)
-    return <LoadingState label="Revisando mecanizado y autoridad de máquinas" />;
+  if (loading && !data) return <LoadingState label="Revisando mecanizado y origen de máquinas" />;
   if (!data)
     return (
       <ErrorState
@@ -338,7 +337,7 @@ export function CncPanel({ orderId, canWrite }: { orderId: string; canWrite: boo
         <p className="cnc-person">
           Sin máquinas activas.{" "}
           <a href="#cnc-authorities" onClick={openAuthority}>
-            Declara una máquina y su autoridad
+            Declara una máquina y su origen
           </a>{" "}
           con el jefe de taller.
         </p>
@@ -401,10 +400,10 @@ export function CncPanel({ orderId, canWrite }: { orderId: string; canWrite: boo
                 <span>
                   <strong>{member.member_label}</strong>
                   <span>
-                    {member.workshop_sku ?? "Sin dato · perfil no sellado"} ·{" "}
+                    {member.workshop_sku ?? "Falta completar · perfil ausente en la orden"} ·{" "}
                     {member.role
                       ? (tOptional("production.role." + member.role) ?? "Función no declarada")
-                      : "Sin dato · función"}
+                      : "Falta completar · función"}
                   </span>
                 </span>
                 <span className="cnc-number">{mm(member.length_mm)}</span>
@@ -463,25 +462,25 @@ export function CncPanel({ orderId, canWrite }: { orderId: string; canWrite: boo
                           <div>
                             <dt>Herramienta</dt>
                             <dd className="cnc-number">
-                              {operation.tool_id ?? "Sin dato · falta herramienta"}
+                              {operation.tool_id ?? "Falta herramienta"}
                             </dd>
                           </div>
                           <div>
-                            <dt>Fuente</dt>
+                            <dt>Origen</dt>
                             <dd>
                               {operation.detail.source ??
                                 (operation.basis === "member_end_overlap"
-                                  ? "Solape sellado: diferencia entre largo de corte y tramo físico, por extremo"
+                                  ? "Solape de la orden: diferencia entre largo de corte y tramo físico, por extremo"
                                   : operation.basis.startsWith("handle_policy:")
-                                    ? "Regla de manilla sellada de la revisión"
-                                    : "Regla técnica sellada; abre los detalles")}
+                                    ? "Regla de manilla de esta revisión"
+                                    : "Regla técnica de esta revisión; abre los detalles")}
                             </dd>
                           </div>
                         </dl>
                         <details className="ui-tech">
-                          <summary>Coordenadas del vano y detalles técnicos</summary>
+                          <summary>Coordenadas de la ventana y detalles técnicos</summary>
                           <p>
-                            Estas coordenadas pertenecen al plano del vano; no son Y/Z de
+                            Estas coordenadas pertenecen al plano de la ventana; no son Y/Z de
                             herramienta.
                           </p>
                           <p className="cnc-number">
@@ -594,11 +593,11 @@ export function CncPanel({ orderId, canWrite }: { orderId: string; canWrite: boo
                 {(
                   {
                     machine: "máquina y herramientas",
-                    preview: "sección y posición física",
+                    preview: "sección y ubicación física",
                     identity: "plan y semilla",
                     declared_intent_gaps: "declaraciones pendientes",
                   } as Record<string, string>
-                )[x.field] ?? "autoridad"}
+                )[x.field] ?? "origen"}
                 .
               </li>
             ))}
@@ -636,7 +635,7 @@ export function CncPanel({ orderId, canWrite }: { orderId: string; canWrite: boo
           ) : (
             <p className="cnc-person">
               {review.verdict === "BLOCK"
-                ? "Completa las autoridades señaladas con el jefe de taller antes de generar."
+                ? "Completa los datos señalados con el jefe de taller antes de generar."
                 : "El dueño o jefe de taller debe confirmar la generación."}{" "}
               <a href="#cnc-authorities" onClick={openAuthority}>
                 Abrir máquinas y herramientas

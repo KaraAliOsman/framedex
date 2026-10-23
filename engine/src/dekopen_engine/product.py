@@ -1960,7 +1960,7 @@ def _evaluate_product(
         try:
             validate_family(_top_with_module_dims(module), params)
             if (module.frameless is not None or module.contour is not None) and module.tree.extras:
-                raise ValueError("Sin dato: esta forma no declara una autoridad de accesorios; revisa su catálogo.")
+                raise ValueError("Falta completar: esta forma no declara reglas de accesorios; revisa su catálogo.")
             if module.frameless is not None:
                 result, frameless_issues = _evaluate_frameless_module(
                     module, coupler_articles=coupler_articles

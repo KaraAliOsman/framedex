@@ -212,7 +212,7 @@ function materialClass(material: string | undefined, kind?: string): string {
 }
 
 function cutAngleText(value: string | null | undefined): string {
-  return value == null ? "Sin dato" : `${fmtMm(value)}°`;
+  return value == null ? "Falta completar" : `${fmtMm(value)}°`;
 }
 
 /** Keep labels and hit targets in screen pixels while the material geometry
@@ -517,7 +517,7 @@ function CutPlanSheetSvg({
 }
 
 function shortId(value: string | null | undefined): string {
-  return value ? "Sin dato · falta código" : "Sin dato";
+  return value ? "Falta código" : "Falta completar";
 }
 
 /** Human piece identity for the workshop: the workshop SKU the printed
@@ -558,8 +558,8 @@ export function CutPlanView({
       id: selected.shopCode ?? pieceLabel(piece, selected.code),
       planRef: selected.code,
       kind: selected.kind,
-      sku: piece.workshop_sku ?? "Sin dato · falta código de catálogo",
-      material: (cut.material && domainLabels[cut.material]) ?? "Sin dato · falta material",
+      sku: piece.workshop_sku ?? "Falta código de catálogo",
+      material: (cut.material && domainLabels[cut.material]) ?? "Falta material",
       color: cut.color ? (domainLabels[cut.color] ?? cut.color) : null,
       role: cutRoleLabel(cut.role),
       position:
@@ -567,7 +567,7 @@ export function CutPlanView({
         shortId(piece.source_position_id),
       bay: (piece.bay_id && labels[piece.bay_id]) ?? shortId(piece.bay_id),
       leaf: (piece.leaf_id && labels[piece.leaf_id]) ?? shortId(piece.leaf_id),
-      unit: piece.unit_index ?? "Sin dato",
+      unit: piece.unit_index ?? "Falta completar",
       measure: isCut
         ? `${fmtMm(cut.length_mm)} mm`
         : `${fmtMm(nest.width_mm)} × ${fmtMm(nest.height_mm)} mm${nest.rotated ? ` (${t("production.optimizeRotated")})` : ""}`,
@@ -657,7 +657,7 @@ export function CutPlanView({
                   {t("production.cutplanYield")} {fmtPct(bar.yield_pct)} % ·{" "}
                   {t("production.cutplanRemainder")} {fmtMm(bar.remainder_mm)} mm
                   {bar.source === "REMNANT"
-                    ? ` · origen ${bar.remnant_code ?? "Sin dato · falta código de retazo"}`
+                    ? ` · origen ${bar.remnant_code ?? "Falta código de retazo"}`
                     : " · barra nueva"}
                 </figcaption>
                 <CutPlanBarSvg
@@ -670,8 +670,8 @@ export function CutPlanView({
                 <p className="cutplan-destination ui-value">
                   {bar.remainder_reusable
                     ? bar.produced_remnant
-                      ? `${fmtMm(bar.remainder_mm)} mm → ${bar.produced_remnant.code} · ${bar.produced_remnant.rack_location ?? "Sin dato · declara destino"} · alta al completar corte`
-                      : `${fmtMm(bar.remainder_mm)} mm → Sin dato · plan histórico sin dirección; reoptimiza antes de cortar`
+                      ? `${fmtMm(bar.remainder_mm)} mm → ${bar.produced_remnant.code} · ${bar.produced_remnant.rack_location ?? "Declara destino"} · alta al completar corte`
+                      : `${fmtMm(bar.remainder_mm)} mm → Falta completar · plan histórico sin dirección; reoptimiza antes de cortar`
                     : `${fmtMm(bar.remainder_mm)} mm → desecho`}
                 </p>
               </figure>
@@ -714,7 +714,7 @@ export function CutPlanView({
                 {unnested.map((pane, index) => (
                   <tr key={index}>
                     <td>
-                      {pane.group ?? "Sin dato · falta grupo de vidrio"}
+                      {pane.group ?? "Falta grupo de vidrio"}
                       {pane.quantity > 1 ? ` ×${pane.quantity}` : ""}
                     </td>
                     <td>
@@ -722,10 +722,10 @@ export function CutPlanView({
                     </td>
                     <td>
                       {tOptional(`production.unnestedReason.${pane.reason}`) ??
-                        "Sin dato · revisa el vidrio en Catálogos (plancha y composición)."}
+                        "Revisa el vidrio en Catálogos (plancha y composición)."}
                       <p>
                         {pane.reason === "shaped_glass_outline" ? (
-                          "Prepara la plantilla del contorno sellado para el vidriero."
+                          "Prepara la plantilla del contorno de la orden para el vidriero."
                         ) : (
                           <a href="/catalogs/sheet-formats">
                             Catálogo › Vidrios › Formatos: declara un suministro compatible y vuelve

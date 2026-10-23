@@ -86,7 +86,7 @@ export function AiMetricsCard({
         </div>
         <div>
           <dt>{t("aiws.metrics.completion")}</dt>
-          <dd>{pct(jobs.completion_rate) ?? "Sin dato"}</dd>
+          <dd>{pct(jobs.completion_rate) ?? "Falta completar"}</dd>
         </div>
         <div>
           <dt>{t("aiws.metrics.proposed")}</dt>
@@ -115,7 +115,7 @@ export function AiMetricsCard({
         </div>
         <div>
           <dt>{t("aiws.metrics.avgDuration")}</dt>
-          <dd>{Number.isFinite(avgSeconds) ? minutes(avgSeconds) : "Sin dato"}</dd>
+          <dd>{Number.isFinite(avgSeconds) ? minutes(avgSeconds) : "Falta completar"}</dd>
         </div>
         <div>
           <dt>{t("aiws.metrics.credits")}</dt>

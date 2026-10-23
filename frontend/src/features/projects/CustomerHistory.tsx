@@ -18,7 +18,7 @@ export function CustomerHistory({ history }: { history: ClientDossierResponse })
       <section>
         <h3>Cuenta por moneda</h3>
         <p className="customer-hint">
-          Fuente: acuerdo elegido y pagos vigentes. El motor calcula cada saldo; las monedas se
+          Origen: acuerdo elegido y pagos vigentes. El motor calcula cada saldo; las monedas se
           muestran por separado.
         </p>
         {history.balances.map((account) => (
@@ -70,7 +70,7 @@ export function CustomerHistory({ history }: { history: ClientDossierResponse })
                 />
                 <span>
                   {project.balance === null
-                    ? `Sin dato · ${project.money_cause}`
+                    ? `Falta completar · ${project.money_cause}`
                     : `Saldo ${formatMoney(project.balance, project.currency ?? "CLP")}${project.simulated ? " · incluye simulación" : ""}`}
                 </span>
                 <time>{formatDate(project.updated_at)}</time>
@@ -124,7 +124,7 @@ export function CustomerHistory({ history }: { history: ClientDossierResponse })
                 <span>
                   {payment.currency
                     ? formatMoney(payment.amount, payment.currency)
-                    : "Sin dato de moneda · revisa el comprobante"}
+                    : "Moneda por completar · revisa el comprobante"}
                   {payment.simulated ? " · Simulado" : ""}
                 </span>
                 {payment.voided_at && <StatusBadge label="Anulado" tone="warning" />}

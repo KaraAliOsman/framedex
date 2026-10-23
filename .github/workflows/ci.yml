@@ -104,6 +104,9 @@ jobs:
   database-gate:
     name: Database Gate
     runs-on: ${{ vars.DEKOPEN_CI_RUNNER || 'ubuntu-24.04' }}
+    permissions:
+      contents: read
+      packages: read
     steps:
       - uses: actions/checkout@v7.0.1
 
@@ -142,10 +145,28 @@ jobs:
         working-directory: frontend
         run: npx playwright install --with-deps chromium
 
+      # Anonymous pulls from shared runner addresses hit ghcr.io rate limits;
+      # the job's own short-lived token pulls the same public Supabase images.
+      - name: Authenticate Supabase image pulls
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
       - name: Live DB gate (pgTAP, RLS integration, auth e2e, PostgreSQL 16)
         env:
           POSTGRES16_CONTAINER: ${{ job.services.postgres16.id }}
+          # ghcr.io throttles the shared runners; the same Supabase images are
+          # published on Docker Hub, which GitHub-hosted runners pull with higher limits.
+          SUPABASE_INTERNAL_IMAGE_REGISTRY: docker.io
         run: make test-db
+
+      # A failed browser gate keeps its traces and screenshots for diagnosis.
+      - name: Keep Playwright traces of a failed gate
+        if: failure()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: playwright-results
+          path: frontend/test-results
+          retention-days: 7
+          if-no-files-found: ignore
 
     services:
       postgres16:

@@ -144,7 +144,7 @@ def test_window_screen_covers_complete_divided_frame_and_leaf_screen_covers_each
 
 def test_no_guessed_extra_missing_authority_or_incompatible_screen() -> None:
     params,node = extra_context()
-    with pytest.raises(ValueError,match="Sin dato"):
+    with pytest.raises(ValueError,match="Falta completar"):
         calculate_geometry(node.model_copy(update={"extras":[ExtraSelection(code="UNKNOWN")]}),params,finish="WHITE")
     with pytest.raises(ValueError,match="compatible"):
         calculate_geometry(node.model_copy(update={"extras":[ExtraSelection(code="SCREEN_SLIDE")]}),params,finish="WHITE")
@@ -247,5 +247,5 @@ def test_shape_without_extra_authority_cannot_silently_drop_selection(shape: str
     product = ProductModel(version='product-v2',assembly=CoupledAssembly(modules=[module]))
     result = evaluate_product(product,params,coupler_articles={},finish='WHITE')
     assert result.status is ProductStatus.MANUFACTURING_INCOMPLETE
-    assert any('autoridad de accesorios' in str(issue.params) for issue in result.issues)
+    assert any('reglas de accesorios' in str(issue.params) for issue in result.issues)
     assert result.bom is None

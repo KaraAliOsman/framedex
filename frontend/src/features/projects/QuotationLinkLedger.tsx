@@ -34,7 +34,7 @@ function Deadline({
           disabled={busy}
         />
       </label>
-      <p>Hora local del navegador. La vigencia comercial conserva la fecha sellada del PDF.</p>
+      <p>Hora local del navegador. La vigencia comercial conserva la fecha original del PDF.</p>
       <button
         type="button"
         disabled={!date || busy}
@@ -94,7 +94,7 @@ export function QuotationLinkLedger({
                   <StatusBadge showIcon={false} data-status={state.toLowerCase()}>
                     {state === "DECLINED" && link.decision_kind === "DECLINED"
                       ? "Rechazado"
-                      : (labels[state] ?? "Sin dato")}
+                      : (labels[state] ?? "Falta completar")}
                   </StatusBadge>
                   <span>
                     {link.link_source === "DOCUMENT" ? "QR del PDF" : "Enlace regenerado"}
@@ -128,7 +128,7 @@ export function QuotationLinkLedger({
                       {link.selected_revision && (
                         <p>
                           Solución elegida: {formatRevision(link.selected_revision)}
-                          {link.position_index ? ` · posición ${link.position_index}` : ""}
+                          {link.position_index ? ` · ventana ${link.position_index}` : ""}
                         </p>
                       )}
                       {link.decided_note ? <blockquote>{link.decided_note}</blockquote> : null}
@@ -152,7 +152,8 @@ export function QuotationLinkLedger({
                                   </dt>
                                   <dd>
                                     {String(
-                                      (link.evidence as Record<string, unknown>)[key] || "Sin dato",
+                                      (link.evidence as Record<string, unknown>)[key] ||
+                                        "Falta completar",
                                     )}
                                   </dd>
                                 </div>

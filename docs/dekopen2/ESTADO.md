@@ -4,19 +4,190 @@ Encargo del dueño: 21-10-2026. Cada fase se entrega por PR y se fusiona con
 Lint & Typecheck, Test Suite, Frontend Build y Database Gate aprobados.
 Producción y precios comerciales requieren autorización aparte.
 
-| Fase | Alcance                                            | Estado                                       | Rama / PR                                                                                                                                                                                                                                                                                                                                  |
-| ---- | -------------------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| P01  | Catálogo v2: backend, origen, niveles y plantillas | Hecha                                        | [P01a #164](https://github.com/KaraAliOsman/framedex/pull/164), [P01b #165](https://github.com/KaraAliOsman/framedex/pull/165), [P01c #166](https://github.com/KaraAliOsman/framedex/pull/166), [P01d #167](https://github.com/KaraAliOsman/framedex/pull/167) y [P01e #168](https://github.com/KaraAliOsman/framedex/pull/168) fusionadas |
-| P02  | Ficha de serie editable                            | Hecha                                        | Sub-PR [#169](https://github.com/KaraAliOsman/framedex/pull/169)–[#173](https://github.com/KaraAliOsman/framedex/pull/173) fusionadas                                                                                                                                                                                                      |
-| P03 | Alta de serie y ventana de prueba | Implementada; fusión final en curso | #174–#180 fusionadas; [P03h #181](https://github.com/KaraAliOsman/framedex/pull/181) espera sus cuatro controles |
-| P04  | Precio simple automático                           | Implementada; aceptación final y CI en curso | [#182](https://github.com/KaraAliOsman/framedex/pull/182)–[#187](https://github.com/KaraAliOsman/framedex/pull/187), `gpt/dk2-p04g-precio-obra`                                                                                                                                                                                            |
-| P05  | Navegación, Hoy y Obras                            | Pendiente                                    | —                                                                                                                                                                                                                                                                                                                                          |
-| P06  | Mesa de la obra y edición directa                  | Pendiente                                    | —                                                                                                                                                                                                                                                                                                                                          |
-| P07  | Cotización y portal                                | Pendiente                                    | —                                                                                                                                                                                                                                                                                                                                          |
-| P08  | Agente v2                                          | Pendiente                                    | —                                                                                                                                                                                                                                                                                                                                          |
-| P09  | Taller e instalación                               | Pendiente                                    | —                                                                                                                                                                                                                                                                                                                                          |
-| P10  | Onboarding, biblioteca Chile y aceptación Proline  | Pendiente                                    | —                                                                                                                                                                                                                                                                                                                                          |
-| P11  | Pulido y cierre                                    | Pendiente                                    | —                                                                                                                                                                                                                                                                                                                                          |
+| Fase | Alcance                                            | Estado                               | Rama / PR                                                                                                                                                                                                                                                                                                                                  |
+| ---- | -------------------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| P01  | Catálogo v2: backend, origen, niveles y plantillas | Hecha                                | [P01a #164](https://github.com/KaraAliOsman/framedex/pull/164), [P01b #165](https://github.com/KaraAliOsman/framedex/pull/165), [P01c #166](https://github.com/KaraAliOsman/framedex/pull/166), [P01d #167](https://github.com/KaraAliOsman/framedex/pull/167) y [P01e #168](https://github.com/KaraAliOsman/framedex/pull/168) fusionadas |
+| P02  | Ficha de serie editable                            | Hecha                                | Sub-PR [#169](https://github.com/KaraAliOsman/framedex/pull/169)–[#173](https://github.com/KaraAliOsman/framedex/pull/173) fusionadas                                                                                                                                                                                                      |
+| P03  | Alta de serie y ventana de prueba                  | Hecha                                | #174–#181 fusionadas; [P03h #181](https://github.com/KaraAliOsman/framedex/pull/181) fusionada el 22-10-2026                                                                                                                                                                                                                               |
+| P04  | Precio simple automático                           | Implementada; CI y fusiones en curso | [#182](https://github.com/KaraAliOsman/framedex/pull/182)–[#187](https://github.com/KaraAliOsman/framedex/pull/187), [#188](https://github.com/KaraAliOsman/framedex/pull/188)                                                                                                                                                             |
+| P05  | Navegación, Hoy y Obras                            | En curso                             | [P05a #189](https://github.com/KaraAliOsman/framedex/pull/189), [P05b #190](https://github.com/KaraAliOsman/framedex/pull/190); P05c `gpt/dk2-p05c-hoy`                                                                                                                                                                                    |
+| P06  | Mesa de la obra y edición directa                  | En curso                             | —                                                                                                                                                                                                                                                                                                                                          |
+| P07  | Cotización y portal                                | Pendiente                            | —                                                                                                                                                                                                                                                                                                                                          |
+| P08  | Agente v2                                          | Pendiente                            | —                                                                                                                                                                                                                                                                                                                                          |
+| P09  | Taller e instalación                               | Pendiente                            | —                                                                                                                                                                                                                                                                                                                                          |
+| P10  | Onboarding, biblioteca Chile y aceptación Proline  | Pendiente                            | —                                                                                                                                                                                                                                                                                                                                          |
+| P11  | Pulido y cierre                                    | Pendiente                            | —                                                                                                                                                                                                                                                                                                                                          |
+
+## P06 · Mesa de la obra
+
+- P06a `gpt/dk2-p06a-obra-unica`, sobre P05k #199 (`1e1ead31`), reúne lista,
+  dibujo e inspector bajo `VITE_OBRA_VISTA_UNICA` (activa; `false` recupera las
+  vistas anteriores). Edición y guardado desde 390 px, 2D/3D en el lienzo,
+  precio guardado con desglose y Escape sin operación; la sesión y el historial
+  sobreviven a las secciones. La colección de lotes sigue en Más.
+- 1.257 unitarias frontend (cuatro workers) y 89 regresiones dirigidas pasan; lint, tipos,
+  guardianes y build aprobados. [Aceptación y límites](../redesign/captures/dk2-p06a/aceptacion.md).
+  P06 sigue en curso: P06b integra precio simple vivo, respuesta menor de
+  100 ms, chips de corrección y extremos de 120/500 ventanas.
+- La pila conserva sus dependencias y espera fusiones en orden hacia main
+  con cuatro controles sobre cada head actual. P04d #185 está fusionada;
+  P04e #186 repite Database Gate sobre `5e653f8e`. La corrección de las pruebas
+  de Obras se integró sin force en P05g `2c9fb423` y se propagó hasta P05k.
+
+## P05 · Navegación, Hoy y Obras
+
+- P05k `gpt/dk2-p05k-diagnosticos` cierra la revisión contextual de los
+  diagnósticos del motor y mensajes del servidor en 55 módulos Python.
+  Suite completa 2.860 PASS y dos xfail previos; 81 integraciones PostgreSQL,
+  229 regresiones finales, 94 de prompts y dos E2E de catorce superficies pasan.
+  SQL, claves, números y estructura ejecutable idénticos. Solo nueve avisos
+  de vierteaguas cambian en los 22 archivos dorados revisados; se regenera
+  con el escritor canónico y se comprueban bytes. Encabezados, marcadores
+  históricos y sinónimos se conservan. [Evidencia](../redesign/captures/dk2-p05k/aceptacion.md).
+  P05j corrige dos expectativas textuales en `4beeb8d1`, con 95 pruebas verdes;
+  P05 queda a la espera del CI y las fusiones de su cadena.
+
+- P05j `gpt/dk2-p05j-documentos-taller`: veintiún módulos de documentos,
+  corte, CNC y terreno con glosario contextual. 288 unitarias dirigidas,
+  19 finales de cotización, 74 integraciones PostgreSQL y cuatro E2E pasan.
+  Nueve PDF, 49 páginas rasterizadas y revisadas; códigos/QR, cifras y bytes
+  históricos conservados. [PDF y 21 capturas](../redesign/captures/dk2-p05j/aceptacion.md).
+  Queda la ronda final de diagnósticos del motor y otros mensajes de servidor.
+- P04c #184 se fusionó en `85bb9151` el 22-10-2026. P04d #185 integra
+  main en `f79926de` y repite los cuatro controles. P05f #194 corrige las
+  expectativas antiguas de navegación/índice en `4ac52381`; once E2E pasan
+  sobre su build propio. Las fusiones continúan en orden.
+
+- P05i `gpt/dk2-p05i-mensajes-servidor`: diecinueve módulos de obras,
+  precios, búsqueda e informes con textos de taller. Backend 1.737 PASS y
+  18 regresiones finales; integraciones PostgreSQL y 31 regresiones finales
+  de servicios/acabados/precios aprobadas. Cuatro E2E pasan catorce superficies,
+  precios exactos, extremos y axe. [12 capturas](../redesign/captures/dk2-p05i/aceptacion.md).
+  Documentos, motor y otras áreas de servidor siguen pendientes en P05.
+
+- P05h publicada en [#196](https://github.com/KaraAliOsman/framedex/pull/196),
+  `b9b98cee`. P05i `gpt/dk2-p05i-mensajes-servidor` revisa los mensajes
+  de obras, precios, búsqueda e informes. Documentos y diagnósticos del motor
+  se mantienen como trabajo posterior de P05; P06–P11 siguen pendientes.
+
+- P05h `gpt/dk2-p05h-ventanas` termina la revisión contextual de la interfaz:
+  distingue ventana, medida de obra, paño y coordenada de mecanizado.
+  1.254 unitarias frontend, 55 Python dirigidas, ocho integraciones y 21 E2E
+  pasan. Contratos, enlaces, sinónimos y datos físicos conservan su significado.
+  [28 capturas y límites](../redesign/captures/dk2-p05h/aceptacion.md).
+  Montaje tarda 8,5–10,0 s y Comercial 2,1–3,3 s; optimización pendiente en P11.
+  La revisión de mensajes y documentos de servidor continuará en P05i.
+
+- P05g `gpt/dk2-p05g-lenguaje` termina la primera purga global: cero voces
+  prohibidas en los textos de producto con un detector AST activo, sin lista
+  base. Se corrigen también los avisos térmicos y de Hoy en el servidor.
+  1.254 unitarias frontend y 2.858 Python aprobadas (dos xfail previos);
+  bytes dorados intactos. Después de corregir lecturas repetidas de costos
+  DEMO pasan 46 regresiones unitarias, 25 integraciones PostgreSQL y las ocho
+  interacciones del editor, sin aumentar sus tiempos ni cambiar sus cifras.
+  El prefetch pertenece al cálculo y vuelve a leer tarifas en la siguiente
+  consulta; la integración comprueba igualdad exacta y actualización real.
+- Once pantallas a 1440/390 pasan lenguaje, contenido cargado, separación de
+  pestañas y desborde. Se corrigió el solapamiento móvil de etiquetas. Pasan
+  además 16 E2E de navegación/Obras y cuatro de precios con extremos y axe.
+  Lint, tipos, formato, guardas y build aprobados. Carga local 410–1.855 ms.
+  [22 capturas y límites](../redesign/captures/dk2-p05g/aceptacion.md).
+  La revisión contextual queda en P05h y los mensajes de servidor siguen pendientes;
+  P05 no está hecha y P06–P11 siguen pendientes.
+- P04a #182 (`0f399a1c`) y P04b #183 (`35682cce`) están fusionadas.
+  P04c #184 integra `main` en `2f638dd5` y repite los cuatro controles. P05a #189 corrige el bloqueo síncrono de su fixture en
+  `ff2b87e2`: sus diez recorridos originales pasan sobre el build de esa rama;
+  CI se repite. Las fusiones continúan en orden con los cuatro controles.
+
+- P05f publicada en [#194](https://github.com/KaraAliOsman/framedex/pull/194),
+  commit `a4e2ca98`. El guardián global y la aceptación de P05g se registran
+  arriba; la API generada conserva sus contratos.
+
+- P05e publicada en [#193](https://github.com/KaraAliOsman/framedex/pull/193).
+  P05f `gpt/dk2-p05f-cotizaciones-obras` conecta el índice de servidor y lleva
+  las cotizaciones emitidas a Obras. `/quotes` conserva filtros, hash y offset
+  exacto al redirigir; las filas conservan seguimiento y revisión de destino.
+  La búsqueda mantiene foco, cancela consultas y separa caché por usuario,
+  empresa y rol. El formulario completo de alta conserva cliente y serie.
+  1.254 unitarias frontend y 69 regresiones finales aprobadas; seis E2E finales
+  con roles, filtros, 500 obras, 320 px, texto 200 % y axe aprobados. Lint,
+  tipos, formato, guardas y build aprobados. Carga local 271–304 ms.
+  [Dieciséis capturas y límites](../redesign/captures/dk2-p05f/aceptacion.md).
+  Queda la purga global de lenguaje con su guardián. P06–P11 pendientes.
+- P03h ya está fusionada en `main` (`45c190a6`). P04a integró esa base en
+  `d7998257` y repite los cuatro controles; las siguientes fusiones esperan
+  ese orden. Un gate verde de un head anterior no autoriza el nuevo.
+
+- P05d se publica en [#192](https://github.com/KaraAliOsman/framedex/pull/192)
+  con los seis recorridos integrados aprobados y doce capturas seleccionadas.
+  P05e `gpt/dk2-p05e-indice-obras` añade el índice de servidor sin límite de
+  500 obras, con páginas y recuentos por etapa. Reutiliza los filtros exactos
+  del índice anterior de cotizaciones, incluido su orden de emisión y offsets.
+  El seguimiento sigue restringido al dueño/vendedor; taller consulta Obras.
+  Una edición entre selección y detalle exige recargar, sin mezclar revisiones.
+  La conexión de este índice a la pantalla y la redirección de `/quotes`
+  corresponden a la siguiente sub-PR; la pantalla actual conserva su límite.
+  Veinticuatro integraciones PostgreSQL y setenta unitarias dirigidas pasan;
+  contrato OpenAPI/orval reproducible, lint, tipos, formato, guardas y build
+  aprobados. El recorrido completo backend pasó 1.735 pruebas y detectó la
+  ruta nueva en la allowlist; corregida explícitamente y comprobada de nuevo.
+
+- P05c se publica en [#191](https://github.com/KaraAliOsman/framedex/pull/191).
+  P05d `gpt/dk2-p05d-obras` conecta etapas reales, búsqueda, recuentos y páginas
+  de 50 filas con enlaces completos. Conserva los filtros históricos de estado
+  y declara el límite de las 500 obras más recientes de la API existente.
+- La oferta vigente elegida aporta su total; precio aplicado solo se usa si
+  corresponde a la revisión. Un borrador sin precio pide abrir para calcular.
+  Seis E2E cubren dueño, vendedor y jefe de taller en 1440/390, 500 obras,
+  0/500 ventanas, 255 caracteres, montos grandes, 320 px y texto al 200 %.
+  [Aceptación P05d](../redesign/captures/dk2-p05d/aceptacion.md).
+- Se integraron en orden las dependencias completas de P03h en P04 y P05,
+  con merges ordinarios y API regenerada. Las PR esperan los cuatro controles
+  nuevamente. No se fusiona un head solo por conservar un gate anterior verde.
+- Pendientes P05: integrar `/quotes` conservando seguimiento, fase, moneda y
+  paginación; purga global y guarda de lenguaje. P06–P11 siguen pendientes.
+
+- P05c añade saludo y fecha, hasta tres métricas reales por rol, tarjeta de
+  cotizaciones preparadas y cola compacta. Revisar abre borradores guardados;
+  navegar a enviar no escribe en la API. La creación manual requiere clic
+  y comparte su implementación entre Hoy y Obras.
+- Catorce unitarias y doce E2E reales de Hoy/navegación pasan, con cinco roles,
+  escritorio y móvil, revisión con teclado, 1.000 tareas, 320 px y texto al
+  200 %. Lint, tipos, build y Ruff del seeder local aprobados.
+  [Aceptación P05c y capturas](../redesign/captures/dk2-p05c/aceptacion.md).
+- La prueba usa un trabajo IA sintético con recibo válido, sin atribuirlo a
+  una llamada de proveedor. El editor bajo 1024 px conserva su lectura actual;
+  edición móvil se revisará en P06. Obras y la purga global siguen pendientes.
+- Correcciones de CI: reapertura/clonación compara el precio comercial que
+  proyecta el motor; correo entregado sin enlace no compara una caducidad
+  ausente; el glosario incluye las cuatro etapas nuevas. Sin reducir gates.
+
+- P05b añade etapas derivadas de la oferta vigente y la solución elegida,
+  órdenes de esa revisión e instalación completa. El motor proyecta el saldo
+  con pagos reales; los anulados y simulados no cierran una obra. Una
+  reposición activa vuelve a Taller; una cancelada no oculta la instalación.
+- La lista de 500 obras obtiene su avance en tres lecturas adicionales, sin
+  recalcular precios por fila ni presentar una caché como precio actual.
+  Los borradores no heredan el importe de una cotización anterior.
+- Hoy distingue el PDF emitido de un enlace compartido/correo entregado y
+  propone revisar y enviar. Sugiere confirmar los valores vigentes de las
+  series usadas en borradores. La tarjeta de IA consulta solo obras con
+  ventanas, guardadas y verificadas por los trabajos del propio usuario.
+- Veinte integraciones PostgreSQL y 24 unitarias aprobadas, incluidos cinco
+  roles, cruce de tenant/usuario, opción elegida, reposiciones, anulación y
+  simulación de pagos, sugeridos confirmados y 500 obras sin N+1.
+- OpenAPI/orval se regeneran desde los serializers. Sin tablas nuevas,
+  escrituras de estado, envíos automáticos ni cambios en fórmulas.
+
+- P05a implementa los destinos y el inicio Hoy para cinco roles. Clientes sigue
+  accesible por búsqueda y ruta; Empresa reúne Informes y Funciones avanzadas.
+- Diez E2E reales de navegación en 1440/390 pasan; 21 unitarias de rutas/shell
+  pasan. La suite frontend completa aprueba 1.184 pruebas. [Aceptación por rol y 16 capturas](../redesign/captures/dk2-p05a/aceptacion.md).
+- El contenido nuevo de Hoy, las etapas y el glosario global siguen en curso.
+  `/quotes` mantiene el índice anterior hasta preservar sus filtros en Obras.
+- P04g publicó `f5c4f35f` para corregir una variable CSS inexistente detectada
+  por CI; sus 34 comprobaciones de tokens pasan. Espera los cuatro gates
+  nuevamente antes de fusionar. No se ha debilitado ninguna comprobación.
 
 ## P04 · Precio simple automático
 

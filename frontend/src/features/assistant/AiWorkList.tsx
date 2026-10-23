@@ -121,7 +121,7 @@ export function AiWorkList({
               data-status={(work.job_state ?? work.status).toLowerCase()}
             >
               {(work.job_state ? STATES[work.job_state] : PROVIDER_STATES[work.status]) ??
-                "Sin dato"}
+                "Falta completar"}
             </StatusBadge>
             {work.test_mode && (
               <StatusBadge showIcon={false} className="status-chip">
@@ -189,7 +189,7 @@ export function AiWorkList({
           <details className="ai-advanced">
             <summary>¿De dónde sale? · Traza del trabajo</summary>
             <p>
-              Registro del proveedor: {PROVIDER_STATES[work.status] ?? "Sin dato"}.{" "}
+              Registro del proveedor: {PROVIDER_STATES[work.status] ?? "Falta completar"}.{" "}
               {work.fallback
                 ? "El modelo respondió mediante JSON validado después de rechazar herramientas nativas."
                 : "La respuesta conserva la validación del servidor."}
@@ -225,7 +225,7 @@ export function AiWorkList({
                 <Link to="/settings/general#inteligencia-artificial">
                   Ajustes › Inteligencia artificial
                 </Link>
-                . Las llamadas anteriores mantienen su fuente original.
+                . Las llamadas anteriores mantienen su origen anterior.
               </p>
             )}
           </details>

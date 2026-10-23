@@ -74,7 +74,7 @@ export function CncMemberDrawing({
         </>
       ) : (
         <p className="cnc-person">
-          Sin dato · falta el largo físico sellado. No se puede ubicar el mecanizado.
+          Falta el largo físico de la orden. No se puede ubicar el mecanizado.
         </p>
       )}
       <nav className="cnc-mark-selectors" aria-label={`Elegir operación de ${label}`}>
@@ -85,7 +85,7 @@ export function CncMemberDrawing({
             onClick={() => onSelectOp(op.operation_id)}
           >
             <span className="cnc-number">{i + 1}</span> · {opLabel(op.kind)} · X{" "}
-            {op.u_mm == null ? "Sin dato" : `${fmtMm(op.u_mm)} mm`}
+            {op.u_mm == null ? "Falta completar" : `${fmtMm(op.u_mm)} mm`}
           </Button>
         ))}
       </nav>
@@ -94,7 +94,7 @@ export function CncMemberDrawing({
           <svg
             viewBox="0 0 200 200"
             role="img"
-            aria-label={`Sección sellada de ${label}${endPlane ? ", trabajo sobre plano de extremo" : ""}`}
+            aria-label={`Sección de ${label}${endPlane ? ", trabajo sobre plano de extremo" : ""}`}
           >
             <polygon
               className={endPlane ? "cnc-section-polygon has-end-work" : "cnc-section-polygon"}
@@ -107,33 +107,33 @@ export function CncMemberDrawing({
           </svg>
         ) : null}
         <div>
-          <h5>Sección de perfil sellada</h5>
+          <h5>Sección del perfil en la orden</h5>
           {section ? (
             <>
               <p>
-                {section.synthetic ? "DEMO · sección sintética" : "Sección declarada"} · Fuente:{" "}
+                {section.synthetic ? "DEMO · sección sintética" : "Sección declarada"} · Origen:{" "}
                 {section.authority_source}
               </p>
               <p>
                 Orientación del dibujo:{" "}
                 {section.orientation_declared
-                  ? (loadingLabels[section.orientation] ?? "Sin dato")
-                  : "Sin dato · no fue declarada explícitamente"}
+                  ? (loadingLabels[section.orientation] ?? "Falta completar")
+                  : "Falta completar · no fue declarada explícitamente"}
                 .
               </p>
               <p>La orientación de carga se revisa por perfil en la máquina.</p>
             </>
           ) : (
             <p className="cnc-person">
-              Sin dato · la revisión no selló esta sección. Emite una nueva revisión con el catálogo
-              revisado.
+              Falta completar · la revisión no guardó esta sección. Emite una nueva revisión con el
+              catálogo revisado.
             </p>
           )}
           {selected ? (
             <p>
               {endPlane
                 ? "Trabajo declarado sobre el plano completo del extremo; no representa una trayectoria de herramienta."
-                : "Sin dato · no se declaró Y/Z de herramienta sobre esta sección; se muestra solo la posición longitudinal."}
+                : "Falta completar · no se declaró Y/Z de herramienta sobre esta sección; se muestra solo la coordenada longitudinal."}
             </p>
           ) : null}
         </div>

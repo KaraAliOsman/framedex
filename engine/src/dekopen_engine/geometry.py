@@ -1412,7 +1412,7 @@ def _append_paired_leaves(
     layout, rule = node.hinged_layout, params.paired_leaf_rule
     system_inputs("paired_leaf_rule")
     if layout is None or rule is None:
-        raise MissingFabricationAuthority("Sin dato: declara las hojas activa/pasiva y la regla del inversor.")
+        raise MissingFabricationAuthority("Falta completar: declara las hojas activa/pasiva y la regla del inversor.")
     width = (outer_rect.width_mm + rule.meeting_overlap_mm - rule.meeting_gap_mm) / _TWO
     if width <= Decimal("0"):
         raise ValueError("El encuentro produce una hoja de ancho no positivo.")
@@ -1446,7 +1446,7 @@ def _append_advanced_bay(accumulator: _GeometryAccumulator, *, node: ParametricN
         rect.width_mm-recipe.inset_left_mm-recipe.inset_right_mm,
         rect.height_mm-recipe.inset_top_mm-recipe.inset_bottom_mm)
     if outer.width_mm <= 0 or outer.height_mm <= 0:
-        raise ValueError("Los descuentos de la receta superan el vano disponible.")
+        raise ValueError("Los descuentos de la receta superan el paño disponible.")
     accumulator.computation.openings.append(OpeningTechnicalFacts(bay_id=node.id,
         width_mm=accumulator.nominal_width_mm if node.id == accumulator.top_node_id else rect.width_mm,
         height_mm=accumulator.nominal_height_mm if node.id == accumulator.top_node_id else rect.height_mm))
@@ -2117,7 +2117,7 @@ def _compute_geometry(
             return (selected is not None and selected.threshold_height_mm is not None) or any(
                 has_nested_threshold(child) for child in node.children)
         if any(has_nested_threshold(child) for child in top.children):
-            raise MissingFabricationAuthority("Sin dato: el umbral avanzado necesita su marco propio. Separa el conjunto en módulos acoplados.")
+            raise MissingFabricationAuthority("Falta completar: el umbral avanzado necesita su marco propio. Separa el conjunto en módulos acoplados.")
     if top.opening_type is BayOpeningType.DOOR_DOUBLE:
         raise NotImplementedError("La puerta doble histórica no declara su composición activa/pasiva.")
     if recipe is not None:

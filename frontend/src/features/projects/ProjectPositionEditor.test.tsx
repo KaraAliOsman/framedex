@@ -328,9 +328,9 @@ it.each(["network", "http"])(
     );
     mount();
     const alert = await screen.findByRole("alert");
-    expect(alert).toHaveTextContent("No se pudo abrir la posición");
+    expect(alert).toHaveTextContent("No se pudo abrir la ventana");
     expect(
-      screen.getByRole("heading", { level: 1, name: "No se pudo abrir la posición" }),
+      screen.getByRole("heading", { level: 1, name: "No se pudo abrir la ventana" }),
     ).toBeInTheDocument();
     expect(alert).not.toHaveTextContent("⚠");
     expect(screen.queryByRole("button", { name: t("projects.save") })).not.toBeInTheDocument();

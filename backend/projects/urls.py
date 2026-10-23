@@ -45,8 +45,10 @@ from projects.finishes import FinishPreviewView
 from projects.extras import ExtraPolicyView, ProjectServicesView, ExtrasPreviewView
 from projects.mounting import MountingRulesView, MountingPreviewView, MeasurementConfirmView, RectificationView
 from projects.collection_views import CollectionSettingsView, FlowSimulationView, FiscalSimulationView, CollectionReminderView, CollectionReminderSendView
+from projects.works import WorksView
 
 urlpatterns = [
+    path("projects/works/", WorksView.as_view()),
     path("projects/<uuid:project_id>/thermal/", ProjectThermalView.as_view()),
     path("projects/<uuid:project_id>/thermal/<uuid:position_id>/alternatives/", ThermalAlternativesView.as_view()),
     path("organization/company/",CompanyView.as_view()),

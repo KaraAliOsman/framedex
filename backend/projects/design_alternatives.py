@@ -36,7 +36,7 @@ ALTERNATIVES_SYSTEM = """Eres el diseñador de alternativas de DEKOPEN, un edito
 
 Recibes un JSON con:
 - "brief": la intención del usuario en lenguaje natural (español chileno).
-- "width_mm" y "height_mm": las medidas fijas de la posición — nunca las cambies.
+- "width_mm" y "height_mm": las medidas fijas de la ventana — nunca las cambies.
 - "count": cuántas alternativas distintas proponer.
 - "openings_contract": las aperturas permitidas por módulo.
 - "catalog": los SKU y espesores que existen en el catálogo del cliente.
@@ -65,15 +65,15 @@ def _dimensions(width: Any, height: Any) -> tuple[Decimal, Decimal]:
         height_mm = Decimal(str(height))
     except ArithmeticError:
         raise contract_error(
-            400, "design_dims_invalid", "Las medidas de la posición no son válidas."
+            400, "design_dims_invalid", "Las medidas de la ventana no son válidas."
         ) from None
     if not MIN_DIMENSION_MM <= width_mm <= MAX_WIDTH_MM:
         raise contract_error(
-            400, "design_width_invalid", "El ancho de la posición no es válido."
+            400, "design_width_invalid", "El ancho de la ventana no es válido."
         )
     if not MIN_DIMENSION_MM <= height_mm <= MAX_HEIGHT_MM:
         raise contract_error(
-            400, "design_height_invalid", "El alto de la posición no es válido."
+            400, "design_height_invalid", "El alto de la ventana no es válido."
         )
     return width_mm, height_mm
 

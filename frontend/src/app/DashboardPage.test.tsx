@@ -2,7 +2,8 @@ import { fireEvent, render, screen, within, cleanup } from "@testing-library/rea
 import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { analyticsToday } from "../api/generated/dekopen";
+import { analyticsToday, projectsCreate } from "../api/generated/dekopen";
+import type { PreparedQuotations } from "../api/generated/models";
 import { DashboardPage } from "./DashboardPage";
 import { AttentionBell } from "./AttentionBell";
 
@@ -14,7 +15,7 @@ vi.mock("../auth/AuthSessionProvider", () => ({
     },
   }),
 }));
-vi.mock("../api/generated/dekopen", () => ({ analyticsToday: vi.fn() }));
+vi.mock("../api/generated/dekopen", () => ({ analyticsToday: vi.fn(), projectsCreate: vi.fn() }));
 const item = (index: number) => ({
   key: `due:${index}`,
   kind: "delivery",
@@ -34,12 +35,16 @@ const item = (index: number) => ({
   source: "Agenda real",
   operation_id: null,
 });
-function show(actions = Array.from({ length: 51 }, (_, index) => item(index + 1))) {
+function show(
+  actions = Array.from({ length: 51 }, (_, index) => item(index + 1)),
+  prepared: PreparedQuotations = { count: 0, items: [] },
+) {
   vi.mocked(analyticsToday).mockResolvedValue({
     status: 200,
     data: {
       today: "2026-10-09",
       actions,
+      prepared,
       pipeline: [
         {
           phase: "IN_PRODUCTION",
@@ -75,6 +80,7 @@ it("keeps exact entity and phase/currency links, and preserves ordered actions a
     "href",
     "/production?order=order-1",
   );
+  fireEvent.click(screen.getByText("Venta por etapa", { selector: "summary" }));
   expect(screen.getByRole("link", { name: /En producción/ })).toHaveAttribute(
     "href",
     "/quotes?phase=IN_PRODUCTION&currency=USD",
@@ -94,4 +100,33 @@ it("uses one quiet empty state without zero KPI tiles", async () => {
   show([]);
   expect(await screen.findByRole("heading", { name: "Todo al día" })).toBeVisible();
   expect(screen.queryByRole("list", { name: "Acciones pendientes" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("region", { name: "Resumen de hoy" })).not.toBeInTheDocument();
+  expect(screen.queryByText(/DEKOPEN preparó/)).not.toBeInTheDocument();
+});
+
+it("opens the prepared drafts without applying or sending anything", async () => {
+  show([], {
+    count: 1,
+    items: [{ project_id: "draft", name: "Casa Pérez", code: "P-000001", href: "/projects/draft" }],
+  });
+  expect(await screen.findByRole("heading", { name: "DEKOPEN preparó 1 cosa" })).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: "Revisar" }));
+  const dialog = screen.getByRole("dialog", { name: "Cotizaciones preparadas" });
+  expect(within(dialog).getByRole("link", { name: /Casa Pérez/ })).toHaveAttribute(
+    "href",
+    "/projects/draft",
+  );
+  expect(vi.mocked(projectsCreate)).not.toHaveBeenCalled();
+});
+
+it("starts one draft from the explicit click and reports a denied creation", async () => {
+  show([]);
+  await screen.findByRole("heading", { name: "Todo al día" });
+  vi.mocked(projectsCreate).mockResolvedValue({ status: 403, data: {} } as never);
+  fireEvent.click(screen.getByRole("button", { name: "Nueva cotización" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent("Tu rol no puede crear cotizaciones");
+  expect(projectsCreate).toHaveBeenCalledWith(
+    { name: expect.stringMatching(/^Cotización del /), client_name: "" },
+    { headers: { "X-Organization-ID": "org" } },
+  );
 });

@@ -374,7 +374,7 @@ export function OperatorStationPage() {
                     ) : null}
                     {queue.map((entry) => (
                       <option key={entry.step_id} value={entry.order_id}>
-                        {entry.order_code} · {domainLabels[entry.status ?? ""] ?? "Sin dato"}
+                        {entry.order_code} · {domainLabels[entry.status ?? ""] ?? "Falta completar"}
                       </option>
                     ))}
                   </select>
@@ -402,18 +402,18 @@ export function OperatorStationPage() {
                     </span>
                   </header>
                   <h2 className="production-piece-code">
-                    {piece?.code ?? detail.making?.code ?? "Sin dato · escanea una etiqueta"}
+                    {piece?.code ?? detail.making?.code ?? "Falta completar · escanea una etiqueta"}
                   </h2>
                   <p className="production-piece-measure ui-value">
                     {piece
                       ? pieceMeasure(piece)
                       : detail.making?.width_mm && detail.making.height_mm
                         ? `${fmtMm(detail.making.width_mm)} × ${fmtMm(detail.making.height_mm)} mm`
-                        : "Sin dato · faltan medidas selladas"}
+                        : "Faltan medidas de la orden"}
                   </p>
                   <p>
                     {piece ? cutRoleLabel(piece.role) + " · " : ""}
-                    {detail.making?.location_tag ?? "Sin dato · destino no declarado"}
+                    {detail.making?.location_tag ?? "Falta completar · destino no declarado"}
                     {piece?.unit ? ` · Unidad ${formatDecimal(piece.unit)}` : ""}
                   </p>
                   <p>

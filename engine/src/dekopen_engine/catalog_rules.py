@@ -65,7 +65,7 @@ def sliding_parameters(params: SystemParams) -> SlidingSystemParameters:
         system_inputs("sliding_parameters")
         return params.sliding
     if not params.uses_legacy_rules:
-        raise MissingFabricationAuthority("Sin dato: faltan los parámetros de corredera del sistema.")
+        raise MissingFabricationAuthority("Falta completar: declara los parámetros de corredera de la serie.")
     # Legacy snapshots carry explicit flat values; missing values never acquire
     # a synthetic sliding allowance. This decoder does not authorize new rows.
     system_inputs("pulley_height_mm", "central_overlap_mm", "sliding_lateral_clearance_mm",
@@ -76,7 +76,7 @@ def sliding_parameters(params: SystemParams) -> SlidingSystemParameters:
               params.sliding_glazing_deduction_width_mm,
               params.sliding_glazing_deduction_height_mm, params.rail_type)
     if any(value is None for value in values):
-        raise MissingFabricationAuthority("Sin dato: la autoridad histórica de corredera está incompleta.")
+        raise MissingFabricationAuthority("Falta completar: las reglas históricas de corredera están incompletas.")
     assert params.pulley_height_mm is not None and params.central_overlap_mm is not None
     assert params.sliding_lateral_clearance_mm is not None and params.sliding_end_add_mm is not None
     assert params.sliding_glazing_deduction_width_mm is not None
@@ -118,9 +118,9 @@ def validate_profile_authority(article: EffectiveProfileArticle, *, legacy: bool
     if legacy:
         return
     if article.cut_rule is None:
-        raise MissingFabricationAuthority(f"Sin dato: falta la regla de corte de {article.sku}.")
+        raise MissingFabricationAuthority(f"Falta completar: declara la regla de corte de {article.sku}.")
     if reinforced_member and article.material is MaterialType.PVC and article.reinforcement_rule is None:
-        raise MissingFabricationAuthority(f"Sin dato: falta la regla de refuerzo de {article.sku}.")
+        raise MissingFabricationAuthority(f"Falta completar: declara la regla de refuerzo de {article.sku}.")
 
 
 def reinforcement_sku(article: EffectiveProfileArticle) -> str | None:
@@ -160,7 +160,7 @@ def validate_leaf_limits(params: SystemParams, opening: BayOpeningType, *, bay_i
     rules = [rule for rule in params.dimensional_limits if rule.opening_type is opening]
     if not rules:
         if not params.uses_legacy_rules:
-            raise MissingFabricationAuthority("Sin dato: faltan los límites de esta apertura en el catálogo.")
+            raise MissingFabricationAuthority("Falta completar: declara los límites de esta apertura en el catálogo.")
         return
     if len(rules) != 1:
         raise ValueError("El catálogo declara límites contradictorios para la apertura.")
@@ -171,7 +171,7 @@ def validate_leaf_limits(params: SystemParams, opening: BayOpeningType, *, bay_i
     if not dimensions_ok or (check_weight and rule.max_leaf_weight_kg is not None
                             and weight_kg is not None and weight_kg > rule.max_leaf_weight_kg):
         raise CatalogRuleError("system_dimensional_limit",
-            "La hoja está fuera de los límites del sistema. Revisa sus medidas y la fuente del catálogo.",
+            "La hoja está fuera de los límites del sistema. Revisa sus medidas y el documento del catálogo.",
             {"bay": bay_id, "source": rule.source, "leaf_width_mm": str(width_mm),
              "leaf_height_mm": str(height_mm), "min_width_mm": str(rule.min_leaf_width_mm),
              "max_width_mm": str(rule.max_leaf_width_mm), "min_height_mm": str(rule.min_leaf_height_mm),
@@ -179,4 +179,4 @@ def validate_leaf_limits(params: SystemParams, opening: BayOpeningType, *, bay_i
              "max_aspect_ratio": str(rule.max_aspect_ratio),
              "max_weight_kg": str(rule.max_leaf_weight_kg) if rule.max_leaf_weight_kg is not None else ""})
     if check_weight and rule.max_leaf_weight_kg is not None and weight_kg is None:
-        raise MissingFabricationAuthority("Sin dato: falta la masa de la hoja para verificar el límite del sistema.")
+        raise MissingFabricationAuthority("Falta completar: declara la masa de la hoja para verificar el límite de la serie.")

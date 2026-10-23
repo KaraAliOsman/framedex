@@ -79,13 +79,13 @@ class ExtraDefinition(ExtraRate):
             raise ValueError("La unidad debe corresponder a la regla y los lados no se repiten.")
         if self.kind == "PROFILE":
             if self.scope != "POSITION" or self.basis not in {"SILL", "SIDES"} or self.profile_role is None or self.sku:
-                raise ValueError("El perfil requiere su rol y una regla de largo por posición.")
+                raise ValueError("El perfil requiere su rol y una regla de largo por ventana.")
             if self.basis == "SIDES" and not self.default_sides:
                 raise ValueError("Declara los lados del perfil.")
         elif self.profile_role is not None:
             raise ValueError("Solo un extra de perfil puede declarar rol de corte.")
         if self.kind in {"SCREEN", "FITTING"} and (self.scope != "POSITION" or self.basis not in {"WINDOW", "LEAF"} or self.sku is None):
-            raise ValueError("El accesorio requiere un artículo por vano u hoja.")
+            raise ValueError("El accesorio requiere un artículo por ventana u hoja.")
         if self.scope == "PROJECT" and (self.kind != "SERVICE" or self.basis in {"SILL", "SIDES", "WINDOW", "LEAF"}):
             raise ValueError("El servicio del proyecto requiere una regla de cantidad del proyecto.")
         if self.kind == "SERVICE" and self.basis not in {"AREA", "PERIMETER", "PER_POSITION", "FIXED", "ZONE"}:
@@ -112,7 +112,7 @@ class ExtraSelection(ExtraModel):
     @model_validator(mode="after")
     def unique_sides(self) -> ExtraSelection:
         if (self.sides is not None and len(self.sides) != len(set(self.sides))) or self.leaf_id is not None and self.bay_id is None:
-            raise ValueError("No repitas lados y declara el vano de la hoja.")
+            raise ValueError("No repitas lados y declara el paño de la hoja.")
         return self
 
 
@@ -129,7 +129,7 @@ class ExtraAuthority(ExtraModel):
     @model_validator(mode="after")
     def unique_codes(self) -> ExtraAuthority:
         if len({item.code for item in self.definitions}) != len(self.definitions):
-            raise ValueError("La autoridad repite un extra.")
+            raise ValueError("La ficha repite un extra.")
         return self
 
 

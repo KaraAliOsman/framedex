@@ -256,7 +256,7 @@ export function ProductionBoard({
             {ended.map((o) => (
               <li key={o.id}>
                 <button type="button" onClick={() => onOpen(o.id)}>
-                  {o.order_code} · {domainLabels[o.status] ?? "Sin dato"}
+                  {o.order_code} · {domainLabels[o.status] ?? "Falta completar"}
                 </button>
               </li>
             ))}

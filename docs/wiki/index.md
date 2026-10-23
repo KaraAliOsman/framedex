@@ -55,6 +55,7 @@ acceptance claims keep separate refs; newer code always requires verification.
 - [Dirección final · 18-10-2026](research/final-direction-2026-10-18.md) — Mesa + Estudio, base manual completa y copiloto opcional en popup; [encargo vigente para Claude](../research/2026-10-18-direccion-final/prompt-maestro.md).
 - [Product vision](product/vision.md) — what DEKOPEN is trying to become and what it is explicitly not.
 - [Fenestration + UX principles](product/fenestration-and-ux.md) — domain/interaction rules that prevent visually plausible but physically wrong software.
+- [Lenguaje de la interfaz](product/interface-language.md) — glosario global, detector de textos y distinción entre documento, dato físico y evidencia histórica.
 - [Catalog authority by family](product/catalog-authority.md) — exact rules, historical migration, reviewed import and synthetic authority boundaries.
 - [Glass composition](product/glass-composition.md) — structured recipes, sourced safety, exact billing and sealed supplier orders.
 - [Physical openings](product/physical-openings.md) — sourced motion, active/passive compositions, handles and immutable legacy transport.

@@ -11,6 +11,7 @@ import type {
   ProductIssue,
   CouplerChoice,
 } from "../../api/generated/models";
+import { obraVistaUnica } from "../../app/productFeatures";
 import { t, type TranslationKey } from "../../i18n/es-CL";
 import { domainLabel } from "../../i18n/domainLabels";
 import {
@@ -182,7 +183,7 @@ export function issueText(
 ): string {
   if (issue.code === "coupler_angle_incompatible") {
     const ordinal = couplings.findIndex((c) => c.id === issue.target.slice("coupling:".length)) + 1;
-    return `Unión ${ordinal}: el acoplador ${issue.params.sku} admite de ${fmtMm(issue.params.min_angle_deg)}° a ${fmtMm(issue.params.max_angle_deg)}°. Con ${fmtMm(issue.params.angle_deg)}°, elige uno compatible o reduce el ángulo. Fuente: ${issue.params.source}.`;
+    return `Unión ${ordinal}: el acoplador ${issue.params.sku} admite de ${fmtMm(issue.params.min_angle_deg)}° a ${fmtMm(issue.params.max_angle_deg)}°. Con ${fmtMm(issue.params.angle_deg)}°, elige uno compatible o reduce el ángulo. Origen: ${issue.params.source}.`;
   }
   const key = ISSUE_KEYS[issue.code];
   // Unmapped engine codes still read as sentences — a chip that shows
@@ -190,7 +191,7 @@ export function issueText(
   let text = key
     ? t(key)
     : (issue.params.reason ?? "Revisa la compatibilidad y los datos del catálogo.");
-  if (issue.params.source) text += " Fuente: " + issue.params.source;
+  if (issue.params.source) text += " Origen: " + issue.params.source;
   for (const [name, value] of Object.entries(issue.params)) {
     if (name === "reason") continue;
     // Engine params arrive as str(Decimal) — "345.00" reads as technical
@@ -966,14 +967,12 @@ function LeafFacts({
         <dl className="editor-leaf-facts">
           <div>
             <dt>Composición</dt>
-            <dd>{glass?.spec ?? bay.glass_spec ?? "Sin dato · elige vidrio"}</dd>
+            <dd>{glass?.spec ?? bay.glass_spec ?? "Elige vidrio"}</dd>
           </div>
           <div>
             <dt>Espesor</dt>
             <dd>
-              {bay.glass_thickness_mm
-                ? `${fmtMm(bay.glass_thickness_mm)} mm`
-                : "Sin dato · elige vidrio"}
+              {bay.glass_thickness_mm ? `${fmtMm(bay.glass_thickness_mm)} mm` : "Elige vidrio"}
             </dd>
           </div>
           {!fixedPane && (
@@ -984,7 +983,7 @@ function LeafFacts({
                   ? `${fmtMm(quantize(leaf?.width_mm ?? resolved?.width_mm, 2))} mm`
                   : visualOpening(bay) === "FIXED"
                     ? "No requiere · paño fijo"
-                    : "Sin dato · calcula el marco"}
+                    : "Calcula el marco"}
               </dd>
             </div>
           )}
@@ -996,7 +995,7 @@ function LeafFacts({
                   ? `${fmtMm(quantize(leaf?.height_mm ?? resolved?.height_mm, 2))} mm`
                   : visualOpening(bay) === "FIXED"
                     ? "No requiere · paño fijo"
-                    : "Sin dato · calcula el marco"}
+                    : "Calcula el marco"}
               </dd>
             </div>
           )}
@@ -1005,9 +1004,7 @@ function LeafFacts({
               <dt>Kit derivado</dt>
               <dd>
                 {kit?.name ??
-                  (visualOpening(bay) === "FIXED"
-                    ? "No requiere · paño fijo"
-                    : "Sin dato · revisa herrajes")}
+                  (visualOpening(bay) === "FIXED" ? "No requiere · paño fijo" : "Revisa herrajes")}
               </dd>
             </div>
           )}
@@ -1023,12 +1020,12 @@ function LeafFacts({
                       : "Cierre superior/inferior"
                   : visualOpening(bay) === "FIXED"
                     ? "No requiere · paño fijo"
-                    : "Sin dato · revisa apertura"}
+                    : "Revisa apertura"}
               </dd>
             </div>
           )}
           <div>
-            <dt>Fuente</dt>
+            <dt>Origen</dt>
             <dd>
               <details className="editor-leaf-facts__source">
                 <SourceSummary />
@@ -1265,7 +1262,7 @@ function BayInspector({
           <p className="assembly-hint">
             Desde el borde inferior de la hoja ·{" "}
             {fmtMm(physicalHandle.minimum_height_from_bottom_mm)}–
-            {fmtMm(physicalHandle.maximum_height_from_bottom_mm)} mm. Fuente:{" "}
+            {fmtMm(physicalHandle.maximum_height_from_bottom_mm)} mm. Origen:{" "}
             {physicalHandle.source}
           </p>
         )}
@@ -1296,7 +1293,7 @@ function BayInspector({
         </details>
       )}
       <details className="inspector-section editor-advanced">
-        <summary>Avanzado · perfiles y procedencia</summary>
+        <summary>Avanzado · perfiles y origen</summary>
         <CatalogLimitNotice options={options} opening={opening} />
         <ProvenanceStrip
           items={[
@@ -1525,9 +1522,7 @@ function TechnicalPanel({
       (article) =>
         [
           article.sku,
-          asGlassProduct(article.product)?.name ??
-            article.spec ??
-            "Sin dato: falta el nombre del vidrio",
+          asGlassProduct(article.product)?.name ?? article.spec ?? "Falta el nombre del vidrio",
         ] as const,
     ),
     ...(options?.panel_choices ?? []).map((article) => [article.sku, article.name] as const),
@@ -1543,7 +1538,7 @@ function TechnicalPanel({
   return (
     <div className="tech-panel">
       <p className="inspector-note">
-        Fuente: cálculo del motor con la versión elegida del catálogo.
+        Origen: cálculo del motor con la versión elegida del catálogo.
       </p>
       {members && widthMm !== undefined && widthMm > 0 && (
         <details className="inspector-section" open>
@@ -1588,7 +1583,7 @@ function TechnicalPanel({
                     {cuts.map((cut, index) => (
                       <tr key={`${cut.sku}-${index}`}>
                         <td title={cut.sku}>
-                          {names.get(cut.sku) ?? "Sin dato: falta el nombre del perfil"}
+                          {names.get(cut.sku) ?? "Falta el nombre del perfil"}
                         </td>
                         <td>{fmtMm(cut.length_mm)}</td>
                         <td>{cut.qty}</td>
@@ -1612,8 +1607,7 @@ function TechnicalPanel({
                     {glasses.map((glass, index) => (
                       <tr key={`${glass.bay_id}-${index}`}>
                         <td title={glass.article_sku ?? undefined}>
-                          {names.get(glass.article_sku ?? "") ??
-                            "Sin dato: falta el nombre del vidrio"}
+                          {names.get(glass.article_sku ?? "") ?? "Falta el nombre del vidrio"}
                         </td>
                         <td>
                           {fmtMm(glass.width_mm)} × {fmtMm(glass.height_mm)} mm
@@ -1638,7 +1632,7 @@ function TechnicalPanel({
                     {panels.map((panel, index) => (
                       <tr key={`${panel.bay_id}-${index}`}>
                         <td title={panel.sku}>
-                          {names.get(panel.sku) ?? "Sin dato: falta el nombre del panel"}
+                          {names.get(panel.sku) ?? "Falta el nombre del panel"}
                         </td>
                         <td>
                           {fmtMm(panel.width_mm)} × {fmtMm(panel.height_mm)} mm
@@ -1678,6 +1672,7 @@ function TechnicalPanel({
 }
 
 function ModuleInspector({
+  simple = false,
   options,
   organizationId,
   color,
@@ -1696,6 +1691,7 @@ function ModuleInspector({
   onMountingChanged,
   optionsReady = true,
 }: {
+  simple?: boolean;
   options?: DesignOptions;
   optionsReady?: boolean;
   organizationId: string;
@@ -1725,128 +1721,8 @@ function ModuleInspector({
       commit([slidingOperation(module.id, slidingBay.id, layout)]);
     }
   };
-  return (
-    <section className="assembly-inspector" aria-label={t("assembly.module")}>
-      <header className="assembly-inspector__header">
-        <h4>
-          {t("assembly.module")} {ordinal}
-        </h4>
-        {product.assembly.modules.length > 1 && (
-          <button
-            type="button"
-            className="ghost-button is-danger"
-            disabled={busy || product.assembly.modules.length <= 1}
-            title={t("assembly.removeUnit")}
-            aria-label={t("assembly.removeUnit")}
-            onClick={() => commit([{ op: "remove_unit", module: module.id }])}
-          >
-            ×
-          </button>
-        )}
-      </header>
-      <details className="inspector-section" open>
-        <summary>{t("inspector.dimensions")}</summary>
-        <DraftField
-          label={t("assembly.width")}
-          value={module.width_mm}
-          unit="mm"
-          disabled={busy}
-          normalize={normalizeMm}
-          onCommit={(value) =>
-            commit([{ op: "set_module_width", module: module.id, width_mm: value }])
-          }
-        />
-        <DraftField
-          label={
-            module.contour?.bulges.some(Boolean) ? "Alto hasta arranque" : t("assembly.height")
-          }
-          value={module.height_mm}
-          unit="mm"
-          disabled={busy}
-          normalize={normalizeMm}
-          onCommit={(value) => commit([{ op: "set_height", height_mm: value }])}
-        />
-      </details>
-      <details className="inspector-section" open>
-        <summary>{t("assembly.opening")}</summary>
-        {options === undefined ? (
-          <OpeningOptionsState state={optionsReady ? "error" : "loading"} />
-        ) : openingsUndeclared(options) ? (
-          <OpeningOptionsState state="missing" />
-        ) : options.opening_capabilities?.length && modulePrimaryBay(module) ? (
-          <OpeningPalette
-            compact
-            options={options}
-            bay={modulePrimaryBay(module)!}
-            disabled={busy}
-            onPick={(patch) =>
-              commit(bayOperations(module.id, modulePrimaryBay(module)!.id, patch))
-            }
-            onPreview={(patch) =>
-              onOpeningPreview(
-                patch
-                  ? setModuleTree(
-                      product,
-                      module.id,
-                      updateBay(module.tree, modulePrimaryBay(module)!.id, patch),
-                    )
-                  : null,
-              )
-            }
-          />
-        ) : (
-          <LegacyOpeningPalette
-            options={options}
-            opening={opening}
-            disabled={busy}
-            onPick={(value) => commit([{ op: "set_opening", module: module.id, opening: value }])}
-          />
-        )}
-      </details>
-      {slidingLayout && slidingBay && (
-        <SlidingPanelsEditor
-          instanceId={slidingBay.id}
-          layout={slidingLayout}
-          busy={busy}
-          onChange={commitSlidingLayout}
-        />
-      )}
-      <details className="inspector-section" open>
-        <summary>{t("inspector.glazing")}</summary>
-        <GlassSelector
-          compact
-          options={options}
-          choices={glassSpecs}
-          node={modulePrimaryBay(module)!}
-          context={glassContext(modulePrimaryBay(module)!, module.id, evaluation)}
-          busy={busy}
-          onPatch={(patch) =>
-            commit(
-              intentBays(module.tree).flatMap((bay) => bayOperations(module.id, bay.id, patch)),
-            )
-          }
-        />
-        {isDoor && (
-          <label className="assembly-field">
-            <span>{t("assembly.panel")}</span>
-            <select
-              aria-label={t("assembly.panel")}
-              disabled={busy}
-              value={modulePanelSku(module) ?? ""}
-              onChange={(event) =>
-                commit([{ op: "set_panel", module: module.id, sku: event.target.value || null }])
-              }
-            >
-              <option value="">{t("assembly.noPanel")}</option>
-              {panelSkus.map((sku) => (
-                <option key={sku} value={sku}>
-                  {panelLabel(sku, panelChoices)}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-      </details>
+  const technicalOptions = (
+    <>
       <LeafFacts
         module={module}
         bay={modulePrimaryBay(module)!}
@@ -1933,6 +1809,141 @@ function ModuleInspector({
           commit={commit}
         />
       </details>
+    </>
+  );
+  return (
+    <section className="assembly-inspector" aria-label={t("assembly.module")}>
+      {(!simple || product.assembly.modules.length > 1) && (
+        <header className="assembly-inspector__header">
+          <h4>
+            {t("assembly.module")} {ordinal}
+          </h4>
+          {product.assembly.modules.length > 1 && (
+            <button
+              type="button"
+              className="ghost-button is-danger"
+              disabled={busy || product.assembly.modules.length <= 1}
+              title={t("assembly.removeUnit")}
+              aria-label={t("assembly.removeUnit")}
+              onClick={() => commit([{ op: "remove_unit", module: module.id }])}
+            >
+              ×
+            </button>
+          )}
+        </header>
+      )}
+      <details className="inspector-section" open>
+        <summary>{t("inspector.dimensions")}</summary>
+        <DraftField
+          label={t("assembly.width")}
+          value={module.width_mm}
+          unit="mm"
+          disabled={busy}
+          normalize={normalizeMm}
+          onCommit={(value) =>
+            commit([{ op: "set_module_width", module: module.id, width_mm: value }])
+          }
+        />
+        <DraftField
+          label={
+            module.contour?.bulges.some(Boolean) ? "Alto hasta arranque" : t("assembly.height")
+          }
+          value={module.height_mm}
+          unit="mm"
+          disabled={busy}
+          normalize={normalizeMm}
+          onCommit={(value) => commit([{ op: "set_height", height_mm: value }])}
+        />
+      </details>
+      <details className="inspector-section" open>
+        <summary>{t("assembly.opening")}</summary>
+        {options === undefined ? (
+          <OpeningOptionsState state={optionsReady ? "error" : "loading"} />
+        ) : openingsUndeclared(options) ? (
+          <OpeningOptionsState state="missing" />
+        ) : options.opening_capabilities?.length && modulePrimaryBay(module) ? (
+          <OpeningPalette
+            compact
+            options={options}
+            bay={modulePrimaryBay(module)!}
+            disabled={busy}
+            onPick={(patch) =>
+              commit(bayOperations(module.id, modulePrimaryBay(module)!.id, patch))
+            }
+            onPreview={(patch) =>
+              onOpeningPreview(
+                patch
+                  ? setModuleTree(
+                      product,
+                      module.id,
+                      updateBay(module.tree, modulePrimaryBay(module)!.id, patch),
+                    )
+                  : null,
+              )
+            }
+          />
+        ) : (
+          <LegacyOpeningPalette
+            compact={simple}
+            options={options}
+            opening={opening}
+            disabled={busy}
+            onPick={(value) => commit([{ op: "set_opening", module: module.id, opening: value }])}
+          />
+        )}
+      </details>
+      {slidingLayout && slidingBay && (
+        <SlidingPanelsEditor
+          instanceId={slidingBay.id}
+          layout={slidingLayout}
+          busy={busy}
+          onChange={commitSlidingLayout}
+        />
+      )}
+      <details className="inspector-section" open>
+        <summary>{t("inspector.glazing")}</summary>
+        <GlassSelector
+          compact
+          options={options}
+          choices={glassSpecs}
+          node={modulePrimaryBay(module)!}
+          context={glassContext(modulePrimaryBay(module)!, module.id, evaluation)}
+          busy={busy}
+          onPatch={(patch) =>
+            commit(
+              intentBays(module.tree).flatMap((bay) => bayOperations(module.id, bay.id, patch)),
+            )
+          }
+        />
+        {isDoor && (
+          <label className="assembly-field">
+            <span>{t("assembly.panel")}</span>
+            <select
+              aria-label={t("assembly.panel")}
+              disabled={busy}
+              value={modulePanelSku(module) ?? ""}
+              onChange={(event) =>
+                commit([{ op: "set_panel", module: module.id, sku: event.target.value || null }])
+              }
+            >
+              <option value="">{t("assembly.noPanel")}</option>
+              {panelSkus.map((sku) => (
+                <option key={sku} value={sku}>
+                  {panelLabel(sku, panelChoices)}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+      </details>
+      {simple ? (
+        <details className="inspector-section work-more-options">
+          <summary>Más opciones</summary>
+          {technicalOptions}
+        </details>
+      ) : (
+        technicalOptions
+      )}
       {onAskAssistant && (
         <div className="inspector-actions">
           <button type="button" className="ghost-button" disabled={busy} onClick={onAskAssistant}>
@@ -2020,7 +2031,7 @@ function CouplingInspector({
       <p className="assembly-hint">
         {chosen?.coupling_rule
           ? `Admite ${fmtMm(chosen.coupling_rule.min_angle_deg)}° a ${fmtMm(chosen.coupling_rule.max_angle_deg)}°; aporte neto ${fmtMm(chosen.coupling_rule.development_mm)} mm.`
-          : "Sin dato · elige un acoplador del catálogo que declare su ángulo."}
+          : "Elige un acoplador del catálogo que declare su ángulo."}
       </p>
       {compatible.length === 0 && (
         <p role="alert">
@@ -2028,8 +2039,10 @@ function CouplingInspector({
         </p>
       )}
       <details>
-        <summary>Fuente del acoplador</summary>
-        <p>{chosen?.coupling_rule?.source ?? "Sin dato · el proveedor no declara este dato."}</p>
+        <summary>Origen del acoplador</summary>
+        <p>
+          {chosen?.coupling_rule?.source ?? "Falta completar · el proveedor no declara este dato."}
+        </p>
       </details>
       <Link data-coupler-catalog to={`/catalogs/systems?system=${systemId}&resource=articles`}>
         Revisar el acoplador en Catálogos
@@ -2094,11 +2107,13 @@ export function AssemblyEditor({
   onEvaluationChange,
   positionId,
   positionPanel,
+  pricePanel,
   contentEpoch = 0,
   optionsReady = options !== undefined,
   quantity = 1,
   libraryOpen = false,
   onLibraryToggle,
+  onLibraryClose,
   library,
   libraryTitle = "Biblioteca de tipologías",
   issuesOpen = false,
@@ -2120,9 +2135,13 @@ export function AssemblyEditor({
   ): void;
   positionId: string | null;
   positionPanel?: JSX.Element;
+  pricePanel?: JSX.Element;
   quantity?: number;
   libraryOpen?: boolean;
   onLibraryToggle?(): void;
+  /** Idempotent close: an outside click and a newer layer may both dismiss
+   * the library in one gesture, and two toggles would reopen it. */
+  onLibraryClose?(): void;
   library?: JSX.Element;
   /** Flyout title: the first decision (series) before the typologies. */
   libraryTitle?: string;
@@ -2180,7 +2199,9 @@ export function AssemblyEditor({
   const [tool, setTool] = useState<EditorTool>("select");
   const [treeOpen, setTreeOpen] = useState(false);
   const narrow = useEditorMedia("(max-width: 1279px)");
-  const readOnly = useEditorMedia("(max-width: 1023px)");
+  const unified = obraVistaUnica();
+  const mobile = useEditorMedia("(max-width: 1023px)");
+  const readOnly = mobile && !unified;
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const copilot = useCopilot();
@@ -2515,8 +2536,9 @@ export function AssemblyEditor({
         { op: "move_divider", module: moduleId!, divider: nodeId!, offset_mm: offset },
       ]);
     };
-    window.addEventListener("keydown", key, true);
-    return () => window.removeEventListener("keydown", key, true);
+    // Let the inner popover/menu consume Escape before closing the inspector.
+    window.addEventListener("keydown", key);
+    return () => window.removeEventListener("keydown", key);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- gestures dispatch against the live store
   }, [disabled, readOnly, operationBusy]);
 
@@ -2617,7 +2639,13 @@ export function AssemblyEditor({
       simulate: simulateCommand,
       propose: proposeCommand,
       select,
-      setTool,
+      setTool: (next) => {
+        if (unified && mobile && (next === "split_v" || next === "split_h")) {
+          setOperationMessage("Para dividir con precisión, usa una pantalla más amplia.");
+          return;
+        }
+        setTool(next);
+      },
       focusAssistant: () => askAssistant(""),
       undo: () => {
         if (useCanvasStore.getState().past.length === 0) return;
@@ -2655,6 +2683,8 @@ export function AssemblyEditor({
     specClipboard,
     lastMutation,
     quantity,
+    unified,
+    mobile,
   ]);
   const surface = useMemo(
     () =>
@@ -2677,6 +2707,22 @@ export function AssemblyEditor({
   const objectTree = useMemo(
     () => (product ? buildObjectTree(product, members, issues, t, options) : null),
     [product, members, issues, options],
+  );
+
+  const detailSelector = (
+    <div className="detail-levels" role="group" aria-label={t("assembly.detailLevels")}>
+      {DETAIL_LEVELS.map(({ level, labelKey }) => (
+        <button
+          key={level}
+          type="button"
+          className={`detail-levels__btn${detail === level ? " is-active" : ""}`}
+          aria-pressed={detail === level}
+          onClick={() => setDetail(level)}
+        >
+          {t(labelKey)}
+        </button>
+      ))}
+    </div>
   );
 
   if (!product || !front || !frontBox || !commandCtx || !surface || !objectTree) {
@@ -2844,6 +2890,7 @@ export function AssemblyEditor({
     <div
       className={`assembly-editor${treeOpen ? "" : " assembly-editor--tree-closed"}`}
       aria-label={t("assembly.frontView")}
+      data-simple={unified || undefined}
     >
       {operationBusy && (
         <output className="editor-operation-message" role="status">
@@ -2875,7 +2922,7 @@ export function AssemblyEditor({
             key: "|",
             action: () => setTool(tool === "split_v" ? "select" : "split_v"),
             active: tool === "split_v",
-            unavailable: busy || splitReady.SPLIT_V === undefined,
+            unavailable: busy || (unified && mobile) || splitReady.SPLIT_V === undefined,
           },
           {
             name: "split_h",
@@ -2883,7 +2930,7 @@ export function AssemblyEditor({
             key: "–",
             action: () => setTool(tool === "split_h" ? "select" : "split_h"),
             active: tool === "split_h",
-            unavailable: busy || splitReady.SPLIT_H === undefined,
+            unavailable: busy || (unified && mobile) || splitReady.SPLIT_H === undefined,
           },
           {
             name: "opening",
@@ -2904,7 +2951,7 @@ export function AssemblyEditor({
             label: "Acoplar",
             key: "",
             action: () => coupleUnit("right"),
-            unavailable: busy || couplerSkus.length === 0,
+            unavailable: busy || (unified && mobile) || couplerSkus.length === 0,
           },
           {
             name: "measure",
@@ -2988,7 +3035,7 @@ export function AssemblyEditor({
       {libraryOpen && library && (
         <EditorFlyout
           title={libraryTitle}
-          onClose={() => onLibraryToggle?.()}
+          onClose={() => (onLibraryClose ?? onLibraryToggle)?.()}
           className="editor-library"
         >
           {library}
@@ -3103,6 +3150,7 @@ export function AssemblyEditor({
       )}
       <div
         className={`assembly-canvas${view3dOpen && view3dExpanded ? " assembly-canvas--3d-expanded" : ""}`}
+        data-presentation={unified && view3dOpen ? "3d" : undefined}
         onDoubleClick={(event) => {
           if ((event.target as Element).closest("[role='button'][aria-label^='Paño']"))
             showInspector("opening");
@@ -3126,6 +3174,20 @@ export function AssemblyEditor({
       >
         <div className="assembly-elevation">
           <div className="assembly-view-choices" role="group" aria-label="Cara visible del dibujo">
+            {unified && (
+              <div className="ui-segmented" role="group" aria-label="Representación del dibujo">
+                <button
+                  type="button"
+                  aria-pressed={!view3dOpen}
+                  onClick={() => setView3dOpen(false)}
+                >
+                  2D
+                </button>
+                <button type="button" aria-pressed={view3dOpen} onClick={() => setView3dOpen(true)}>
+                  3D
+                </button>
+              </div>
+            )}
             <div className="ui-segmented assembly-face-group">
               <button
                 type="button"
@@ -3342,7 +3404,7 @@ export function AssemblyEditor({
               <p className="editor-proposal-price">
                 Δ neto de línea ·{" "}
                 {(proposal.simulation.price as EditorPrice).delta_net == null
-                  ? "Sin dato"
+                  ? "Falta completar"
                   : formatMoney(
                       (proposal.simulation.price as EditorPrice).delta_net,
                       (proposal.simulation.price as EditorPrice).currency,
@@ -3356,7 +3418,7 @@ export function AssemblyEditor({
                 </p>
                 <p>
                   Operaciones del registro sobre el diseño actual; diferencia exacta de ventas
-                  calculada por el motor. Se conserva la cantidad de la posición.
+                  calculada por el motor. Se conserva la cantidad de la ventana.
                 </p>
               </details>
               {!proposal.simulation.valid && (
@@ -3384,32 +3446,38 @@ export function AssemblyEditor({
           )}
           {view3dOpen ? (
             <div
-              className={`model3d-inset${view3dExpanded ? " model3d-inset--expanded" : ""}`}
+              className={
+                unified
+                  ? "work-model3d"
+                  : `model3d-inset${view3dExpanded ? " model3d-inset--expanded" : ""}`
+              }
               role="complementary"
               aria-label={t("assembly.view3d")}
             >
-              <div className="model3d-inset__header">
-                <h3>{t("assembly.view3d")}</h3>
-                <button
-                  type="button"
-                  className="model3d-icon-button"
-                  aria-pressed={view3dExpanded}
-                  aria-label={view3dExpanded ? "Reducir 3D" : "Ampliar 3D"}
-                  title={view3dExpanded ? "Reducir 3D" : "Ampliar 3D"}
-                  onClick={() => setView3dExpanded((value) => !value)}
-                >
-                  <Icon name={view3dExpanded ? "minimize" : "maximize"} size={16} />
-                </button>
-                <button
-                  type="button"
-                  className="model3d-icon-button"
-                  aria-label={t("assembly.hide3d")}
-                  title={t("assembly.hide3d")}
-                  onClick={() => setView3dOpen(false)}
-                >
-                  <Icon name="close" size={16} />
-                </button>
-              </div>
+              {!unified && (
+                <div className="model3d-inset__header">
+                  <h3>{t("assembly.view3d")}</h3>
+                  <button
+                    type="button"
+                    className="model3d-icon-button"
+                    aria-pressed={view3dExpanded}
+                    aria-label={view3dExpanded ? "Reducir 3D" : "Ampliar 3D"}
+                    title={view3dExpanded ? "Reducir 3D" : "Ampliar 3D"}
+                    onClick={() => setView3dExpanded((value) => !value)}
+                  >
+                    <Icon name={view3dExpanded ? "minimize" : "maximize"} size={16} />
+                  </button>
+                  <button
+                    type="button"
+                    className="model3d-icon-button"
+                    aria-label={t("assembly.hide3d")}
+                    title={t("assembly.hide3d")}
+                    onClick={() => setView3dOpen(false)}
+                  >
+                    <Icon name="close" size={16} />
+                  </button>
+                </div>
+              )}
               <Suspense
                 fallback={
                   <div className="model3d-loading" role="status">
@@ -3430,7 +3498,7 @@ export function AssemblyEditor({
                 />
               </Suspense>
             </div>
-          ) : (
+          ) : unified ? null : (
             <button type="button" className="model3d-toggle" onClick={() => setView3dOpen(true)}>
               {t("assembly.view3d")}
             </button>
@@ -3590,198 +3658,207 @@ export function AssemblyEditor({
             ×
           </button>
         </header>
-        {isPending && (
-          <p className="editor-calculation-note" role="status">
-            Calculando las medidas de hoja y el kit. El dibujo conserva la última evaluación.
-          </p>
-        )}
-        <div className="detail-levels" role="group" aria-label={t("assembly.detailLevels")}>
-          {DETAIL_LEVELS.map(({ level, labelKey }) => (
-            <button
-              key={level}
-              type="button"
-              className={`detail-levels__btn${detail === level ? " is-active" : ""}`}
-              aria-pressed={detail === level}
-              onClick={() => setDetail(level)}
-            >
-              {t(labelKey)}
-            </button>
-          ))}
-        </div>
-        {detail === "technical" ? (
-          <TechnicalPanel
-            evaluation={currentEvaluation}
-            options={options}
-            moduleId={selectedBayModule?.id ?? selectedModule?.id}
-            bayId={selectedBayNode && selectedBayModule ? selectedBayNode.id : null}
-            moduleIndex={(moduleId) => modules.findIndex((module) => module.id === moduleId) + 1}
-            members={members}
-            bayNode={selectedBayNode}
-            widthMm={Number((selectedBayModule ?? selectedModule)?.width_mm) || undefined}
-          />
-        ) : detail === "overview" ? (
-          selectedModule ? (
-            <ElementSummary
-              title={selectedLabel ?? t("assembly.module")}
-              rows={[
-                [
-                  t("inspector.dimensions"),
-                  `${Number(selectedModule.width_mm).toFixed(0)} × ${Number(selectedModule.height_mm).toFixed(0)} mm`,
-                ],
-                [
-                  t("assembly.opening"),
-                  physicalNodeLabel(modulePrimaryBay(selectedModule)!) ??
-                    t(
-                      OPENING_OPTIONS.find(
-                        ([value]) => value === moduleOpening(selectedModule),
-                      )?.[1] ?? "intent.fixed",
-                    ),
-                ],
-                [t("assembly.bayCount"), String(intentBays(selectedModule.tree).length)],
-                [
-                  t("assembly.glass"),
-                  [moduleGlassThicknessMm(selectedModule), moduleGlassSku(selectedModule)]
-                    .filter((value): value is string => value !== null && value !== "")
-                    .join(" · ") || "—",
-                ],
-              ]}
+        <div className="editor-inspector-content">
+          {unified && positionPanel}
+          {unified && mobile && (
+            <p className="inspector-note">
+              Puedes editar medidas, apertura, vidrio y color. Para dividir o acoplar con precisión,
+              usa una pantalla más amplia.
+            </p>
+          )}
+          {isPending && (
+            <p className="editor-calculation-note" role="status">
+              Calculando las medidas de hoja y el kit. El dibujo conserva la última evaluación.
+            </p>
+          )}
+          {!unified && detailSelector}
+          {detail === "technical" ? (
+            <TechnicalPanel
+              evaluation={currentEvaluation}
+              options={options}
+              moduleId={selectedBayModule?.id ?? selectedModule?.id}
+              bayId={selectedBayNode && selectedBayModule ? selectedBayNode.id : null}
+              moduleIndex={(moduleId) => modules.findIndex((module) => module.id === moduleId) + 1}
+              members={members}
+              bayNode={selectedBayNode}
+              widthMm={Number((selectedBayModule ?? selectedModule)?.width_mm) || undefined}
+            />
+          ) : detail === "overview" ? (
+            selectedModule ? (
+              <ElementSummary
+                title={selectedLabel ?? t("assembly.module")}
+                rows={[
+                  [
+                    t("inspector.dimensions"),
+                    `${Number(selectedModule.width_mm).toFixed(0)} × ${Number(selectedModule.height_mm).toFixed(0)} mm`,
+                  ],
+                  [
+                    t("assembly.opening"),
+                    physicalNodeLabel(modulePrimaryBay(selectedModule)!) ??
+                      t(
+                        OPENING_OPTIONS.find(
+                          ([value]) => value === moduleOpening(selectedModule),
+                        )?.[1] ?? "intent.fixed",
+                      ),
+                  ],
+                  [t("assembly.bayCount"), String(intentBays(selectedModule.tree).length)],
+                  [
+                    t("assembly.glass"),
+                    [moduleGlassThicknessMm(selectedModule), moduleGlassSku(selectedModule)]
+                      .filter((value): value is string => value !== null && value !== "")
+                      .join(" · ") || "—",
+                  ],
+                ]}
+              />
+            ) : selectedBayModule && selectedBayNode ? (
+              <ElementSummary
+                title={selectedLabel ?? t("assembly.bay")}
+                rows={[
+                  [
+                    t("assembly.opening"),
+                    physicalNodeLabel(selectedBayNode) ??
+                      t(
+                        OPENING_OPTIONS.find(
+                          ([value]) => value === (selectedBayNode.opening_type ?? "FIXED"),
+                        )?.[1] ?? "intent.fixed",
+                      ),
+                  ],
+                  [
+                    t("assembly.glass"),
+                    [selectedBayNode.glass_thickness_mm, selectedBayNode.glass_article_sku]
+                      .filter((value): value is string => value != null && value !== "")
+                      .join(" · ") || "—",
+                  ],
+                  [
+                    t("quotation.handleHeight"),
+                    selectedBayNode.handle_height_mm
+                      ? `${fmtMm(selectedBayNode.handle_height_mm)} mm`
+                      : "—",
+                  ],
+                  ...(selectedBayNode.opening_type === "DOOR_ENTRY"
+                    ? [
+                        [t("assembly.panel"), selectedBayNode.panel_article_sku ?? "—"] as [
+                          string,
+                          string,
+                        ],
+                        [
+                          t("assembly.hingeSide"),
+                          selectedBayNode.door_handedness === "RIGHT"
+                            ? t("assembly.hingeRight")
+                            : t("assembly.hingeLeft"),
+                        ] as [string, string],
+                      ]
+                    : []),
+                ]}
+              />
+            ) : selectedCoupling ? (
+              <ElementSummary
+                title={selectedLabel ?? t("assembly.coupling")}
+                rows={[
+                  [t("assembly.angle"), `${selectedCoupling.angle_deg}°`],
+                  [t("assembly.coupler"), selectedCoupling.coupler_profile_sku ?? "—"],
+                ]}
+              />
+            ) : (
+              (positionPanel ?? (
+                <section className="assembly-inspector">
+                  <p className="assembly-hint">{t("assembly.elementHint")}</p>
+                </section>
+              ))
+            )
+          ) : selectedModule ? (
+            <ModuleInspector
+              simple={unified}
+              organizationId={organizationId}
+              color={inputs.color}
+              onMountingChanged={onChanged}
+              onOpeningPreview={setOpeningPreviewProduct}
+              options={options}
+              optionsReady={optionsReady}
+              evaluation={currentEvaluation}
+              module={selectedModule}
+              product={product}
+              members={members}
+              glassSpecs={options?.glass_specs ?? []}
+              panelSkus={panelSkus}
+              panelChoices={options?.panel_choices ?? []}
+              mullionSkus={mullionSkus}
+              couplerSkus={couplerSkus}
+              busy={busy}
+              commit={simulateCommand}
+              onAskAssistant={
+                selectedLabel && copilot.available
+                  ? () =>
+                      askAssistant(t("assistant.modifyPrompt").replace("{target}", selectedLabel))
+                  : undefined
+              }
             />
           ) : selectedBayModule && selectedBayNode ? (
-            <ElementSummary
-              title={selectedLabel ?? t("assembly.bay")}
-              rows={[
-                [
-                  t("assembly.opening"),
-                  physicalNodeLabel(selectedBayNode) ??
-                    t(
-                      OPENING_OPTIONS.find(
-                        ([value]) => value === (selectedBayNode.opening_type ?? "FIXED"),
-                      )?.[1] ?? "intent.fixed",
-                    ),
-                ],
-                [
-                  t("assembly.glass"),
-                  [selectedBayNode.glass_thickness_mm, selectedBayNode.glass_article_sku]
-                    .filter((value): value is string => value != null && value !== "")
-                    .join(" · ") || "—",
-                ],
-                [
-                  t("quotation.handleHeight"),
-                  selectedBayNode.handle_height_mm
-                    ? `${fmtMm(selectedBayNode.handle_height_mm)} mm`
-                    : "—",
-                ],
-                ...(selectedBayNode.opening_type === "DOOR_ENTRY"
-                  ? [
-                      [t("assembly.panel"), selectedBayNode.panel_article_sku ?? "—"] as [
-                        string,
-                        string,
-                      ],
-                      [
-                        t("assembly.hingeSide"),
-                        selectedBayNode.door_handedness === "RIGHT"
-                          ? t("assembly.hingeRight")
-                          : t("assembly.hingeLeft"),
-                      ] as [string, string],
-                    ]
-                  : []),
-              ]}
+            <BayInspector
+              onOpeningPreview={setOpeningPreviewProduct}
+              options={options}
+              optionsReady={optionsReady}
+              evaluation={currentEvaluation}
+              module={selectedBayModule}
+              bay={selectedBayNode}
+              product={product}
+              organizationId={organizationId}
+              color={inputs.color}
+              glassSpecs={options?.glass_specs ?? []}
+              panelSkus={panelSkus}
+              panelChoices={options?.panel_choices ?? []}
+              busy={busy}
+              commit={simulateCommand}
+              onAskAssistant={
+                selectedLabel && copilot.available
+                  ? () =>
+                      askAssistant(t("assistant.modifyPrompt").replace("{target}", selectedLabel))
+                  : undefined
+              }
+            />
+          ) : selectedDivisionModule && selectedDivisionNode ? (
+            <DivisionInspector
+              module={selectedDivisionModule}
+              division={selectedDivisionNode}
+              product={product}
+              busy={busy}
+              commit={simulateCommand}
+              onSelect={(id) => select(id)}
+              onAskAssistant={
+                selectedLabel && copilot.available
+                  ? () =>
+                      askAssistant(t("assistant.modifyPrompt").replace("{target}", selectedLabel))
+                  : undefined
+              }
             />
           ) : selectedCoupling ? (
-            <ElementSummary
-              title={selectedLabel ?? t("assembly.coupling")}
-              rows={[
-                [t("assembly.angle"), `${selectedCoupling.angle_deg}°`],
-                [t("assembly.coupler"), selectedCoupling.coupler_profile_sku ?? "—"],
-              ]}
+            <CouplingInspector
+              coupling={selectedCoupling}
+              ordinal={couplings.findIndex((item) => item.id === selectedCoupling.id) + 1}
+              systemId={inputs.systemId}
+              couplerProfiles={options?.coupler_profiles ?? []}
+              busy={busy}
+              commit={simulateCommand}
+              onAskAssistant={
+                selectedLabel && copilot.available
+                  ? () =>
+                      askAssistant(t("assistant.modifyPrompt").replace("{target}", selectedLabel))
+                  : undefined
+              }
             />
           ) : (
-            (positionPanel ?? (
-              <section className="assembly-inspector">
-                <p className="assembly-hint">{t("assembly.elementHint")}</p>
-              </section>
-            ))
-          )
-        ) : selectedModule ? (
-          <ModuleInspector
-            organizationId={organizationId}
-            color={inputs.color}
-            onMountingChanged={onChanged}
-            onOpeningPreview={setOpeningPreviewProduct}
-            options={options}
-            optionsReady={optionsReady}
-            evaluation={currentEvaluation}
-            module={selectedModule}
-            product={product}
-            members={members}
-            glassSpecs={options?.glass_specs ?? []}
-            panelSkus={panelSkus}
-            panelChoices={options?.panel_choices ?? []}
-            mullionSkus={mullionSkus}
-            couplerSkus={couplerSkus}
-            busy={busy}
-            commit={simulateCommand}
-            onAskAssistant={
-              selectedLabel && copilot.available
-                ? () => askAssistant(t("assistant.modifyPrompt").replace("{target}", selectedLabel))
-                : undefined
-            }
-          />
-        ) : selectedBayModule && selectedBayNode ? (
-          <BayInspector
-            onOpeningPreview={setOpeningPreviewProduct}
-            options={options}
-            optionsReady={optionsReady}
-            evaluation={currentEvaluation}
-            module={selectedBayModule}
-            bay={selectedBayNode}
-            product={product}
-            organizationId={organizationId}
-            color={inputs.color}
-            glassSpecs={options?.glass_specs ?? []}
-            panelSkus={panelSkus}
-            panelChoices={options?.panel_choices ?? []}
-            busy={busy}
-            commit={simulateCommand}
-            onAskAssistant={
-              selectedLabel && copilot.available
-                ? () => askAssistant(t("assistant.modifyPrompt").replace("{target}", selectedLabel))
-                : undefined
-            }
-          />
-        ) : selectedDivisionModule && selectedDivisionNode ? (
-          <DivisionInspector
-            module={selectedDivisionModule}
-            division={selectedDivisionNode}
-            product={product}
-            busy={busy}
-            commit={simulateCommand}
-            onSelect={(id) => select(id)}
-            onAskAssistant={
-              selectedLabel && copilot.available
-                ? () => askAssistant(t("assistant.modifyPrompt").replace("{target}", selectedLabel))
-                : undefined
-            }
-          />
-        ) : selectedCoupling ? (
-          <CouplingInspector
-            coupling={selectedCoupling}
-            ordinal={couplings.findIndex((item) => item.id === selectedCoupling.id) + 1}
-            systemId={inputs.systemId}
-            couplerProfiles={options?.coupler_profiles ?? []}
-            busy={busy}
-            commit={simulateCommand}
-            onAskAssistant={
-              selectedLabel && copilot.available
-                ? () => askAssistant(t("assistant.modifyPrompt").replace("{target}", selectedLabel))
-                : undefined
-            }
-          />
-        ) : (
-          <section className="assembly-inspector">
-            <p className="assembly-hint">{t("assembly.elementHint")}</p>
-          </section>
-        )}
+            <section className="assembly-inspector">
+              <p className="assembly-hint">{t("assembly.elementHint")}</p>
+            </section>
+          )}
+          {unified && (
+            <details className="inspector-section work-detail-options">
+              <summary>Datos de fabricación</summary>
+              {detailSelector}
+            </details>
+          )}
+        </div>
+        {pricePanel}
       </div>
       <footer className="assembly-statusbar">
         <span
@@ -3816,7 +3893,9 @@ export function AssemblyEditor({
               // The list sits at the top of the inspector column — surface
               // it so the click visibly resolves to the issues, not silence.
               issuesListRef.current?.scrollIntoView({
-                behavior: "smooth",
+                behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+                  ? "auto"
+                  : "smooth",
                 block: "nearest",
               });
             }}
@@ -3840,7 +3919,7 @@ function CatalogLimitNotice({
   const rule = options.dimensional_limits.find((item) => item.opening_type === opening);
   return (
     <details className="inspector-section">
-      <summary>Límites del sistema y fuente</summary>
+      <summary>Límites del sistema y origen</summary>
       {rule ? (
         <>
           <p>
@@ -3849,13 +3928,15 @@ function CatalogLimitNotice({
           </p>
           <p>
             Peso máximo:{" "}
-            {rule.max_leaf_weight_kg == null ? "Sin dato" : fmtMm(rule.max_leaf_weight_kg) + " kg"}.
-            Relación alto/ancho: {fmtMm(rule.min_aspect_ratio)}–{fmtMm(rule.max_aspect_ratio)}.
+            {rule.max_leaf_weight_kg == null
+              ? "Falta completar"
+              : fmtMm(rule.max_leaf_weight_kg) + " kg"}
+            . Relación alto/ancho: {fmtMm(rule.min_aspect_ratio)}–{fmtMm(rule.max_aspect_ratio)}.
           </p>
-          <p>Fuente: {rule.source}</p>
+          <p>Origen: {rule.source}</p>
         </>
       ) : (
-        <p>Sin dato: declara los límites de esta apertura en Catálogo antes de calcular.</p>
+        <p>Declara los límites de esta apertura en Catálogo antes de calcular.</p>
       )}
     </details>
   );

@@ -149,7 +149,7 @@ def _bar_svg(
         return cut_map.get(
             _cut_key(cut),
             labels["member"].get(
-                piece_id, labels["reinforcement"].get(piece_id, "Sin dato · falta código")
+                piece_id, labels["reinforcement"].get(piece_id, "Falta completar el código")
             ),
         )
 
@@ -458,7 +458,7 @@ def _claim_piece(
             labels["member"].get(
                 cut.get("piece_id"),
                 labels["reinforcement"].get(
-                    cut.get("piece_id"), "Sin dato · falta código"
+                    cut.get("piece_id"), "Falta completar el código"
                 ),
             ),
         )
@@ -591,7 +591,7 @@ def _sheet_svg(
         x, y = _mm(placement["x_mm"]), _mm(placement["y_mm"])
         w, h = _mm(placement["width_mm"]), _mm(placement["height_mm"])
         location = _location(labels, placement.get("bay_id"), placement.get("leaf_id"))
-        code = placement.get("piece_code") or infills.get(_infill_key(placement), "Sin dato")
+        code = placement.get("piece_code") or infills.get(_infill_key(placement), "Falta completar")
         rotated = bool(placement.get("rotated"))
         # Print-size labels: a full-height piece earns ~5mm code text; fonts
         # shrink with the smaller piece dimension so narrow panes stay legible.

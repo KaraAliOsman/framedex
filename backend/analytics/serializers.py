@@ -53,10 +53,23 @@ class PipelinePhaseSerializer(serializers.Serializer):
     source = serializers.CharField()
 
 
+class PreparedQuotationSerializer(serializers.Serializer):
+    project_id = serializers.UUIDField()
+    code = serializers.CharField()
+    name = serializers.CharField()
+    href = serializers.CharField()
+
+
+class PreparedQuotationsSerializer(serializers.Serializer):
+    count = serializers.IntegerField()
+    items = PreparedQuotationSerializer(many=True)
+
+
 class TodayResponseSerializer(serializers.Serializer):
     today = serializers.DateField()
     actions = TodayActionSerializer(many=True)
     pipeline = PipelinePhaseSerializer(many=True)
+    prepared = PreparedQuotationsSerializer()
     source = serializers.CharField()
 
 

@@ -239,11 +239,12 @@ function Amount({
   inputs?: ValueTrace["inputs"];
   display?: "money" | "fraction" | "pp";
 }): JSX.Element {
-  if (value === undefined || value === null) return <span className="price-unknown">Sin dato</span>;
+  if (value === undefined || value === null)
+    return <span className="price-unknown">Falta completar</span>;
   const evidence = trace ?? {
     formula,
-    inputs: inputs ?? [{ label: "Valor sellado en la operación", value, unit: currency }],
-    authority: sources.join(" · ") || "Operación comercial sellada",
+    inputs: inputs ?? [{ label: "Valor guardado en el cálculo", value, unit: currency }],
+    authority: sources.join(" · ") || "Cálculo comercial guardado",
     engineVersion: "price-workspace-v1",
     result: value,
   };
@@ -314,7 +315,7 @@ function PriceCascade({
             currency={currency}
             sources={sources}
             trace={reading.traces?.list_net}
-            formula="Suma de precios de lista de posiciones y servicios"
+            formula="Suma de precios de lista de ventanas y servicios"
           />
         </div>
       )}
@@ -359,7 +360,7 @@ function PriceCascade({
 }
 
 function controlValue(field: string, value: string | null): string {
-  if (value === null) return "Sin dato";
+  if (value === null) return "Falta completar";
   if (["target_margin", "discount_pct"].includes(field))
     return formatFraction(value.replace(/\s*%$/, ""), "points");
   if (field === "effective_date") return formatDate(value);
@@ -383,7 +384,8 @@ export function Projection({
           {formatRevision(operation.revision_code)} · {labels[operation.state]}
         </h2>
         <p>
-          Sin dato: este precio antiguo no guardó el desglose necesario para explicar cada impulsor.
+          Falta completar: este precio antiguo no guardó el desglose necesario para explicar cada
+          impulsor.
         </p>
         <PriceCascade
           reading={{
@@ -577,8 +579,8 @@ export function Projection({
         sources={sources}
         costsVisible={owner && operation.costs_visible}
       />
-      <h3>Posiciones</h3>
-      <div className="price-positions" tabIndex={0} aria-label="Tabla de posiciones">
+      <h3>Ventanas</h3>
+      <div className="price-positions" tabIndex={0} aria-label="Tabla de ventanas">
         <table className="price-position-table">
           <thead>
             <tr>
@@ -600,7 +602,7 @@ export function Projection({
             {value.positions.map((line) => (
               <Fragment key={line.position_index}>
                 <tr className="price-position-reading">
-                  <th data-label="Posición">{line.position_index}</th>
+                  <th data-label="Ventana">{line.position_index}</th>
                   <td data-label="Ubicación y tipología">
                     <span>
                       {line.location || "Sin ubicación"}
@@ -652,7 +654,7 @@ export function Projection({
                         sources={sources}
                         display="fraction"
                         trace={line.traces?.margin}
-                        formula="(Neto de la posición − costo) ÷ neto"
+                        formula="(Neto de la ventana − costo) ÷ neto"
                       />
                     </td>
                   )}
@@ -662,15 +664,15 @@ export function Projection({
                       currency={currency}
                       sources={sources}
                       trace={line.traces?.delta}
-                      formula="Neto propuesto de la posición − neto aplicado"
+                      formula="Neto propuesto de la ventana − neto aplicado"
                     />
                   </td>
                 </tr>
                 <tr>
                   <td colSpan={owner && operation.costs_visible ? 8 : 6}>
                     <details>
-                      <summary>Composición de la posición {line.position_index}</summary>
-                      <p>Descuento de esta posición: {formatPercent(line.discount_pct)}.</p>
+                      <summary>Composición de la ventana {line.position_index}</summary>
+                      <p>Descuento de esta ventana: {formatPercent(line.discount_pct)}.</p>
                       {line.warnings.map((text) => (
                         <p key={text}>{text}</p>
                       ))}
@@ -684,7 +686,7 @@ export function Projection({
                             netOnly
                           />
                           <p>
-                            IVA definitivo por proyecto. Esta lectura llega al neto de la posición.
+                            IVA definitivo por proyecto. Esta lectura llega al neto de la ventana.
                           </p>
                           <table className="price-composition">
                             <thead>
@@ -723,7 +725,7 @@ export function Projection({
                                       currency={currency}
                                       sources={sources}
                                       trace={item.trace}
-                                      formula="Costo consumido del artículo según la compra y el cálculo sellados"
+                                      formula="Costo consumido del artículo según la compra y el cálculo guardados"
                                     />
                                   </td>
                                 </tr>
@@ -743,8 +745,8 @@ export function Projection({
                             />
                           )}
                           <p>
-                            La venta de esta posición queda sellada en su neto. La composición de
-                            compra está reservada al dueño y jefe de taller.
+                            La venta de esta ventana conserva su importe neto guardado. La
+                            composición de compra está reservada al dueño y jefe de taller.
                           </p>
                         </>
                       )}
@@ -819,7 +821,7 @@ export function Projection({
         </details>
       )}
       <details>
-        <summary>Fuentes del cálculo</summary>
+        <summary>Referencias del cálculo</summary>
         <ul>
           {sources.map((source) => (
             <li key={source}>{source}</li>
@@ -1167,7 +1169,7 @@ export function ProjectPrices({
       )}
       {emptyProject && (
         <section className="price-empty">
-          <h2>El proyecto aún no tiene posiciones</h2>
+          <h2>El proyecto aún no tiene ventanas</h2>
           <p>Agrega la primera ventana para calcular su precio y comprobar los costos.</p>
           <Link
             className="ui-button ui-button--primary"
@@ -1212,7 +1214,9 @@ export function ProjectPrices({
               !loading &&
               !calculating &&
               !error &&
-              !emptyProject && <p>Sin dato: el proyecto todavía no tiene un precio calculado.</p>
+              !emptyProject && (
+                <p>Falta completar: el proyecto todavía no tiene un precio calculado.</p>
+              )
             )}
           </section>
           <PriceControlRail>
@@ -1473,13 +1477,13 @@ export function ProjectPrices({
                   </label>
                   {options?.fx.find((item) => item.id === controls.fx_snapshot_id)?.source && (
                     <p className="field-hint">
-                      Fuente:{" "}
+                      Origen:{" "}
                       {options.fx.find((item) => item.id === controls.fx_snapshot_id)?.source}
                     </p>
                   )}
                   <p className="field-hint">
                     La tasa declara pesos por dólar. Costos USD a CLP incluyen reserva del 5 %;
-                    costos CLP a USD se dividen por esa tasa. La revisión conserva la fuente.
+                    costos CLP a USD se dividen por esa tasa. La revisión conserva el origen.
                   </p>
                 </details>
                 <label>
@@ -1570,7 +1574,7 @@ export function ProjectPrices({
                       currency={item.currency}
                       sources={item.workspace?.sources ?? []}
                       trace={item.workspace?.cascade.traces?.gross}
-                      formula="Total sellado de esta operación comercial"
+                      formula="Total guardado en este cálculo comercial"
                     />
                     <span>{labels[item.state]}</span>
                     {item.resulted_in_issue && <span>Resultó en emisión</span>}

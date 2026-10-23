@@ -8,9 +8,17 @@ import { AuthSessionContext, type AuthSessionContextValue } from "./auth/AuthSes
 import { ConfirmProvider } from "./ui";
 // Compile the real lazy destination during test setup. The route assertion
 // verifies navigation/rendering, independently of concurrent Vite transforms.
-import "./features/projects/ProjectPages";
+import "./features/projects/WorksPage";
+import "./features/landing/LandingPage";
+import "./app/AppShell";
+import "./app/DashboardPage";
 vi.mock("./api/generated/dekopen", () => ({
   projectsList: vi.fn().mockResolvedValue({ status: 200, data: { items: [] } }),
+  projectsWorks: vi.fn().mockResolvedValue({
+    status: 200,
+    data: { items: [], total: 0, matching: 0, counts: {}, offset: 0, limit: 50 },
+  }),
+  engineSystems: vi.fn().mockResolvedValue({ status: 200, data: { systems: [] } }),
   analyticsToday: vi.fn().mockResolvedValue({
     status: 200,
     data: { today: "2026-10-09", actions: [], pipeline: [], source: "Compromisos" },
@@ -83,16 +91,16 @@ describe("SHOT-04 application routes", () => {
   it("opens the real project list from the authenticated shell", async () => {
     renderRoute("/dashboard", authValue("ready"));
     expect(await screen.findByTestId("app-shell")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Proyectos" })).toHaveAttribute("href", "/projects");
-    fireEvent.click(screen.getByRole("link", { name: "Proyectos" }));
-    expect(await screen.findByRole("heading", { name: "Proyectos", level: 1 })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Obras" })).toHaveAttribute("href", "/projects");
+    fireEvent.click(screen.getByRole("link", { name: "Obras" }));
+    expect(await screen.findByRole("heading", { name: "Obras", level: 1 })).toBeInTheDocument();
   });
 
   it("lets an operator explicitly open their role-scoped Today queue", async () => {
     const auth = authValue("ready");
     auth.me!.active_organization!.role = "OPERATOR";
     renderRoute("/dashboard", auth);
-    expect(await screen.findByRole("heading", { name: "Pendientes" })).toBeVisible();
+    expect(await screen.findByRole("link", { name: "Abrir taller" })).toBeVisible();
     expect(screen.queryByRole("link", { name: "Precios" })).not.toBeInTheDocument();
   });
 

@@ -57,17 +57,17 @@ ERRORS = {
 # Contract codes raised without a public_detail get a Spanish action-oriented
 # message here — the generic fallback reads like a crash, not a diagnosis.
 DOCUMENTARY_ERROR_DETAILS = {
-    "cnc_authority_stale": "La autoridad cambió mientras revisabas. Actualiza máquinas y herramientas y prepara el cambio otra vez.",
-    "cnc_profile_setup_invalid": "El montaje del perfil necesita sección sellada, orientación de carga, origen inicial y fuente técnica.",
+    "cnc_authority_stale": "Los datos técnicos cambiaron mientras revisabas. Actualiza máquinas y herramientas y prepara el cambio otra vez.",
+    "cnc_profile_setup_invalid": "El montaje del perfil necesita la sección de la orden, orientación de carga, origen inicial y documento técnico.",
     "cnc_preview_required": "Revisa la vista previa y confirma los archivos antes de generar.",
     "cnc_preview_stale": "El plan, la máquina o el historial cambió. Revisa una vista previa nueva.",
     "cnc_machine_axis_invalid": "Declara ejes válidos de la máquina.",
     "cnc_numeric_invalid": "Escribe una medida decimal válida, sin infinito ni texto.",
     "version_not_releasable": "La versión no está lista para liberar a producción.",
-    "production_measurements_unconfirmed": "Las medidas selladas no están confirmadas. Rectifica y confirma cada marco en una nueva revisión antes de liberar a producción.",
+    "production_measurements_unconfirmed": "Las medidas de la revisión emitida no están confirmadas. Rectifica y confirma cada marco en una nueva revisión antes de liberar a producción.",
     "version_superseded": "La versión fue reemplazada por una revisión más reciente.",
     "production_process_unresolved": (
-        "No hay autoridad de proceso para esta orden: vincula un perfil de proceso al sistema."
+        "Faltan datos de proceso para esta orden: vincula un perfil de proceso al sistema."
     ),
     "step_action_unknown": "La acción solicitada no existe para este paso.",
     "step_note_required": "Esta acción requiere una nota.",
@@ -94,7 +94,7 @@ DOCUMENTARY_ERROR_DETAILS = {
     "work_order_missing_system": "La orden no tiene un sistema de catálogo resoluble.",
     "remake_requires_hold": "Solo una orden bloqueada o con falla de QC admite una re-fabricación.",
     "optimize_color_required": "La optimización requiere el color a cortar.",
-    "optimize_color_mismatch": "El color no coincide con el sellado de la orden.",
+    "optimize_color_mismatch": "El color no coincide con el registrado en la orden.",
     "cnc_incomplete_cut_angles": "Hay piezas sin ángulos de corte completos; revisa el plan.",
     "cnc_requires_optimization": "La orden no tiene un plan de corte: optimízala primero.",
     "operations_requires_optimization": "La orden no tiene un plan de corte: optimízala primero.",
@@ -138,7 +138,7 @@ DOCUMENTARY_ERROR_DETAILS = {
     ),
     "supplier_order_type_required": "El proveedor no está habilitado para este tipo de compra.",
     "legacy_version_not_eligible": (
-        "Esta versión fue sellada antes de existir la trazabilidad de compras; no admite pedidos."
+        "Esta versión fue emitida antes de registrar el seguimiento de compras; no admite pedidos."
     ),
     "invalid_purchase_requirement": "La necesidad de compra no es válida para esta versión.",
     "invalid_supplier": "El proveedor no es válido para este pedido.",
@@ -182,7 +182,7 @@ def public_documentary_errors():
             error.code,
             error.public_detail
             or DOCUMENTARY_ERROR_DETAILS.get(error.code)
-            or "La evidencia documental no pudo guardarse; revisa el proyecto, sus autoridades y su estado.",
+            or "La evidencia documental no pudo guardarse; revisa la obra, sus datos y su estado.",
             error_extra=error.extra or None,
         ) from error
     except InvalidEngineRequest as error:
@@ -205,7 +205,7 @@ def public_documentary_errors():
         raise contract_error(
             422,
             "documentary_authority_required",
-            "Falta o no coincide una autoridad técnica necesaria para congelar la revisión.",
+            "Falta o no coincide un dato técnico necesario para preparar la revisión.",
             error_extra={"reason": str(error)},
         ) from error
     except DatabaseError as error:

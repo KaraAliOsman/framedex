@@ -298,7 +298,7 @@ export function AdvancedRecipesEditor({
                     (kind) => change({ kind: kind as Panel["kind"] }),
                   )}
                   {text(
-                    "Proporción exacta del vano",
+                    "Proporción exacta del paño",
                     panel.share,
                     (share) => change({ share }),
                     true,

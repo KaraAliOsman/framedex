@@ -27,6 +27,7 @@ export function DataTable<Row>({
   label,
   state = { kind: "ready" },
   emptyReason,
+  emptyTitle,
   emptyAction,
   selectionActions,
   onSelectionChange,
@@ -38,6 +39,7 @@ export function DataTable<Row>({
   label: string;
   state?: TableState;
   emptyReason: string;
+  emptyTitle?: string;
   emptyAction?: ReactNode;
   selectionActions?: (ids: readonly string[]) => ReactNode;
   onSelectionChange?: (ids: readonly string[]) => void;
@@ -146,7 +148,13 @@ export function DataTable<Row>({
     );
   if (state.kind === "blocked") return <BlockedState reason={state.cause} action={state.action} />;
   if (!rows.length)
-    return <EmptyState title={`Todavía no hay ${label}`} body={emptyReason} action={emptyAction} />;
+    return (
+      <EmptyState
+        title={emptyTitle ?? `Todavía no hay ${label}`}
+        body={emptyReason}
+        action={emptyAction}
+      />
+    );
   return (
     <section className="ui-table-region" data-region={`tabla-${label}`} aria-label={label}>
       {filterable ? (
@@ -265,7 +273,7 @@ export function DataTable<Row>({
                       ? column.render(row)
                       : column.numeric
                         ? formatDecimal(column.value(row))
-                        : (column.value(row) ?? "Sin dato")}
+                        : (column.value(row) ?? "Falta completar")}
                     {column.unit ? <span className="ui-value__unit"> {column.unit}</span> : null}
                   </td>
                 ))}

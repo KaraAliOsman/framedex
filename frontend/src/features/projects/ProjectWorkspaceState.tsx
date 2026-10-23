@@ -49,12 +49,15 @@ export function useProjectWorkspaceState({
   orgId,
   project,
   section,
+  unified = false,
 }: {
   userId: string;
   orgId: string;
   project: ProjectResponse | null;
   /** null = Ventanas; other destinations show the same panels in both views. */
   section: string | null;
+  /** DEKOPEN 2: one visible editing session, with the legacy views behind a flag. */
+  unified?: boolean;
 }): {
   view: WorkView;
   setView(view: WorkView): void;
@@ -141,11 +144,15 @@ export function useProjectWorkspaceState({
     [setParams],
   );
 
-  const presentation: EditorPresentation = editorRoute
-    ? "expanded"
-    : view === "estudio" && section === null
+  const presentation: EditorPresentation = unified
+    ? section === null
       ? "studio"
-      : "hidden";
+      : "hidden"
+    : editorRoute
+      ? "expanded"
+      : view === "estudio" && section === null
+        ? "studio"
+        : "hidden";
 
   // The editing session follows deliberate entries (wide editor or Estudio)
   // and is kept while visiting Mesa or another destination of the same work.

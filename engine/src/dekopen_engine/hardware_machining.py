@@ -63,7 +63,7 @@ def hardware_operations(*, items: Sequence[HardwareItem], fact_units: Sequence[M
                         missing.append("coordenadas dentro de la pieza")
                     targets.append((host, dx, dy))
                 if not targets:
-                    missing.append("hoja física sellada")
+                    missing.append("hoja física identificada en la orden")
                 if missing:
                     issues.append({"code": "declared_intent_not_emitted", "kind": declaration.kind,
                         "component_sku": component.sku, "component_name": component.name,

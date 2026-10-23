@@ -6,11 +6,13 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { PipelinePhase } from "./pipelinePhase";
+import type { PreparedQuotations } from "./preparedQuotations";
 import type { TodayAction } from "./todayAction";
 
 export interface TodayResponse {
   today: string;
   actions: TodayAction[];
   pipeline: PipelinePhase[];
+  prepared: PreparedQuotations;
   source: string;
 }

@@ -192,7 +192,7 @@ export function SectionView({
           {declaredDepth && Number(declaredDepth) > 0 ? (
             <span className="section-depth">{fmtMm(declaredDepth)} mm</span>
           ) : (
-            "Sin dato · declara la sección en Catálogo."
+            "Declara la sección en Catálogo."
           )}
         </span>
         {approximate ? (

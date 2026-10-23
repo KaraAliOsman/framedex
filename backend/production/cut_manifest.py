@@ -32,13 +32,13 @@ def next_piece_station(piece: dict, route: list[dict]) -> str:
     role = _role_name(piece.get("role"))
     if role == "GLAZING_BEAD" or piece.get("width_mm") is not None:
         return next((step["label"] for step in route if step.get("code") == "GLAZE"),
-                    "Sin dato · consulte la ruta de la OT")
+                    "Falta completar · consulta la ruta de la OT")
     cut_code = "CUT_STEEL" if piece.get("source_kind") == "REINFORCEMENT" and any(
         step.get("code") == "CUT_STEEL" for step in route) else "CUT"
     index = next((index for index, step in enumerate(route) if step.get("code") == cut_code), None)
     return next((str(step["label"]) for step in route[index + 1:]
                  if step.get("code") not in ("CUT", "CUT_STEEL")),
-                "Sin dato · consulte la ruta de la OT") if index is not None else "Sin dato · consulte la ruta de la OT"
+                "Falta completar · consulta la ruta de la OT") if index is not None else "Falta completar · consulta la ruta de la OT"
 
 
 def grouped_cuts(plan: dict) -> list[dict]:
@@ -95,7 +95,7 @@ def piece_context(snapshot: dict) -> dict[str, dict]:
                     "position": labels["position"].get(fact.get("position_id")),
                     "unit_index": fact.get("repetition_index"),
                     "role_label": ("Refuerzo · " if kind == "REINFORCEMENT" else "")
-                                  + (_ROLE_ES.get(role, "Sin dato") if kind != "INFILL" else
+                                  + (_ROLE_ES.get(role, "Falta completar") if kind != "INFILL" else
                                      ("Vidrio" if entry.get("kind") == "GLASS" else "Panel")),
                     "parent_code": parent_code,
                     "bay_code": labels["bay"].get(home.get("bay_id")),

@@ -23,7 +23,8 @@ export function AttentionBell(): JSX.Element | null {
         className="topbar-button topbar-button--icon"
         aria-expanded={open}
         aria-label="Atención pendiente"
-        title="Atención pendiente"
+        title={`${actions.length} acciones pendientes`}
+        aria-describedby={actions.length > 0 ? "attention-count" : undefined}
         onClick={() => {
           if (!open) {
             window.dispatchEvent(new Event("dekopen:shell-overlay"));
@@ -34,7 +35,14 @@ export function AttentionBell(): JSX.Element | null {
       >
         <Icon name="bell" />
         {actions.length > 0 && (
-          <span className="attention-bell__badge ui-value">{actions.length}</span>
+          <>
+            <span className="attention-bell__badge ui-value" aria-hidden="true">
+              {actions.length > 99 ? "99+" : actions.length}
+            </span>
+            <span id="attention-count" className="sr-only">
+              {actions.length} acciones pendientes
+            </span>
+          </>
         )}
       </button>
       {open && (

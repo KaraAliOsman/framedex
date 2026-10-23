@@ -28,7 +28,7 @@ def test_stock_specification_is_human_and_preserves_declared_dimensions() -> Non
         "oriented_height_mm": "510.00", "location_tag": "Destino privado",
         "polishing": {"top": True, "right": False, "bottom": False, "left": True},
     }) == "4-16-4 Float Incoloro · 810,25 × 510 mm · Cantos pulidos: superior, izquierdo"
-    assert service._spec_text({"width_mm": "1000.00"}) == "Ancho 1\u202f000 mm · Sin dato en la otra medida"
+    assert service._spec_text({"width_mm": "1000.00"}) == "Ancho 1\u202f000 mm · Falta completar la otra medida"
     assert service._spec_text({"width_mm": "NaN", "height_mm": False}) == ""
     assert service._spec_text("invalid") == ""
 

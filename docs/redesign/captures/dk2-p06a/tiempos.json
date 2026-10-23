@@ -1,0 +1,22 @@
+[
+  {
+    "surface": "workbench",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "loadMs": 929,
+    "windowId": "4433f1ec-ad19-4331-9fb5-510025e27905",
+    "engineTotal": "192780"
+  },
+  {
+    "surface": "workbench",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "loadMs": 944,
+    "windowId": "8e465b6b-34ff-4c67-9a00-860dc51c0adc",
+    "engineTotal": "192780"
+  }
+]

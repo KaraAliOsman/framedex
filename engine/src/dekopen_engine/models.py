@@ -208,7 +208,7 @@ class OpeningHandleRule(EngineModel):
     @model_validator(mode="after")
     def declared_height(self) -> OpeningHandleRule:
         if self.vertical_reference != "CENTER" and self.default_height_mm is None:
-            raise ValueError("La altura de manilla requiere un valor de la fuente.")
+            raise ValueError("La altura de manilla requiere un valor del documento de referencia.")
         return self
 
 
@@ -277,7 +277,7 @@ class AdvancedOpeningRecipe(EngineModel):
     @model_validator(mode="after")
     def declared_composition(self) -> AdvancedOpeningRecipe:
         if sum((panel.share for panel in self.panels), Decimal(0)) != Decimal(1):
-            raise ValueError("Las proporciones de la receta deben cubrir exactamente el vano.")
+            raise ValueError("Las proporciones de la receta deben cubrir exactamente el paño.")
         if len({panel.slot for panel in self.panels}) != len(self.panels):
             raise ValueError("Los paneles de la receta deben tener direcciones distintas.")
         if len(set(self.hardware_kit_skus)) != len(self.hardware_kit_skus):
@@ -307,7 +307,7 @@ class AdvancedOpeningRecipe(EngineModel):
         for panel in self.panels:
             shift = panel.travel_fraction * (-1 if panel.travel in ("LEFT", "UP") else 1)
             if panel.travel is not None and (start + shift < 0 or start + panel.share + shift > 1):
-                raise ValueError("El recorrido declarado atraviesa una jamba del vano.")
+                raise ValueError("El recorrido declarado atraviesa una jamba del paño.")
             start += panel.share
         for left, right in zip(self.panels, self.panels[1:]):
             if (left.kind == right.kind == "MOVING" and left.travel is not None
@@ -350,7 +350,7 @@ class OpeningCapability(EngineModel):
             raise ValueError("Declara los herrajes que respaldan esta capacidad.")
         elif (self.movement is not OpeningMovement.SLIDE and self.leaf_role is not LeafRole.PASSIVE
               and self.handle_rule is None):
-            raise ValueError("Declara la regla de manilla con su fuente.")
+            raise ValueError("Declara la regla de manilla con su documento de referencia.")
         if self.leaf_role is LeafRole.PASSIVE and self.handle_rule is not None:
             raise ValueError("La hoja pasiva lleva falleba, sin manilla de accionamiento.")
         if len(self.hinge_sides) != len(set(self.hinge_sides)):
@@ -599,7 +599,7 @@ class HardwareOption(EngineModel):
     @model_validator(mode="after")
     def security_has_a_source(self) -> HardwareOption:
         if self.security_rating is not None and self.kind != "SECURITY":
-            raise ValueError("Una clase de seguridad requiere una opción de seguridad con fuente.")
+            raise ValueError("Una clase de seguridad requiere una opción de seguridad con documento de referencia.")
         return self
 
 
@@ -878,7 +878,7 @@ class CouplerRule(EngineModel):
         if self.min_angle_deg > self.max_angle_deg:
             raise ValueError("El ángulo mínimo no puede superar el máximo.")
         if not self.source.strip():
-            raise ValueError("Falta la fuente del acoplador.")
+            raise ValueError("Falta el documento de referencia del acoplador.")
         return self
 
 
@@ -1082,7 +1082,7 @@ class SystemParams(EngineModel):
         if self.uses_legacy_rules:
             for name in ("sliding_glazing_deduction_width_mm", "sliding_glazing_deduction_height_mm"):
                 if getattr(self, name) is None:
-                    raise ValueError(f"{name}: falta la autoridad histórica explícita.")
+                    raise ValueError(f"{name}: faltan las reglas históricas explícitas.")
             return self
         legacy = (self.pulley_height_mm, self.central_overlap_mm,
                   self.sliding_lateral_clearance_mm, self.sliding_end_add_mm,

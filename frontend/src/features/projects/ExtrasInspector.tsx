@@ -139,15 +139,15 @@ export function ExtrasInspector({
     []) as { bay_id: string; leaf_id: string | null; width_mm: string; height_mm: string }[];
   return (
     <details className="inspector-section extra-inspector" open>
-      <summary>Extras de la posición</summary>
+      <summary>Extras de la ventana</summary>
       {module.contour || module.frameless ? (
         <p className="inspector-note">
           La serie no declara accesorios para esta forma. Revisa su catálogo.
         </p>
       ) : choices.length === 0 ? (
         <p className="inspector-note">
-          Sin dato: esta versión no declara extras. Elige una serie con accesorios o completa su
-          catálogo.
+          Falta completar: esta versión no declara extras. Elige una serie con accesorios o completa
+          su catálogo.
         </p>
       ) : (
         <>
@@ -163,7 +163,7 @@ export function ExtrasInspector({
               </button>
             </p>
           )}
-          {preview.data?.reason && <p role="alert">Sin dato: {preview.data.reason}</p>}
+          {preview.data?.reason && <p role="alert">Falta completar: {preview.data.reason}</p>}
           {!selections.length && <p className="inspector-note">Todavía no has agregado extras.</p>}
           <p className="inspector-note">
             El palillaje y sus cruces se declaran en Vidrio · Tratamientos, con la tarifa de su
@@ -213,7 +213,7 @@ export function ExtrasInspector({
                     </button>
                   </header>
                   {requiredByMounting && (
-                    <p>Exigido por montaje. Para cambiarlo, revisa Vano y montaje.</p>
+                    <p>Exigido por montaje. Para cambiarlo, revisa Medidas de obra y montaje.</p>
                   )}
                   {selection.decision === "DISMISS" ? (
                     <p>
@@ -329,9 +329,9 @@ export function ExtrasInspector({
                     </>
                   )}
                   <details>
-                    <summary>Regla y fuente</summary>
+                    <summary>Regla y origen</summary>
                     <p>
-                      {extraBasisLabels[definition?.basis ?? ""] ?? "Sin dato"} ·{" "}
+                      {extraBasisLabels[definition?.basis ?? ""] ?? "Falta completar"} ·{" "}
                       {definition?.source ?? "Completa el catálogo"}
                       {definition?.synthetic && " · DEMO"}
                     </p>
@@ -373,11 +373,11 @@ export function ExtrasInspector({
             </button>
           </div>
           <details>
-            <summary>Avanzado · vano de obra</summary>
+            <summary>Avanzado · medidas de obra</summary>
             <p>Declara las medidas disponibles para que el motor sugiera ensanches con su causa.</p>
             <Measure
               optional
-              label="Ancho del vano · mm"
+              label="Ancho de obra · mm"
               value={module.tree.extra_context?.opening_width_mm ?? ""}
               disabled={busy}
               onValue={(value) =>
@@ -396,7 +396,7 @@ export function ExtrasInspector({
             />
             <Measure
               optional
-              label="Alto del vano · mm"
+              label="Alto de obra · mm"
               value={module.tree.extra_context?.opening_height_mm ?? ""}
               disabled={busy}
               onValue={(value) =>

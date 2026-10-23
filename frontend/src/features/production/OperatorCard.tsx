@@ -236,10 +236,10 @@ function _loc(
 ): string {
   const parts: string[] = [];
   if (piece.bay_id) {
-    parts.push(labels[piece.bay_id] ?? "Sin dato · vano sin código");
+    parts.push(labels[piece.bay_id] ?? "Falta completar · ventana sin código");
   }
   if (piece.leaf_id) {
-    parts.push(labels[piece.leaf_id] ?? "Sin dato · hoja sin código");
+    parts.push(labels[piece.leaf_id] ?? "Falta completar · hoja sin código");
   }
   const prefix = piece.unit_index ? `u${piece.unit_index}` : "";
   return [prefix, ...parts].filter(Boolean).join(" · ");
@@ -433,10 +433,10 @@ export function OperatorStepCard({
                         className={_isShort(row.short) ? "operator-row-short" : ""}
                       >
                         <td>
-                          {row.name ?? row.sku ?? "Sin dato"}
+                          {row.name ?? row.sku ?? "Falta completar"}
                           {row.sku && row.sku !== row.name ? ` · ${row.sku}` : ""}
                           {row.unit
-                            ? ` · ${domainLabels[row.unit] ?? "Sin dato · unidad no declarada"}`
+                            ? ` · ${domainLabels[row.unit] ?? "Falta completar · unidad no declarada"}`
                             : ""}
                         </td>
                         <td>{fmtMm(row.needed)}</td>
@@ -448,7 +448,7 @@ export function OperatorStepCard({
                             fmtMm(row.short)
                           )}
                         </td>
-                        <td>{row.consumed_at ? formatDate(row.consumed_at) : "Sin dato"}</td>
+                        <td>{row.consumed_at ? formatDate(row.consumed_at) : "Falta completar"}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -516,7 +516,7 @@ export function OperatorStepCard({
                                 ? opBoundaryLabel(String(op.detail.boundary))
                                 : op.detail?.sequence
                                   ? `#${String(op.detail.sequence)}`
-                                  : "Sin dato"}
+                                  : "Falta completar"}
                             </td>
                           </tr>
                         ))}
@@ -551,14 +551,15 @@ export function OperatorStepCard({
                           const meta = memberMeta[host] ?? {};
                           const code =
                             labels[host] ??
-                            (meta.role ? cutRoleLabel(meta.role) : "Sin dato · pieza sin etiqueta");
+                            (meta.role
+                              ? cutRoleLabel(meta.role)
+                              : "Falta completar · pieza sin etiqueta");
                           const locationCode = _loc(labels, meta);
                           const length = Number(meta.cut_length_mm);
                           if (!Number.isFinite(length) || length <= 0)
                             return (
                               <p key={host}>
-                                {code} · Sin dato · falta el largo sellado para ubicar las
-                                operaciones.
+                                {code} · Falta el largo de la orden para ubicar las operaciones.
                               </p>
                             );
                           return (
@@ -626,7 +627,7 @@ export function OperatorStepCard({
                                 <td title={opBasisLabel(op.basis)}>
                                   {op.tool_id && !/^[0-9a-f]{8}-/i.test(op.tool_id)
                                     ? (domainLabels[op.tool_id] ?? op.tool_id)
-                                    : "Sin dato · herramienta sin código"}
+                                    : "Falta completar · herramienta sin código"}
                                 </td>
                               </tr>
                             );
@@ -663,7 +664,7 @@ export function OperatorStepCard({
                           {piece.code ? <strong>{piece.code} · </strong> : null}
                           {formatDecimal(piece.sequence)}
                         </td>
-                        <td>{piece.workshop_sku ?? "Sin dato"}</td>
+                        <td>{piece.workshop_sku ?? "Falta completar"}</td>
                         <td>{cutRoleLabel(piece.role)}</td>
                         <td>
                           {fmtMm(piece.length_mm)}
@@ -703,7 +704,7 @@ export function OperatorStepCard({
                   {sheetPieces.map((piece, index) => (
                     <tr key={`${piece.piece_id ?? "x"}-${index}`}>
                       <td>
-                        {piece.code ?? "Sin dato"}
+                        {piece.code ?? "Falta completar"}
                         {piece.workshop_sku ? ` · ${piece.workshop_sku}` : ""}
                       </td>
                       <td>{cutRoleLabel(piece.role)}</td>
@@ -735,21 +736,22 @@ export function OperatorStepCard({
                     <tr key={index}>
                       <td>
                         {domainLabels[String(pane.group ?? "")] ??
-                          "Sin dato · material sin etiqueta"}
+                          "Falta completar · material sin etiqueta"}
                         {pane.quantity ? ` ×${pane.quantity}` : ""}
                       </td>
                       <td>
-                        {pane.width_mm ? fmtMm(String(pane.width_mm)) : "Sin dato"} ×{" "}
-                        {pane.height_mm ? fmtMm(String(pane.height_mm)) : "Sin dato"}
+                        {pane.width_mm ? fmtMm(String(pane.width_mm)) : "Falta completar"} ×{" "}
+                        {pane.height_mm ? fmtMm(String(pane.height_mm)) : "Falta completar"}
                       </td>
                       <td>
-                        {_loc(labels, pane as { bay_id?: string; leaf_id?: string }) || "Sin dato"}
+                        {_loc(labels, pane as { bay_id?: string; leaf_id?: string }) ||
+                          "Falta completar"}
                       </td>
                       <td>
                         {pane.reason
                           ? (tOptional(`production.unnestedReason.${pane.reason}`) ??
-                            "Sin dato · revisa el plan sellado")
-                          : "Sin dato"}
+                            "Revisa el plan emitido")
+                          : "Falta completar"}
                       </td>
                     </tr>
                   ))}
@@ -859,9 +861,9 @@ function QcCheckSection({
             {entries.map((entry) => (
               <tr key={entry.id}>
                 <td>{entry.check}</td>
-                <td>{entry.expected || "Sin dato"}</td>
-                <td>{entry.actual || "Sin dato"}</td>
-                <td>{entry.item_code ? <strong>{entry.item_code}</strong> : "Sin dato"}</td>
+                <td>{entry.expected || "Falta completar"}</td>
+                <td>{entry.actual || "Falta completar"}</td>
+                <td>{entry.item_code ? <strong>{entry.item_code}</strong> : "Falta completar"}</td>
                 <td>
                   <strong className={entry.result === "FAIL" ? "qc-result-fail" : "qc-result-pass"}>
                     {entry.result === "FAIL" ? t("production.qcFail") : t("production.qcPass")}

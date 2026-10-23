@@ -42,7 +42,7 @@ def quotation_rows(org_id):
                    COALESCE(c.kind,a.status) AS response_status,d.kind AS decision_kind,
                    COALESCE(d.evidence->>'note',a.decided_note) AS decided_note,COALESCE(c.decided_at,a.decided_at) AS decided_at,
                    a.view_count,a.last_viewed_at,a.expires_at,
-                   a.created_at AS shared_at
+                   COALESCE(a.created_at,sent.delivered_at) AS shared_at
             FROM public.projects p
             JOIN public.project_versions v ON v.project_id=p.id AND v.org_id=p.org_id
                  AND v.revision_code=p.current_revision
@@ -59,11 +59,18 @@ def quotation_rows(org_id):
                   max(decided_at) AS decided_at,sum(view_count) AS view_count,
                   max(last_viewed_at) AS last_viewed_at,
                   max(private.quote_link_expires_at(ca.id,ca.org_id,ca.expires_at)) AS expires_at,
-                  max(created_at) AS created_at
+                  max(created_at) FILTER (WHERE link_source='SHARE' OR view_count>0) AS created_at
                 FROM public.customer_approvals ca
                 WHERE ca.org_id=p.org_id AND ca.project_id=p.id
                   AND ca.project_version_id=v.id AND ca.status<>'REVOKED'
             ) a ON true
+            LEFT JOIN LATERAL (
+                SELECT max(m.delivered_at) AS delivered_at
+                FROM public.quotation_issues i
+                JOIN public.mail_outbox m ON m.org_id=i.org_id AND m.id=i.mail_id
+                WHERE i.org_id=p.org_id AND i.project_id=p.id
+                  AND i.project_version_id=v.id AND m.state='SENT'
+            ) sent ON true
             WHERE p.org_id=%s AND p.status<>'CANCELLED'
             ORDER BY v.emitted_at DESC,p.code
         """,
@@ -84,7 +91,7 @@ def quote_public(row, today):
         else "unshared"
         if row["shared_at"] is None
         else "link_expired"
-        if row["expires_at"] < datetime.now(timezone.utc)
+        if row["expires_at"] is not None and row["expires_at"] < datetime.now(timezone.utc)
         else "pending"
     )
     return {
@@ -107,7 +114,7 @@ def quote_public(row, today):
     }
 
 
-def quotations(org_id, *, query="", attention="", phase="", currency="", offset=0, limit=50):
+def matching_quotations(org_id, *, query="", attention="", phase="", currency=""):
     today = local_today(org_id)
     items = [quote_public(row, today) for row in quotation_rows(org_id)]
     needle = query.strip().casefold()
@@ -131,6 +138,12 @@ def quotations(org_id, *, query="", attention="", phase="", currency="", offset=
             for item in items
             if item["currency"] == (None if currency == "unknown" else currency)
         ]
+    return today, items
+
+
+def quotations(org_id, *, query="", attention="", phase="", currency="", offset=0, limit=50):
+    today, items = matching_quotations(org_id, query=query, attention=attention,
+                                     phase=phase, currency=currency)
     return {
         "items": items[offset : offset + limit],
         "total": len(items),
@@ -232,10 +245,35 @@ def price_actions(org_id, user_id, role):
             + urlencode({"operation": row["id"]}),
             blocking=row["state"] == "PENDING",
             operation_id=row["id"],
-            source="Operación de precio y recibo del solicitante; " + row["revision_code"],
+            source="Operación de precio y resumen del solicitante; " + row["revision_code"],
         )
         for row in operations
     ]
+
+
+def suggested_actions(org_id):
+    from authentication.rls import catalog_backend
+    from catalogs.value_origins import engine_origins
+
+    systems = rows(
+        "SELECT DISTINCT s.id,s.code,s.name FROM public.profile_systems s "
+        "JOIN public.project_positions w ON w.system_id=s.id AND w.org_id=%s "
+        "JOIN public.projects p ON p.id=w.project_id AND p.org_id=w.org_id AND p.status='DRAFT' "
+        "WHERE s.org_id=%s AND EXISTS(SELECT 1 FROM public.catalog_value_history h "
+        "WHERE h.org_id=s.org_id AND h.system_id=s.id AND h.origin='SUGGESTED') ORDER BY s.code,s.id",
+        [org_id, org_id],
+    )
+    with catalog_backend():
+        result = []
+        for system in systems:
+            pending = [value for value in engine_origins(org_id, system['id']) if value.origin == 'SUGGESTED']
+            if pending:
+                result.append(action('catalog_suggested', system['id'], system['code'], system['name'],
+                    'Confirma los valores sugeridos',
+                    'La serie se usa en tus borradores. Puedes cotizar; revisa sus valores antes de fabricar.',
+                    'Revisar sugeridos', '/catalogs/systems?' + urlencode({'system': system['id']}),
+                    source='Valores vigentes de la serie; cada confirmación queda registrada en su historial.'))
+    return result
 
 
 def commercial_actions(org_id, today, role):
@@ -243,6 +281,10 @@ def commercial_actions(org_id, today, role):
     source_rows = quotation_rows(org_id)
     quotes = [quote_public(row, today) for row in source_rows]
     for item in quotes:
+        if item['state'] == 'unshared':
+            result.append(action('quote_send', item['project_id'], item['project_code'],
+                item['project_name'], 'Envía la cotización', 'La revisión está emitida y espera compartirla con el cliente.',
+                'Revisar y enviar', item['href'], source=item['source']))
         if quote_attention(item, "expiring", today):
             result.append(
                 action(
@@ -374,9 +416,9 @@ def commercial_actions(org_id, today, role):
                             "Revisa el recordatorio de cobro vencido"
                             if overdue
                             else "Gestiona el saldo por cobrar",
-                            "El calendario sellado tiene cuotas vencidas. Revisa el mensaje preparado por la IA antes de enviarlo."
+                            "El calendario acordado tiene cuotas vencidas. Revisa el mensaje preparado por la IA antes de enviarlo."
                             if overdue
-                            else "La venta sellada tiene pagos pendientes. Sin un vencimiento cumplido, no se presenta como vencida.",
+                            else "La venta acordada tiene pagos pendientes. Sin un vencimiento cumplido, no se presenta como vencida.",
                             "Abrir cobranza",
                             f"/projects/{row['id']}?section=payments",
                             amount=balance,
@@ -384,9 +426,9 @@ def commercial_actions(org_id, today, role):
                             balance_total=total,
                             balance_collected=collected,
                             due_on=projection.oldest_due_on if overdue else None,
-                            source="Total sellado de "
+                            source="Total emitido de "
                             + row["current_revision"]
-                            + " menos pagos vigentes. No incluye recibos anulados.",
+                            + " menos pagos vigentes. No incluye comprobantes anulados.",
                         )
                     )
         for status, currency in sorted(set(by_phase) | set(unknown), key=str):
@@ -432,7 +474,7 @@ def position_actions(org_id):
             row["code"],
             row["name"],
             "Confirma las medidas de fabricación",
-            f"Posición {row['position_index']} · "
+            f"Ventana {row['position_index']} · "
             f"{row['location_tag'] or 'Sin ubicación'}: el levantamiento espera confirmación.",
             "Confirmar medidas",
             f"/projects/{row['project_id']}/positions/{row['id']}/edit",
@@ -468,12 +510,12 @@ def position_actions(org_id):
             # dimensions. The editor owns their positioned, formatted detail;
             # Hoy supplies a business cause and the exact resolver instead.
             reason = (
-                "La geometría o la combinación elegida no es válida. Revisa Qué falta en la posición."
+                "La geometría o la combinación elegida no es válida. Revisa Qué falta en la ventana."
                 if evaluation.status.value == "INVALID"
-                else "Faltan definiciones o autoridad técnica para fabricar el conjunto. Revisa Qué falta en la posición."
+                else "Faltan definiciones o referencias técnicas para fabricar el conjunto. Revisa Qué falta en la ventana."
             )
         except (SystemNotFound, UnsupportedCatalogContract, ValueError):
-            reason = "El diseño guardado requiere revisar su serie y la autoridad técnica vigente."
+            reason = "El diseño guardado requiere revisar su serie y las referencias técnicas vigentes."
         result.append(
             action(
                 "position_engine_blocked",
@@ -481,8 +523,8 @@ def position_actions(org_id):
                 row["code"],
                 row["name"],
                 "Completa la definición de fabricación",
-                f"Posición {row['position_index']} · {row['location_tag'] or 'Sin ubicación'}: {reason}",
-                "Revisar posición",
+                f"Ventana {row['position_index']} · {row['location_tag'] or 'Sin ubicación'}: {reason}",
+                "Revisar ventana",
                 f"/projects/{row['project_id']}/positions/{row['id']}/edit",
                 blocking=True,
                 source="Evaluación del motor sobre el diseño guardado y el catálogo visible; no modifica la BOM ni una emisión.",
@@ -603,7 +645,7 @@ def workshop_actions(org_id, role, today):
                     href,
                     due_on=due,
                     blocking=True,
-                    source="Plan sellado de la OT.",
+                    source="Plan de la orden de trabajo.",
                 )
             )
         elif row["status"] == "COMPLETED":
@@ -676,7 +718,7 @@ def field_actions(org_id, today, role):
         for visit in visits:
             context = decoded(visit["context_json"])
             if visit["status"] in ("SCHEDULED", "ACTIVE") and visit["planned_on"] <= today:
-                verb = "Medir vano" if visit["kind"] == "MEASUREMENT" else "Abrir visita"
+                verb = "Medir abertura de obra" if visit["kind"] == "MEASUREMENT" else "Abrir visita"
                 result.append(
                     action(
                         "field_visit",
@@ -710,7 +752,7 @@ def field_actions(org_id, today, role):
                                     "Abrir garantía",
                                     "/field?" + urlencode({"visit": visit["id"]}),
                                     due_on=expiry,
-                                    source="Declaración sellada y hecho de inicio; fecha proyectada por el motor.",
+                                    source="Declaración de la orden y registro de inicio; fecha proyectada por el motor.",
                                 )
                             )
         for case in cases:
@@ -735,12 +777,14 @@ def field_actions(org_id, today, role):
 
 
 def daily_work(org_id, user_id, role):
+    from analytics.prepared import prepared_quotations
     today = local_today(org_id)
     actions, pipeline = price_actions(org_id, user_id, role), []
     if role in COMMERCIAL_ROLES:
         commercial, pipeline = commercial_actions(org_id, today, role)
         actions.extend(commercial)
         actions.extend(position_actions(org_id))
+        actions.extend(suggested_actions(org_id))
     if role in {"OWNER", "WORKSHOP_MANAGER", "INSTALLER", "OPERATOR"}:
         actions.extend(workshop_actions(org_id, role, today))
     if role in {"OWNER", "WORKSHOP_MANAGER", "ESTIMATOR", "INSTALLER"}:
@@ -756,5 +800,6 @@ def daily_work(org_id, user_id, role):
         "today": today.isoformat(),
         "actions": ordered,
         "pipeline": pipeline,
+        "prepared": prepared_quotations(org_id, user_id, role),
         "source": "Compromisos vencidos, bloqueos, trabajo de hoy y seguimiento; orden determinista del motor.",
     }

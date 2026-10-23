@@ -42,7 +42,7 @@ def send(*,org_id:UUID,order_id:UUID,actor_id:UUID,role:str,confirmed:bool,expec
         one("SELECT id FROM public.orders WHERE id=%s AND org_id=%s FOR UPDATE",[str(order_id),str(org_id)],'order_not_found')
         value=source(org_id=org_id,order_id=order_id)
         if not value['recipient'] or expected_recipient!=value['recipient']:
-            raise DocumentaryError('mail_preview_stale',detail="El correo no coincide con el proveedor sellado. Revisa su elegibilidad antes de crear la orden.")
+            raise DocumentaryError('mail_preview_stale',detail="El correo no coincide con el proveedor guardado en la orden. Revisa su elegibilidad antes de crear la orden.")
         order=value['order']
         metadata,_=generate_artifact(org_id=org_id,actor_id=actor_id,role=role,project_version_id=UUID(str(order['project_version_id'])),
                     document_type=value['document_type'],file_format='PDF',order_id=order_id)

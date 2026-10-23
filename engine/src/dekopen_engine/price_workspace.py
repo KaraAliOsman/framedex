@@ -30,7 +30,7 @@ def percent_points(value: Decimal) -> str:
 
 def money_trace(formula: str, result: Decimal,
                 inputs: Sequence[tuple[str, Decimal, str]],
-                authority: str = 'Autoridades resueltas y congeladas de la operación') -> dict[str, Any]:
+                authority: str = 'Datos y reglas resueltos y guardados con la operación') -> dict[str, Any]:
     return {'formula': formula, 'result': str(result),
             'inputs': [{'label': label, 'value': str(value), 'unit': unit}
                        for label, value, unit in inputs],
@@ -99,7 +99,7 @@ def comparison(before: Mapping[str, Decimal | None], after: Mapping[str, Decimal
             traces = {}
             for stage, value in (('current',current),('proposed',proposed)):
                 if value is not None:
-                    traces[stage] = money_trace('Valor de la operación comercial sellada',value,
+                    traces[stage] = money_trace('Valor guardado con la operación comercial',value,
                         [('Actual' if stage == 'current' else 'Propuesto',value,unit)])
             if delta is not None and current is not None and proposed is not None:
                 inputs = [('Actual',current,unit),('Propuesto',proposed,unit)]

@@ -75,7 +75,7 @@ declared-unemitted for execution even when the reference exists elsewhere.
                             "position_id": unit.position_id, "unit_index": unit.repetition_index,
                             "position_index": unit.position_index,
                             "reason_code": "emitter_not_implemented",
-                            "detail": "Emisor no implementado para esta declaración sellada. No se generó trabajo de máquina.",
+                            "detail": "Este tipo de operación de la revisión emitida aún no permite generar trabajo de máquina.",
                             "source": "Anotación de taller de la revisión emitida"})
             for handle in unit.handles:
                 matching = [op for op in ops if op.host == handle.host_member_id and op.kind.value == "HANDLE_PREP"]

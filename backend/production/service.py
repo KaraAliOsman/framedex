@@ -234,7 +234,7 @@ def _require_hardware_machining_authority(*, org_id: UUID, order: dict[str, obje
     _sealed_hardware_operations(snapshot, position_id, _operations_fact_units(snapshot, position_id), issues)
     if issues:
         raise DocumentaryError("step_ops_incomplete",
-            detail="Hay mecanizados de herrajes declarados no emitidos. Completa la autoridad del catálogo y emite una nueva revisión antes de completar esta estación.",
+            detail="Hay mecanizados de herrajes declarados no emitidos. Completa los datos técnicos del catálogo y emite una nueva revisión antes de completar esta estación.",
             extra={"hardware_machining": issues})
 
 
@@ -2866,7 +2866,7 @@ def version_hardware_picking(*, org_id: UUID, version_id: UUID):
             [str(version_id), str(org_id)], "version_not_found")["snapshot_json"])
     indexes = {str(position["id"]): position["position_index"] for position in snapshot.get("positions") or []}
     items = [(HardwareItem.model_validate_json(json.dumps(item)), int(position["quantity"]),
-        f"Posición {indexes.get(str(position['position_id']), ordinal)}")
+        f"Ventana {indexes.get(str(position['position_id']), ordinal)}")
         for ordinal, position in enumerate(snapshot.get("bom") or [], 1)
         for item in (position.get("engine_result") or {}).get("hardware_items") or []]
     return {"rows": _picking_payload(items)}
@@ -3502,7 +3502,7 @@ def packing_labels(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
         if not optimization or optimization.get("invalidated"):
             blocked_reason = (
                 "El plan de corte fue invalidado al liberar material. " if optimization.get("invalidated")
-                else "Sin dato · la orden no tiene un plan de corte vigente. "
+                else "La orden no tiene un plan de corte vigente. "
             ) + "Optimiza la orden antes de imprimir etiquetas de piezas."
         else:
             snapshot = _decoded(one(

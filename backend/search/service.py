@@ -54,7 +54,7 @@ def search(org_id: UUID, query: str, role: str = "OWNER") -> dict:
             "order_code",
         ):
             results.append({"group": "orders", "id": str(row["id"]),
-                "title": row["order_code"], "subtitle": _ORDER_STATUS.get(row["status"], "Sin dato · falta estado"),
+                "title": row["order_code"], "subtitle": _ORDER_STATUS.get(row["status"], "Estado por completar"),
                 "path": "/production?" + urlencode({"order": row["id"]})})
         return {"results": results}
 
@@ -201,7 +201,7 @@ def search(org_id: UUID, query: str, role: str = "OWNER") -> dict:
                 "group": "orders",
                 "id": str(row["id"]),
                 "title": row["order_code"],
-                "subtitle": _ORDER_STATUS.get(row["status"], "Sin dato · falta estado"),
+                "subtitle": _ORDER_STATUS.get(row["status"], "Estado por completar"),
                 "path": (
                     "/production?" + urlencode({"order": row["id"]})
                     if row["kind"] == "WORKSHOP_OT" else
@@ -285,7 +285,7 @@ def search(org_id: UUID, query: str, role: str = "OWNER") -> dict:
             )
         for row in supplier_rows:
             results.append({"group": "orders", "id": str(row["id"]), "title": row["order_code"],
-                "subtitle": _ORDER_STATUS.get(row["status"], "Sin dato · falta estado"),
+                "subtitle": _ORDER_STATUS.get(row["status"], "Estado por completar"),
                 "path": "/purchasing?" + urlencode({"order": row["id"], "version": row["project_version_id"]})})
         for row in org(
             "SELECT id, code, status FROM (SELECT id, org_id, created_at,"
@@ -294,7 +294,7 @@ def search(org_id: UUID, query: str, role: str = "OWNER") -> dict:
             f" ORDER BY created_at DESC LIMIT {GROUP_LIMIT}", "code",
         ):
             results.append({"group": "inventory", "id": str(row["id"]),
-                "title": row["code"], "subtitle": _REMNANT_STATUS.get(row["status"], "Sin dato · falta estado"),
+                "title": row["code"], "subtitle": _REMNANT_STATUS.get(row["status"], "Estado por completar"),
                 "path": "/inventory?" + urlencode({"remnant": row["id"], "code": row["code"]})})
         for row in receipt_rows:
             results.append({"group": "inventory", "id": str(row["id"]),

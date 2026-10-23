@@ -39,7 +39,7 @@ def test_context_lookup_never_links_to_another_tenant(monkeypatch):
     org, project, position = uuid4(), uuid4(), uuid4()
     queries = []
     monkeypatch.setattr(presentation, "rows", lambda query, params: queries.append((query, params)) or [])
-    assert presentation.context_identity(org_id=org, refs={"project_id": str(project), "position_id": str(position)}) == {"context_label": "Posición no disponible", "context_url": None}
+    assert presentation.context_identity(org_id=org, refs={"project_id": str(project), "position_id": str(position)}) == {"context_label": "Ventana no disponible", "context_url": None}
     assert queries[0][1] == [str(org), str(position), str(project), str(project)]
     assert "pos.org_id=%s" in queries[0][0]
 

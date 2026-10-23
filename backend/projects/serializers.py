@@ -228,7 +228,17 @@ class ProjectVersionResponseSerializer(serializers.Serializer):
     sealed_currency = serializers.CharField(allow_null=True, required=False)
 
 
+class ProjectProgressSerializer(serializers.Serializer):
+    stage = serializers.ChoiceField(choices=[
+        'QUOTING', 'SENT', 'ACCEPTED', 'WORKSHOP', 'INSTALLED', 'TO_COLLECT', 'CLOSED', 'CANCELLED',
+    ])
+    reason = serializers.CharField()
+    quoted_total = serializers.CharField(allow_null=True)
+    currency = serializers.CharField(allow_null=True)
+
+
 class ProjectResponseSerializer(ProjectWriteSerializer):
+    progress = ProjectProgressSerializer(required=False)
     working_price = WorkingPriceSerializer(required=False, allow_null=True)
     # Always present in responses (blank while a draft has no client yet).
     client_name = serializers.CharField(max_length=255, allow_blank=True)

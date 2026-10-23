@@ -53,6 +53,15 @@ it("resolves member face widths and materials from the catalog", () => {
   expect(members.sashOverlapMm).toBe(8);
 });
 
+it("keeps the chosen viewing face when the finish has no declared swatch", () => {
+  const inside = resolveMembers(CATALOG, "WHITE", "interior");
+  const outside = resolveMembers(CATALOG, "WHITE", "exterior");
+  expect(inside.viewFace).toBe("interior");
+  expect(outside.viewFace).toBe("exterior");
+  expect(outside.finish).toBeUndefined();
+  expect(outside.frame).toEqual(inside.frame);
+});
+
 it("falls back to drawing conventions when options are missing", () => {
   const members = resolveMembers(undefined);
   expect(members.frame.faceWidthMm).toBeGreaterThan(0);

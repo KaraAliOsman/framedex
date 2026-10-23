@@ -350,3 +350,46 @@ def test_editor_read_only_price_evaluates_without_an_operation(documentary_tenan
     assert Decimal(price["delta_net"]) == Decimal("0")
     with as_user(users["OWNER"]):
         assert position_row(org, position["id"]) == before
+
+
+def test_editor_price_reads_costs_once_and_observes_the_next_request(documentary_tenant, monkeypatch):
+    from django.db import connection
+    from django.test.utils import CaptureQueriesContext
+    from pricing.repository import PricingRepository, admin_write, one
+    from projects import ops_registry
+    from projects.service import position_row
+
+    org, _, users, _ = documentary_tenant
+    owner = users["OWNER"]
+    _, position = setup_project(org, owner)
+    with as_user(owner):
+        product = ops_registry.product_from_position(position_row(org, position["id"]))
+        args = (org, product, position["design"]["system_id"], position["design"]["color"])
+        with CaptureQueriesContext(connection) as queries:
+            price = ops_registry.sale_price(*args)
+        assert price["net"] is not None
+        assert sum("SELECT p.* FROM public.catalog_demo_prices" in query["sql"] for query in queries) == 1
+
+        class LiveRepository(PricingRepository):
+            def __init__(self, *args, **kwargs):
+                kwargs["request_cache"] = False
+                super().__init__(*args, **kwargs)
+
+            def preload_costs(self, bundle):
+                pass
+
+        with monkeypatch.context() as original:
+            original.setattr(ops_registry, "PricingRepository", LiveRepository)
+            assert ops_registry.sale_price(*args) == price
+
+        # The cost list is tenant-owned. Changing every listed rate guarantees
+        # an affected material without presuming its technical/purchase SKU.
+        with commercial_backend():
+            cost_list = one("SELECT id FROM public.cost_lists WHERE org_id=%s", [org])["id"]
+            items = rows("SELECT id,unit_cost FROM public.cost_list_items WHERE org_id=%s AND cost_list_id=%s",
+                         [org, cost_list])
+        for item in items:
+            admin_write("cost-items", org, {"unit_cost": item["unit_cost"] * Decimal("2")},
+                        "Synthetic price update between editor requests", item["id"])
+        updated = ops_registry.sale_price(*args)
+        assert updated["net"] is not None and Decimal(updated["net"]) > Decimal(price["net"])

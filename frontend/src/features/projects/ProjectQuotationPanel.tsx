@@ -1236,7 +1236,7 @@ export function ProjectQuotationPanel({
       });
       void queryClient.invalidateQueries({ queryKey: ["mail", orgId] });
       setMessage(
-        `${formatRevision(response.data.revision_code)} sellada. El correo se registró para ${response.data.mail.recipient}; sigue su entrega en el historial.${response.data.production_allowed ? "" : " La fabricación requiere completar y confirmar su evidencia."}`,
+        `${formatRevision(response.data.revision_code)} emitida. El correo se registró para ${response.data.mail.recipient}; sigue su entrega en el historial.${response.data.production_allowed ? "" : " La fabricación requiere completar y confirmar su evidencia."}`,
       );
       await onChanged();
     } catch (error) {
@@ -1245,7 +1245,7 @@ export function ProjectQuotationPanel({
         error instanceof ApiError
           ? (apiDetail(error.payload) ??
               "No se pudo registrar la emisión. Revisa la conexión y recupera el mismo intento.")
-          : "La respuesta de emisión no llegó. Recupera el mismo intento para comprobar el sello y el correo.",
+          : "La respuesta de emisión no llegó. Recupera el mismo intento para comprobar la emisión y el correo.",
       );
       if (error instanceof ApiError && [400, 403, 404, 422].includes(error.status)) {
         sessionStorage.removeItem(pendingKey);
@@ -1267,7 +1267,7 @@ export function ProjectQuotationPanel({
     if (
       !(await confirm({
         title: `¿Regenerar el enlace de ${formatRevision(link.revision_code)}?`,
-        body: "El enlace seleccionado quedará revocado. Se creará uno nuevo para la misma revisión; el PDF sellado y las decisiones anteriores se conservan.",
+        body: "El enlace seleccionado quedará revocado. Se creará uno nuevo para la misma revisión; el PDF emitido y las decisiones anteriores se conservan.",
         confirmLabel: "Revocar y regenerar",
       }))
     )
@@ -1301,7 +1301,7 @@ export function ProjectQuotationPanel({
     if (
       !(await confirm({
         title: `¿Cambiar el acceso de ${formatRevision(link.revision_code)} hasta ${formatDateTime(date)}?`,
-        body: "El vencimiento del enlace cambiará. La vigencia comercial del PDF conserva su fecha sellada.",
+        body: "El vencimiento del enlace cambiará. La vigencia comercial del PDF conserva su fecha original.",
         confirmLabel: "Cambiar vencimiento",
       }))
     )
@@ -1318,7 +1318,7 @@ export function ProjectQuotationPanel({
       if (response.status !== 200) throw new ApiError(response.status, response.data);
       await approvals.refetch();
       setMessage(
-        "Vencimiento del enlace actualizado. El documento sellado conserva su vigencia comercial.",
+        "Vencimiento del enlace actualizado. El documento emitido conserva su vigencia comercial.",
       );
     } catch (error) {
       setMessage(
@@ -1464,7 +1464,7 @@ export function ProjectQuotationPanel({
     },
     {
       key: "positions",
-      label: "Posiciones y precios",
+      label: "Ventanas y precios",
       complete:
         canEmit &&
         Boolean(project.position_count) &&
@@ -1655,18 +1655,16 @@ export function ProjectQuotationPanel({
             <div id="quotation-positions" tabIndex={-1}>
               <p>
                 {project.position_count === 0
-                  ? "La obra aún no tiene posiciones."
+                  ? "La obra aún no tiene ventanas."
                   : canEmit
                     ? "El precio está listo. Revisa las ventanas y las condiciones antes del PDF."
                     : project.working_price?.error?.detail ||
                       "Revisa los datos y precios de las ventanas."}
               </p>
               {project.position_count === 0 ? (
-                <Link to={`/projects/${project.id}/positions/new`}>Agregar primera posición</Link>
+                <Link to={`/projects/${project.id}/positions/new`}>Agregar primera ventana</Link>
               ) : canEmit === false ? (
-                <Link to={`/projects/${project.id}/pricing`}>
-                  Revisar precios de las posiciones
-                </Link>
+                <Link to={`/projects/${project.id}/pricing`}>Revisar precios de las ventanas</Link>
               ) : null}
             </div>
             <QuotationGlobalChanges
@@ -1745,7 +1743,7 @@ export function ProjectQuotationPanel({
                   <details>
                     <summary>Comparar revisiones anteriores como alternativas</summary>
                     <p>
-                      Se imprimen completas con su precio sellado y no se incluyen en el total.
+                      Se imprimen completas con su precio emitido y no se incluyen en el total.
                       Puedes elegir hasta tres.
                     </p>
                     {project.versions?.map((version) => (
@@ -1778,7 +1776,7 @@ export function ProjectQuotationPanel({
                 {preparation.positions.map((position, index) => (
                   <details className="quotation-position" key={position.position_id}>
                     <summary>
-                      Posición {index + 1} · {position.location_tag || "Sin ubicación"} ·{" "}
+                      Ventana {index + 1} · {position.location_tag || "Sin ubicación"} ·{" "}
                       {positionFormComplete(position) ? "Preparada" : "Qué falta"}
                     </summary>
                     <fieldset disabled={busy}>
@@ -1948,7 +1946,7 @@ export function ProjectQuotationPanel({
                                   )}
                                   {requirement.source && (
                                     <span className="handle-bounds">
-                                      Fuente: {requirement.source}
+                                      Origen: {requirement.source}
                                     </span>
                                   )}
                                 </div>
@@ -2396,7 +2394,7 @@ export function ProjectQuotationPanel({
                   ))}
                 {emitMissing.length > 0 && (
                   <div className="quotation-technical-missing">
-                    <h4>Preparación de las posiciones</h4>
+                    <h4>Preparación de las ventanas</h4>
                     <ul>
                       {emitMissing.map((item) => (
                         <li key={item.key}>

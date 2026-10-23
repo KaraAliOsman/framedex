@@ -105,8 +105,8 @@ function PriceSource({ option }: { option: PortalOption }): JSX.Element {
       <summary>¿De dónde sale el precio?</summary>
       <p>{option.price_source}</p>
       <p>
-        Los precios unitarios y de línea incluyen el impuesto sellado. Los ajustes se muestran por
-        separado para conservar el total de la revisión.
+        Los precios unitarios y de línea incluyen el impuesto de la cotización. Los ajustes se
+        muestran por separado para conservar el total de la revisión.
       </p>
       <details>
         <summary>Detalles técnicos</summary>
@@ -120,7 +120,7 @@ function ProposalState({ quote }: { quote: PortalQuote }): JSX.Element {
   return (
     <section className="portal-state" aria-label="Estado de la propuesta">
       <StatusBadge data-status={quote.approval_status.toLowerCase()}>
-        {titles[quote.approval_status] || "Estado sin dato"}
+        {titles[quote.approval_status] || "Estado por completar"}
       </StatusBadge>
       {quote.decided_at && (
         <p>
@@ -142,7 +142,7 @@ function ProposalState({ quote }: { quote: PortalQuote }): JSX.Element {
       ) : quote.approval_status === "DECLINED" ? (
         <p>Su rechazo quedó registrado. Si necesita otra propuesta, contacte al fabricante.</p>
       ) : (
-        <p>Revise las posiciones, el importe y las condiciones antes de aceptar.</p>
+        <p>Revise las ventanas, el importe y las condiciones antes de aceptar.</p>
       )}
     </section>
   );
@@ -179,7 +179,7 @@ function Conditions({ option }: { option: PortalOption }): JSX.Element {
           ) : (
             <p>
               {option.payment_terms ||
-                "Sin dato · el fabricante debe declarar el calendario de pagos."}
+                "Falta completar · el fabricante debe declarar el calendario de pagos."}
             </p>
           )}
         </div>
@@ -293,7 +293,7 @@ function PortalPayment({
             : result.isError
               ? "No se pudo verificar el resultado. Contacte al fabricante antes de repetir el pago."
               : (paymentStates[result.data.status] ??
-                "Estado del proveedor sin dato. Contacte al fabricante.")}
+                "Estado del proveedor por completar. Contacte al fabricante.")}
         </p>
       )}
       {quote.payment ? (
@@ -462,7 +462,7 @@ export function PortalQuotePage(): JSX.Element {
         price_cause:
           quote.price_cause ??
           "Esta revisión histórica necesita una proyección comercial nueva; contacte al fabricante.",
-        price_source: quote.price_source || "Revisión sellada",
+        price_source: quote.price_source || "Revisión emitida",
         consent_text: quote.consent_text ?? null,
         positions: quote.positions,
         extras: quote.extras,
@@ -527,7 +527,7 @@ export function PortalQuotePage(): JSX.Element {
       <main className="portal-page" data-density="document">
         <section className="portal-card portal-card--narrow">
           <h1>Consultando su cotización</h1>
-          <Loading label="Consultando la propuesta sellada" />
+          <Loading label="Consultando la propuesta emitida" />
         </section>
       </main>
     );
@@ -650,7 +650,7 @@ export function PortalQuotePage(): JSX.Element {
           <section className="portal-section" aria-label="Comparar alternativas">
             <h2>Compare y elija su solución</h2>
             <p>
-              Las alternativas son revisiones selladas completas. La aprobación, los cobros y la
+              Las alternativas son revisiones emitidas completas. La aprobación, los cobros y la
               fabricación usarán la solución que usted elija.
             </p>
             <div className="portal-options">
@@ -673,10 +673,10 @@ export function PortalQuotePage(): JSX.Element {
                     </>
                   )}
                   <p>
-                    {candidate.positions[0]?.system_name || "Serie sellada"} ·{" "}
-                    {candidate.positions[0]?.finish || "Acabado sin dato"}
+                    {candidate.positions[0]?.system_name || "Serie de la cotización"} ·{" "}
+                    {candidate.positions[0]?.finish || "Acabado por completar"}
                   </p>
-                  <p>{candidate.positions.length} posiciones</p>
+                  <p>{candidate.positions.length} ventanas</p>
                   <p>
                     <Money value={candidate.display_total_gross} currency={candidate.currency} />{" "}
                     IVA incluido
@@ -712,7 +712,7 @@ export function PortalQuotePage(): JSX.Element {
             {option.price_cause}
           </p>
         )}
-        <section className="portal-section" aria-label="Posiciones de la solución">
+        <section className="portal-section" aria-label="Ventanas de la solución">
           <h2>Lo que usted compra</h2>
           <p>{formatRevision(option.revision_code)} · precios unitarios y de línea IVA incluido.</p>
           <div className="portal-positions">
@@ -720,7 +720,7 @@ export function PortalQuotePage(): JSX.Element {
               <article className="portal-position" key={p.id} id={`posicion-${p.position_index}`}>
                 <header>
                   <h3>
-                    Posición {p.position_index} · {p.location_tag || "Ubicación sin declarar"}
+                    Ventana {p.position_index} · {p.location_tag || "Ubicación sin declarar"}
                   </h3>
                   {p.is_demo && (
                     <DemoBadge source="Catálogo sintético; sin certificación técnica" />
@@ -740,13 +740,13 @@ export function PortalQuotePage(): JSX.Element {
                       </div>
                       <div>
                         <dt>Cantidad</dt>
-                        <dd className="technical-number">{p.quantity ?? "Sin dato"}</dd>
+                        <dd className="technical-number">{p.quantity ?? "Falta completar"}</dd>
                       </div>
                       <div>
                         <dt>Vidrio</dt>
                         <dd>
                           {p.glass_specs.join(" · ") || (
-                            <UnknownValue cause="No se declaró vidrio en esta posición" />
+                            <UnknownValue cause="No se declaró vidrio en esta ventana" />
                           )}
                         </dd>
                       </div>
@@ -754,7 +754,7 @@ export function PortalQuotePage(): JSX.Element {
                         <dt>Acabado</dt>
                         <dd>
                           {p.finish || (
-                            <UnknownValue cause="No se declaró acabado en esta posición" />
+                            <UnknownValue cause="No se declaró acabado en esta ventana" />
                           )}
                         </dd>
                       </div>
@@ -798,7 +798,7 @@ export function PortalQuotePage(): JSX.Element {
                           document.getElementById("portal-note")?.focus();
                         }}
                       >
-                        Solicitar cambio en posición {p.position_index}
+                        Solicitar cambio en ventana {p.position_index}
                       </button>
                     )}
                   </div>
@@ -808,7 +808,7 @@ export function PortalQuotePage(): JSX.Element {
           </div>
           {!option.positions.length && (
             <p>
-              Sin posiciones · solicite al fabricante una propuesta con el detalle de los vanos.
+              Sin ventanas · solicite al fabricante una propuesta con el detalle de las ventanas.
             </p>
           )}
         </section>
@@ -838,7 +838,7 @@ export function PortalQuotePage(): JSX.Element {
           <p>
             Ajuste de moneda:{" "}
             <Money value={option.rounding_adjustment} currency={option.currency} />. La suma de
-            posiciones, servicios, cargos y este ajuste conserva el total sellado.
+            ventanas, servicios, cargos y este ajuste conserva el total emitido.
           </p>
         )}
         <PriceSource option={option} />
@@ -916,7 +916,7 @@ export function PortalQuotePage(): JSX.Element {
               </button>
               <hr />
               <h3>Cambios o rechazo</h3>
-              <label htmlFor="portal-position">Posición a revisar (opcional)</label>
+              <label htmlFor="portal-position">Ventana a revisar (opcional)</label>
               <select
                 id="portal-position"
                 value={position}
@@ -926,7 +926,7 @@ export function PortalQuotePage(): JSX.Element {
                 <option value="">Propuesta completa</option>
                 {option.positions.map((p) => (
                   <option key={p.id} value={p.id}>
-                    Posición {p.position_index} · {p.location_tag || "Sin ubicación"}
+                    Ventana {p.position_index} · {p.location_tag || "Sin ubicación"}
                   </option>
                 ))}
               </select>

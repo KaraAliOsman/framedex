@@ -204,7 +204,7 @@ _STRATEGY_ES = {"auto": "Automática", "fast": "Rápida", "deep": "Profunda"}
 def _measure(value: object, unit: str, precision: int) -> str:
     """Presentation precision for a declared physical quantity, never a default."""
     if value is None:
-        return "Sin dato"
+        return "Falta completar"
     number = Decimal(_value(value)).quantize(Decimal(1).scaleb(-precision), rounding=ROUND_HALF_UP)
     return f"{number:,.{precision}f}".replace(",", "\u202f").replace(".", ",") + " " + unit
 
@@ -235,7 +235,7 @@ def _survey_dim(value: object) -> str:
     text = _dim(value)
     match = re.fullmatch(r'(-?)(\d+)(?:\.(\d+))?',text)
     if not match:
-        return 'Sin dato'
+        return 'Falta completar'
     sign,integer,fraction = match.groups()
     grouped = re.sub(r'(?<=\d)(?=(\d{3})+$)','\u2009',integer)
     return ('−' if sign else '')+grouped+(','+fraction if fraction else '')
@@ -651,7 +651,7 @@ def _svg_elements(node: dict[str, object], x: Decimal, y: Decimal,
             motion = opening_from_legacy(BayOpeningType.DOOR_ENTRY, door_handedness=hinge)
             out.append(_opening_symbol_svg(motion, lx, iy, lw, ih, pal, exterior=exterior))
             if hinge is None:
-                out.append('<title>Sin dato: bisagras de la puerta</title>')
+                out.append('<title>Falta completar las bisagras de la puerta</title>')
     else:
         try:
             motion = opening_from_legacy(BayOpeningType(opening or "FIXED"))
@@ -958,7 +958,7 @@ def _position_svg(
     return (
         f'<svg viewBox="{_pt((min(Decimal("0"), width-drawing_width) if view == "exterior" else Decimal("0"))-label_margin)} {-caption_size * 2} {_pt(max(width, drawing_width)+label_margin*2)} {_pt(max(height, drawing_height) + caption_size * 2)}" '
         'xmlns="http://www.w3.org/2000/svg" role="img" '
-        f'aria-label="Vano {_value(position.get("position_index"))}">'
+        f'aria-label="Ventana {_value(position.get("position_index"))}">'
         + f'<title>{title}</title><text x="0" y="{-caption_size}" font-family="IBM Plex Sans" '
           f'font-size="{_pt(caption_size)}" fill="{pal["glyph"]}">{title}</text>' + graphic + "</svg>"
     )
@@ -1119,7 +1119,7 @@ def _doc03(snapshot: dict[str, object]) -> str:
         typology_es = _TYPOLOGY_ES.get(
             _value(position_ref.get("typology")), _value(position_ref.get("typology"))
         )
-        position_title = f"Posición {_value(fact.get('position_index'))}"
+        position_title = f"Ventana {_value(fact.get('position_index'))}"
         if location_tag != "—":
             position_title += f" · {location_tag}"
         if typology_es != "—":
@@ -1157,7 +1157,7 @@ def _doc03(snapshot: dict[str, object]) -> str:
             )
         if infills:
             body += _table(
-                ["Relleno", "Vano / hoja", "Especificación", "Dimensiones (mm)", "Forma", "Retención"],
+                ["Relleno", "Paño / hoja", "Especificación", "Dimensiones (mm)", "Forma", "Retención"],
                 [[labels["infill"].get(item.get("infill_id"), item.get("infill_id")),
                   _location(labels, item.get("bay_id"), item.get("leaf_id")),
                   item.get("composition"),
@@ -1169,7 +1169,7 @@ def _doc03(snapshot: dict[str, object]) -> str:
             )
         if handles:
             body += _table(
-                ["Manilla", "Vano / hoja", "Pieza host", "Punto X/Y mm",
+                ["Manilla", "Paño / hoja", "Pieza host", "Punto X/Y mm",
                  "Altura solicitada mm", "Referencia vertical"],
                 [[labels["handle"].get(item.get("handle_id"), item.get("handle_id")),
                   _location(labels, item.get("bay_id"), item.get("leaf_id")),
@@ -1205,7 +1205,7 @@ def _doc03(snapshot: dict[str, object]) -> str:
             ]
             if annotations:
                 body += "<h3>Anotaciones de taller congeladas</h3>" + _table(
-                    ["Vano", "Hoja", "Desagüe inferior mm", "Cierres perímetro mm",
+                    ["Paño", "Hoja", "Desagüe inferior mm", "Cierres perímetro mm",
                      "Ancho continuo mm", "Acabado", "Coplador"],
                     [[
                         item.get("bay_id"), item.get("leaf_id"),
@@ -1365,7 +1365,7 @@ def _piece_labels(
 def _short_id(value: object) -> str:
     """Raw 64-hex/UUID identities dump a full hash cell — truncate for
     display while staying recognizably unique to the shop."""
-    return "Sin dato · falta código" if value is not None else "Sin dato"
+    return "Falta completar el código" if value is not None else "Falta completar"
 
 
 def _norm_dec(value: object) -> str:
@@ -1645,10 +1645,10 @@ def _infill_key(piece: dict[str, object]) -> tuple[str, str, str]:
 
 
 def _location(labels: dict[str, dict[object, str]], bay_id: object, leaf_id: object) -> str:
-    bay = labels["bay"].get(bay_id, "Sin dato")
+    bay = labels["bay"].get(bay_id, "Falta completar")
     if leaf_id is None:
         return str(bay)
-    return f"{bay} / {labels['leaf'].get(leaf_id, 'Sin dato')}"
+    return f"{bay} / {labels['leaf'].get(leaf_id, 'Falta completar')}"
 
 
 def _doc05(snapshot: dict[str, object]) -> str:
@@ -1694,7 +1694,7 @@ def _doc05(snapshot: dict[str, object]) -> str:
                 + _bar_svg(bar, labels, cut_map, span_mm=Decimal("186"))
                 + "</div>"
                 + _table(
-                    ["Sec.", "Pieza física", "Posición", "Vano / hoja", "SKU taller", "Corte mm", "Ángulos", "Flecha mm"],
+                    ["Sec.", "Pieza física", "Ventana", "Paño / hoja", "SKU taller", "Corte mm", "Ángulos", "Flecha mm"],
                     [[cut.get("sequence"),
                       cut_map.get(_cut_key(cut), _short_id(cut.get("piece_id"))),
                       labels["position"].get(
@@ -1738,7 +1738,7 @@ def _doc06(snapshot: dict[str, object]) -> str:
         ])
     if units_rows:
         body += _table(
-            ["Posición", "Ubicación", "Tipología", "Cant.", "Dimensiones"],
+            ["Ventana", "Ubicación", "Tipología", "Cant.", "Dimensiones"],
             units_rows,
             ["", "", "", "dimension", "dimension"],
         )
@@ -1801,7 +1801,7 @@ def _doc07(snapshot: dict[str, object]) -> str:
 
     body += '<p class="confidential">CONFIDENCIAL · SOLO PROPIETARIO</p>'
     body += _table(
-        ["Posición", "Costo capturado", "Venta neta", "Margen", "Margen %"],
+        ["Ventana", "Costo capturado", "Venta neta", "Margen", "Margen %"],
         [_cost_row(item) for item in costs],
         ["", "dimension", "dimension", "dimension", "dimension"],
     )
@@ -1889,14 +1889,14 @@ def _po_parties(order: dict[str, object], snapshot: dict[str, object]) -> str:
 
 
 def _purchase_unit(value: object) -> str:
-    return {'BAR': 'barras', 'EA': 'un.', 'KIT': 'kits', 'M': 'm', 'M2': 'm²', 'SHEET': 'planchas', 'KG': 'kg'}.get(str(value).upper(), 'Sin dato')
+    return {'BAR': 'barras', 'EA': 'un.', 'KIT': 'kits', 'M': 'm', 'M2': 'm²', 'SHEET': 'planchas', 'KG': 'kg'}.get(str(value).upper(), 'Falta completar')
 
 
 def _purchase_finish(value: object) -> str:
     names = {'WHITE': 'Blanco', 'FOILED': 'Foliado', 'CREAM': 'Crema',
              'WALNUT': 'Nogal', 'ANTHRACITE': 'Antracita', 'COEX_GREY': 'Gris coextruido'}
     if value is None:
-        return 'Sin dato · falta acabado declarado'
+        return 'Falta declarar el acabado'
     code = str(value)
     if code in names:
         return names[code]
@@ -1976,11 +1976,11 @@ def _purchase_prices(lines: list[dict[str, object]]) -> str:
                   for line in lines]
     total = purchase_total(quantities)
     return _table(["Material", "Precio neto unitario CLP", "Monto neto CLP"],
-                  [[line.get("purchasing_sku"), _money(price, "CLP") if price is not None else "Sin dato",
-                    _money(purchase_total([(quantity, price)]), "CLP") if price is not None else "Sin dato"]
+                  [[line.get("purchasing_sku"), _money(price, "CLP") if price is not None else "Falta completar",
+                    _money(purchase_total([(quantity, price)]), "CLP") if price is not None else "Falta completar"]
                    for line, (quantity, price) in zip(lines, quantities, strict=True)]
                   + [["TOTAL NETO", "", _money(total, "CLP") if total is not None
-                      else "Sin dato · falta cotización del proveedor"]],
+                      else "Falta la cotización del proveedor"]],
                   ["", "dimension", "dimension"])
 
 
@@ -2216,16 +2216,16 @@ def _receipt_body(payload: dict[str, object]) -> str:
         f'<span class="tb-value">{escape(_value(project.get("code")))}</span></div>'
         f'<div class="tb-cell"><span class="tb-label">Documento</span>'
         '<span class="tb-value">Comprobante de pago</span></div>'
-        f'<div class="tb-cell"><span class="tb-label">Recibo</span>'
+        f'<div class="tb-cell"><span class="tb-label">Número</span>'
         f'<span class="tb-value">{escape(receipt_code)}</span></div>'
         f'<div class="tb-cell"><span class="tb-label">Fecha</span>'
         f'<span class="tb-value">{escape(_cldate(issued_at))}</span></div>'
         f'<div class="tb-cell tb-wide"><span class="tb-label">Concepto</span>'
         f'<span class="tb-value">{escape(kind)}</span></div>'
         f'<div class="tb-cell"><span class="tb-label">Revisión</span>'
-        f'<span class="tb-value">{escape(str(project.get("revision_code") or "Sin dato"))}</span></div>'
+        f'<span class="tb-value">{escape(str(project.get("revision_code") or "Falta completar"))}</span></div>'
         f'<div class="tb-cell"><span class="tb-label">Huella BOM</span>'
-        f'<span class="tb-value">{escape(str(payload.get("bom_hash") or "Sin dato")[:12])}</span></div>'
+        f'<span class="tb-value">{escape(str(payload.get("bom_hash") or "No consta")[:12])}</span></div>'
         '<div class="tb-cell"><span class="tb-label">Página</span>'
         '<span class="tb-value"><span class="pg"></span></span></div>'
         "</div>"
@@ -2258,11 +2258,11 @@ def _receipt_body(payload: dict[str, object]) -> str:
         "<h2>Detalle del cobro</h2>"
         + _table(
             ["Concepto", "Método", "Referencia", "Fecha de cobro", "Registrado por"],
-            [[kind, method, payment.get("reference") or "Sin dato", _cldate(payment.get("recorded_at")), payment.get("actor_label") or "Sin dato · registro histórico"]],
+            [[kind, method, payment.get("reference") or "Falta completar", _cldate(payment.get("recorded_at")), payment.get("actor_label") or "No registrado en el histórico"]],
         )
     )
     if payment.get("simulated"):
-        body += '<p><strong>Pago simulado — no se movió dinero.</strong> Este recibo es evidencia de una prueba.</p>'
+        body += '<p><strong>Pago simulado — no se movió dinero.</strong> Este comprobante corresponde a una prueba.</p>'
     elif balance.get("includes_simulation"):
         body += '<p>El saldo incluye otros pagos simulados; no acredita el cobro de esos movimientos.</p>'
     body += f'<p>Revisión {escape(_value(project.get("revision_code")))} · saldo al registrar este movimiento.</p>'
@@ -2360,7 +2360,7 @@ def _dispatch_note_body(payload: dict[str, object]) -> str:
         )
     window = str(delivery.get("time_window") or "")
     window_es = {"AM": "Mañana", "PM": "Tarde", "JORNADA": "Jornada completa"}.get(
-        window, "Sin dato · horario no declarado" if window else ""
+        window, "Falta declarar el horario" if window else ""
     )
     if delivery.get("scheduled_date"):
         when = f"{escape(_cldate(str(delivery['scheduled_date'])))}"
@@ -2618,12 +2618,12 @@ def _internal_title(payload, title, code):
     project = _object(payload.get("project"), "invalid_invoice_project")
     cells = [("Proyecto", project.get("code")), ("Documento", title), ("Número", code),
              ("Revisión", payload.get("revision_code")), ("Fecha", _cldate(payload.get("issued_at"))),
-             ("Huella BOM", str(payload.get("bom_hash") or "Sin dato")[:12])]
+             ("Huella BOM", str(payload.get("bom_hash") or "No consta")[:12])]
     footer = ''.join(f'<div class="tb-cell"><span class="tb-label">{label}</span><span class="tb-value">{escape(_value(value))}</span></div>' for label, value in cells)
     footer += '<div class="tb-cell"><span class="tb-label">Página</span><span class="tb-value"><span class="pg"></span></span></div>'
     org = payload.get("organization") or {}
-    issuer = " · ".join(str(org.get(field) or "Sin dato") for field in ("name", "tax_id", "giro", "brand_address", "brand_phone", "brand_email"))
-    receiver = " · ".join(str(project.get(field) or "Sin dato") for field in ("client_name", "client_rut", "client_giro", "client_address", "client_comuna"))
+    issuer = " · ".join(str(org.get(field) or "Falta completar") for field in ("name", "tax_id", "giro", "brand_address", "brand_phone", "brand_email"))
+    receiver = " · ".join(str(project.get(field) or "Falta completar") for field in ("client_name", "client_rut", "client_giro", "client_address", "client_comuna"))
     return (f'<main><div class="titleblock">{footer}</div><div class="masthead">{_MITER}{_brand_block(org)}'
             f'<div class="meta"><strong>{escape(code)}</strong><br>{escape(_cldate(payload.get("issued_at")))}</div></div>'
             f'<div class="rule-stack"></div><h1>{title}</h1><p>{escape(INTERNAL_LEGEND)}</p>'
@@ -2649,14 +2649,14 @@ def _internal_detail(payload, currency):
         if position.get("location_tag"):
             description += " · " + str(position["location_tag"])
         lines.append([position.get("position_index"), description, position.get("quantity"),
-            _money(value.unit_net, currency) if value else "Sin dato · sin precio sellado",
-            _money(value.net, currency) if value else "Sin dato · sin precio sellado"])
+            _money(value.unit_net, currency) if value else "Precio no registrado en esta revisión",
+            _money(value.net, currency) if value else "Precio no registrado en esta revisión"])
         if value and value.adjustment:
             adjustment = _money(value.adjustment, currency).replace("-", "−")
-            notes.append(f'<p>Posición {escape(str(position.get("position_index")))}: cantidad × unitario + ajuste de moneda '
-                         f'<span class="dimension">{escape(adjustment)}</span> = total neto sellado.</p>')
-    html = "<h2>Detalle</h2>" + _table(["Posición", "Descripción", "Cantidad", "Unitario neto", "Total neto"], lines,
-        ["", "", "dimension", "dimension", "dimension"]) if lines else "<p>Sin detalle por posición en esta emisión histórica.</p>"
+            notes.append(f'<p>Ventana {escape(str(position.get("position_index")))}: cantidad × unitario + ajuste de moneda '
+                         f'<span class="dimension">{escape(adjustment)}</span> = total neto emitido.</p>')
+    html = "<h2>Detalle</h2>" + _table(["Ventana", "Descripción", "Cantidad", "Unitario neto", "Total neto"], lines,
+        ["", "", "dimension", "dimension", "dimension"]) if lines else "<p>Sin detalle por ventana en esta emisión histórica.</p>"
     return html + "".join(notes), values if len(values) == len(positions) else None
 
 
@@ -2668,10 +2668,10 @@ def _internal_totals(deal, currency, lines):
             rows += [["Neto antes de descuento", _money(summary.before_discount, currency)],
                      ["Descuento", _money(summary.discount, currency)]]
         else:
-            rows += [["Descuento", "Sin dato · emisión sin desglose anterior"]]
+            rows += [["Descuento", "Desglose no registrado en esta emisión"]]
     net, tax = _num(deal["total_net"]), _num(deal["total_tax"])
     rate = tax_percent(net=net, tax=tax)
-    label = "IVA " + _survey_dim(rate) + " %" if rate is not None else "IVA · tasa sin dato"
+    label = "IVA " + _survey_dim(rate) + " %" if rate is not None else "IVA · tasa no registrada"
     rows += [["Neto", _money(net, currency)], [label, _money(tax, currency)],
              ["Total · " + currency, _money(deal["total_gross"], currency)]]
     return "<h2>Totales</h2>" + _table(["Concepto", "Monto"], rows, ["", "dimension"])
@@ -2725,7 +2725,7 @@ def _credit_note_body(payload: dict[str, object]) -> str:
     body = _internal_title(payload, "Nota de crédito interna", _value(payload.get("credit_code")))
     verb = "Abono parcial del documento" if payload.get("credit_partial") else "Anula documento"
     body += f'<p><strong>Referencia:</strong> {verb} {escape(_value(invoice.get("invoice_code")))} · {escape(_cldate(invoice.get("issued_at")))}</p>'
-    body += f'<p><strong>Motivo:</strong> {escape(str(payload.get("reason") or "Sin dato · motivo no registrado"))}</p>'
+    body += f'<p><strong>Motivo:</strong> {escape(str(payload.get("reason") or "Motivo no registrado"))}</p>'
     detail, _ = _internal_detail(payload, currency)
     body += detail + '<p>El detalle corresponde al documento original; el monto acreditado figura a continuación.</p>'
     body += _internal_totals({"total_net": net, "total_tax": tax, "total_gross": credited}, currency, None)

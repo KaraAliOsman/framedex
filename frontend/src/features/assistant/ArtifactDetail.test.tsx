@@ -21,7 +21,7 @@ it("shows the current project-operation draft using its grounded position design
       }}
     />,
   );
-  expect(screen.getByText("Posición 3")).toBeTruthy();
+  expect(screen.getByText("Ventana 3")).toBeTruthy();
   expect(screen.getByText("Dormitorio")).toBeTruthy();
   const dimensions = screen.getByText(/2\u2009400 × 1\u2009800/, { normalizer: (value) => value });
   expect(dimensions.className).toBe("ui-value ui-value--measure");
@@ -61,7 +61,7 @@ it("keeps historical drafts readable with their actual measures and translated s
 
 it("does not manufacture zero prices for absent draft authority", () => {
   render(<ArtifactDetail artifact={{ kind: "quote_draft", payload: { totals: { net: null } } }} />);
-  expect(screen.getByText("Sin dato")).toBeTruthy();
+  expect(screen.getByText("Falta completar")).toBeTruthy();
   expect(screen.getByText(/No hay un precio aplicado\./)).toBeTruthy();
   expect(document.body.textContent).not.toContain("$0");
 });

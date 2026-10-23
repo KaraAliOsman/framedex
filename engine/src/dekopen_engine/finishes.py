@@ -36,7 +36,7 @@ def finish_article(article: EffectiveProfileArticle, selected: ResolvedFinish | 
     # structural steel authority for a trim, extension or sill.
     if article.material is MaterialType.PVC and combo.reinforcement_required and not auxiliary and article.role.value not in {"GLAZING_BEAD", "THRESHOLD", "RAIL"}:
         if rule is None:
-            raise MissingFabricationAuthority(f"Sin dato: {selected.exterior.name} / {selected.interior.name} exige refuerzo; falta la regla de {article.sku}. Completa el catálogo.")
+            raise MissingFabricationAuthority(f"Falta completar: {selected.exterior.name} / {selected.interior.name} exige refuerzo; falta la regla de {article.sku}. Completa el catálogo.")
         rule = rule.model_copy(update={"minimum_length_mm": Decimal(0), "required_non_white": False})
     elif rule is not None and not auxiliary:
         rule = rule.model_copy(update={"required_non_white": False})
@@ -86,7 +86,7 @@ def finish_result(result: EngineResult, params: SystemParams, code: str) -> Engi
     for cut in result.profile_cuts:
         sku = selected.profile_skus.get(cut.sku)
         if not sku:
-            raise MissingFabricationAuthority(f"Sin dato: falta el SKU de {cut.sku} para {selected.exterior.name} exterior / {selected.interior.name} interior. Completa Colores y SKU por color.")
+            raise MissingFabricationAuthority(f"Falta completar: falta el SKU de {cut.sku} para {selected.exterior.name} exterior / {selected.interior.name} interior. Completa Colores y SKU por color.")
         mapped[cut.sku] = sku
         cuts.append(cut.model_copy(update={"commercial_sku": sku, "stock_color": code}))
     for item in result.hardware_items:

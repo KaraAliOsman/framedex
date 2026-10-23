@@ -281,7 +281,7 @@ it("mounts selling evidence and authorized FX for estimator without confidential
 it("shows authority unit and line for quantity three without deriving a unit from the line", async () => {
   render(page());
   await screen.findByText("3 unidades");
-  const table = screen.getByLabelText("Tabla de posiciones");
+  const table = screen.getByLabelText("Tabla de ventanas");
   expect(within(table).getByText("$351")).toBeInTheDocument();
   expect(within(table).getByText("$1.000")).toBeInTheDocument();
   expect(table).toHaveTextContent("1 200 × 1 400 mm");

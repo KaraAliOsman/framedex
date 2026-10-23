@@ -83,7 +83,7 @@ POSITION_COLUMNS = (
 
 
 def missing():
-    raise contract_error(404, "project_not_found", "El proyecto o vano no está disponible.")
+    raise contract_error(404, "project_not_found", "Esta obra o ventana no está disponible.")
 
 
 def project_row(org_id, project_id, *, lock=False):
@@ -218,7 +218,7 @@ def positions(org_id, project_id):
     for item in values:
         item["measurements"] = measurements.get(str(item["id"]))
         system = systems.get(str(item["design"]["system_id"]))
-        item["system_name"] = system["name"] if system else "Sin dato · revisa el catálogo de la serie"
+        item["system_name"] = system["name"] if system else "Falta completar · revisa el catálogo de la serie"
         item["system_demo"] = bool(system and system["is_demo"])
     return values
 
@@ -288,8 +288,8 @@ def project_public(org_id, row, *, detail=False, authority=_UNSET,
                 validity = rows("SELECT quotation_valid_until AS valid_until FROM public.project_documentary_inputs "
                     "WHERE project_id=%s AND org_id=%s", [row["id"], org_id])
         value["quotation_valid_until"] = validity[0]["valid_until"] if validity else None
-        value["quotation_validity_source"] = ("Fuente: cotización sellada de esta revisión" if sealed_validity
-            else "Fuente: preparación guardada; revisa la fecha antes de emitir" if validity
+        value["quotation_validity_source"] = ("Origen: cotización emitida de esta revisión" if sealed_validity
+            else "Origen: preparación guardada; revisa la fecha antes de emitir" if validity
             else "Sin fecha guardada en esta revisión")
         commercial = {}
         if authority:
@@ -340,12 +340,16 @@ def _bulk_pricing_authorities(org_id, project_ids):
     return result
 
 
-def list_projects(org_id):
+def list_projects(org_id, *, project_ids=None, progress=None):
+    if project_ids is not None and not project_ids:
+        return []
     project_rows = rows(
         f"SELECT {','.join(PROJECT_COLUMNS)}, pricing_reset_at "
-        "FROM public.projects WHERE org_id=%s ORDER BY updated_at DESC,id "
-        "LIMIT 500",
-        [org_id],
+        "FROM public.projects WHERE org_id=%s "
+        + ("AND id=ANY(%s) " if project_ids is not None else "")
+        + "ORDER BY updated_at DESC,id "
+        + ("LIMIT 500" if project_ids is None else ""),
+        [org_id, project_ids] if project_ids is not None else [org_id],
     )
     if not project_rows:
         return []
@@ -376,13 +380,16 @@ def list_projects(org_id):
         ):
             continue
         authorities[candidate["project_id"]] = candidate
+    from projects.progress import project_progress
+    if progress is None:
+        progress = project_progress(org_id, project_ids)
     return [
-        project_public(
+        {**project_public(
             org_id, row,
             authority=authorities.get(row["id"]),
             position_count=counts.get(row["id"], 0),
             accepted=accepted.get(str(row['id'])),
-        )
+        ), 'progress': progress[str(row['id'])]}
         for row in project_rows
     ]
 
@@ -597,7 +604,7 @@ def save_position(org_id, project_id, data, *, position_id=None, apply_defaults=
         derived,_ = derive_design(org_id,design,SURVEYS.validate_json(json_text(data['measurements'])))
         if (derived['nominal_width_mm'] != design['nominal_width_mm'] or derived['nominal_height_mm'] != design['nominal_height_mm']
             or not _same_documentary_value(derived['parametric_tree'],design['parametric_tree'])):
-            raise contract_error(409,'measurement_design_drift','Aplica la fabricación calculada antes de guardar el vano.')
+            raise contract_error(409,'measurement_design_drift','Aplica la fabricación calculada antes de guardar la ventana.')
     with connection.cursor() as cursor:
         cursor.execute("SELECT private.reserve_catalog_authority(%s,%s)",
                        [design["system_id"], org_id])

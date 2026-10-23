@@ -66,9 +66,11 @@ export function crumbsFor(
     const leafKey =
       second === "billing"
         ? "crumb.settingsBilling"
-        : second === "wallet"
-          ? "crumb.settingsWallet"
-          : "crumb.settingsGeneral";
+        : second === "advanced"
+          ? "nav.advanced"
+          : second === "wallet"
+            ? "crumb.settingsWallet"
+            : "crumb.settingsGeneral";
     return [head, { label: t(leafKey) }];
   }
   if (section === "projects") {

@@ -2,7 +2,7 @@
   "DEMO_GUILLOTINA/DOBLE-CONTRAPESOS": {
     "extra_suggestions": [
       {
-        "cause": "La posición contiene una ventana; revisa si la fachada necesita vierteaguas.",
+        "cause": "Hay una ventana compatible; revisa si la fachada necesita vierteaguas.",
         "name": "Vierteaguas",
         "selection": {
           "bay_id": null,
@@ -756,7 +756,7 @@
   "DEMO_GUILLOTINA/DOBLE-MUELLES": {
     "extra_suggestions": [
       {
-        "cause": "La posición contiene una ventana; revisa si la fachada necesita vierteaguas.",
+        "cause": "Hay una ventana compatible; revisa si la fachada necesita vierteaguas.",
         "name": "Vierteaguas",
         "selection": {
           "bay_id": null,
@@ -1510,7 +1510,7 @@
   "DEMO_GUILLOTINA/SIMPLE-CONTRAPESOS": {
     "extra_suggestions": [
       {
-        "cause": "La posición contiene una ventana; revisa si la fachada necesita vierteaguas.",
+        "cause": "Hay una ventana compatible; revisa si la fachada necesita vierteaguas.",
         "name": "Vierteaguas",
         "selection": {
           "bay_id": null,
@@ -2172,7 +2172,7 @@
   "DEMO_GUILLOTINA/SIMPLE-MUELLES": {
     "extra_suggestions": [
       {
-        "cause": "La posición contiene una ventana; revisa si la fachada necesita vierteaguas.",
+        "cause": "Hay una ventana compatible; revisa si la fachada necesita vierteaguas.",
         "name": "Vierteaguas",
         "selection": {
           "bay_id": null,
@@ -2834,7 +2834,7 @@
   "DEMO_HST/A": {
     "extra_suggestions": [
       {
-        "cause": "La posición contiene una ventana; revisa si la fachada necesita vierteaguas.",
+        "cause": "Hay una ventana compatible; revisa si la fachada necesita vierteaguas.",
         "name": "Vierteaguas",
         "selection": {
           "bay_id": null,
@@ -3577,7 +3577,7 @@
   "DEMO_HST/C": {
     "extra_suggestions": [
       {
-        "cause": "La posición contiene una ventana; revisa si la fachada necesita vierteaguas.",
+        "cause": "Hay una ventana compatible; revisa si la fachada necesita vierteaguas.",
         "name": "Vierteaguas",
         "selection": {
           "bay_id": null,
@@ -4835,7 +4835,7 @@
   "DEMO_PIVOT_H/EJE-30": {
     "extra_suggestions": [
       {
-        "cause": "La posición contiene una ventana; revisa si la fachada necesita vierteaguas.",
+        "cause": "Hay una ventana compatible; revisa si la fachada necesita vierteaguas.",
         "name": "Vierteaguas",
         "selection": {
           "bay_id": null,
@@ -5337,7 +5337,7 @@
   "DEMO_PIVOT_V/EJE-30": {
     "extra_suggestions": [
       {
-        "cause": "La posición contiene una ventana; revisa si la fachada necesita vierteaguas.",
+        "cause": "Hay una ventana compatible; revisa si la fachada necesita vierteaguas.",
         "name": "Vierteaguas",
         "selection": {
           "bay_id": null,
@@ -10136,7 +10136,7 @@
   "DEMO_PSK/XO": {
     "extra_suggestions": [
       {
-        "cause": "La posición contiene una ventana; revisa si la fachada necesita vierteaguas.",
+        "cause": "Hay una ventana compatible; revisa si la fachada necesita vierteaguas.",
         "name": "Vierteaguas",
         "selection": {
           "bay_id": null,

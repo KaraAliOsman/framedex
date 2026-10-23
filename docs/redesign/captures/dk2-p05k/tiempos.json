@@ -1,0 +1,226 @@
+[
+  {
+    "surface": "thermal",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "loadMs": 971
+  },
+  {
+    "surface": "pricing",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "loadMs": 2390
+  },
+  {
+    "surface": "payments",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "loadMs": 1038
+  },
+  {
+    "surface": "quote",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "loadMs": 1018
+  },
+  {
+    "surface": "documents",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "loadMs": 992
+  },
+  {
+    "surface": "assistant",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "loadMs": 494
+  },
+  {
+    "surface": "production",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "loadMs": 460
+  },
+  {
+    "surface": "field",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "loadMs": 943
+  },
+  {
+    "surface": "purchasing",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "loadMs": 707
+  },
+  {
+    "surface": "analytics",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "loadMs": 578
+  },
+  {
+    "surface": "costs",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "loadMs": 508
+  },
+  {
+    "surface": "mounting",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "loadMs": 8018
+  },
+  {
+    "surface": "services",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "loadMs": 3246
+  },
+  {
+    "surface": "onboarding",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "loadMs": 381
+  },
+  {
+    "surface": "thermal",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "loadMs": 973
+  },
+  {
+    "surface": "pricing",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "loadMs": 1886
+  },
+  {
+    "surface": "payments",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "loadMs": 711
+  },
+  {
+    "surface": "quote",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "loadMs": 1009
+  },
+  {
+    "surface": "documents",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "loadMs": 968
+  },
+  {
+    "surface": "assistant",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "loadMs": 445
+  },
+  {
+    "surface": "production",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "loadMs": 468
+  },
+  {
+    "surface": "field",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "loadMs": 436
+  },
+  {
+    "surface": "purchasing",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "loadMs": 783
+  },
+  {
+    "surface": "analytics",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "loadMs": 607
+  },
+  {
+    "surface": "costs",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "loadMs": 480
+  },
+  {
+    "surface": "mounting",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "loadMs": 10193
+  },
+  {
+    "surface": "services",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "loadMs": 2244
+  },
+  {
+    "surface": "onboarding",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "loadMs": 406
+  }
+]

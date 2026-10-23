@@ -43,11 +43,11 @@ def context_identity(*, org_id: UUID, refs: dict, surface: str = "") -> dict:
         )
         if found:
             item = found[0]
-            label = f"Pos. {int(item['position_index']):02d}"
+            label = f"Ventana {int(item['position_index']):02d}"
             if item.get("location_tag"):
                 label += f" {item['location_tag']}"
             return {"context_label": f"{label} · {item['code']}", "context_url": f"/projects/{item['project_id']}/positions/{position_id}/edit"}
-        return {"context_label": "Posición no disponible", "context_url": None}
+        return {"context_label": "Ventana no disponible", "context_url": None}
     if version_id and not project_id:
         found = rows("SELECT project_id FROM public.project_versions WHERE org_id=%s AND id=%s", [str(org_id), version_id])
         if found:
@@ -63,7 +63,7 @@ def context_identity(*, org_id: UUID, refs: dict, surface: str = "") -> dict:
     if client_id:
         found = rows("SELECT name FROM public.clients WHERE org_id=%s AND id=%s", [str(org_id), client_id])
         return {"context_label": str(found[0]["name"]) if found else "Cliente no disponible", "context_url": f"/clients/{client_id}" if found else None}
-    labels = {"position": "Posición nueva", "project": "Proyecto", "quotation": "Precios", "production": "Producción", "work_order": "Orden de trabajo", "purchasing": "Compras", "catalog": "Catálogo", "clients": "Clientes", "client": "Cliente", "settings": "Ajustes", "dashboard": "Inicio", "assistant": "Asistente", "jobs": "Trabajos"}
+    labels = {"position": "Ventana nueva", "project": "Proyecto", "quotation": "Precios", "production": "Producción", "work_order": "Orden de trabajo", "purchasing": "Compras", "catalog": "Catálogo", "clients": "Clientes", "client": "Cliente", "settings": "Ajustes", "dashboard": "Inicio", "assistant": "Asistente", "jobs": "Trabajos"}
     return {"context_label": labels.get(surface, "Trabajo de organización"), "context_url": None}
 
 

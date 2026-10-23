@@ -15,13 +15,13 @@ def render_field_act(payload, signature):
     css = _CSS.replace("letter portrait", PAPERS[prefs["paper"]]).replace("#075F5A", ACCENTS[prefs["accent"]])
 
     def text(value):
-        return escape(str(value or "Sin dato"))
+        return escape(str(value or "Falta completar"))
 
     checks = {(c["position_id"], c["unit_index"]): c for c in payload["checks"]}
     labels = {
         "installed": "Instalada",
         "levelled": "Nivelada",
-        "sealed": "Sellada",
+        "sealed": "Juntas estancas",
         "adjusted": "Regulada",
         "clean": "Limpia",
     }
@@ -56,7 +56,7 @@ def render_field_act(payload, signature):
         ("Acta", payload["act_code"]),
         ("Revisión", ctx["revision_code"]),
         ("Fecha", _cldate(payload["issued_at"])),
-        ("Huella de revisión", (ctx["snapshot_sha256"] or "Sin dato")[:12]),
+        ("Huella de revisión", (ctx["snapshot_sha256"] or "No consta")[:12]),
     ]
     titleblock = '<div class="titleblock">' + "".join(
         f'<div class="tb-cell"><span class="tb-label">{label}</span><span class="tb-value">{text(value)}</span></div>'

@@ -2,6 +2,27 @@
 
 ## DEKOPEN 2
 
+- [P06a · Mesa de la obra](dk2-p06a/aceptacion.md): sesión única propuesta,
+  inspector móvil, cotas cancelables y precio guardado con su desglose.
+
+- [P05k · Diagnósticos y servidor](dk2-p05k/aceptacion.md): glosario contextual,
+  compatibilidad de intercambio y revisión textual de nueve avisos dorados.
+
+- [P05j · Documentos y taller](dk2-p05j/aceptacion.md): nueve PDF nuevos,
+  49 páginas revisadas y compatibilidad con documentos históricos.
+
+- [P05g · Lenguaje global](dk2-p05g/aceptacion.md): guardián de producto,
+  valores pendientes explícitos y veintidós capturas de once pantallas.
+
+- [P05f · Cotizaciones dentro de Obras](dk2-p05f/aceptacion.md): índice del
+  servidor, filtros históricos, permisos y dieciséis capturas finales.
+
+- [P05d · Obras por etapa](dk2-p05d/aceptacion.md): lista densa, enlaces de
+  fila, filtros persistentes y 500 obras en tres roles autorizados.
+
+- [P05c · Hoy y revisión de preparadas](dk2-p05c/aceptacion.md): saludo,
+  tareas reales por rol, revisión humana y extremos de 1.000 acciones.
+
 - [P04g · precio automático en obra](dk2-p04g/aceptacion.md): total, desglose,
   emisión sin aplicar, PDF conservado y extremos de 500 ventanas.
 
@@ -70,3 +91,12 @@ versionarla. Consulte [mantenimiento del workspace](../../operations/WORKSPACE.m
 para proteger fixtures, secretos, sesiones, WSL y bases. `.rgignore` excluye
 estos payloads de las búsquedas generales; las rutas explícitas y
 `rg --no-ignore docs/redesign/captures/` permiten investigarlos.
+
+- [P05a · Navegación por rol](dk2-p05a/aceptacion.md): dieciséis capturas de
+  cinco roles en escritorio/móvil; contenido nuevo de Hoy/Obras aún pendiente.
+
+- [P05h · Glosario contextual](dk2-p05h/aceptacion.md): catorce superficies,
+  28 capturas a 1440/390; mensajes/documentos de servidor aún pendientes.
+
+- [P05i · Mensajes del servidor](dk2-p05i/aceptacion.md): doce capturas de
+  precios, informes, servicios y extremos, sobre respuestas actuales.

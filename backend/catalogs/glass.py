@@ -136,7 +136,7 @@ def validate_design_products(org_id, system_id, tree):
                 raise contract_error(422, "glass_authority_required", "Vuelve a seleccionar el producto con su composición del catálogo.")
             continue
         if not isinstance(value, dict) or not value.get("authority_id"):
-            raise contract_error(422, "glass_authority_required", "Publica la composición en el catálogo antes de asignarla al vano.")
+            raise contract_error(422, "glass_authority_required", "Publica la composición en el catálogo antes de asignarla al paño.")
         try:
             UUID(value["authority_id"])
         except (ValueError, TypeError, AttributeError) as error:
@@ -226,7 +226,7 @@ def replace_safety_rules(org_id, actor_id, payload, expected):
     try:
         items = [GlassSafetyRule.model_validate_json(json_text(item)) for item in payload]
     except (ValueError, TypeError) as error:
-        raise contract_error(400, "glass_rules_invalid", "Completa cada regla y su fuente. Las reglas oficiales requieren la norma aportada por tu organización.") from error
+        raise contract_error(400, "glass_rules_invalid", "Completa cada regla y su documento de referencia. Las reglas oficiales requieren la norma aportada por tu organización.") from error
     if len(items) > 200 or len({item.code for item in items}) != len(items):
         raise contract_error(400, "glass_rules_invalid", "Usa códigos distintos y un máximo de 200 reglas.")
     with transaction.atomic(), catalog_backend():

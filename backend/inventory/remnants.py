@@ -306,7 +306,7 @@ def _bar_identity(org_id: UUID, authority_id: str) -> dict:
         "WHERE id=%s AND is_active AND (org_id=%s OR org_id IS NULL)",
         [authority_id,str(org_id),authority_id,str(org_id),authority_id,str(org_id)])
     if len(found) != 1 or found[0]["stock_length_mm"] is None:
-        raise DocumentaryError("remnant_stock_authority_missing", detail="El suministro no tiene autoridad de stock vigente. Revisa su color y largo en Catálogo.")
+        raise DocumentaryError("remnant_stock_authority_missing", detail="El suministro no tiene datos de stock vigentes. Revisa su color y largo en Catálogo.")
     return found[0]
 
 

@@ -198,7 +198,7 @@ def services_response(org,project):
         else:
             policy = ExtraPolicy()
             public_lines = []
-            reason = "Sin dato: esta revisión no tiene una autoridad de servicios sellada."
+            reason = "Falta completar · esta revisión no conserva las tarifas de servicios."
     else:
         policy = load_policy(org)
         positions = rows("SELECT width_mm,height_mm,quantity FROM public.project_positions WHERE project_id=%s AND org_id=%s",[project["id"],org])
@@ -207,7 +207,7 @@ def services_response(org,project):
             try:
                 lines = service_lines(org,project,positions,repo)
             except PricingError as error:
-                reason = "Sin dato: " + pricing_public_detail(error.code)
+                reason = pricing_public_detail(error.code)
             except ValueError as error:
                 reason = str(error)
         public_lines = [{key:value for key,value in service_price(item,currency).items() if key not in {"cost_rate","total_cost"}} for item in lines]
@@ -248,7 +248,7 @@ class ProjectServicesView(APIView):
                 lines = project_lines(authority,data["selections"],[(p["width_mm"],p["height_mm"],int(p["quantity"])) for p in positions]) if data["selections"] else []
                 if any(item.installation for item in lines) and any(
                     fact.get("installation") for p in positions for fact in (p["bom_snapshot"].get("extras",[]) if isinstance(p["bom_snapshot"],dict) else json.loads(p["bom_snapshot"]).get("extras",[]))):
-                    raise ValueError("La instalación ya se seleccionó en una posición. Usa una sola regla para el proyecto.")
+                    raise ValueError("La instalación ya se seleccionó en una ventana. Usa una sola regla para el proyecto.")
             except ValueError as error:
                 raise contract_error(422,"extra_services_invalid",str(error)) from error
             with extra_backend():
@@ -295,13 +295,13 @@ class ExtrasPreviewView(APIView):
                     {'tree':tree,'width_mm':data['nominal_width_mm'],'height_mm':data['nominal_height_mm']}]
                 target = data.get('target_module_id')
                 if target is not None and (tree.get('version') != 'product-v2' or not any(module['id'] == target for module in modules)):
-                    raise ValueError('El módulo seleccionado no existe en este diseño. Recarga la posición.')
+                    raise ValueError('El módulo seleccionado no existe en este diseño. Recarga la ventana.')
                 leaf_targets, available_by_module, classic_codes = [], {}, []
                 definitions = [item for item in params.extra_authority.definitions if item.scope == 'POSITION'] if params.extra_authority else []
                 for module in modules:
                     if module.get('contour') or module.get('frameless'):
                         if module['tree'].get('extras') or module.get('id') == target:
-                            raise ValueError('Esta forma no declara una autoridad de accesorios; revisa su catálogo.')
+                            raise ValueError('Esta forma no declara reglas de accesorios; revisa su catálogo.')
                         available_by_module[module['id']] = []
                         continue
                     root = normalized_root_from_api(parametric_tree=module['tree'],nominal_width_mm=Decimal(module['width_mm']),

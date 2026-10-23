@@ -180,7 +180,7 @@ function ProjectDraftView({ payload }: { payload: Dict }): JSX.Element {
                   <strong>
                     {pos.label || pos.key
                       ? text(pos.label ?? pos.key)
-                      : `Posición ${text(pos.position_index, String(i + 1))}`}
+                      : `Ventana ${text(pos.position_index, String(i + 1))}`}
                   </strong>
                   {typeof pos.state === "string" ? <StatePill state={text(pos.state)} /> : null}
                 </span>

@@ -107,9 +107,9 @@ export type PriceChange = {
 };
 export type RuleRecord = { revision: number; rule: MountingRule };
 export const mountingKinds: [MountingRule["kind"], string][] = [
-  ["IN_OPENING", "En vano con holgura"],
+  ["IN_OPENING", "Dentro de la abertura con holgura"],
   ["SUBFRAME", "Con premarco"],
-  ["OVERLAP", "Sobre vano o traslapado"],
+  ["OVERLAP", "Sobre la abertura o traslapado"],
   ["RENOVATION", "Renovación sobre marco existente"],
 ];
 export const walls: [OpeningSurvey["wall"], string][] = [

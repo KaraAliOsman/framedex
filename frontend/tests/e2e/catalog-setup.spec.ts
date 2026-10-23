@@ -2,6 +2,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page, type TestInfo } from "@playwright/test";
 import { fileURLToPath } from "node:url";
 import { test } from "./support/catalog-series-fixture";
+import { santiagoToday } from "./support/environment";
 
 async function capture(page: Page, info: TestInfo, name: string) {
   const wizard = page.getByRole("dialog", { name: "Preparar mi serie", exact: true });
@@ -89,9 +90,7 @@ for (const viewport of [
       await expect(wizard.getByText(/hoja Precios de prueba · 12 filas/)).toBeVisible();
       await wizard.getByRole("button", { name: "Crear una lista nueva", exact: true }).click();
       await wizard.getByLabel("Proveedor", { exact: true }).fill("Proveedor de ensayo sintético");
-      await wizard
-        .getByLabel("Vigente desde", { exact: true })
-        .fill(new Date().toISOString().slice(0, 10));
+      await wizard.getByLabel("Vigente desde", { exact: true }).fill(santiagoToday());
       await wizard.getByRole("button", { name: "Crear lista", exact: true }).click();
       await wizard.getByRole("button", { name: "Revisar todos los precios", exact: true }).click();
       await wizard
@@ -192,6 +191,14 @@ for (const viewport of [
       ).toContainText("Primera obra sintética");
       // The empty state repeats the same action; use the section toolbar.
       await page.getByRole("link", { name: "Añadir ventana", exact: true }).first().click();
+      // Below 1280 px the series lives in the inspector sheet, closed by default;
+      // the library sheet opened for the new window covers the tools first.
+      if (viewport.width < 1280) {
+        await page
+          .getByRole("button", { name: "Cerrar Biblioteca de tipologías", exact: true })
+          .click();
+        await page.getByRole("button", { name: "Inspector", exact: true }).click();
+      }
       await page.getByRole("button", { name: "PRO6004 · ensayo sintético", exact: true }).click();
       await expect(
         page.getByRole("combobox", { name: "Serie de perfiles", exact: true }),
