@@ -59,6 +59,15 @@ COMPANY_ERRORS = {
         409,
         "La invitación ya cambió de estado. Actualiza la lista antes de revocarla.",
     ),
+    "workshop_identity_required": (
+        403,
+        "Confirma tu correo desde el enlace que te enviamos antes de crear tu taller.",
+    ),
+    "workshop_membership_exists": (
+        409,
+        "Tu cuenta ya pertenece a un taller. Recarga para entrar en él.",
+    ),
+    "workshop_name_invalid": (400, "Escribe el nombre del taller (entre 2 y 120 caracteres)."),
 }
 
 
@@ -153,6 +162,10 @@ class InvitationInspectSerializer(serializers.Serializer):
 
 class InvitationAcceptedSerializer(serializers.Serializer):
     organization_id = serializers.UUIDField()
+
+
+class WorkshopCreateSerializer(StrictSerializer):
+    name = serializers.CharField(max_length=120)
 
 
 class NumberingSerializer(serializers.Serializer):
@@ -263,6 +276,20 @@ class InvitationAcceptView(APIView):
         token = verified_request_token(request)
         with public_pricing_errors(), authenticated_rls_context(token.claims), company_errors():
             return response(company.accept_invitation(data["token"]))
+
+
+class WorkshopCreateView(APIView):
+    @extend_schema(
+        operation_id="workshop_create",
+        request=WorkshopCreateSerializer,
+        responses={200: InvitationAcceptedSerializer, **ERRORS},
+        tags=["auth"],
+    )
+    def post(self, request):
+        data = validate(WorkshopCreateSerializer, request.data)
+        token = verified_request_token(request)
+        with public_pricing_errors(), authenticated_rls_context(token.claims), company_errors():
+            return response(company.create_workshop(data["name"]))
 
 
 class CompanyNumberingView(APIView):

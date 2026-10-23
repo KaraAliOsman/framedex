@@ -149,6 +149,94 @@ describe("catalog home", () => {
     );
   });
 
+  it("starts the guided setup from a library series chosen in the first-use guide", async () => {
+    vi.mocked(api.catalogFamilyTemplates).mockResolvedValue(
+      ok({
+        items: [
+          {
+            id: "pvc-sliding",
+            version: 1,
+            name: "PVC corredera",
+            source_ref: "Plantilla",
+            origin: "SUGGESTED",
+            notes: [],
+            system: { material: "PVC", system_family: "SLIDING" },
+            profile_defaults: {},
+            reinforcement_defaults: null,
+            hardware_defaults: {},
+            glazing_defaults: {},
+            prices: [],
+          },
+          {
+            id: "pvc-casement",
+            version: 2,
+            name: "PVC practicable",
+            source_ref: "Plantilla",
+            origin: "SUGGESTED",
+            notes: [],
+            system: { material: "PVC", system_family: "CASEMENT" },
+            profile_defaults: {},
+            reinforcement_defaults: null,
+            hardware_defaults: {},
+            glazing_defaults: {},
+            prices: [],
+          },
+        ],
+      }),
+    );
+    const reference = {
+      id: "proline-pro6004",
+      manufacturer: "Proline",
+      series_code: "PRO6004",
+      series_name: "PRO6004 · 60 mm",
+      material: "PVC",
+      family: "Practicable",
+      uses: [],
+      capabilities: { reference: true, quotable: false, manufacturable: false, cnc: false },
+      missing: [],
+      incidents: [],
+      sources: [],
+      facts: [],
+      articles: [],
+      needs_manufacturer_manual: false,
+      seed: {
+        name: "PRO6004 60 mm",
+        code: "PRO6004",
+        system_family: "CASEMENT",
+        material: "PVC",
+        manufacturer: "Proline",
+        depth_mm: "60",
+        chamber_count: "4",
+      },
+    };
+    vi.mocked(api.catalogReferenceSeries).mockResolvedValue(
+      ok({ series: [reference], sources: [] }) as never,
+    );
+    vi.mocked(api.catalogSeriesCreate).mockResolvedValue({
+      status: 201,
+      data: { ...sheetFixture(), id: "pro6004" },
+      headers: new Headers(),
+    });
+    mount([], "/catalogs/systems?library=proline-pro6004");
+    expect(await screen.findByDisplayValue("PRO6004 60 mm")).toBeInTheDocument();
+    expect(screen.getByLabelText("Fabricante")).toHaveValue("Proline");
+    expect(await screen.findByRole("option", { name: "PVC practicable" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Plantilla")).toHaveValue("pvc-casement");
+    fireEvent.click(screen.getByRole("button", { name: "Crear serie" }));
+    await screen.findByRole("heading", { name: "Ficha pro6004" });
+    expect(api.catalogSeriesCreate).toHaveBeenCalledWith(
+      {
+        template_id: "pvc-casement",
+        template_version: 2,
+        rules: { depth_mm: "60", chamber_count: 4 },
+        name: "PRO6004 60 mm",
+        code: "PRO6004",
+        manufacturer: "Proline",
+      },
+      { headers: { "X-Organization-ID": "org" } },
+    );
+  });
+
   it("opens a source link directly without fetching the full catalog", async () => {
     mount([], "/catalogs/systems?import=existing");
     await screen.findByRole("heading", { name: "Revisar manual existing" });

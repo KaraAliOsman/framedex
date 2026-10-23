@@ -988,7 +988,6 @@ export const messages = {
   "auth.callback": "Validando el enlace y resolviendo tu taller…",
   "auth.callbackError": "No fue posible validar el enlace de acceso.",
   "auth.linkExpired": "El enlace venció. Solicita uno nuevo para entrar.",
-  "auth.noMembership": "No tienes una membresía activa. Contacta al propietario del taller.",
   "auth.returnToLogin": "Volver al acceso",
   "auth.signOut": "Cerrar sesión",
   "auth.loginTitle": "Acceso seguro al taller",

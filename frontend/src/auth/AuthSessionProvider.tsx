@@ -38,7 +38,8 @@ export type AuthSessionContextValue = {
   memberships: Membership[];
   error: string | null;
   networkUnavailable?: boolean;
-  requestMagicLink(email: string): Promise<void>;
+  /** `createAccount` lets a new person sign up; the default only signs in. */
+  requestMagicLink(email: string, options?: { createAccount?: boolean }): Promise<void>;
   selectOrganization(organizationId: string): Promise<void>;
   refreshContext(): Promise<void>;
   signOut(): Promise<void>;
@@ -326,14 +327,14 @@ export function AuthSessionProvider({ children }: PropsWithChildren): JSX.Elemen
       memberships,
       error,
       networkUnavailable,
-      async requestMagicLink(email: string) {
+      async requestMagicLink(email: string, options?: { createAccount?: boolean }) {
         if (supabase === null) {
           throw new Error("Supabase browser configuration is missing");
         }
         const { error: signInError } = await supabase.auth.signInWithOtp({
           email,
           options: {
-            shouldCreateUser: false,
+            shouldCreateUser: options?.createAccount === true,
             emailRedirectTo: `${window.location.origin}/auth/callback`,
           },
         });

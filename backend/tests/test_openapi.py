@@ -57,6 +57,7 @@ def test_openapi_contains_only_authorized_shot_11_paths_and_bearer_security() ->
         "/api/v1/production/field/assets/{asset_id}/access/",
         "/api/v1/auth/invitation/",
         "/api/v1/auth/invitation/accept/",
+        "/api/v1/auth/workshop/",
         "/api/v1/clients/directory/",
         "/api/v1/clients/{client_id}/dossier/",
         "/api/v1/clients/{client_id}/merge-preview/",

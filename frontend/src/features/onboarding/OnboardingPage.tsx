@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../../api/apiMutator";
 import {
+  catalogReferenceSeries,
   catalogSystemList,
   engineSystems,
   clientsCreate,
@@ -78,6 +79,16 @@ export function OnboardingPage(): JSX.Element {
       return response.data.items
         .filter((system) => visible.has(system.id))
         .sort((a, b) => a.name.localeCompare(b.name, "es-CL"));
+    },
+  });
+  const library = useQuery({
+    queryKey: ["catalog-references", orgId],
+    enabled: Boolean(orgId) && canWrite,
+    staleTime: 5 * 60_000,
+    queryFn: async ({ signal }) => {
+      const response = await catalogReferenceSeries({ ...options, signal });
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      return response.data.series;
     },
   });
   const selected = systems.data?.find((system) => system.id === draft.systemId);
@@ -300,6 +311,45 @@ export function OnboardingPage(): JSX.Element {
               <Button variant="primary" onClick={() => update({ step: 1 })}>
                 Usar esta serie
               </Button>
+            ) : null}
+            {library.data?.length ? (
+              <section className="onboarding-library" aria-labelledby="onboarding-library-title">
+                <h3 id="onboarding-library-title">Tu serie del fabricante</h3>
+                <p>
+                  Elige la serie con que trabajas. La biblioteca aporta su identidad; los perfiles,
+                  largos y precios los cargas desde el manual o tu planilla en el alta guiada.
+                </p>
+                <ul>
+                  {library.data.map((item) => (
+                    <li key={item.id}>
+                      <Link
+                        className="onboarding-reference"
+                        to={`/catalogs/systems?library=${encodeURIComponent(item.id)}`}
+                      >
+                        <span className="onboarding-reference__monogram" aria-hidden="true">
+                          {item.manufacturer.slice(0, 7).toLocaleUpperCase("es-CL")}
+                        </span>
+                        <span>
+                          <strong>{item.series_name}</strong>
+                          <span>
+                            {item.manufacturer} · {item.material}
+                          </span>
+                        </span>
+                        <StatusBadge
+                          label={
+                            !item.capabilities.reference
+                              ? "Identidad sin resolver"
+                              : item.needs_manufacturer_manual
+                                ? "Necesita manual"
+                                : "Completar para cotizar"
+                          }
+                          tone="neutral"
+                        />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </section>
             ) : null}
           </>
         ) : step === 1 ? (
