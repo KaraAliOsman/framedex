@@ -511,8 +511,7 @@ function SeriesCatalogHome({
               </label>
               {reference ? (
                 <p>
-                  La biblioteca aporta solo la identidad de {reference.series_name}
-                  {reference.seed.depth_mm ? ` (${reference.seed.depth_mm} mm)` : ""}. Los perfiles,
+                  La biblioteca aporta solo la identidad de {reference.series_name}. Los perfiles,
                   largos y precios salen del manual de tu fabricante o de tu planilla.
                 </p>
               ) : null}

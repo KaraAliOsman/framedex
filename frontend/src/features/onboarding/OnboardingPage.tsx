@@ -88,7 +88,8 @@ export function OnboardingPage(): JSX.Element {
     queryFn: async ({ signal }) => {
       const response = await catalogReferenceSeries({ ...options, signal });
       if (response.status !== 200) throw new ApiError(response.status, response.data);
-      return response.data.series;
+      // Same cache entry as the catalog: the whole registry, not only its series.
+      return response.data;
     },
   });
   const selected = systems.data?.find((system) => system.id === draft.systemId);
@@ -312,7 +313,7 @@ export function OnboardingPage(): JSX.Element {
                 Usar esta serie
               </Button>
             ) : null}
-            {library.data?.length ? (
+            {library.data?.series.length ? (
               <section className="onboarding-library" aria-labelledby="onboarding-library-title">
                 <h3 id="onboarding-library-title">Tu serie del fabricante</h3>
                 <p>
@@ -320,7 +321,7 @@ export function OnboardingPage(): JSX.Element {
                   largos y precios los cargas desde el manual o tu planilla en el alta guiada.
                 </p>
                 <ul>
-                  {library.data.map((item) => (
+                  {library.data.series.map((item) => (
                     <li key={item.id}>
                       <Link
                         className="onboarding-reference"
