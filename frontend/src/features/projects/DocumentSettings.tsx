@@ -32,23 +32,28 @@ export function DocumentSettings({
   useEffect(() => {
     if (value) onDraft?.(value);
   }, [value, onDraft]);
-  const load = useCallback(async (isCurrent: () => boolean = () => true): Promise<void> => {
-    setStatus("Cargando preferencias de documentos…");
-    setError(false);
-    try {
-      const response = await organizationBrandingGet({ headers: { "X-Organization-ID": orgId } });
-      // A superseded read must not overwrite what the person already typed.
-      if (!isCurrent()) return;
-      if (response.status !== 200) throw new Error("read");
-      setValue(response.data.document_preferences);
-      setExpected(response.data.updated_at);
-      setStatus("");
-    } catch {
-      if (!isCurrent()) return;
-      setStatus("No se pudieron cargar las preferencias. Revisa tu conexión y vuelve a intentar.");
-      setError(true);
-    }
-  }, [orgId]);
+  const load = useCallback(
+    async (isCurrent: () => boolean = () => true): Promise<void> => {
+      setStatus("Cargando preferencias de documentos…");
+      setError(false);
+      try {
+        const response = await organizationBrandingGet({ headers: { "X-Organization-ID": orgId } });
+        // A superseded read must not overwrite what the person already typed.
+        if (!isCurrent()) return;
+        if (response.status !== 200) throw new Error("read");
+        setValue(response.data.document_preferences);
+        setExpected(response.data.updated_at);
+        setStatus("");
+      } catch {
+        if (!isCurrent()) return;
+        setStatus(
+          "No se pudieron cargar las preferencias. Revisa tu conexión y vuelve a intentar.",
+        );
+        setError(true);
+      }
+    },
+    [orgId],
+  );
   useEffect(() => {
     let current = true;
     void load(() => current);

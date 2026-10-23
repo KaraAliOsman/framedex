@@ -2601,3 +2601,17 @@ de Hoy, las etapas de Obras y la purga global siguen en P05. Se conserva el
 - El dueño decide que el trabajo del agente herede el `aal2` de la sesión que
   lo delegó (sellado al encolar); el E2E de aceptación delega como dueño.
 
+
+## [2026-10-23] DEKOPEN 2 P10 | Aceptación Proline del registro a la aprobación
+
+- P08 (#203) y la dirección Luz (#204) quedan fusionadas; P10 va en
+  `claude/dk2-p10-proline` desde `main`.
+- Alta autónoma (función de base de datos + pgTAP 262), primer uso por la
+  biblioteca y «Preparar» con la identidad de PRO6004.
+- La aceptación encontró que ninguna vía de taller declaraba la compra del acero
+  de refuerzo: nueva hoja «Barras de refuerzo» (migración + pgTAP 263) y
+  cobertura honesta. También corrigió desbordes a 390 px, el nombre accesible
+  del Asistente en móvil y una lectura tardía en Documentos.
+- `proline-acceptance` pasa a 1440 y 390 px (~64 s cada uno), con datos
+  sintéticos rotulados; una aceptación con el manual real de Proline sigue
+  pendiente de ese documento.

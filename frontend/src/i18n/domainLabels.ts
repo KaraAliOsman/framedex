@@ -547,6 +547,7 @@ export const domainLabels: Readonly<Record<string, string>> = {
   R13: "Regla 13",
   R14: "Regla 14",
   catalog_color_skus: "SKU por color",
+  reinforcement_articles: "Barras de refuerzo",
   create: "Crear",
   update: "Actualizar",
   none: "Sin cambios",

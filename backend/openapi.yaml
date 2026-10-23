@@ -4442,6 +4442,7 @@ paths:
         schema:
           type: string
           enum:
+          - Barras de refuerzo
           - Colores y SKU por color
           - Herrajes
           - Límites
@@ -5172,6 +5173,7 @@ paths:
         schema:
           type: string
           enum:
+          - Barras de refuerzo
           - Colores y SKU por color
           - Herrajes
           - Límites
@@ -31032,6 +31034,7 @@ components:
       - manufacturing_placement_policies
       - profile_articles
       - profile_systems
+      - reinforcement_articles
       - reinforcement_cut_policies
       type: string
       description: |-
@@ -31046,6 +31049,7 @@ components:
         * `manufacturing_placement_policies` - manufacturing_placement_policies
         * `profile_articles` - profile_articles
         * `profile_systems` - profile_systems
+        * `reinforcement_articles` - reinforcement_articles
         * `reinforcement_cut_policies` - reinforcement_cut_policies
     AutonomyEnum:
       enum:

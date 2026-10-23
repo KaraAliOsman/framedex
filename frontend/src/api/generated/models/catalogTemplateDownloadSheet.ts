@@ -10,6 +10,7 @@ export type CatalogTemplateDownloadSheet =
   (typeof CatalogTemplateDownloadSheet)[keyof typeof CatalogTemplateDownloadSheet];
 
 export const CatalogTemplateDownloadSheet = {
+  Barras_de_refuerzo: "Barras de refuerzo",
   Colores_y_SKU_por_color: "Colores y SKU por color",
   Herrajes: "Herrajes",
   Límites: "Límites",

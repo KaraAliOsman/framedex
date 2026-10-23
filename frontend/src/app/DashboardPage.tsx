@@ -80,7 +80,8 @@ function TodayWorkspace(): JSX.Element {
           </Link>
         ) : (
           <Button
-            variant="primary"
+            // On first use «Empezar» is the one primary action of the page.
+            variant={ownSeries.data === 0 ? "secondary" : "primary"}
             loading={creating}
             onClick={() => void startQuotation()}
             icon={<Icon name="plus" />}

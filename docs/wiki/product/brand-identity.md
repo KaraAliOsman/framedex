@@ -63,3 +63,16 @@ y evita negociar ambos. Dominio, DNS y credenciales productivas son activación
 posterior: véase [ACTIVACION](../../operations/ACTIVACION.md).
 Las capturas verificadas resuelven imágenes CID desde los bytes MIME recibidos;
 los enlaces de un uso y del portal se omiten en la evidencia publicada.
+
+## Alta autónoma del taller · P10
+
+Verificado el 23-10-2026 en `claude/dk2-p10-proline`. `/registro` pide un
+enlace mágico que sí crea la cuenta (`shouldCreateUser`); `/login` sigue sin
+crearla. Al volver, una persona sin membresía ve «Crea tu taller» en vez del
+callejón anterior. `POST /api/v1/auth/workshop/` llama a
+`private.create_own_workshop(nombre)`: exige correo confirmado y ninguna
+membresía (activa o no) y se serializa por persona. Crea la organización con
+los valores de Chile (CLP, prueba con sus créditos) y la membresía OWNER, y
+deja evidencia `CREATE_WORKSHOP`. El RUT se pide en «Prepara tu empresa»; el
+dueño configura su segundo factor antes de entrar. Hoy lleva a un taller sin
+series propias a su primer uso, que empieza por la biblioteca.

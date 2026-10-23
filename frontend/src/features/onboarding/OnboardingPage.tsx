@@ -31,6 +31,14 @@ import { CompanySetup } from "./CompanySetup";
 const STEPS = ["Serie", "Cliente", "Obra", "Primera ventana"] as const;
 const emptyFields: ClientFields = { rut: "", email: "", phone: "" };
 
+/** Three letters of the manufacturer: a stable mark that fits its tile. */
+function monogram(manufacturer: string): string {
+  return manufacturer
+    .replace(/[^\p{L}]/gu, "")
+    .slice(0, 3)
+    .toLocaleUpperCase("es-CL");
+}
+
 export function OnboardingPage(): JSX.Element {
   const auth = useAuthSession();
   const org = auth.me?.active_organization;
@@ -112,7 +120,7 @@ export function OnboardingPage(): JSX.Element {
               to={`/catalogs/systems?library=${encodeURIComponent(item.id)}`}
             >
               <span className="onboarding-reference__monogram" aria-hidden="true">
-                {item.manufacturer.slice(0, 7).toLocaleUpperCase("es-CL")}
+                {monogram(item.manufacturer)}
               </span>
               <span>
                 <strong>{item.series_name}</strong>
@@ -255,6 +263,8 @@ export function OnboardingPage(): JSX.Element {
         onComplete={() => {
           sessionStorage.setItem(`onboarding-company:${orgId}`, "confirmed");
           setSetupComplete(true);
+          // The long company form leaves the page scrolled; the guide starts at its top.
+          window.scrollTo({ top: 0 });
         }}
       />
     );

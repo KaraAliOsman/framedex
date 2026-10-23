@@ -335,6 +335,7 @@ for (const viewport of [
       await decision.getByRole("checkbox").first().check();
       await decision.getByRole("button", { name: "Aprobar propuesta", exact: true }).click();
       await expect(portal.getByText("Propuesta aprobada").first()).toBeVisible({ timeout: 30_000 });
+      await portal.getByText("Propuesta aprobada").first().scrollIntoViewIfNeeded();
       await capture(portal, info, "f1-aprobada");
       await visitor.close();
       lap("aprobacion-del-cliente");
