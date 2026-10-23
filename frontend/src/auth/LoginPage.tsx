@@ -1,15 +1,16 @@
 import { ValidatedForm } from "../ui/FormValidation";
 import { type FormEvent, useEffect, useState } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
 
 import { t } from "../i18n/es-CL";
 import { Wordmark } from "../brand/Brand";
 import { Loading } from "../ui/Signature";
 
 import { useAuthSession } from "./AuthSessionProvider";
+import { CreateWorkshop } from "./CreateWorkshop";
 import { consumeReturnTo, stashReturnTo } from "./returnTo";
 
-export function LoginPage(): JSX.Element {
+export function LoginPage({ signup = false }: { signup?: boolean }): JSX.Element {
   const auth = useAuthSession();
   const location = useLocation();
   const [email, setEmail] = useState("");
@@ -34,6 +35,7 @@ export function LoginPage(): JSX.Element {
   if (auth.status === "ready") {
     return <Navigate to={consumeReturnTo()} replace />;
   }
+  if (auth.status === "no_membership") return <CreateWorkshop />;
 
   async function submit(event?: FormEvent<HTMLFormElement>): Promise<void> {
     event?.preventDefault();
@@ -41,7 +43,7 @@ export function LoginPage(): JSX.Element {
     setError(null);
     setBusy(true);
     try {
-      await auth.requestMagicLink(email);
+      await auth.requestMagicLink(email, { createAccount: signup });
       setSent(true);
       setCooldown(30);
     } catch {
@@ -58,15 +60,13 @@ export function LoginPage(): JSX.Element {
           <Wordmark width={176} />
         </div>
         <header className="auth-card__header">
-          <h1 id="login-title">{t("auth.loginTitle")}</h1>
-          <p className="auth-hint">{t("auth.loginDescription")}</p>
-        </header>
-        {auth.status === "no_membership" ? (
-          <p role="alert" className="auth-notice auth-notice--error">
-            Tu cuenta no pertenece a una organización. Pide al dueño que te agregue y vuelve a
-            entrar.
+          <h1 id="login-title">{signup ? "Crea tu taller en DEKOPEN" : t("auth.loginTitle")}</h1>
+          <p className="auth-hint">
+            {signup
+              ? "Escribe tu correo. Te enviaremos un enlace para confirmarlo y, al volver, le pones nombre a tu taller."
+              : t("auth.loginDescription")}
           </p>
-        ) : null}
+        </header>
         {!sent ? (
           <ValidatedForm className="auth-form" onSubmit={(event) => void submit(event)}>
             <label htmlFor="email">{t("auth.email")}</label>
@@ -122,6 +122,17 @@ export function LoginPage(): JSX.Element {
             {error}
           </p>
         ) : null}
+        <p className="auth-hint">
+          {signup ? (
+            <>
+              ¿Ya tienes cuenta? <Link to="/login">Entrar</Link>
+            </>
+          ) : (
+            <>
+              ¿Primera vez en DEKOPEN? <Link to="/registro">Crea tu taller</Link>
+            </>
+          )}
+        </p>
       </section>
     </main>
   );

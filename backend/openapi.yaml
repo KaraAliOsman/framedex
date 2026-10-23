@@ -3093,6 +3093,74 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/auth/workshop/:
+    post:
+      operationId: workshop_create
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkshopCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/WorkshopCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/WorkshopCreateRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvitationAccepted'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/billing/:
     get:
       operationId: billing_retrieve
@@ -4374,6 +4442,7 @@ paths:
         schema:
           type: string
           enum:
+          - Barras de refuerzo
           - Colores y SKU por color
           - Herrajes
           - Límites
@@ -5104,6 +5173,7 @@ paths:
         schema:
           type: string
           enum:
+          - Barras de refuerzo
           - Colores y SKU por color
           - Herrajes
           - Límites
@@ -30964,6 +31034,7 @@ components:
       - manufacturing_placement_policies
       - profile_articles
       - profile_systems
+      - reinforcement_articles
       - reinforcement_cut_policies
       type: string
       description: |-
@@ -30978,6 +31049,7 @@ components:
         * `manufacturing_placement_policies` - manufacturing_placement_policies
         * `profile_articles` - profile_articles
         * `profile_systems` - profile_systems
+        * `reinforcement_articles` - reinforcement_articles
         * `reinforcement_cut_policies` - reinforcement_cut_policies
     AutonomyEnum:
       enum:
@@ -49858,6 +49930,8 @@ components:
           type: object
           additionalProperties:
             type: string
+        needs_manufacturer_manual:
+          type: boolean
       required:
       - articles
       - capabilities
@@ -49868,6 +49942,7 @@ components:
       - manufacturer
       - material
       - missing
+      - needs_manufacturer_manual
       - seed
       - series_code
       - series_name
@@ -54593,6 +54668,15 @@ components:
       - bay_id
       - label
       - width_mm
+    WorkshopCreateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+      required:
+      - name
     WorkshopGlassTarget:
       type: object
       properties:

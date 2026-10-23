@@ -2,6 +2,8 @@
   max-width: 46rem;
   margin-inline: auto;
   display: grid;
+  /* The column may shrink below its longest series name on a phone. */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-24px);
   padding: var(--space-24px) var(--space-16px);
 }
@@ -27,6 +29,7 @@
 }
 .onboarding-card {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-16px);
 }
 .onboarding-card h2 {
@@ -59,6 +62,7 @@
   gap: var(--space-8px);
 }
 .onboarding-system {
+  white-space: normal;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -108,5 +112,65 @@
   }
   .onboarding .ui-stepper {
     flex-wrap: wrap;
+  }
+}
+
+/* First use: the manufacturer's series from the reference library. */
+.onboarding-library {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-8px);
+}
+/* After the workshop's own series the library is a second, separated choice. */
+.onboarding-systems ~ .onboarding-library {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--space-16px);
+}
+.onboarding-library h3 {
+  margin: 0;
+  font-size: var(--type-subtitle);
+}
+.onboarding-library ul {
+  display: grid;
+  gap: var(--space-8px);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.onboarding .onboarding-reference {
+  align-items: center;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-1);
+  color: var(--text-primary);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8px) var(--space-12px);
+  padding: var(--space-8px) var(--space-12px);
+  text-decoration: none;
+}
+.onboarding-reference > span:nth-child(2) {
+  display: grid;
+  flex: 1 1 10rem;
+  gap: 2px;
+  min-width: 0;
+}
+.onboarding-reference > span:nth-child(2) > span {
+  color: var(--text-secondary);
+  font-size: var(--type-dense);
+}
+.onboarding-reference__monogram {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-2);
+  display: grid;
+  flex: 0 0 44px;
+  font-size: var(--type-dense);
+  font-weight: 600;
+  height: 44px;
+  letter-spacing: 0.04em;
+  place-items: center;
+}
+@media (hover: hover) and (pointer: fine) {
+  .onboarding .onboarding-reference:hover {
+    background: var(--surface-hover);
   }
 }

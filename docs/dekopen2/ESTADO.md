@@ -13,10 +13,32 @@ Producción y precios comerciales requieren autorización aparte.
 | P05  | Navegación, Hoy y Obras                            | Hecha     | P05a–P05k integradas en [#201](https://github.com/KaraAliOsman/framedex/pull/201)                                                                                                                                                                                                                                                          |
 | P06  | Mesa de la obra y edición directa                  | Hecha     | P06a en [#201](https://github.com/KaraAliOsman/framedex/pull/201); P06b [#202](https://github.com/KaraAliOsman/framedex/pull/202)                                                                                                                                                                                                          |
 | P07  | Cotización y portal                                | Pendiente | —                                                                                                                                                                                                                                                                                                                                          |
-| P08  | Agente v2                                          | En curso  | P08a–b `claude/dk2-p08-agente`                                                                                                                                                                                                                                                                                                             |
+| P08  | Agente v2                                          | Hecha     | P08a–b [#203](https://github.com/KaraAliOsman/framedex/pull/203); pendiente bandeja en Hoy, planos y fotos                                                                                                                                                                                                                                 |
 | P09  | Taller e instalación                               | Pendiente | —                                                                                                                                                                                                                                                                                                                                          |
-| P10  | Onboarding, biblioteca Chile y aceptación Proline  | Pendiente | —                                                                                                                                                                                                                                                                                                                                          |
+| P10  | Onboarding, biblioteca Chile y aceptación Proline  | En curso  | P10a–c `claude/dk2-p10-proline`                                                                                                                                                                                                                                                                                                            |
 | P11  | Pulido y cierre                                    | Pendiente | —                                                                                                                                                                                                                                                                                                                                          |
+
+## P10 · Primer uso y aceptación Proline
+
+- P10a: la biblioteca de referencia cita cada dato (URL pública o documento con
+  huella y páginas) y marca las series sin datos como «Necesita manual del
+  fabricante». Ninguna referencia es cotizable ni fabricable.
+- P10b: registro autónomo. `/registro` envía un enlace que crea la cuenta; al
+  volver, quien no tiene taller ve «Crea tu taller» (Chile, CLP, IVA 19 %, en
+  prueba) en lugar de un callejón. `private.create_own_workshop` exige correo
+  confirmado y ninguna membresía, una sola vez (pgTAP 262). Luego el dueño
+  configura su segundo factor. Hoy lleva a un taller sin series a su primer
+  uso; la biblioteca aparece primero y «Preparar» abre el alta guiada con la
+  identidad de la serie (PRO6004, 60 mm, 4 cámaras).
+- P10c: la importación oficial gana la hoja «Barras de refuerzo»: el taller
+  declara la compra del acero que nombra cada regla de refuerzo (migración y
+  pgTAP 263). Antes ninguna vía de taller la creaba y la cobertura prometía
+  «cotizable» a una serie cuyo precio fallaba; ahora la bloquea.
+- Aceptación `proline-acceptance` (1440 y 390): registro → taller → segundo
+  factor → empresa → PRO6004 → ficha técnica sintética → precios → ventana de
+  prueba → obra con tres ventanas → emisión con correo al cliente → aprobación
+  en el portal. ~67 s de máquina por tamaño; detalle en
+  [la evidencia](../redesign/captures/dk2-p10/aceptacion.md).
 
 ## P08 · Agente v2
 

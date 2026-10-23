@@ -305,6 +305,8 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
                     <button
                       type="button"
                       className="topbar-assistant"
+                      // Narrow screens hide the text; the button keeps its name.
+                      aria-label={t("shell.assistant")}
                       onClick={() => setAssistantRequest((value) => value + 1)}
                     >
                       {/* The figure follows the popup's real task, never

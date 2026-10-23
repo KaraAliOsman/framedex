@@ -193,3 +193,28 @@
 .organization-list:empty {
   display: none;
 }
+
+/* First use: the defaults a new workshop starts with, read before creating it. */
+.auth-facts {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-2);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: var(--space-8px) 0 0;
+}
+.auth-facts > div {
+  display: grid;
+  gap: 2px;
+  padding: var(--space-8px) var(--space-12px);
+}
+.auth-facts > div + div {
+  border-left: 1px solid var(--border-subtle);
+}
+.auth-facts dt {
+  color: var(--text-secondary);
+  font-size: var(--type-micro);
+}
+.auth-facts dd {
+  font-weight: 500;
+  margin: 0;
+}

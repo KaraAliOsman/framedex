@@ -6,6 +6,7 @@ import { Wordmark } from "../brand/Brand";
 import { Loading } from "../ui/Signature";
 
 import { useAuthSession } from "./AuthSessionProvider";
+import { CreateWorkshop } from "./CreateWorkshop";
 import { consumeReturnTo } from "./returnTo";
 
 /** Supabase carries link failures in the URL hash:
@@ -38,16 +39,14 @@ export function AuthCallbackPage(): JSX.Element {
     }
   }, [auth.status, navigate]);
 
-  if (["anonymous", "error", "no_membership"].includes(auth.status)) {
+  if (auth.status === "no_membership" && !sessionStorage.getItem("dekopen.pending-invitation"))
+    return <CreateWorkshop />;
+  if (["anonymous", "error"].includes(auth.status)) {
     return (
       <main className="auth-screen" data-density="office">
         <section className="auth-card" aria-label="Acceso por enlace">
           <Wordmark width={176} />
-          <p role="alert">
-            {linkError.expired
-              ? t("auth.linkExpired")
-              : t(auth.status === "no_membership" ? "auth.noMembership" : "auth.callbackError")}
-          </p>
+          <p role="alert">{linkError.expired ? t("auth.linkExpired") : t("auth.callbackError")}</p>
           <Link className="ui-button ui-button--primary" to="/login">
             {t("auth.returnToLogin")}
           </Link>

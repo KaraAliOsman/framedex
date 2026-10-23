@@ -2,6 +2,9 @@
 
 ## DEKOPEN 2
 
+- [P10 · Aceptación Proline](dk2-p10/aceptacion.md): un taller nuevo, del
+  registro a la aprobación del cliente con PRO6004, cronometrado en 26 capturas.
+
 - [P06a · Mesa de la obra](dk2-p06a/aceptacion.md): sesión única propuesta,
   inspector móvil, cotas cancelables y precio guardado con su desglose.
 

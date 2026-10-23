@@ -47,7 +47,7 @@ def tree():
         "glass_thickness_mm": "24", "glass_article_sku": "GLASS-24"}
 
 
-def priced_series(org, actor):
+def priced_series(org, actor, *, steel=True):
     # Explicit synthetic workshop facts; these do not claim manufacturer data.
     supplied = pro6004_input()
     profiles = [{**item, "commercial_length_mm": "6500.00"} for item in supplied["profiles"]]
@@ -56,7 +56,7 @@ def priced_series(org, actor):
         for profile in sheet["tabs"]["profiles"]:
             one("INSERT INTO public.profile_purchase_mappings(org_id,profile_article_id,commercial_sku,manufacturer_name,purchase_unit) "
                 "VALUES(%s,%s,%s,'SYNTHETIC workshop','BAR') RETURNING id", [org, profile["id"], profile["sku"]])
-            if profile["reinforcement_sku"]:
+            if steel and profile["reinforcement_sku"]:
                 one("INSERT INTO public.reinforcement_articles(org_id,system_id,parent_profile_article_id,sku,commercial_sku,name,stock_length_mm,purchase_unit,is_default) "
                     "VALUES(%s,%s,%s,%s,%s,'SYNTHETIC steel',6000,'BAR',true) RETURNING id",
                     [org, sheet["id"], profile["id"], profile["reinforcement_sku"], profile["reinforcement_sku"]])
@@ -87,6 +87,18 @@ def test_drawable_does_not_require_inspector_glazing_or_prices(documentary_tenan
         assert usage["level"] == "DRAWABLE"
         assert usage["suggested_count"] > 0
         assert next(item for item in usage["levels"] if item["level"] == "DRAWABLE")["ok"]
+        assert not catalog_readiness(sheet["id"], org)["quote_ready"]
+
+
+def test_a_reinforcement_rule_without_its_steel_purchase_is_not_quotable(documentary_tenant):
+    # The price consumes the steel's bar purchase; readiness must not promise a quote without it.
+    org, _, users, _ = documentary_tenant
+    actor = users["OWNER"]
+    with as_user(actor):
+        sheet = priced_series(org, actor, steel=False)
+        quotable = next(item for item in sheet["usage"]["levels"] if item["level"] == "QUOTABLE")
+        assert not quotable["ok"]
+        assert any("compra de barra del refuerzo" in item["action"] for item in quotable["pending"])
         assert not catalog_readiness(sheet["id"], org)["quote_ready"]
 
 

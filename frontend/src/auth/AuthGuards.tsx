@@ -4,6 +4,7 @@ import { Navigate, useLocation } from "react-router-dom";
 import { t } from "../i18n/es-CL";
 
 import { useAuthSession } from "./AuthSessionProvider";
+import { CreateWorkshop } from "./CreateWorkshop";
 
 export function ReadyGuard({ children }: PropsWithChildren): JSX.Element {
   const auth = useAuthSession();
@@ -22,12 +23,11 @@ export function ReadyGuard({ children }: PropsWithChildren): JSX.Element {
   if (auth.status === "organization_required") {
     return <Navigate to="/select-organization" replace />;
   }
+  if (auth.status === "no_membership") return <CreateWorkshop />;
   if (auth.status !== "ready") {
     return (
       <main className="auth-screen">
-        <p role="alert">
-          {t(auth.status === "no_membership" ? "auth.noMembership" : "auth.unavailable")}
-        </p>
+        <p role="alert">{t("auth.unavailable")}</p>
         <button type="button" onClick={() => void auth.signOut()}>
           {t("auth.signOut")}
         </button>

@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from hashlib import sha256
 import hmac
+from decimal import Decimal
 import json
 from uuid import UUID, uuid5
 
@@ -51,6 +52,24 @@ class ColorSkuSerializer(StrictSerializer):
         return attrs
 
 
+class SteelBarSerializer(StrictSerializer):
+    system_id = serializers.UUIDField()
+    parent_profile_article_id = serializers.UUIDField()
+    sku = serializers.CharField(max_length=150)
+    commercial_sku = serializers.CharField(max_length=150)
+    name = serializers.CharField(max_length=255)
+    stock_length_mm = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=Decimal("0.01"))
+    purchase_unit = serializers.ChoiceField(choices=["BAR"])
+    manufacturer_name = serializers.CharField(required=False, allow_null=True, max_length=255)
+    supplier_name = serializers.CharField(required=False, allow_null=True, max_length=255)
+    physical_stock_identity = serializers.UUIDField(required=False, allow_null=True)
+    stock_color = serializers.CharField(required=False, allow_null=True, max_length=50)
+    cutting_profile_id = serializers.UUIDField(required=False, allow_null=True)
+    binding_version = serializers.IntegerField(required=False, allow_null=True, min_value=1)
+    is_default = serializers.BooleanField(required=False)
+    is_active = serializers.BooleanField(required=False)
+
+
 class GlassMappingSerializer(StrictSerializer):
     system_id = serializers.UUIDField()
     technical_sku = serializers.CharField(max_length=100)
@@ -63,9 +82,10 @@ class GlassMappingSerializer(StrictSerializer):
 
 
 COLORS = service.Resource("catalog_color_skus", ColorSkuSerializer, backend_lock=True)
+STEELS = service.Resource("reinforcement_articles", SteelBarSerializer, backend_lock=True)
 GLASS = service.Resource("glass_purchase_mappings", GlassMappingSerializer, backend_lock=True)
 RESOURCES = {resource.table: resource for resource in
-             (service.SYSTEMS, service.ARTICLES, service.BEADS, service.KITS, COLORS, GLASS, glass_catalog.COMPOSITIONS)}
+             (service.SYSTEMS, service.ARTICLES, service.BEADS, service.KITS, COLORS, STEELS, GLASS, glass_catalog.COMPOSITIONS)}
 
 
 @dataclass
@@ -190,6 +210,8 @@ def _plan(org_id, import_row, entries, *, lock=False):
         code = values["system_code"]
         identity = (sheet, code, values.get("sku"), values.get("opening_type"),
                     values.get("finish"), values.get("version"), values.get("list_code"))
+        if sheet == "Barras de refuerzo":
+            identity += (values.get("reinforcement_sku"),)
         if identity in seen:
             errors.append(_error(key, "system_code", "Hay dos filas para la misma configuración. Excluye la duplicada antes de publicar."))
             continue
@@ -205,7 +227,7 @@ def _plan(org_id, import_row, entries, *, lock=False):
         elif code not in systems:
             errors.append(_error(key, "system_code", "No existe este sistema en tu catálogo. Incluye su fila en Sistemas."))
             continue
-        elif sheet in ("Perfiles", "Roles y reglas de corte", "Refuerzos", "Colores y SKU por color"):
+        elif sheet in ("Perfiles", "Roles y reglas de corte", "Refuerzos", "Barras de refuerzo", "Colores y SKU por color"):
             sku = values["sku"]
             profile = current.get((code, sku))
             if profile is None and ("system", code) in current:
@@ -231,6 +253,31 @@ def _plan(org_id, import_row, entries, *, lock=False):
                     if sheet == "Roles y reglas de corte":
                         data["role"] = values["role"]
                 before, resource = profile, service.ARTICLES
+            elif sheet == "Barras de refuerzo":
+                steel = values["reinforcement_sku"]
+                found = rows("SELECT id FROM public.reinforcement_articles WHERE org_id=%s AND parent_profile_article_id=%s AND sku=%s",
+                             [org_id, profile["id"], steel]) if profile.get("revision") else []
+                before = service.retrieve(STEELS, org_id, found[0]["id"]) if found else None
+                resource = STEELS
+                steel_data = {"system_id": systems[code], "parent_profile_article_id": profile["id"], "sku": steel,
+                    "is_default": True,
+                    **{name: values[name] for name in ("commercial_sku", "name", "stock_length_mm", "purchase_unit")},
+                    **{name: values[name] for name in ("manufacturer_name", "supplier_name", "stock_color", "binding_version", "is_active") if values.get(name) is not None}}
+                if values.get("cutting_profile_code"):
+                    from engine_api.cutting_repository import CuttingRepository
+                    try:
+                        steel_data["cutting_profile_id"] = CuttingRepository().cutting_profile(org_id, values["cutting_profile_code"]).id
+                    except ValueError:
+                        errors.append(_error(key, "cutting_profile_code", "Declara un perfil de corte vigente de este taller."))
+                binding = ("manufacturer_name", "stock_color", "cutting_profile_id", "binding_version")
+                if (current.get(("system", code)) or {}).get("finish_authority") or any(
+                        steel_data.get(name) is not None for name in binding[1:]):
+                    # A physical stock binding is all-or-nothing; its identity is the purchase itself.
+                    for name in binding:
+                        if steel_data.get(name) is None:
+                            errors.append(_error(key, name, "Completa los datos de stock de esta barra de refuerzo."))
+                    steel_data["physical_stock_identity"] = uuid5(UUID(str(org_id)), "steel:" + values["commercial_sku"])
+                data = _validated(SteelBarSerializer, steel_data, key, errors)
             else:
                 if values["finish"] not in (current.get(("system", code)) or {}).get("finishes", []):
                     errors.append(_error(key, "finish", "Declara este color en la hoja Sistemas antes de asignar su SKU."))

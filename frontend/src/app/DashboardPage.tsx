@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { catalogSystemList } from "../api/generated/dekopen";
 import type { TodayAction } from "../api/generated/models";
 import { useAuthSession } from "../auth/AuthSessionProvider";
 import {
@@ -43,6 +45,20 @@ function TodayWorkspace(): JSX.Element {
   const workshop =
     org.role === "INSTALLER" || org.role === "OPERATOR" || org.role === "WORKSHOP_MANAGER";
   const prepared = query.data?.prepared;
+  // A workshop without its own series is on first use: Hoy points to the guide.
+  const ownSeries = useQuery({
+    queryKey: ["today-own-series", org.id],
+    enabled: !workshop && query.data?.actions.length === 0,
+    staleTime: 60_000,
+    queryFn: async ({ signal }) => {
+      const response = await catalogSystemList(
+        { summary: true, is_demo: false, owned_only: true },
+        { headers: { "X-Organization-ID": org.id }, signal },
+      );
+      if (response.status !== 200) throw new Error("catalog");
+      return response.data.items.length;
+    },
+  });
   const metrics = todayMetrics(query.data?.actions ?? [], org.role);
   const name =
     auth.session?.user.user_metadata?.full_name ?? auth.session?.user.user_metadata?.name;
@@ -64,7 +80,8 @@ function TodayWorkspace(): JSX.Element {
           </Link>
         ) : (
           <Button
-            variant="primary"
+            // On first use «Empezar» is the one primary action of the page.
+            variant={ownSeries.data === 0 ? "secondary" : "primary"}
             loading={creating}
             onClick={() => void startQuotation()}
             icon={<Icon name="plus" />}
@@ -146,7 +163,18 @@ function TodayWorkspace(): JSX.Element {
               />
             </section>
           )}
-          {query.data.actions.length === 0 ? (
+          {query.data.actions.length === 0 && ownSeries.data === 0 ? (
+            <div className="today-clear today-first-use">
+              <h2>Prepara tu taller</h2>
+              <p>
+                Elige tu serie del fabricante, carga sus perfiles y precios, comprueba una ventana y
+                envía tu primera cotización.
+              </p>
+              <Link className="ui-button ui-button--primary" to="/onboarding">
+                Empezar
+              </Link>
+            </div>
+          ) : query.data.actions.length === 0 ? (
             <div className="today-clear">
               <h2>Todo al día</h2>
               <p>No hay compromisos pendientes para tu rol en esta organización.</p>

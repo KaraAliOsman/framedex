@@ -17,6 +17,19 @@ from ingest.catalog_template import SCHEMAS  # noqa: E402
 def main() -> None:
     path = ROOT / "backend/ingest/templates/catalogo-v1.xlsx"
     book = load_workbook(path)
+    names = list(SCHEMAS)
+    for index, name in enumerate(names):
+        if name not in book.sheetnames:
+            # A new sheet copies its neighbour's layout and takes its schema place.
+            source = book[names[index - 1]]
+            sheet = book.copy_worksheet(source)
+            sheet.title = name
+            for row in sheet.iter_rows(min_row=1, max_row=4):
+                for cell in row:
+                    cell.value = None
+            sheet.cell(1, 1, name)
+            sheet.cell(2, 1, source.cell(2, 1).value)
+            book.move_sheet(sheet, offset=index - book.sheetnames.index(name))
     for name, columns in SCHEMAS.items():
         sheet = book[name]
         if any(cell.value is not None for row in sheet.iter_rows(min_row=5) for cell in row):

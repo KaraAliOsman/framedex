@@ -18,6 +18,7 @@
  * * `manufacturing_placement_policies` - manufacturing_placement_policies
  * * `profile_articles` - profile_articles
  * * `profile_systems` - profile_systems
+ * * `reinforcement_articles` - reinforcement_articles
  * * `reinforcement_cut_policies` - reinforcement_cut_policies
  */
 export type AuthorityTableEnum = (typeof AuthorityTableEnum)[keyof typeof AuthorityTableEnum];
@@ -34,5 +35,6 @@ export const AuthorityTableEnum = {
   manufacturing_placement_policies: "manufacturing_placement_policies",
   profile_articles: "profile_articles",
   profile_systems: "profile_systems",
+  reinforcement_articles: "reinforcement_articles",
   reinforcement_cut_policies: "reinforcement_cut_policies",
 } as const;

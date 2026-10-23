@@ -109,6 +109,17 @@ SCHEMAS: dict[str, tuple[Column, ...]] = {
         c("cut_deduction_mm", "Descuento refuerzo (mm)", "decimal", True),
         c("screws_per_m", "Tornillos por metro", "positive", True),
         c("screw_sku", "SKU de tornillo", required=True), c("screw_weight_kg", "Masa tornillo (kg)", "decimal"), SOURCE),
+    # The steel a reinforcement rule names, as the workshop buys it: the price
+    # consumes this bar. Under a finish chart it also needs its stock binding.
+    "Barras de refuerzo": (SYSTEM, SKU, c("reinforcement_sku", "SKU de refuerzo", required=True),
+        c("commercial_sku", "SKU comercial del refuerzo", required=True),
+        c("name", "Nombre del refuerzo", required=True),
+        c("stock_length_mm", "Largo de barra (mm)", "positive", True),
+        c("purchase_unit", "Unidad de compra", required=True, choices={"BAR": "Barra"}),
+        c("manufacturer_name", "Fabricante de barra"), c("supplier_name", "Proveedor de barra"),
+        c("stock_color", "Color del stock"), c("cutting_profile_code", "Código de regla de corte"),
+        c("binding_version", "Versión de stock", "integer"),
+        c("is_active", "Barra vigente", "boolean"), SOURCE),
     "Límites": (SYSTEM, c("opening_type", "Apertura", required=True, choices=OPENINGS),
         c("min_leaf_width_mm", "Ancho mínimo de hoja (mm)", "positive", True),
         c("max_leaf_width_mm", "Ancho máximo de hoja (mm)", "positive", True),

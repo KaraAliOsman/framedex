@@ -509,3 +509,24 @@ La [evidencia](../../redesign/captures/dk2-p03h/aceptacion.md) distingue los
 precios/perfiles sintéticos y respuestas documentales simuladas de la base,
 autenticación y almacenamiento reales. El precio automático y una aceptación
 con los datos reales del dueño corresponden a P04 y P10 respectivamente.
+
+## Barras de refuerzo y aceptación Proline · P10
+
+Verificado el 23-10-2026 en `claude/dk2-p10-proline`. La plantilla oficial
+tiene una hoja nueva, «Barras de refuerzo»: cada fila declara la compra del
+acero que nombra una regla de refuerzo (SKU comercial, largo de barra, unidad
+BAR y, bajo una carta de colores, su vínculo de stock completo). La revisión la
+publica en `reinforcement_articles` por `catalog_backend`. La migración
+`20270212000100` y pgTAP 263 cubren la RLS: solo su propio taller, sin global
+ni borrado; deshacer desactiva. Antes solo las semillas DEMO tenían esas barras.
+La cobertura de precio daba «cotizable» a una serie importada cuyo precio
+fallaba al dibujar. Ahora una regla sin su barra bloquea QUOTABLE.
+
+Hallazgo relacionado: con carta de colores, las compras de perfil se leen de
+`catalog_color_skus` y exigen fabricante, color de stock igual al acabado,
+perfil de corte y versión. Sin carta se leen de `profile_purchase_mappings`,
+que ninguna importación de taller escribe todavía.
+
+La [aceptación](../../redesign/captures/dk2-p10/aceptacion.md) usa una ficha
+PRO6004 sintética generada con `scripts/catalog_interchange_fixture.py` y
+recorre del registro a la aprobación del cliente en unos 64 s por tamaño.

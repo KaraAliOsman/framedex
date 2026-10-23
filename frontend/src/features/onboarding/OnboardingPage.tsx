@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../../api/apiMutator";
 import {
+  catalogReferenceSeries,
   catalogSystemList,
   engineSystems,
   clientsCreate,
@@ -29,6 +30,14 @@ import { CompanySetup } from "./CompanySetup";
 
 const STEPS = ["Serie", "Cliente", "Obra", "Primera ventana"] as const;
 const emptyFields: ClientFields = { rut: "", email: "", phone: "" };
+
+/** Three letters of the manufacturer: a stable mark that fits its tile. */
+function monogram(manufacturer: string): string {
+  return manufacturer
+    .replace(/[^\p{L}]/gu, "")
+    .slice(0, 3)
+    .toLocaleUpperCase("es-CL");
+}
 
 export function OnboardingPage(): JSX.Element {
   const auth = useAuthSession();
@@ -80,7 +89,61 @@ export function OnboardingPage(): JSX.Element {
         .sort((a, b) => a.name.localeCompare(b.name, "es-CL"));
     },
   });
+  const library = useQuery({
+    queryKey: ["catalog-references", orgId],
+    enabled: Boolean(orgId) && canWrite,
+    staleTime: 5 * 60_000,
+    queryFn: async ({ signal }) => {
+      const response = await catalogReferenceSeries({ ...options, signal });
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      // Same cache entry as the catalog: the whole registry, not only its series.
+      return response.data;
+    },
+  });
   const selected = systems.data?.find((system) => system.id === draft.systemId);
+  // A workshop without a quotable series of its own starts from the library.
+  const ownSeries = (systems.data ?? []).some(
+    (system) => !system.is_demo && system.readiness.quote_ready,
+  );
+  const manufacturerSeries = library.data?.series.length ? (
+    <section className="onboarding-library" aria-labelledby="onboarding-library-title">
+      <h3 id="onboarding-library-title">Tu serie del fabricante</h3>
+      <p>
+        Elige la serie con que trabajas. La biblioteca aporta su identidad; los perfiles, largos y
+        precios los cargas desde el manual o tu planilla en el alta guiada.
+      </p>
+      <ul>
+        {library.data.series.map((item) => (
+          <li key={item.id}>
+            <Link
+              className="onboarding-reference"
+              to={`/catalogs/systems?library=${encodeURIComponent(item.id)}`}
+            >
+              <span className="onboarding-reference__monogram" aria-hidden="true">
+                {monogram(item.manufacturer)}
+              </span>
+              <span>
+                <strong>{item.series_name}</strong>
+                <span>
+                  {item.manufacturer} · {item.material}
+                </span>
+              </span>
+              <StatusBadge
+                label={
+                  !item.capabilities.reference
+                    ? "Identidad sin resolver"
+                    : item.needs_manufacturer_manual
+                      ? "Necesita manual"
+                      : "Completar para cotizar"
+                }
+                tone="neutral"
+              />
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ) : null;
   const offered = systems.data ?? [];
   const seriesReady = Boolean(selected?.readiness.quote_ready);
   const done = [seriesReady, Boolean(draft.clientId), Boolean(draft.projectId), false];
@@ -200,6 +263,8 @@ export function OnboardingPage(): JSX.Element {
         onComplete={() => {
           sessionStorage.setItem(`onboarding-company:${orgId}`, "confirmed");
           setSetupComplete(true);
+          // The long company form leaves the page scrolled; the guide starts at its top.
+          window.scrollTo({ top: 0 });
         }}
       />
     );
@@ -238,6 +303,7 @@ export function OnboardingPage(): JSX.Element {
               Define qué aperturas y medidas puede calcular el motor. Los catálogos de prueba se
               identifican como DEMO.
             </p>
+            {ownSeries ? null : manufacturerSeries}
             {systems.isPending ? (
               <LoadingState label="Cargando series disponibles" />
             ) : systems.isError ? (
@@ -301,6 +367,7 @@ export function OnboardingPage(): JSX.Element {
                 Usar esta serie
               </Button>
             ) : null}
+            {ownSeries ? manufacturerSeries : null}
           </>
         ) : step === 1 ? (
           <>

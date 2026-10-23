@@ -167,6 +167,11 @@ def accept_invitation(token):
     return {"organization_id": identity}
 
 
+def create_workshop(name):
+    identity = rows("SELECT private.create_own_workshop(%s) AS id", [name])[0]["id"]
+    return {"organization_id": identity}
+
+
 def preview(org_id, data):
     with documentary_backend():
         _, reference = _revision_snapshot(data["version_id"], org_id)

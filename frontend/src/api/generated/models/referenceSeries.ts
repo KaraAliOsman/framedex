@@ -25,4 +25,5 @@ export interface ReferenceSeries {
   missing: string[];
   incidents: string[];
   seed: ReferenceSeriesSeed;
+  needs_manufacturer_manual: boolean;
 }

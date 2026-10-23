@@ -107,9 +107,11 @@ export function ReferenceSeriesPanel({
           </p>
         </div>
         <StatusBadge tone="warning" showIcon={false}>
-          {series.capabilities.reference
-            ? "Completar serie para cotizar"
-            : "Identidad sin resolver"}
+          {!series.capabilities.reference
+            ? "Identidad sin resolver"
+            : series.needs_manufacturer_manual
+              ? "Necesita manual del fabricante"
+              : "Completar serie para cotizar"}
         </StatusBadge>
       </header>
       <CapabilityChips capabilities={series.capabilities} />

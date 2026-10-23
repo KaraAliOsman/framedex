@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, Navigate, useSearchParams } from "react-router-dom";
 
@@ -8,7 +8,13 @@ import {
   catalogSeriesCreate,
   catalogSystemList,
 } from "../../api/generated/dekopen";
-import type { SeriesCell, SeriesSheet, SystemResponse } from "../../api/generated/models";
+import type {
+  FamilyTemplate,
+  ReferenceSeries,
+  SeriesCell,
+  SeriesSheet,
+  SystemResponse,
+} from "../../api/generated/models";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { Button, DeniedState, Dialog, Loading } from "../../ui";
 import { Icon } from "../../ui/Icon";
@@ -53,6 +59,20 @@ export function catalogGroups(
       ),
     }))
     .sort((a, b) => a.name.localeCompare(b.name, "es-CL"));
+}
+
+/** The suggested family template a reference series starts from: same
+ * material and opening family. Its values stay «sugeridos» until confirmed. */
+export function templateForReference(
+  reference: ReferenceSeries,
+  templates: FamilyTemplate[],
+): FamilyTemplate | undefined {
+  const seed = reference.seed;
+  if (!seed.system_family || !seed.material) return undefined;
+  return templates.find((template) => {
+    const system = template.system as { material?: string; system_family?: string };
+    return system.material === seed.material && system.system_family === seed.system_family;
+  });
 }
 
 export function SeriesCatalogPage(): JSX.Element {
@@ -117,6 +137,9 @@ function SeriesCatalogHome({
   const [failure, setFailure] = useState("");
   const [trial, setTrial] = useState<SeriesSheet | null>(null);
   const [showExamples, setShowExamples] = useState(false);
+  // A library series chosen here or in the first-use guide (`?library=`).
+  const [reference, setReference] = useState<ReferenceSeries | null>(null);
+  const requestedReference = params.get("library");
   const systems = useQuery({
     queryKey,
     queryFn: async ({ signal }) => {
@@ -142,7 +165,7 @@ function SeriesCatalogHome({
   });
   const templates = useQuery({
     queryKey: ["catalog-family-templates", orgId],
-    enabled: adding === "template",
+    enabled: adding === "template" || adding === "library" || requestedReference !== null,
     queryFn: async ({ signal }) => {
       const response = await catalogFamilyTemplates({ ...options, signal });
       if (response.status !== 200) throw new Error("templates");
@@ -151,13 +174,22 @@ function SeriesCatalogHome({
   });
   const library = useQuery({
     queryKey: ["catalog-references", orgId],
-    enabled: adding === "library",
+    enabled: adding === "library" || requestedReference !== null,
     queryFn: async ({ signal }) => {
       const response = await catalogReferenceSeries({ ...options, signal });
       if (response.status !== 200) throw new Error("library");
       return response.data;
     },
   });
+
+  useEffect(() => {
+    if (!requestedReference || !library.data) return;
+    const item = library.data.series.find((entry) => entry.id === requestedReference);
+    setParams({}, { replace: true });
+    if (!item) return;
+    setReference(item);
+    setAdding("template");
+  }, [library.data, requestedReference, setParams]);
 
   function advanced(cell?: SeriesCell) {
     setParams({
@@ -185,6 +217,16 @@ function SeriesCatalogHome({
         {
           template_id: template.id,
           template_version: template.version,
+          ...(reference?.seed.depth_mm || reference?.seed.chamber_count
+            ? {
+                rules: {
+                  ...(reference.seed.depth_mm ? { depth_mm: reference.seed.depth_mm } : {}),
+                  ...(reference.seed.chamber_count
+                    ? { chamber_count: Number(reference.seed.chamber_count) }
+                    : {}),
+                },
+              }
+            : {}),
           name: String(form.get("name") ?? "").trim(),
           code: String(form.get("code") ?? "").trim(),
           ...(String(form.get("manufacturer") ?? "").trim()
@@ -197,6 +239,7 @@ function SeriesCatalogHome({
       changed(response.data);
       queryClient.setQueryData(["series-sheet", orgId, response.data.id], response.data);
       setAdding(null);
+      setReference(null);
       setParams({ system: response.data.id, setup: "1" });
     } catch {
       setFailure("No se pudo agregar la serie. Revisa sus datos y vuelve a intentarlo.");
@@ -375,7 +418,9 @@ function SeriesCatalogHome({
                 : "Desde una plantilla"
           }
           onClose={() => {
-            if (!saving) setAdding(null);
+            if (saving) return;
+            setAdding(null);
+            setReference(null);
           }}
         >
           {adding === "choose" ? (
@@ -395,7 +440,16 @@ function SeriesCatalogHome({
               <ul className="series-catalog__library">
                 {library.data?.series.map((item) => (
                   <li key={item.id}>
-                    <Button onClick={() => setParams({ advanced: "1", reference: item.id })}>
+                    <Button
+                      onClick={() => {
+                        // A series with a known family starts the guided setup;
+                        // the rest open the full reference to resolve identity.
+                        if (templates.data && templateForReference(item, templates.data)) {
+                          setReference(item);
+                          setAdding("template");
+                        } else setParams({ advanced: "1", reference: item.id });
+                      }}
+                    >
                       {item.manufacturer} · {item.series_name}
                     </Button>
                   </li>
@@ -413,19 +467,41 @@ function SeriesCatalogHome({
             >
               <label>
                 Fabricante
-                <input name="manufacturer" maxLength={255} />
+                <input
+                  name="manufacturer"
+                  maxLength={255}
+                  defaultValue={reference?.seed.manufacturer ?? ""}
+                />
               </label>
               <label>
                 Nombre de la serie
-                <input name="name" required maxLength={150} />
+                <input
+                  name="name"
+                  required
+                  maxLength={150}
+                  defaultValue={reference?.seed.name ?? ""}
+                />
               </label>
               <label>
                 Código
-                <input name="code" required maxLength={50} />
+                <input
+                  name="code"
+                  required
+                  maxLength={50}
+                  defaultValue={reference?.seed.code ?? ""}
+                />
               </label>
               <label>
                 Plantilla
-                <select name="template" required>
+                <select
+                  name="template"
+                  required
+                  defaultValue={
+                    reference && templates.data
+                      ? templateForReference(reference, templates.data)?.id
+                      : undefined
+                  }
+                >
                   {templates.data?.map((item) => (
                     <option key={item.id} value={item.id}>
                       {item.name}
@@ -433,6 +509,12 @@ function SeriesCatalogHome({
                   ))}
                 </select>
               </label>
+              {reference ? (
+                <p>
+                  La biblioteca aporta solo la identidad de {reference.series_name}. Los perfiles,
+                  largos y precios salen del manual de tu fabricante o de tu planilla.
+                </p>
+              ) : null}
               <p>
                 Los valores de la plantilla quedan como sugeridos. Después agrega tus perfiles y
                 precios.

@@ -430,6 +430,7 @@ export function AppRoutes(): JSX.Element {
         />
         {publicProposalRoutes()}
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/registro" element={<LoginPage signup />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route
           path="/auth/mfa"
