@@ -33,6 +33,9 @@ async function capture(page: Page, info: TestInfo, name: string) {
     ).violations,
   ).toEqual([]);
   await page.screenshot({ path: info.outputPath(`${name}.png`), fullPage: true });
+  // Axe analyses through an auxiliary page; take focus back before the next
+  // interaction so the page does not regain it mid-gesture.
+  await page.bringToFront();
 }
 
 for (const viewport of [
