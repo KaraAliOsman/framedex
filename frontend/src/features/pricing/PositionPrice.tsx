@@ -4,7 +4,7 @@ import type {
   ProjectResponse,
   SimplePriceBreakdown,
 } from "../../api/generated/models";
-import { policyPercentInput } from "./policyNumbers";
+import { SimplePriceDetails } from "./SimplePriceDetails";
 import { formatMoney } from "../../format";
 import { Popover } from "../../ui/Overlays";
 import "./working-price.css";
@@ -49,24 +49,8 @@ export function PositionPrice({
         <p>
           {name} · {position.quantity} {position.quantity === 1 ? "unidad" : "unidades"}
         </p>
+        <SimplePriceDetails breakdown={breakdown} policy={policy} currency={currency} />
         <dl>
-          {breakdown &&
-            (
-              [
-                ["Materiales", breakdown.materials],
-                ["Merma", breakdown.waste],
-                ["Mano de obra", breakdown.labor],
-                ["Instalación", breakdown.installation],
-                ["Accesorios y otros servicios", breakdown.extras_cost],
-                ["Costo por unidad", breakdown.direct_cost],
-                ["Utilidad por unidad", breakdown.profit],
-              ] as const
-            ).map(([label, value]) => (
-              <div key={label}>
-                <dt>{label}</dt>
-                <dd>{formatMoney(value, currency)}</dd>
-              </div>
-            ))}
           <div>
             <dt>Precio neto por unidad</dt>
             <dd>{formatMoney(sale.unit_net, currency)}</dd>
@@ -76,20 +60,7 @@ export function PositionPrice({
             <dd>{formatMoney(sale.line_net, currency)}</dd>
           </div>
         </dl>
-        {policy && (
-          <p>
-            Margen sobre venta: {policyPercentInput(policy.margin)} %. Mano de obra{" "}
-            {policy.labor_basis === "M2" ? "por m²" : "por ventana"}; instalación{" "}
-            {policy.installation_basis === "M2" ? "por m²" : "por ventana"}. Redondeo hacia arriba a
-            múltiplos de {formatMoney(policy.rounding_step, currency)}.
-          </p>
-        )}
-        {breakdown && (
-          <p>
-            La utilidad incluye {formatMoney(breakdown.rounding, currency)} de redondeo. Desglose de
-            una unidad; los totales incluyen la cantidad guardada.
-          </p>
-        )}
+        <p>Los totales incluyen la cantidad guardada.</p>
         {sale.catalog_use?.is_example && <p>Serie de ejemplo: datos sintéticos para ensayar.</p>}
         {(sale.catalog_use?.suggested_count ?? 0) > 0 && (
           <p>

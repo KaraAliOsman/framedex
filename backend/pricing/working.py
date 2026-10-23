@@ -9,16 +9,15 @@ from django.utils import timezone
 
 from authentication.errors import ContractAPIException
 from dekopen_engine.commercial import CommercialLine, PricingError
-from dekopen_engine.extra_models import ExtraLine
 from dekopen_engine.extras import service_price, partition_price
 from dekopen_engine.snapshot import result_payload
 from dekopen_engine.cutting import InvalidCutContract
 from engine_api.adapter import UnsupportedEngineContract
 from engine_api.repository import UnsupportedCatalogContract, SystemNotFound
 from pricing.repository import PricingRepository, commercial_backend, one, rows, json_text
-from pricing.service import position_cost, preview, source_revision, pricing_public_detail, decoded
-from pricing.simple_policy import engine_policy, read_policy
-from dekopen_engine.simple_pricing import simple_price, simple_project
+from pricing.service import preview, source_revision, pricing_public_detail, decoded
+from pricing.simple_policy import engine_policy, read_policy, simple_position_price
+from dekopen_engine.simple_pricing import simple_project
 
 D = Decimal
 
@@ -47,12 +46,8 @@ def calculate_simple(org_id, project, positions, values, request):
         'installation_rate_per_m2': D('0'), 'default_margin_pct': policy.margin}
     technical, lines, details, extras_by_index = [], [], [], {}
     for position in positions:
-        _, area, bom, formation = position_cost(repo, position, rules)
-        extras = [ExtraLine.model_validate_json(json_text(item)) for item in formation['extra_lines']]
-        if explicit_installation and any(item.installation for item in extras):
-            raise PricingError('installation_rule_duplicate')
-        priced = simple_price([D(item['cost']) for item in formation['composition'] if item['kind'] != 'EXTRA'],
-            area, policy, installation_included=explicit_installation, extras=extras)
+        priced, bom, formation, extras = simple_position_price(repo, position, values,
+            installation_included=explicit_installation)
         index = position['position_index']
         extras_by_index[index] = extras
         lines.append(CommercialLine(index, position['quantity'], priced.direct_cost, priced.unit_net))

@@ -1059,3 +1059,85 @@
   padding-bottom: var(--space-3);
   border-radius: 0 0 var(--r-2) var(--r-2);
 }
+
+/* Engine warnings sit on the drawing as chips with their correction, not in
+   a hidden list: the fix is one click away and the engine validates it. */
+.editor-issue-chips {
+  position: absolute;
+  left: 50%;
+  bottom: 52px;
+  z-index: var(--z-rail);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-6px);
+  width: max-content;
+  max-width: min(640px, calc(100% - 32px));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  transform: translateX(-50%);
+  /* The chips read over the drawing; only their actions take the pointer, so
+     modules and dimensions under a chip stay selectable. */
+  pointer-events: none;
+}
+.editor-issue-chip > button,
+.editor-issue-chips__more {
+  pointer-events: auto;
+}
+.editor-issue-chip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12px);
+  max-width: 100%;
+  padding: var(--space-6px) var(--space-6px) var(--space-6px) var(--space-16px);
+  border-radius: var(--r-pill);
+  font-size: var(--type-dense);
+  line-height: 1.35;
+}
+.editor-issue-chip--warning {
+  background: var(--state-warning-soft);
+  color: var(--state-warning-ink);
+}
+.editor-issue-chip--error {
+  background: var(--state-danger-soft);
+  color: var(--state-danger-ink);
+}
+.editor-issue-chip > span {
+  min-width: 0;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.editor-issue-chip > button,
+.editor-issue-chips__more {
+  flex: none;
+  min-height: 32px;
+  padding: 0 var(--space-12px);
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--surface-panel);
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform var(--t-micro) var(--ease-in);
+}
+.editor-issue-chip > button:active:not(:disabled),
+.editor-issue-chips__more:active {
+  transform: scale(0.97);
+}
+.editor-issue-chips__more {
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+@media (max-width: 767px) {
+  .editor-issue-chips {
+    bottom: 96px;
+  }
+  .editor-issue-chip {
+    border-radius: var(--r-2);
+  }
+}

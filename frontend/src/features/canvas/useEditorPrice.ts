@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { designOperationsSimulate } from "../../api/generated/dekopen";
 import { ApiError } from "../../api/apiMutator";
 import type { CanvasDesignInputs } from "./canvasStore";
+import type { SimplePolicyResponse, SimplePriceBreakdown } from "../../api/generated/models";
 
 export type EditorPrice = {
   net: string | null;
@@ -14,6 +15,11 @@ export type EditorPrice = {
   modules?: { module_id: string; net: string | null; reason: string | null }[];
   assembly_adjustment_net?: string | null;
   breakdown_source?: string;
+  use_advanced?: boolean;
+  policy_revision?: number;
+  breakdown?: SimplePriceBreakdown;
+  policy?: SimplePolicyResponse;
+  catalog_use?: { suggested_count?: number; is_example?: boolean };
 };
 
 /** A no-edit simulation reads the same commercial authority as proposals.

@@ -358,11 +358,18 @@ def test_editor_price_reads_costs_once_and_observes_the_next_request(documentary
     from pricing.repository import PricingRepository, admin_write, one
     from projects import ops_registry
     from projects.service import position_row
+    from pricing.simple_policy import read_policy, save_policy, POLICY_FIELDS
 
     org, _, users, _ = documentary_tenant
     owner = users["OWNER"]
     _, position = setup_project(org, owner)
     with as_user(owner):
+        # A 1,000-peso selling step can intentionally hide a small cost change.
+        # Isolate request freshness with a one-peso step and no service rates.
+        current = read_policy(org)
+        save_policy(org, {key: current[key] for key in POLICY_FIELDS} | {
+            'rounding_step': Decimal('1'), 'labor_rate': Decimal('0'),
+            'installation_rate': Decimal('0')}, current['revision'], 'Ensayo de caché de costos')
         product = ops_registry.product_from_position(position_row(org, position["id"]))
         args = (org, product, position["design"]["system_id"], position["design"]["color"])
         with CaptureQueriesContext(connection) as queries:
