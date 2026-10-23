@@ -2,6 +2,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page, type TestInfo } from "@playwright/test";
 import { fileURLToPath } from "node:url";
 import { test } from "./support/catalog-series-fixture";
+import { santiagoToday } from "./support/environment";
 
 async function capture(page: Page, info: TestInfo, name: string) {
   await page.evaluate(() => document.fonts.ready);
@@ -43,9 +44,7 @@ for (const viewport of [
       await panel
         .getByLabel("Proveedor", { exact: true })
         .fill("Proveedor sintético 窗 y taller de ensayo con precios revisados");
-      await panel
-        .getByLabel("Vigente desde", { exact: true })
-        .fill(new Date().toISOString().slice(0, 10));
+      await panel.getByLabel("Vigente desde", { exact: true }).fill(santiagoToday());
       const created = page.waitForResponse(
         (response) =>
           new URL(response.url()).pathname === "/api/v1/pricing/admin/cost-lists/" &&

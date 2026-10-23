@@ -2,6 +2,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page, type TestInfo } from "@playwright/test";
 import { fileURLToPath } from "node:url";
 import { test } from "./support/catalog-series-fixture";
+import { santiagoToday } from "./support/environment";
 
 async function capture(page: Page, info: TestInfo, name: string) {
   const wizard = page.getByRole("dialog", { name: "Preparar mi serie", exact: true });
@@ -89,9 +90,7 @@ for (const viewport of [
       await expect(wizard.getByText(/hoja Precios de prueba · 12 filas/)).toBeVisible();
       await wizard.getByRole("button", { name: "Crear una lista nueva", exact: true }).click();
       await wizard.getByLabel("Proveedor", { exact: true }).fill("Proveedor de ensayo sintético");
-      await wizard
-        .getByLabel("Vigente desde", { exact: true })
-        .fill(new Date().toISOString().slice(0, 10));
+      await wizard.getByLabel("Vigente desde", { exact: true }).fill(santiagoToday());
       await wizard.getByRole("button", { name: "Crear lista", exact: true }).click();
       await wizard.getByRole("button", { name: "Revisar todos los precios", exact: true }).click();
       await wizard
