@@ -23,7 +23,10 @@ REGISTRY = Path(__file__).with_name("reference_series.json")
 
 @lru_cache(maxsize=1)
 def registry() -> dict:
-    return json.loads(REGISTRY.read_text(encoding="utf-8"))
+    data = json.loads(REGISTRY.read_text(encoding="utf-8"))
+    for series in data["series"]:
+        series["needs_manufacturer_manual"] = not series.get("facts") and not series.get("articles")
+    return data
 
 
 class ReferenceFactSerializer(serializers.Serializer):
@@ -65,6 +68,9 @@ class ReferenceSeriesSerializer(serializers.Serializer):
     # Verified identity values to prefill the manual series form (strings,
     # lexemes as written; never dimensions the source does not state).
     seed = serializers.DictField(child=serializers.CharField())
+    # P10: no cited fact or article yet — the series exists only as a name
+    # until the manufacturer's manual is incorporated.
+    needs_manufacturer_manual = serializers.BooleanField()
 
 
 class ReferenceSourceSerializer(serializers.Serializer):

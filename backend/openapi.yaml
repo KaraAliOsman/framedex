@@ -49858,6 +49858,8 @@ components:
           type: object
           additionalProperties:
             type: string
+        needs_manufacturer_manual:
+          type: boolean
       required:
       - articles
       - capabilities
@@ -49868,6 +49870,7 @@ components:
       - manufacturer
       - material
       - missing
+      - needs_manufacturer_manual
       - seed
       - series_code
       - series_name
