@@ -571,6 +571,16 @@ export const domainLabels: Readonly<Record<string, string>> = {
   SUPERSEDED: "Reemplazado",
   EXPIRED: "Vencido",
   REVOKED: "Revocado",
+  // P08 · origin of a window read from a request and «Deshacer todo».
+  series: "Serie",
+  glass: "Vidrio",
+  color: "Color",
+  opening: "Apertura",
+  usual: "Lo habitual de la empresa",
+  request: "Mensaje original",
+  attachment: "Adjunto",
+  removed: "Obra borrador eliminada",
+  kept: "Obra conservada",
 };
 
 export function domainLabel(value: string | null | undefined): string {

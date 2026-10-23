@@ -53,7 +53,10 @@ class EngineTools:
             raise OperationError("ops_required", "Declara las operaciones a simular.")
         for op in ops:
             validate_operation(op)
-        allowed = _declared_values(self.goal) | self.numeric_evidence
+        from ai_gateway.origins import measures_mm
+        # «1,20 x 1,50» and «90 x 210» are millimetres the person wrote; the
+        # window-level origin check still binds each new window to its phrase.
+        allowed = _declared_values(self.goal) | self.numeric_evidence | measures_mm(self.goal)
         def collect(value):
             if isinstance(value, dict):
                 for field, child in value.items():

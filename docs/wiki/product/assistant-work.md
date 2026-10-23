@@ -1,10 +1,14 @@
 ---
 type: synthesis
 status: active
-updated: 2026-10-18
+updated: 2026-10-22
 volatility: high
 verified_ref: d5500d69bbc843162a9c189805a00d8904d11264
 sources:
+  - backend/ai_gateway/origins.py
+  - backend/ai_gateway/undo_all.py
+  - backend/tests/test_ai_request_origins.py
+  - frontend/tests/e2e/agent.spec.ts
   - docs/redesign/P17-ACEPTACION.md
   - backend/tests/integration/test_assistant_presence.py
   - backend/tests/test_assistant_tool_continuity.py
@@ -12,6 +16,30 @@ sources:
 ---
 
 # Asistente, trabajos y presencia
+
+## Solicitud → obra con origen · 22-10-2026 · rama `claude/dk2-p08-agente`
+
+Verificado en la rama (no en main todavía):
+
+- Cada `add_position` que el agente lee de una solicitud cita su frase. El
+  servidor la ubica en el pedido o en el texto de un adjunto y exige que ancho,
+  alto y cantidad estén escritos ahí (mm, cm, metros, «1.800», números en
+  palabras). Sin frase válida la ventana no se crea; si el modelo no cita, el
+  servidor busca la cláusula más corta que las contiene. Las herramientas del
+  motor aceptan esas mismas lecturas de unidades.
+- Nunca se supone una medida: falta una → el agente pregunta. Los supuestos son
+  no numéricos (apertura, serie, vidrio, color) y los calcula el servidor; lo
+  habitual de la empresa se agrupa aparte.
+- `POST /api/v1/ai/jobs/{id}/undo-all/` deshace las operaciones guardadas del
+  trabajo (de la más nueva a la más antigua) y elimina la obra borrador que el
+  trabajo creó si quedó vacía; una edición humana posterior detiene la cadena.
+- UI: Ctrl K ofrece «Pedir a DEKOPEN» (prefija, no envía); el asistente se
+  acopla como panel lateral (`VITE_AGENTE_PANEL_LATERAL`); la propuesta muestra
+  el mensaje con frases numeradas, supuestos y «Deshacer todo».
+- Decisión del dueño (22-10-2026): el trabajo del agente hereda el `aal2` de la
+  sesión que lo delegó. El servidor lo sella al encolar desde el token
+  verificado (`session_aal`); la cola genérica descarta cualquier valor del
+  cliente. Sin sello corre en `aal1`. Un OWNER con «Omitir todo» crea la obra.
 
 ## Adjuntos compatibles · 18-10-2026 · alcance por implementar
 

@@ -26,7 +26,12 @@ class _Unclaimable(Exception):
 
 
 def _claims(context: JobContext) -> str:
-    return json.dumps(_claims_for(str(context.created_by), context))
+    claims = _claims_for(str(context.created_by), context)
+    # The run keeps the second factor of the session that delegated it, as
+    # sealed at enqueue; anything else runs at aal1.
+    if context.payload.get("session_aal") == "aal2":
+        claims["aal"] = "aal2"
+    return json.dumps(claims)
 
 
 def _set_claims(cursor: Any, context: JobContext) -> None:

@@ -49,6 +49,7 @@ def prepare(request, project_id: UUID) -> dict:
     from pricing.repository import commercial_backend, rows
     from pricing.serializers import PriceRequestSerializer
     from pricing.service import apply_operation, pricing_public_detail
+    from pricing.simple_policy import read_policy
     from pricing.views import _preview_with_retry, scope as pricing_scope
     from projects import service as projects_service
 
@@ -56,8 +57,13 @@ def prepare(request, project_id: UUID) -> dict:
         with pricing_scope(request, ("OWNER", "ESTIMATOR")) as (_, _, org_id):
             currency = rows("SELECT currency FROM public.tenancy_organizations WHERE id=%s", [str(org_id)])[0]["currency"]
             project = projects_service.project_public(org_id, projects_service.project_row(org_id, project_id))
+            with commercial_backend():
+                simple = not read_policy(org_id)["use_advanced"]
         applied_id = project.get("current_pricing_operation_id")
-        if not applied_id:
+        # Simple pricing (P04): the working price is automatic; the draft below
+        # prepares and renders from it (with its own cause when not ready) and
+        # the price is applied only when issuing. Advanced rules apply first.
+        if not applied_id and not simple:
             serializer = PriceRequestSerializer(data={
                 "project_id": str(project_id),
                 "pricing_mode": "COST_PLUS_MARGIN",
@@ -80,18 +86,32 @@ def prepare(request, project_id: UUID) -> dict:
                     apply_operation(org_id, token.user_id, tenant.active_organization.role,
                                     UUID(str(operation["id"])), REASON, False)
             applied_id = operation["id"]
+        content, pdf_cause = b"", None
         try:
             with documentary_scope(request, ("OWNER", "ESTIMATOR")) as (token, _, org_id):
                 content = issuance.draft_preview(org_id=org_id, actor_id=token.user_id, project_id=project_id)
-            pdf_cause = None if content.startswith(b"%PDF") else "El borrador no se pudo generar."
         except (ContractAPIException, DocumentaryError) as error:
-            pdf_cause = _document_cause(error)
+            if (getattr(error, "contract_code", None) or getattr(error, "code", None)) != "project_documentary_inputs_required":
+                pdf_cause = _document_cause(error)
+            else:
+                # Commercial conditions stay the person's decision: the quick
+                # draft renders with them «Por definir» and stores nothing.
+                from documents import quick_drafts
+
+                try:
+                    content, _ = quick_drafts.render(request, project_id, "QUOTE")
+                except (ContractAPIException, DocumentaryError) as quick_error:
+                    pdf_cause = _document_cause(quick_error)
+        if pdf_cause is None and not content.startswith(b"%PDF"):
+            pdf_cause = "El borrador no se pudo generar."
         if pdf_cause:
             # The price stays applied (reversible: «Retirar precio» with an
             # audit reason); the receipt says both facts, never one.
-            return {"status": "blocked", "operation_id": str(applied_id), "pdf": False,
-                    "cause": f"Precio aplicado con las reglas vigentes; el PDF borrador no se generó: {pdf_cause}"[:240]}
-        return {"status": "applied", "cause": None, "operation_id": str(applied_id), "pdf": True}
+            priced = "Precio aplicado con las reglas vigentes" if applied_id else "Precio de trabajo listo"
+            return {"status": "blocked", "operation_id": str(applied_id) if applied_id else None, "pdf": False,
+                    "cause": f"{priced}; el PDF borrador no se generó: {pdf_cause}"[:240]}
+        return {"status": "applied", "cause": None, "operation_id": str(applied_id) if applied_id else None,
+                "pdf": True}
     except PricingError as error:
         return _blocked(pricing_public_detail(error.code))
     except (ContractAPIException, DocumentaryError) as error:

@@ -42,6 +42,19 @@
   inset: var(--space-16px);
 }
 
+/* P08 · docked side panel: full height at the right edge, beside the work. */
+.copilot.is-docked {
+  inset: 0 0 0 auto;
+  width: min(440px, 40vw);
+  border-radius: 0;
+  border-width: 0 0 0 1px;
+  box-shadow: var(--e2);
+}
+
+.copilot.is-docked .copilot__header {
+  cursor: default;
+}
+
 /* Phone: a full-height sheet with «Volver al trabajo»; no fake drag. */
 .copilot.is-mobile {
   border-radius: 0;
@@ -688,4 +701,22 @@
 /* Closed or minimized: hidden but mounted (draft, thread and job survive). */
 .copilot[hidden] {
   display: none;
+}
+
+/* P08 · «Deshacer todo»: every reversible change of the job at once. */
+.copilot-undo-all {
+  align-items: center;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-2);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8px);
+  justify-content: space-between;
+  padding: var(--space-8px);
+}
+
+.copilot-undo-all p {
+  color: var(--text-secondary);
+  font-size: var(--type-dense);
+  margin: 0;
 }

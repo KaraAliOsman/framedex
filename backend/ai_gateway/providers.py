@@ -9,6 +9,7 @@ it never performs network I/O."""
 from __future__ import annotations
 
 import base64
+import functools
 import hashlib
 import ipaddress
 import json
@@ -17,6 +18,7 @@ import os
 import re
 import socket
 import time
+from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
@@ -956,12 +958,54 @@ _QUERYABLE_WITHOUT_REFS = {
 }
 
 
+_RECORDED = Path(__file__).with_name("evals") / "recorded"
+_PLACEHOLDER = re.compile(r"^\{\{usual\.(system_id|color|glass_article_sku)\}\}$")
+
+
+@functools.lru_cache(maxsize=1)
+def _recorded_cases() -> tuple[dict, ...]:
+    cases: list[dict] = []
+    for path in sorted(_RECORDED.glob("*.json")):
+        cases.extend(json.loads(path.read_text(encoding="utf-8")).get("cases") or [])
+    return tuple(cases)
+
+
+def _recorded_round(input_payload: dict) -> dict | None:
+    """A recorded request (P08) replays its rounds: «start» before the work
+    exists, «project» once the server reports the created draft work. Only
+    the usual series/glass/finish placeholders resolve, from the server
+    context; the server still validates every op, origin and price."""
+    goal = " ".join(str(input_payload.get("goal") or "").casefold().split())
+    case = next((item for item in _recorded_cases()
+                 if " ".join(str(item["match"]).casefold().split()) in goal), None)
+    if case is None:
+        return None
+    created = any(
+        observation.get("surface") == "create_project" and "project_id" in (observation.get("context") or {})
+        for observation in input_payload.get("observations") or [] if isinstance(observation, dict))
+    usual = (input_payload.get("context") or {}).get("usual") or {}
+
+    def resolve(node: Any) -> Any:
+        if isinstance(node, dict):
+            return {key: resolve(value) for key, value in node.items()}
+        if isinstance(node, list):
+            return [resolve(value) for value in node]
+        if isinstance(node, str) and (match := _PLACEHOLDER.match(node)):
+            return str((usual.get(match.group(1)) or {}).get("value") or node)
+        return node
+
+    return resolve(case["rounds"]["project" if created else "start"])
+
+
 def _agent_output(input_payload: dict) -> dict:
     """Mock agent round: a contract-valid JSON document built only from the
     server-built context — so dev/CI can exercise the flagship agent loop
     (grounding, steps, states) without a real provider. On the first round
     it emits a plan + a claim so the work-visibility channels render; on
     later rounds (observations present) it closes without new queries."""
+    recorded = _recorded_round(input_payload)
+    if recorded is not None:
+        return recorded
     context = input_payload.get("context") or {}
     org = context.get("organization") or {}
     goal = str(input_payload.get("goal") or "")

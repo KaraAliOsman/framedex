@@ -246,6 +246,7 @@ def test_openapi_contains_only_authorized_shot_11_paths_and_bearer_security() ->
         "/api/v1/ai/attachments/{attachment_id}/",
         "/api/v1/ai/attachments/{attachment_id}/content/",
         "/api/v1/ai/jobs/{job_id}/approve/",
+        "/api/v1/ai/jobs/{job_id}/undo-all/",
         "/api/v1/capabilities/",
         "/api/v1/catalogs/references/",
         "/api/v1/projects/{project_id}/imports/",

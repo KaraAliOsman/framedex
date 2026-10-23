@@ -24,6 +24,7 @@ from ai_gateway.serializers import (
     AiAttachmentSerializer,
     AiAttachmentUploadSerializer,
     AiJobDetailSerializer,
+    AiJobUndoAllSerializer,
     AiThreadCreateSerializer,
     AiThreadListSerializer,
     AiThreadQuerySerializer,
@@ -230,6 +231,30 @@ class AiAttachmentContentView(APIView):
         disposition = "inline" if media_type in ("application/pdf", "image/png", "image/jpeg", "image/webp") else "attachment"
         response["Content-Disposition"] = f'{disposition}; filename="{safe}"'
         return response
+
+
+class AiJobUndoAllView(APIView):
+    """«Deshacer todo»: undoes every reversible change the job saved, newest
+    first, and removes the draft work it created once empty. Never calls the
+    model; a later human edit stops the chain and is reported as kept."""
+
+    @extend_schema(
+        operation_id="ai_job_undo_all",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=None,
+        responses={200: AiJobUndoAllSerializer, **ERRORS},
+        tags=["ai"],
+    )
+    def post(self, request, job_id: UUID):
+        from ai_gateway.undo_all import undo_all
+
+        with documentary_scope(request, _WRITERS) as (token, _, org_id):
+            job = jobs.get_job(org_id=org_id, user_id=token.user_id, job_id=job_id)
+            if job is None:
+                raise contract_error(404, "ai_job_not_found", "El trabajo no existe.")
+            if job["state"] in ("QUEUED", "PLANNING", "RUNNING"):
+                raise contract_error(409, "ai_job_running", "Espera a que termine el trabajo.")
+            return Response(undo_all(org_id=org_id, user_id=token.user_id, job_id=job_id))
 
 
 class AiJobApproveView(APIView):

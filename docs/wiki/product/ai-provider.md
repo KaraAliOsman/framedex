@@ -1,7 +1,7 @@
 ---
 type: concept
 status: active
-updated: 2026-10-18
+updated: 2026-10-22
 volatility: medium
 verified_ref: 75bd60c70b7ad6c1943b5fd855d4672ae3a29f31
 sources:
@@ -104,3 +104,15 @@ carga en memoria de Django y del worker según
 La presencia de visión no equivale a certificación ni determina normas,
 costos reales de fábrica o autoridad de CNC. [Riesgos](../quality/known-risks.md)
 y [evaluaciones](../quality/ai-outcome-baseline.md) mantienen esas fronteras.
+
+## Rondas grabadas del proveedor de prueba · 22-10-2026
+
+`backend/ai_gateway/evals/recorded/*.json` guarda rondas sintéticas del agente
+para solicitudes conocidas (P08). El proveedor de prueba las reproduce cuando el
+pedido coincide; solo resuelve «lo habitual» (serie, vidrio, color) desde el
+contexto del servidor, que sigue validando ids, orígenes, medidas y precios.
+El gate aislado local/CI habilita `AI_GATEWAY_MOCK_ENABLED` únicamente para su
+backend; en cualquier otro entorno el proveedor de prueba sigue deshabilitado.
+`evals/request_cases.yaml` (12 solicitudes) mide ventanas correctas y cero
+medidas aceptadas que la solicitud no dice.
+

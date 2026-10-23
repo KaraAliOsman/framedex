@@ -15,6 +15,7 @@ import type {
 } from "../../api/generated/models";
 import { fmtMm } from "../../format";
 import { Loading } from "../../ui/Signature";
+import { RequestOrigins } from "./RequestOrigins";
 import { SimulationPreview } from "./SimulationPreview";
 import { Link } from "react-router-dom";
 import { Icon } from "../../ui/Icon";
@@ -193,6 +194,7 @@ export function ProjectOpsStep({
         {state === "applied" ? <Icon name="check" size={16} /> : null}
         {step.label}
       </p>
+      <RequestOrigins step={step} />
       {busy ? (
         <Loading label={state === "proposed" ? "Calculando la propuesta" : "Guardando"} />
       ) : null}

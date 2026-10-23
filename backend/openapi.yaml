@@ -1180,6 +1180,80 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/ai/jobs/{job_id}/undo-all/:
+    post:
+      operationId: ai_job_undo_all
+      description: |-
+        «Deshacer todo»: undoes every reversible change the job saved, newest
+        first, and removes the draft work it created once empty. Never calls the
+        model; a later human edit stops the chain and is reported as kept.
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: job_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ai
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiJobUndoAll'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/ai/metrics/:
     get:
       operationId: ai_metrics
@@ -28773,6 +28847,18 @@ components:
         project_id:
           type: string
           format: uuid
+        origins:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiStepOrigin'
+        assumptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiStepAssumption'
+        sources:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiStepSource'
       required:
       - kind
       - label
@@ -29394,6 +29480,34 @@ components:
       required:
       - id
       - recorded
+    AiJobUndoAll:
+      type: object
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        undone:
+          type: integer
+          minimum: 0
+        kept:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiUndoKept'
+        created_project:
+          type: string
+          format: uuid
+          nullable: true
+        project_state:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/ProjectStateEnum'
+          - $ref: '#/components/schemas/NullEnum'
+      required:
+      - created_project
+      - job_id
+      - kept
+      - project_state
+      - undone
     AiMetrics:
       type: object
       properties:
@@ -29759,6 +29873,80 @@ components:
       - expected_revision
       - monthly_budget_credits
       - routes
+    AiStepAssumption:
+      type: object
+      description: |-
+        A choice the request does not state: «agent» asks for confirmation,
+        «usual» is the company's habitual value used for the listed windows.
+      properties:
+        field:
+          $ref: '#/components/schemas/FieldEnum'
+        value:
+          type: string
+        source:
+          $ref: '#/components/schemas/AiStepAssumptionSourceEnum'
+        location:
+          type: string
+        locations:
+          type: array
+          items:
+            type: string
+        reason:
+          type: string
+      required:
+      - field
+      - source
+      - value
+    AiStepAssumptionSourceEnum:
+      enum:
+      - agent
+      - usual
+      type: string
+      description: |-
+        * `agent` - agent
+        * `usual` - usual
+    AiStepOrigin:
+      type: object
+      description: 'P08: the phrase of the request each new window was read from.'
+      properties:
+        position_id:
+          type: string
+        location:
+          type: string
+        source:
+          type: integer
+          minimum: 0
+        start:
+          type: integer
+          minimum: 0
+        end:
+          type: integer
+          minimum: 0
+        quote:
+          type: string
+      required:
+      - end
+      - quote
+      - source
+      - start
+    AiStepSource:
+      type: object
+      properties:
+        kind:
+          $ref: '#/components/schemas/AiStepSourceKindEnum'
+        text:
+          type: string
+      required:
+      - kind
+      - text
+    AiStepSourceKindEnum:
+      enum:
+      - request
+      - attachment
+      type: string
+      description: |-
+        * `request` - request
+        * `attachment` - attachment
     AiThread:
       type: object
       properties:
@@ -29896,6 +30084,27 @@ components:
       description: |-
         * `job` - job
         * `ask` - ask
+    AiUndoKept:
+      type: object
+      properties:
+        turn_index:
+          type: integer
+        step_index:
+          type: integer
+        operation_id:
+          type: string
+          format: uuid
+        project_id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+      required:
+      - operation_id
+      - project_id
+      - reason
+      - step_index
+      - turn_index
     AiUsageWork:
       type: object
       properties:
@@ -36682,6 +36891,18 @@ components:
       required:
       - kind
       - operation_key
+    FieldEnum:
+      enum:
+      - series
+      - glass
+      - color
+      - opening
+      type: string
+      description: |-
+        * `series` - series
+        * `glass` - glass
+        * `color` - color
+        * `opening` - opening
     FieldReceipt:
       type: object
       properties:
@@ -48399,6 +48620,14 @@ components:
         * `IN_PRODUCTION` - IN_PRODUCTION
         * `COMPLETED` - COMPLETED
         * `CANCELLED` - CANCELLED
+    ProjectStateEnum:
+      enum:
+      - removed
+      - kept
+      type: string
+      description: |-
+        * `removed` - removed
+        * `kept` - kept
     ProjectVersionResponse:
       type: object
       properties:

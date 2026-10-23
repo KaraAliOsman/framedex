@@ -1,0 +1,126 @@
+{
+  "_comment": "Recorded agent rounds for the test provider (P08). Synthetic requests written for DEKOPEN; no real client data. Placeholders {{usual.*}} resolve from the server-built context; every id, measure and price is still validated by the server and the engine.",
+  "cases": [
+    {
+      "id": "R01",
+      "match": "2 ventanas oscilobatientes para el living de 1,20 por 1,40",
+      "rounds": {
+        "start": {
+          "reply": "Creo la obra borrador de Rodrigo Soto y agrego las ventanas de su mensaje.",
+          "steps": [
+            {
+              "kind": "create_project",
+              "name": "Casa Soto",
+              "client": "Rodrigo Soto"
+            }
+          ],
+          "plan": [
+            {
+              "label": "Crear la obra borrador"
+            },
+            {
+              "label": "Agregar las ventanas del mensaje"
+            },
+            {
+              "label": "Calcular el precio y el PDF borrador"
+            }
+          ],
+          "warnings": [],
+          "questions": [],
+          "claims": []
+        },
+        "project": {
+          "reply": "Agregué las ventanas del mensaje a la obra y preparé el precio con tus reglas. No envié nada: el envío queda para ti.",
+          "steps": [
+            {
+              "kind": "project_ops",
+              "label": "Ventanas del mensaje",
+              "apply": true,
+              "ops": [
+                {
+                  "op": "add_position",
+                  "system_id": "{{usual.system_id}}",
+                  "template": "TILT_TURN_LEFT",
+                  "dims": {
+                    "width_mm": "1200",
+                    "height_mm": "1400"
+                  },
+                  "location": "Living",
+                  "quantity": 2,
+                  "glass_sku": "{{usual.glass_article_sku}}",
+                  "color": "{{usual.color}}",
+                  "origin": {
+                    "quote": "2 ventanas oscilobatientes para el living de 1,20 por 1,40"
+                  }
+                },
+                {
+                  "op": "add_position",
+                  "system_id": "{{usual.system_id}}",
+                  "template": "FIXED",
+                  "dims": {
+                    "width_mm": "600",
+                    "height_mm": "600"
+                  },
+                  "location": "Baño",
+                  "quantity": 1,
+                  "glass_sku": "{{usual.glass_article_sku}}",
+                  "color": "{{usual.color}}",
+                  "origin": {
+                    "quote": "una del baño chiquita de 60 x 60 fija"
+                  }
+                },
+                {
+                  "op": "add_position",
+                  "system_id": "{{usual.system_id}}",
+                  "template": "TILT_TURN_LEFT",
+                  "dims": {
+                    "width_mm": "1200",
+                    "height_mm": "1000"
+                  },
+                  "location": "Dormitorio",
+                  "quantity": 1,
+                  "glass_sku": "{{usual.glass_article_sku}}",
+                  "color": "{{usual.color}}",
+                  "origin": {
+                    "quote": "una para el dormitorio de 1,20 x 1,00",
+                    "reasons": {
+                      "template": "El mensaje no dice cómo abre; usé oscilobatiente como en el living."
+                    }
+                  }
+                },
+                {
+                  "op": "add_position",
+                  "system_id": "{{usual.system_id}}",
+                  "template": "FIXED",
+                  "dims": {
+                    "width_mm": "900",
+                    "height_mm": "1100"
+                  },
+                  "location": "Cocina",
+                  "quantity": 1,
+                  "glass_sku": "{{usual.glass_article_sku}}",
+                  "color": "{{usual.color}}",
+                  "origin": {
+                    "quote": "otra para la cocina de 90 x 1,10",
+                    "reasons": {
+                      "template": "El mensaje no dice cómo abre; la dejé fija."
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "quote_draft",
+              "label": "Precio y PDF borrador",
+              "apply": true
+            }
+          ],
+          "plan": [],
+          "warnings": [],
+          "questions": [],
+          "claims": []
+        }
+      }
+    }
+  ]
+}
