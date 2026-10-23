@@ -1,70 +1,71 @@
-/* Constitution §3. Physical materials are invariant; chrome uses functional roles. */
+/* Constitution §3 · Dirección Luz (22-10-2026): white page, near-black ink,
+   one cobalt accent. Physical materials are invariant; chrome uses roles. */
 @font-face {
-  font-family: "IBM Plex Sans";
+  font-family: "Inter";
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("/fonts/ibm-plex-sans-latin-400-normal.woff2") format("woff2");
+  src: url("/fonts/inter-latin-400-normal.woff2") format("woff2");
 }
 @font-face {
-  font-family: "IBM Plex Sans";
+  font-family: "Inter";
   font-style: normal;
   font-weight: 500;
   font-display: swap;
-  src: url("/fonts/ibm-plex-sans-latin-500-normal.woff2") format("woff2");
+  src: url("/fonts/inter-latin-500-normal.woff2") format("woff2");
 }
 @font-face {
-  font-family: "IBM Plex Sans";
+  font-family: "Inter";
   font-style: normal;
   font-weight: 600;
   font-display: swap;
-  src: url("/fonts/ibm-plex-sans-latin-600-normal.woff2") format("woff2");
+  src: url("/fonts/inter-latin-600-normal.woff2") format("woff2");
 }
 @font-face {
-  font-family: "IBM Plex Mono";
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/inter-latin-700-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Geist Mono";
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("/fonts/ibm-plex-mono-latin-400-normal.woff2") format("woff2");
+  src: url("/fonts/geist-mono-latin-400-normal.woff2") format("woff2");
 }
 @font-face {
-  font-family: "IBM Plex Mono";
+  font-family: "Geist Mono";
   font-style: normal;
   font-weight: 500;
   font-display: swap;
-  src: url("/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2");
-}
-@font-face {
-  font-family: "IBM Plex Mono";
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: url("/fonts/ibm-plex-mono-latin-600-normal.woff2") format("woff2");
+  src: url("/fonts/geist-mono-latin-500-normal.woff2") format("woff2");
 }
 :root {
-  --g-950: #161c1f;
-  --g-900: #252d31;
-  --g-700: #465158;
-  --g-500: #727d82;
-  --g-400: #9aa6a9;
-  --g-300: #cdd5d6;
-  --g-200: #e0e6e5;
-  --g-100: #eef2f1;
-  --g-50: #f5f7f6;
-  --g-25: #fcfdfc;
-  --teal-950: #042e2c;
-  --teal-900: #064440;
-  --teal-800: #075f5a;
-  --teal-700: #0b7770;
-  --teal-600: #0f8f85;
-  --teal-100: #d4efea;
-  --teal-50: #e6f4f2;
+  --g-950: #0a0a0a;
+  --g-900: #171717;
+  --g-700: #404040;
+  --g-500: #737373;
+  --g-400: #a3a3a3;
+  --g-300: #d4d4d4;
+  --g-200: #e5e5e5;
+  --g-100: #f5f5f5;
+  --g-50: #fafafa;
+  --g-25: #fcfcfc;
+  --cobalt-950: #0b1a5c;
+  --cobalt-900: #13268a;
+  --cobalt-800: #1634b0;
+  --cobalt-700: #1f45e0;
+  --cobalt-600: #3a5cf0;
+  --cobalt-100: #dfe6ff;
+  --cobalt-50: #eef2ff;
   --orange-700: #a84418;
   --orange-600: #c24e1e;
   --orange-500: #e56a32;
   --orange-100: #fbebe2;
   --paper: #ffffff;
-  --scrim: rgb(22 28 31 / 42%);
+  --scrim: rgb(10 10 10 / 40%);
   --success-base: #1e7a4c;
   --success-soft: #e3f2ea;
   --success-ink: #13502f;
@@ -75,8 +76,8 @@
   --danger-soft: #fbe9e7;
   --danger-ink: #7e1f19;
   --origin-workshop: #1d4ed8;
-  --font-sans: "IBM Plex Sans", system-ui, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, monospace;
   --type-display: 2.25rem;
   --line-display: 2.625rem;
   --type-title-l: 1.875rem;
@@ -103,9 +104,9 @@
   --r-pill: 999px;
   --e1: none;
   --focus-ring: none;
-  --e2: 0 1px 2px rgb(22 28 31 / 5%), 0 4px 12px rgb(22 28 31 / 8%);
-  --e3: 0 2px 6px rgb(22 28 31 / 6%), 0 12px 32px rgb(22 28 31 / 14%);
-  --sheet: 0 1px 3px rgb(22 28 31 / 7%);
+  --e2: 0 1px 2px rgb(0 0 0 / 4%), 0 12px 32px -16px rgb(0 0 0 / 16%);
+  --e3: 0 16px 40px -12px rgb(0 0 0 / 30%);
+  --sheet: 0 1px 2px rgb(0 0 0 / 4%);
   --z-base: 0;
   --z-sticky: 10;
   --z-rail: 20;
@@ -195,39 +196,39 @@
   --model3d-coupler: var(--mat-coupler);
   --model3d-gasket: var(--mat-gasket);
   --model3d-edge: var(--mat-edge);
-  --studio-background: rgb(228, 230, 227);
-  --studio-ground: rgb(212, 214, 209);
-  --studio-wall: rgb(196, 198, 192);
-  --studio-guide: rgb(84, 95, 93);
+  --studio-background: rgb(245, 245, 245);
+  --studio-ground: rgb(229, 229, 229);
+  --studio-wall: rgb(212, 212, 212);
+  --studio-guide: rgb(82, 82, 82);
   --op-mark: var(--mat-op-mark);
   --theme-glass-pane: var(--mat-glass-pane);
   --signature-ink: var(--mat-signature-ink);
 }
 :root,
 [data-density="document"] {
-  --bg-app: #f5f5f7;
+  --bg-app: var(--paper);
   --surface-panel: var(--paper);
-  --surface-card: #f2f3f5;
+  --surface-card: var(--g-100);
   --surface-sheet: var(--paper);
-  --surface-hover: #f0f2f3;
-  --surface-active: #e5e8ea;
-  --surface-selected: var(--teal-50);
-  --border-subtle: #e6e8eb;
-  --border-default: #d8dbdf;
-  --border-control: #859296;
-  --border-strong: #a9b4b6;
-  --border-focus: var(--teal-600);
-  --text-primary: #1d1d1f;
-  --text-secondary: #565c62;
+  --surface-hover: var(--g-100);
+  --surface-active: var(--g-200);
+  --surface-selected: var(--cobalt-50);
+  --border-subtle: #ededed;
+  --border-default: var(--g-200);
+  --border-control: #8a8a8a;
+  --border-strong: var(--g-300);
+  --border-focus: var(--cobalt-600);
+  --text-primary: var(--g-950);
+  --text-secondary: #525252;
   --text-muted: var(--g-500);
-  --text-small-muted: var(--g-700);
+  --text-small-muted: #5c5c5c;
   --text-on-fill: var(--paper);
   --text-disabled: var(--g-400);
-  --interactive: var(--teal-700);
-  --interactive-fill: var(--teal-800);
-  --interactive-hover: var(--teal-700);
-  --interactive-pressed: var(--teal-900);
-  --mark: var(--orange-500);
+  --interactive: var(--cobalt-700);
+  --interactive-fill: var(--g-950);
+  --interactive-hover: #262626;
+  --interactive-pressed: #000000;
+  --mark: var(--cobalt-600);
   /* Copilot character (contract 06): one stable light body, dark pill eyes. */
   --companion-body: var(--paper);
   --companion-edge: var(--border-strong);
@@ -242,30 +243,30 @@
   --state-danger-soft: var(--danger-soft);
   --state-danger-ink: var(--danger-ink);
   --text-on-danger: var(--paper);
-  --state-info: var(--teal-700);
-  --state-info-soft: var(--teal-50);
-  --state-info-ink: var(--teal-900);
+  --state-info: var(--cobalt-700);
+  --state-info-soft: var(--cobalt-50);
+  --state-info-ink: var(--cobalt-900);
   --state-person: var(--orange-500);
   --state-person-soft: var(--orange-100);
   --state-person-ink: var(--orange-700);
   --canvas-sheet: var(--surface-sheet);
-  --canvas-grid: #dce4e2;
-  --canvas-grid-lines: #eaf0ee;
+  --canvas-grid: var(--g-200);
+  --canvas-grid-lines: #f0f0f0;
   --canvas-member: var(--text-primary);
   --canvas-dim: var(--text-secondary);
   --canvas-dim-line: var(--text-muted);
-  --canvas-glazing: rgba(15, 143, 133, 0.07);
-  --canvas-glazing-stroke: var(--teal-600);
+  --canvas-glazing: rgba(31, 69, 224, 0.05);
+  --canvas-glazing-stroke: var(--cobalt-600);
   --canvas-opening-symbol: var(--text-secondary);
-  --canvas-selection: var(--teal-600);
-  --canvas-selection-fill: rgba(15, 143, 133, 0.08);
+  --canvas-selection: var(--cobalt-700);
+  --canvas-selection-fill: rgba(31, 69, 224, 0.08);
   --canvas-handle: var(--mark);
   --canvas-handle-stroke: var(--paper);
   --canvas-snap: var(--success-base);
   --canvas-preview: var(--mark);
   --canvas-invalid: var(--state-danger);
-  --viewport-stage: #e0e6e5;
-  --viewport-ground: #cdd5d6;
+  --viewport-stage: var(--g-50);
+  --viewport-ground: var(--g-200);
 }
 :root,
 [data-density="workshop"],

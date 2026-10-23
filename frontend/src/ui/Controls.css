@@ -131,7 +131,7 @@ button:disabled {
   outline-offset: 2px;
 }
 ::selection {
-  background: var(--teal-100);
+  background: var(--cobalt-100);
 }
 .ui-field,
 .ui-number-field {

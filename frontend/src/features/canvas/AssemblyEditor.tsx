@@ -2,6 +2,7 @@ import { fmtMm, formatDecimal, parseLocaleNumber, quantize } from "../../format"
 import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import "./canvas.css";
+import "./luz.css";
 
 import type {
   DesignOptions,

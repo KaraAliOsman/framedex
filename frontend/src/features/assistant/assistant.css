@@ -1121,7 +1121,7 @@
   padding: var(--space-12px);
 }
 .operation-project[data-state="applied"] {
-  border-color: var(--teal-100);
+  border-color: var(--cobalt-100);
   background: var(--surface-selected);
 }
 .operation-project__label {

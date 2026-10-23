@@ -234,7 +234,7 @@
 }
 
 .materials__strip .strip-cut {
-  fill: var(--teal-100);
+  fill: var(--cobalt-100);
   stroke: var(--interactive);
   vector-effect: non-scaling-stroke;
 }

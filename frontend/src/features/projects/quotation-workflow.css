@@ -153,7 +153,7 @@
   display: flex;
   gap: 12px;
   align-items: baseline;
-  border-bottom: 2px solid var(--teal-700);
+  border-bottom: 2px solid var(--cobalt-700);
   padding-bottom: 8px;
 }
 
@@ -201,7 +201,7 @@
 }
 
 .quotation-field-target {
-  outline: 2px solid var(--teal-600);
+  outline: 2px solid var(--cobalt-600);
   outline-offset: 2px;
   background-color: var(--theme-surface-raised);
 }

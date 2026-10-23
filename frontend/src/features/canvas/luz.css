@@ -1,0 +1,121 @@
+/* Dirección Luz (Constitution §3, 22-10-2026): the drawing is the page. From
+   tablet width up the tools float over it as one dark pill and the inspector
+   is a card beside it, on plain paper. Selectors repeat their class to outrank the density
+   layers (`[data-simple]`) whatever order the route loads its stylesheets. */
+@media (min-width: 1024px) {
+  .assembly-editor.assembly-editor,
+  .assembly-editor.assembly-editor--tree-closed {
+    grid-template-columns: minmax(0, 1fr) 320px;
+    grid-template-rows: minmax(0, 1fr) 28px;
+    grid-template-areas: "canvas side" "status side";
+    container: assembly-editor / inline-size;
+  }
+  .assembly-editor.assembly-editor .assembly-canvas {
+    background: var(--paper);
+  }
+  .assembly-editor.assembly-editor .assembly-tools.assembly-tools {
+    grid-area: auto;
+    position: absolute;
+    left: calc((100% - 320px - var(--space-2)) / 2);
+    bottom: calc(28px + var(--space-3));
+    z-index: var(--z-rail);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 2px;
+    max-width: calc(100% - 320px - var(--space-6));
+    padding: var(--space-6px);
+    overflow-x: auto;
+    border: 0;
+    border-radius: var(--r-2);
+    background: var(--g-950);
+    box-shadow: var(--e3);
+    transform: translateX(-50%);
+  }
+  .assembly-editor.assembly-editor .assembly-tools.assembly-tools .tool-button {
+    flex: none;
+    width: 36px;
+    height: 36px;
+    min-height: 36px;
+    padding: 0;
+    justify-content: center;
+    border-radius: var(--r-1);
+    color: var(--g-300);
+    transition: transform var(--t-micro) var(--ease-in);
+  }
+  .assembly-editor.assembly-editor .assembly-tools.assembly-tools .tool-button :is(span, kbd) {
+    display: none;
+  }
+  .assembly-editor.assembly-editor
+    .assembly-tools.assembly-tools
+    .tool-button:hover:not(:disabled) {
+    background: var(--g-900);
+    color: var(--paper);
+  }
+  .assembly-editor.assembly-editor
+    .assembly-tools.assembly-tools
+    .tool-button:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+  .assembly-editor.assembly-editor
+    .assembly-tools.assembly-tools
+    .tool-button:is(.is-active, [aria-pressed="true"], [aria-expanded="true"]) {
+    background: var(--cobalt-700);
+    color: var(--paper);
+  }
+  .assembly-editor.assembly-editor .assembly-tools.assembly-tools .tool-button:disabled {
+    color: var(--g-500);
+  }
+  .assembly-editor.assembly-editor .assembly-tools.assembly-tools .assembly-tools__divider {
+    flex: none;
+    width: 1px;
+    height: 22px;
+    margin: 0 var(--space-1);
+    background: var(--g-700);
+  }
+  .assembly-editor.assembly-editor .assembly-tools.assembly-tools .assembly-tools__spacer {
+    display: none;
+  }
+  /* The inspector is a card: same column, no hairline against the drawing. */
+  .assembly-editor.assembly-editor .assembly-side {
+    margin: var(--space-3) var(--space-3) var(--space-3) 0;
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-3);
+    box-shadow: var(--e2);
+    overflow: auto;
+  }
+  /* Layers that sat beside the old tool column now start at the sheet edge;
+     chips rise above the pill. */
+  .assembly-editor.assembly-editor :is(.editor-flyout, .assembly-tree, .editor-operation-message) {
+    left: var(--space-3);
+  }
+  .assembly-editor.assembly-editor .editor-issue-chips {
+    bottom: calc(28px + var(--space-3) + 52px + var(--space-3));
+  }
+}
+/* Below 1280px the inspector is a sheet over the drawing: the pill centres on
+   the whole canvas and the card keeps its own edge. */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .assembly-editor.assembly-editor,
+  .assembly-editor.assembly-editor--tree-closed {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "canvas" "status";
+  }
+  .assembly-editor.assembly-editor .assembly-tools.assembly-tools {
+    left: 50%;
+    max-width: calc(100% - var(--space-6));
+  }
+  .assembly-editor.assembly-editor .assembly-side.is-open {
+    margin: var(--space-3);
+  }
+}
+/* A narrow editor (1280 px screen with the window list open) has no room for
+   zoom, pill and readout in one row: the pill rises above the zoom row. */
+@container assembly-editor (max-width: 1117px) {
+  .assembly-editor.assembly-editor .assembly-tools.assembly-tools {
+    bottom: calc(28px + var(--space-3) + 48px);
+  }
+  .assembly-editor.assembly-editor .editor-issue-chips {
+    bottom: calc(28px + var(--space-3) + 48px + 48px + var(--space-3));
+  }
+}

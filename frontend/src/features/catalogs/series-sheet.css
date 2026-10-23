@@ -13,6 +13,12 @@
   align-items: center;
   gap: 16px;
 }
+/* Header actions never widen the page: at 320 px and 200 % text they wrap. */
+.series-sheet__header > .ui-button {
+  max-width: 100%;
+  white-space: normal;
+  text-align: center;
+}
 .series-sheet__monogram {
   display: grid;
   place-items: center;

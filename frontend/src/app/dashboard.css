@@ -1,6 +1,8 @@
 .dashboard,
 .today-page {
   display: grid;
+  /* One shrinkable column: at 320 px and 200 % text no child widens the page. */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-24px);
   min-width: 0;
   width: 100%;
@@ -13,6 +15,12 @@
   justify-content: space-between;
   align-items: end;
   gap: var(--space-16px);
+}
+/* The main action never widens the page: at 320 px and 200 % text it wraps. */
+.today-head > .ui-button {
+  max-width: 100%;
+  white-space: normal;
+  text-align: center;
 }
 .today-head > div {
   min-width: 0;
