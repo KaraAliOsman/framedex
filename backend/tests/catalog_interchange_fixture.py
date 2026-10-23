@@ -1,4 +1,4 @@
-"""Provider-like ten-sheet fixture; every number has an explicit synthetic source."""
+"""Provider-like eleven-sheet fixture; every number has an explicit synthetic source."""
 from catalogs.demo_fixture import manifest
 from ingest.catalog_template import candidate
 
@@ -15,6 +15,10 @@ def catalog_rows():
         rows.append(("Roles y reglas de corte", {**article["cut_rule"], "system_code": code, "sku": article["sku"], "role": article["role"], "source": source}))
         if article["reinforcement_rule"]:
             rows.append(("Refuerzos", {**article["reinforcement_rule"], "system_code": code, "sku": article["sku"], "source": source}))
+            steel = article["reinforcement_rule"]["reinforcement_sku"]
+            rows.append(("Barras de refuerzo", {"system_code": code, "sku": article["sku"], "reinforcement_sku": steel,
+                "commercial_sku": steel, "name": "Refuerzo de prueba", "stock_length_mm": "6000.00", "purchase_unit": "BAR",
+                "manufacturer_name": "Proveedor de prueba", "source": source}))
     for rule in params["dimensional_limits"]:
         rows.append(("Límites", {**rule, "system_code": code, "source": source}))
     rows.append(("Colores y SKU por color", {"system_code": code, "sku": fixture["articles"][0]["sku"], "finish": "WHITE", "commercial_sku": "COMPRA-MARCO-BLANCO", "physical_stock_identity": "MARCO-BLANCO", "source": source}))

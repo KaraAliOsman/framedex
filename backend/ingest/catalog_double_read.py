@@ -11,6 +11,7 @@ IDENTITY = {
     "Perfiles": ("system_code", "sku"),
     "Roles y reglas de corte": ("system_code", "sku", "role"),
     "Refuerzos": ("system_code", "sku"),
+    "Barras de refuerzo": ("system_code", "sku", "reinforcement_sku"),
     "Límites": ("system_code", "opening_type"),
     "Colores y SKU por color": ("system_code", "sku", "finish"),
     "Vidrios": ("system_code", "sku", "version"),

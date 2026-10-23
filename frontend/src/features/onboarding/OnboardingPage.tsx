@@ -93,6 +93,49 @@ export function OnboardingPage(): JSX.Element {
     },
   });
   const selected = systems.data?.find((system) => system.id === draft.systemId);
+  // A workshop without a quotable series of its own starts from the library.
+  const ownSeries = (systems.data ?? []).some(
+    (system) => !system.is_demo && system.readiness.quote_ready,
+  );
+  const manufacturerSeries = library.data?.series.length ? (
+    <section className="onboarding-library" aria-labelledby="onboarding-library-title">
+      <h3 id="onboarding-library-title">Tu serie del fabricante</h3>
+      <p>
+        Elige la serie con que trabajas. La biblioteca aporta su identidad; los perfiles, largos y
+        precios los cargas desde el manual o tu planilla en el alta guiada.
+      </p>
+      <ul>
+        {library.data.series.map((item) => (
+          <li key={item.id}>
+            <Link
+              className="onboarding-reference"
+              to={`/catalogs/systems?library=${encodeURIComponent(item.id)}`}
+            >
+              <span className="onboarding-reference__monogram" aria-hidden="true">
+                {item.manufacturer.slice(0, 7).toLocaleUpperCase("es-CL")}
+              </span>
+              <span>
+                <strong>{item.series_name}</strong>
+                <span>
+                  {item.manufacturer} · {item.material}
+                </span>
+              </span>
+              <StatusBadge
+                label={
+                  !item.capabilities.reference
+                    ? "Identidad sin resolver"
+                    : item.needs_manufacturer_manual
+                      ? "Necesita manual"
+                      : "Completar para cotizar"
+                }
+                tone="neutral"
+              />
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ) : null;
   const offered = systems.data ?? [];
   const seriesReady = Boolean(selected?.readiness.quote_ready);
   const done = [seriesReady, Boolean(draft.clientId), Boolean(draft.projectId), false];
@@ -250,6 +293,7 @@ export function OnboardingPage(): JSX.Element {
               Define qué aperturas y medidas puede calcular el motor. Los catálogos de prueba se
               identifican como DEMO.
             </p>
+            {ownSeries ? null : manufacturerSeries}
             {systems.isPending ? (
               <LoadingState label="Cargando series disponibles" />
             ) : systems.isError ? (
@@ -313,45 +357,7 @@ export function OnboardingPage(): JSX.Element {
                 Usar esta serie
               </Button>
             ) : null}
-            {library.data?.series.length ? (
-              <section className="onboarding-library" aria-labelledby="onboarding-library-title">
-                <h3 id="onboarding-library-title">Tu serie del fabricante</h3>
-                <p>
-                  Elige la serie con que trabajas. La biblioteca aporta su identidad; los perfiles,
-                  largos y precios los cargas desde el manual o tu planilla en el alta guiada.
-                </p>
-                <ul>
-                  {library.data.series.map((item) => (
-                    <li key={item.id}>
-                      <Link
-                        className="onboarding-reference"
-                        to={`/catalogs/systems?library=${encodeURIComponent(item.id)}`}
-                      >
-                        <span className="onboarding-reference__monogram" aria-hidden="true">
-                          {item.manufacturer.slice(0, 7).toLocaleUpperCase("es-CL")}
-                        </span>
-                        <span>
-                          <strong>{item.series_name}</strong>
-                          <span>
-                            {item.manufacturer} · {item.material}
-                          </span>
-                        </span>
-                        <StatusBadge
-                          label={
-                            !item.capabilities.reference
-                              ? "Identidad sin resolver"
-                              : item.needs_manufacturer_manual
-                                ? "Necesita manual"
-                                : "Completar para cotizar"
-                          }
-                          tone="neutral"
-                        />
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ) : null}
+            {ownSeries ? manufacturerSeries : null}
           </>
         ) : step === 1 ? (
           <>

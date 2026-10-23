@@ -12,14 +12,14 @@ from ingest.catalog_ai import parse_response
 from ingest.catalog_template import SCHEMAS, candidate, export_csv, normalize, parse_structured
 
 @pytest.mark.parametrize("sheet", list(SCHEMAS))
-def test_ten_sheet_csv_roundtrip_with_evidence(sheet):
+def test_every_sheet_csv_roundtrip_with_evidence(sheet):
     original = [row for row in catalog_rows() if row["sheet"] == sheet]
     assert original and not any(row["errors"] for row in original)
     parsed = parse_structured("CSV", export_csv(sheet, original))
     assert [row["values"] for row in parsed] == [row["values"] for row in original]
     assert all(field["ref"].startswith(sheet + "!") for row in parsed for field in row["fields"].values())
 
-def test_official_xlsx_is_ten_sheet_empty_template():
+def test_official_xlsx_is_the_empty_schema_template():
     from ingest.catalog_template import _xlsx_tables
     content = Path("backend/ingest/templates/catalogo-v1.xlsx").read_bytes()
     assert {name for name, _ in _xlsx_tables(content)} == set(SCHEMAS)
@@ -119,7 +119,7 @@ def test_preview_new_catalog_all_types_is_stable_and_rejects_duplicates(monkeypa
     changes, errors, token = catalog_review._plan(org_id, imported, deepcopy(original))
     assert errors == []
     assert len(changes) == len(original)+2*len([row for row in original if row["sheet"]=="Vidrios"])
-    assert {"profile_systems", "profile_articles", "glazing_bead_matrix", "hardware_kits", "glass_purchase_mappings", "catalog_glass_compositions", "glass_safety_rule_sets", "catalog_color_skus", "cost_list_items"} == {change.table for change in changes}
+    assert {"profile_systems", "profile_articles", "glazing_bead_matrix", "hardware_kits", "glass_purchase_mappings", "catalog_glass_compositions", "glass_safety_rule_sets", "catalog_color_skus", "reinforcement_articles", "cost_list_items"} == {change.table for change in changes}
     assert token == catalog_review._plan(org_id, imported, deepcopy(original))[2]
     duplicate = deepcopy(original[0])
     duplicate["key"] = "duplicate"

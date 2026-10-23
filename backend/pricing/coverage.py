@@ -32,11 +32,20 @@ def catalog_coverage(org_id, *, system_id=None, effective_date=None, demo_prices
             [profile_ids, org_id])
         for mapping in mappings:
             purchases[mapping['profile_article_id']].append(mapping)
+    # A reinforcement rule names its steel; the price needs that steel's own bar purchase.
+    steel_bars = {(str(item['parent_profile_article_id']), item['sku']) for item in rows(
+        'SELECT parent_profile_article_id,sku FROM reinforcement_articles '
+        'WHERE parent_profile_article_id=ANY(%s::uuid[]) AND is_active AND (org_id=%s OR org_id IS NULL)',
+        [[profile['id'] for profile in profiles], org_id])} if profiles else set()
     for profile in profiles:
         rule = profile['reinforcement_rule']
         rule = json.loads(rule) if isinstance(rule, str) else rule
         if rule:
             add(rule.get('screw_sku'), 'Tornillo de refuerzo', 'FITTING', 'EA')
+            steel = rule.get('reinforcement_sku')
+            if steel and (str(profile['id']), steel) not in steel_bars:
+                add(steel, f"Refuerzo de {profile['name']}", 'REINFORCEMENT', 'BAR',
+                    blocker='Falta declarar la compra de barra del refuerzo.')
         mappings = purchases[profile['id']]
         local = [item for item in mappings if item['org_id'] == org_id]
         mappings = local or mappings
