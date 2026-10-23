@@ -23,8 +23,11 @@ async function capture(page: Page, info: TestInfo, name: string) {
     page.viewportSize()!.width,
   );
   expect(
+    // Legacy mode analyses inside this page: the auxiliary page the default
+    // mode opens hides this one in CI and closes an open price breakdown.
     (
       await new AxeBuilder({ page })
+        .setLegacyMode(true)
         .include(
           ".project-head, .project-position-collection, .working-price-detail, .working-price-panel",
         )
@@ -33,9 +36,6 @@ async function capture(page: Page, info: TestInfo, name: string) {
     ).violations,
   ).toEqual([]);
   await page.screenshot({ path: info.outputPath(`${name}.png`), fullPage: true });
-  // Axe analyses through an auxiliary page; take focus back before the next
-  // interaction so the page does not regain it mid-gesture.
-  await page.bringToFront();
 }
 
 for (const viewport of [
