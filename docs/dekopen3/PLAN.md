@@ -47,7 +47,8 @@ todos y la interfaz no los muestra.
 | P12a | Sin DEMO en la interfaz y números humanos en pantallas y documentos. |
 | P12b | Catálogo real Proline PRO6004 desde la OT 385 del dueño (perfiles, refuerzos, herrajes, vidrio, reglas de corte verificadas contra sus cortes). |
 | P12c | Cotización PDF nueva: dibujo grande en color, medidas, línea, color, vidrio, precio por ítem, logo de la línea; totales y condiciones compactas. |
-| P12d | Optimización legible (medida grande + ítem/lado), OT por ventana, vidrios, materiales, montaje y checklist, con calidad superior a NuveraPro. |
+| P12d | Optimización legible (medida grande + ítem/lado), OT por ventana, vidrios, materiales, montaje y checklist, con calidad superior a NuveraPro. Primero, que una serie real llegue a taller: reglas de taller por serie, verificación que no se pierde al usarla, aviso de diseño que compara diseño y no fechas, orden de corte dibujada a escala. |
+| P12e | Pasar a taller sin molestar al cliente: tras la aprobación, una preparación de taller interna (medidas confirmadas, datos por ventana con sugerencias aplicadas) se sella aparte de la revisión comercial, siempre que diseño y precio sean idénticos a lo aprobado, y libera la OT. |
 | P13 | Identidad visual original (paleta, tipografía, ritmo) y asistente rediseñado. |
 | P14 | Asistente total con seguridad: puede operar toda la app, personalizar la interfaz del usuario y lanzar subagentes, siempre con permisos, confirmación de efectos externos y defensa contra jailbreak. |
 | P15 | 3D con sentido: vista del cliente en el portal (color real, interior/exterior, apertura animada) y comprobación de montaje, no un adorno. |

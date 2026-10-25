@@ -24,6 +24,7 @@ import {
 } from "./seriesSheetModel";
 import "./series-sheet.css";
 import { SeriesPricesTable } from "./SeriesPricesTable";
+import { WorkshopRulesPanel } from "./WorkshopRulesPanel";
 import { sheetValidationError } from "./seriesSheetErrors";
 
 function problem(error: unknown): string {
@@ -288,7 +289,9 @@ export function SeriesSheetView({
       ) : null}
       <Tabs
         label="Secciones de la serie"
-        items={seriesTabs.map((item) => ({ ...item, disabled: dirty || busy }))}
+        items={seriesTabs
+          .filter((item) => item.id !== "workshop" || !sheet.usage.is_example)
+          .map((item) => ({ ...item, disabled: dirty || busy }))}
         value={tab}
         onChange={(id) => {
           setTab(id as SeriesTab);
@@ -420,6 +423,9 @@ export function SeriesSheetView({
             )
           }
         />
+      )}
+      {tab === "workshop" && (
+        <WorkshopRulesPanel orgId={orgId} systemId={systemId} writable={writable} />
       )}
       {historyCell && (
         <Dialog title="Historial de la celda" onClose={() => setHistoryCell(null)}>

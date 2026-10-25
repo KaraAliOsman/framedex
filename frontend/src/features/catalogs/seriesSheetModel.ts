@@ -11,6 +11,7 @@ export const seriesTabs = [
   { id: "glazing_colors", label: "Vidrios y colores" },
   { id: "typologies", label: "Tipologías" },
   { id: "prices", label: "Precios" },
+  { id: "workshop", label: "Taller" },
 ] as const;
 export type SeriesTab = (typeof seriesTabs)[number]["id"];
 export type Binding = { cell: SeriesCell; index?: number; field?: string };

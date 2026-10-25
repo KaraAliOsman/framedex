@@ -16,6 +16,8 @@ vi.mock("../../api/generated/dekopen", () => ({
   catalogSeriesCellHistory: vi.fn(),
   catalogSeriesEditPrices: vi.fn(),
   catalogSeriesPriceHistory: vi.fn(),
+  catalogSeriesWorkshopRules: vi.fn(),
+  catalogSeriesConfirmWorkshopRules: vi.fn(),
 }));
 const ok = <T,>(data: T) => ({ status: 200 as const, data, headers: new Headers() });
 afterEach(cleanup);
@@ -219,5 +221,63 @@ describe("cell origin", () => {
     );
     expect(screen.getByText(/Taller · Juan/)).toBeInTheDocument();
     expect(screen.queryByText(/private-id/)).not.toBeInTheDocument();
+  });
+});
+
+describe("workshop rules", () => {
+  const inspector = {
+    R01: {},
+    R02: { min_ratio: "0.4000", max_ratio: "2.5000", suggested_ratio: "1.5000" },
+    R03: { min_width_mm: "350.00", max_width_mm: "1600.00", max_height_mm: "2400.00" },
+    R04: { monolithic_4_max_area_m2: "1.8000", dvh_4_any_4_max_area_m2: "2.6000" },
+    R05: { span_trigger_mm: "1800.00" },
+    R06: {},
+    R07: { width_trigger_mm: "800.00", required_bottom_drains: 3 },
+    R08: { max_spacing_mm: "800.00" },
+    R09: { white_limit_mm: "4000.00", foiled_limit_mm: "3000.00" },
+    R10: { tolerance_mm: "1.50" },
+    R11: { expected_mm: "12.00", tolerance_mm: "1.50", suggested_sash_overlap_mm: "8.00" },
+    R12: { width_trigger_mm: "4500.00", minimum_ix_cm4: "45.0000" },
+    R13: { height_trigger_mm: "1200.00", required_stay_arms: 2 },
+    R14: { weight_trigger_kg: "150.00", required_carriages: 4, minimum_capacity_kg: "80.00" },
+  };
+  const rules = {
+    system_id: "system",
+    state: "PENDING" as const,
+    version: null,
+    chamber_clearance_mm: "12.00",
+    inspector,
+    reinforcement_rules: [
+      { role: "FRAME", profile_angle_left: "45.00", profile_angle_right: "45.00" },
+      { role: "MULLION_V", profile_angle_left: "90.00", profile_angle_right: "90.00" },
+    ],
+    bead_offsets: { TOP: { x_mm: "0.00", y_mm: "0.00" } },
+    sources: {
+      inspector: "Referencia general DEKOPEN",
+      reinforcement: "Ángulos de corte de los perfiles",
+      beads: "Al ras",
+      handles: "Regla de manilla de cada apertura",
+    },
+    pending_reinforcement: false,
+  };
+
+  it("shows the proposal in plain language and confirms what the owner edited", async () => {
+    vi.mocked(api.catalogSeriesWorkshopRules).mockResolvedValue(ok(rules));
+    vi.mocked(api.catalogSeriesConfirmWorkshopRules).mockResolvedValue(
+      ok({ ...rules, state: "CONFIRMED" as const, version: 1 }),
+    );
+    await mount(sheetFixture([]));
+    fireEvent.click(screen.getByRole("tab", { name: "Taller" }));
+    const panel = await screen.findByRole("region", { name: "Reglas de taller" });
+    expect(within(panel).getByText("Por confirmar")).toBeTruthy();
+    expect(within(panel).getByText("Travesaño vertical")).toBeTruthy();
+    const spacing = within(panel).getByLabelText("Puntos de cierre: Separación máxima (mm)");
+    fireEvent.change(spacing, { target: { value: "700" } });
+    fireEvent.click(within(panel).getByRole("button", { name: "Confirmar reglas de taller" }));
+    await within(panel).findByText(/Reglas confirmadas \(versión 1\)/);
+    const body = vi.mocked(api.catalogSeriesConfirmWorkshopRules).mock.calls[0]![1];
+    expect(body.inspector.R08).toEqual({ max_spacing_mm: "700" });
+    expect(body.chamber_clearance_mm).toBe("12.00");
+    expect(within(panel).getByText("Confirmadas · versión 1")).toBeTruthy();
   });
 });

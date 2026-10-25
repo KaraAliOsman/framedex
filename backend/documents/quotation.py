@@ -203,10 +203,12 @@ CSS_V3 = """
   border-bottom: 0.75pt solid #DCE1E4; padding-bottom: 1.6mm; margin: 6mm 0 2mm; }
 .q-legend { font-size: 8pt; color: #75808A; margin: 0 0 1mm; }
 .q-spec dt::after { content: " · "; }
-.q-item { display: flex; flex-wrap: wrap; align-items: center; column-gap: 5mm; row-gap: 1.5mm; padding: 3.5mm 0; border-bottom: 0.75pt solid #E6E9EB; break-inside: avoid; }
+/* A block article: WeasyPrint keeps it whole; the flex row lives inside. */
+.q-item { display: block; padding: 3.5mm 0; border-bottom: 0.75pt solid #E6E9EB; break-inside: avoid; page-break-inside: avoid; }
+.q-item-body { display: flex; align-items: center; gap: 5mm; margin-top: 1.5mm; }
 .q-item-data { flex: 0 0 50mm; width: 50mm; min-width: 0; }
 .q-item-no { margin: 0; font-size: 8.5pt; font-weight: 600; color: #075F5A; }
-.q-item-head { flex: 0 0 100%; display: flex; align-items: baseline; gap: 3mm; min-width: 0; }
+.q-item-head { display: flex; align-items: baseline; gap: 3mm; min-width: 0; }
 .q-item-head .q-item-no { flex: none; }
 .q-item h3 { margin: 0; font-size: 11pt; font-weight: 600; line-height: 1.4; overflow-wrap: anywhere; min-width: 0; }
 .q-item-size { margin: 0 0 2.2mm; font-size: 12pt; font-weight: 600; color: #1B2328; }
@@ -224,7 +226,7 @@ CSS_V3 = """
 .q-item-price dd { margin: 0; font-size: 9pt; color: #2B353C; }
 .q-item-total { margin: 1mm 0 0; font-size: 14.5pt; font-weight: 700; color: #1B2328; }
 .q-item-note { margin: 0.3mm 0 0; font-size: 7.5pt; color: #75808A; }
-.q-item .q-extra { flex-basis: 100%; }
+
 .q-commercial { gap: 8mm; }
 .q-totals { border: 0.75pt solid #DCE1E4; border-radius: 1.6mm; }
 .q-totals td { padding: 1.6mm 3mm; border-bottom: 0.5pt solid #EEF0F2; }
@@ -621,11 +623,11 @@ def render(snapshot: dict, *, portal_url: str | None = None, layout_name: str | 
                 price += f'<p class="q-item-note">Ajuste de moneda <span class="q-num">{escape(_money(value.adjustment, currency))}</span></p>'
         price += '</div>'
         return (f'<article class="q-item"><header class="q-item-head"><p class="q-item-no">Ítem {escape(str(position["position_index"]).zfill(2))}</p>'
-                f'<h3>{escape(title)}</h3></header><div class="q-item-data">'
+                f'<h3>{escape(title)}</h3></header><div class="q-item-body"><div class="q-item-data">'
                 f'<p class="q-item-size q-num">{escape(_survey_dim(position["width_mm"]))} × {escape(_survey_dim(position["height_mm"]))} mm</p>'
                 f'<dl>{position_specs(position)}</dl></div>'
                 f'<div class="q-item-figure">{figure}{plan_figure(position)}{sliding_specs(position)}</div>'
-                f'{price}{extras}</article>')
+                f'{price}</div>{extras}</article>')
 
     def block_positions() -> str:
         out = '<section class="q-details"><h2>Ventanas y puertas</h2>'

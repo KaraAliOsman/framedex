@@ -5,13 +5,14 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from authentication.views import verified_request_token
-from catalogs import series
+from catalogs import series, workshop_rules
 from catalogs.family_templates import family_templates
 from catalogs.series_serializers import (
     CellAddressSerializer, CellHistorySerializer, FamilyTemplateListSerializer,
     SeriesBatchConfirmSerializer, SeriesBatchEditSerializer, SeriesCreateSerializer,
     SeriesSheetSerializer,
     SeriesPriceEditSerializer, PriceHistorySerializer,
+    WorkshopRulesConfirmSerializer, WorkshopRulesSerializer,
 )
 from catalogs.views import (
     CatalogJSONParser, ERRORS, HEADERS, READ_ROLES, _validated, catalog_scope,
@@ -108,3 +109,21 @@ class SeriesPriceHistoryView(APIView):
     def get(self, request, system_id, price_id):
         with catalog_scope(request, roles=("OWNER",)) as org_id:
             return Response(PriceHistorySerializer(series.price_history(org_id, system_id, price_id)).data)
+
+
+class SeriesWorkshopRulesView(APIView):
+    parser_classes = [CatalogJSONParser]
+
+    @extend_schema(operation_id="catalog_series_workshop_rules", tags=["catalogs"], parameters=HEADERS,
+        responses={200: WorkshopRulesSerializer, **ERRORS})
+    def get(self, request, system_id):
+        with catalog_scope(request, roles=READ_ROLES) as org_id:
+            return Response(WorkshopRulesSerializer(workshop_rules.workshop_rules(org_id, system_id)).data)
+
+    @extend_schema(operation_id="catalog_series_confirm_workshop_rules", tags=["catalogs"], parameters=HEADERS,
+        request=WorkshopRulesConfirmSerializer, responses={200: WorkshopRulesSerializer, **ERRORS})
+    def post(self, request, system_id):
+        with catalog_scope(request) as org_id:
+            result = workshop_rules.confirm(org_id, system_id, verified_request_token(request).user_id,
+                _validated(WorkshopRulesConfirmSerializer, request.data))
+            return Response(WorkshopRulesSerializer(result).data)

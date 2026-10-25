@@ -30,6 +30,7 @@ def test_openapi_contains_only_authorized_shot_11_paths_and_bearer_security() ->
         "/api/v1/catalogs/series/{system_id}/trial/",
         "/api/v1/catalogs/series/{system_id}/trial/proposals/",
         "/api/v1/catalogs/series/{system_id}/trial/verify/",
+        "/api/v1/catalogs/series/{system_id}/workshop-rules/",
         "/api/v1/catalogs/series/{system_id}/references/",
         "/api/v1/catalogs/series/{system_id}/setup/",
         # v1 (2026-10): design defaults, finish samples, catalog batches,

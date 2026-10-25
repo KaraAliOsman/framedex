@@ -151,6 +151,7 @@ def materials_env(monkeypatch):
                           "updated_at": datetime.now(timezone.utc)})
     monkeypatch.setattr(materials, "_positions", lambda org, project: positions)
     monkeypatch.setattr(materials, "_profile_names", lambda org, systems, skus: {})
+    monkeypatch.setattr(materials, "_article_titles", lambda org, names, systems: {})
     monkeypatch.setattr(materials, "_freshness", lambda org, project, rows: {"latest_revision": None, "design_changed": False})
     state = {"missing_sku": None, "no_profile": False}
 
@@ -249,3 +250,15 @@ def test_document_layout_step_validates_the_same_object_and_never_hides_windows(
     assert _document_layout_step({"layout": {"template": "ESENCIAL"}}, refs={}, context={}, may_draft=True,
                                  rejected=rejected) is None
     assert [item["reason"] for item in rejected] == ["layout_invalid", "project_not_editable"]
+
+
+def test_design_identity_ignores_transport_and_prices():
+    from projects import materials
+    sealed = {"id": "p1", "quantity": 1, "system_id": "s", "width_mm": D("1200.00"), "height_mm": "1400",
+              "color_interior": "WHITE", "color_exterior": "WHITE", "parametric_tree": {"id": "root", "type": "BAY"},
+              "price_net": "198000"}
+    stored = {"id": "p1", "quantity": 1, "system_id": "s", "width_mm": "1200", "height_mm": D("1400.00"),
+              "color_interior": "WHITE", "color_exterior": "WHITE", "parametric_tree": '{"type": "BAY", "id": "root"}',
+              "price_net": "205000"}
+    assert materials._design(sealed) == materials._design(stored)
+    assert materials._design({**stored, "width_mm": "1201"}) != materials._design(sealed)

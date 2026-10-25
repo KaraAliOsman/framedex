@@ -97,9 +97,12 @@ def value_text(value):
 
 
 def _setup(org_id, system_id):
+    from catalogs.use_levels import series_verification
     found = rows("SELECT template_id,template_version,verified_at,verified_by,verified_hash "
         "FROM public.catalog_series_setup WHERE org_id=%s AND system_id=%s", [org_id, system_id])
-    return found[0] if found else dict.fromkeys(("template_id", "template_version", "verified_at", "verified_by", "verified_hash"))
+    setup = found[0] if found else dict.fromkeys(("template_id", "template_version", "verified_at", "verified_by", "verified_hash"))
+    verified = series_verification(org_id, system_id)
+    return {**setup, **{key: verified.get(key) for key in ("verified_at", "verified_by", "verified_hash")}}
 
 
 def _sheet_rows(workspace):

@@ -302,6 +302,7 @@ export const domainLabels: Readonly<Record<string, string>> = {
   COMMERCIAL_LIST_WITH_DISCOUNTS: "Lista comercial con descuentos",
   COMPLETE: "Completo",
   COMPLETED: "Completado",
+  CONFIRMED: "Confirmada",
   CONNECTOR: "Conector",
   CONSTRUCTION: "Constructora",
   CONSUMABLE: "Insumo",

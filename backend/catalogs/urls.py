@@ -11,6 +11,7 @@ from catalogs.trial_views import (
 from catalogs.series_views import (
     FamilyTemplatesView, SeriesCellsView, SeriesConfirmView, SeriesCreateView,
     SeriesHistoryView, SeriesSheetView, SeriesPricesView, SeriesPriceHistoryView,
+    SeriesWorkshopRulesView,
 )
 
 urlpatterns = [
@@ -23,6 +24,7 @@ urlpatterns = [
     path("series/<uuid:system_id>/setup/", SeriesSetupProgressView.as_view(), name="catalog-series-setup"),
     path("series/<uuid:system_id>/", SeriesSheetView.as_view(), name="catalog-series-sheet"),
     path("series/<uuid:system_id>/cells/", SeriesCellsView.as_view(), name="catalog-series-cells"),
+    path("series/<uuid:system_id>/workshop-rules/", SeriesWorkshopRulesView.as_view(), name="catalog-series-workshop-rules"),
     path("series/<uuid:system_id>/confirm/", SeriesConfirmView.as_view(), name="catalog-series-confirm"),
     path("series/<uuid:system_id>/history/", SeriesHistoryView.as_view(), name="catalog-series-history"),
     path("series/<uuid:system_id>/prices/", SeriesPricesView.as_view(), name="catalog-series-prices"),

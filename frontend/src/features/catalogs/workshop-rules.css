@@ -1,0 +1,82 @@
+.workshop-rules {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  min-width: 0;
+}
+.workshop-rules__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+.workshop-rules__head h2,
+.workshop-rules h3 {
+  margin: 0 0 var(--space-1);
+}
+.workshop-rules__head p {
+  margin: 0;
+  max-width: 62ch;
+  color: var(--text-secondary);
+}
+.workshop-rules__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-4);
+}
+.workshop-rules__card,
+.workshop-rules__rule {
+  min-width: 0;
+  margin: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-2);
+  background: var(--surface-panel);
+}
+.workshop-rules__card p {
+  margin: var(--space-2) 0 0;
+}
+.workshop-rules__source {
+  color: var(--text-secondary);
+  font-size: var(--type-dense);
+}
+.workshop-rules__list {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.workshop-rules__list li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-variant-numeric: tabular-nums;
+}
+.workshop-rules__field {
+  display: grid;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+  font-size: var(--type-dense);
+}
+.workshop-rules__rules {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+.workshop-rules__rule legend {
+  padding: 0 var(--space-1);
+  font-weight: 600;
+}
+.workshop-rules__rule p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--type-dense);
+}
+.workshop-rules__actions {
+  display: flex;
+  justify-content: flex-end;
+}

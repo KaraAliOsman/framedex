@@ -453,6 +453,8 @@ import type {
   WorkOrderOptimizeRequestRequest,
   WorksResponse,
   WorkshopCreateRequest,
+  WorkshopRules,
+  WorkshopRulesConfirmRequest,
   WorkspaceResponse,
 } from "./models";
 
@@ -9134,6 +9136,156 @@ export const catalogSeriesTrialVerify = async (
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(trialVerificationRequest),
   });
+};
+
+export type catalogSeriesWorkshopRulesResponse200 = {
+  data: WorkshopRules;
+  status: 200;
+};
+
+export type catalogSeriesWorkshopRulesResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogSeriesWorkshopRulesResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogSeriesWorkshopRulesResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogSeriesWorkshopRulesResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogSeriesWorkshopRulesResponse409 = {
+  data: ReferenceChangeError;
+  status: 409;
+};
+
+export type catalogSeriesWorkshopRulesResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogSeriesWorkshopRulesResponseSuccess = catalogSeriesWorkshopRulesResponse200 & {
+  headers: Headers;
+};
+export type catalogSeriesWorkshopRulesResponseError = (
+  | catalogSeriesWorkshopRulesResponse400
+  | catalogSeriesWorkshopRulesResponse401
+  | catalogSeriesWorkshopRulesResponse403
+  | catalogSeriesWorkshopRulesResponse404
+  | catalogSeriesWorkshopRulesResponse409
+  | catalogSeriesWorkshopRulesResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogSeriesWorkshopRulesResponse =
+  catalogSeriesWorkshopRulesResponseSuccess | catalogSeriesWorkshopRulesResponseError;
+
+export const getCatalogSeriesWorkshopRulesUrl = (systemId: string) => {
+  return `/api/v1/catalogs/series/${systemId}/workshop-rules/`;
+};
+
+export const catalogSeriesWorkshopRules = async (
+  systemId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogSeriesWorkshopRulesResponse> => {
+  return apiMutator<catalogSeriesWorkshopRulesResponse>(
+    getCatalogSeriesWorkshopRulesUrl(systemId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export type catalogSeriesConfirmWorkshopRulesResponse200 = {
+  data: WorkshopRules;
+  status: 200;
+};
+
+export type catalogSeriesConfirmWorkshopRulesResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogSeriesConfirmWorkshopRulesResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogSeriesConfirmWorkshopRulesResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogSeriesConfirmWorkshopRulesResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogSeriesConfirmWorkshopRulesResponse409 = {
+  data: ReferenceChangeError;
+  status: 409;
+};
+
+export type catalogSeriesConfirmWorkshopRulesResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogSeriesConfirmWorkshopRulesResponseSuccess =
+  catalogSeriesConfirmWorkshopRulesResponse200 & {
+    headers: Headers;
+  };
+export type catalogSeriesConfirmWorkshopRulesResponseError = (
+  | catalogSeriesConfirmWorkshopRulesResponse400
+  | catalogSeriesConfirmWorkshopRulesResponse401
+  | catalogSeriesConfirmWorkshopRulesResponse403
+  | catalogSeriesConfirmWorkshopRulesResponse404
+  | catalogSeriesConfirmWorkshopRulesResponse409
+  | catalogSeriesConfirmWorkshopRulesResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogSeriesConfirmWorkshopRulesResponse =
+  catalogSeriesConfirmWorkshopRulesResponseSuccess | catalogSeriesConfirmWorkshopRulesResponseError;
+
+export const getCatalogSeriesConfirmWorkshopRulesUrl = (systemId: string) => {
+  return `/api/v1/catalogs/series/${systemId}/workshop-rules/`;
+};
+
+export const catalogSeriesConfirmWorkshopRules = async (
+  systemId: string,
+  workshopRulesConfirmRequest: WorkshopRulesConfirmRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogSeriesConfirmWorkshopRulesResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<catalogSeriesConfirmWorkshopRulesResponse>(
+    getCatalogSeriesConfirmWorkshopRulesUrl(systemId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+      body: JSON.stringify(workshopRulesConfirmRequest),
+    },
+  );
 };
 
 export type catalogSystemListResponse200 = {

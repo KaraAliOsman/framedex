@@ -203,6 +203,15 @@
   --op-mark: var(--mat-op-mark);
   --theme-glass-pane: var(--mat-glass-pane);
   --signature-ink: var(--mat-signature-ink);
+  /* Cut plan: the bar on the saw. The dark ground shows through kerfs and
+     mitres; PVC pieces read as profile, steel as steel. */
+  --cut-ground: #24292d;
+  --cut-piece: #f3efe6;
+  --cut-piece-ink: var(--mat-signature-ink);
+  --cut-piece-mark: #5a6670;
+  --cut-steel: var(--mat-steel);
+  --cut-rest: #e4e6e8;
+  --cut-scrap: #b9bcbf;
 }
 :root,
 [data-density="document"] {
