@@ -28,7 +28,7 @@ import {
   ValidatedForm,
 } from "../../ui";
 import { domainLabels } from "../../i18n/domainLabels";
-import { fmtMm, formatDecimal } from "../../format";
+import { formatCode, fmtMm, formatDecimal } from "../../format";
 import {
   PLAN_REQUIRED_CODES,
   STEP_STOCK_KINDS,
@@ -374,7 +374,8 @@ export function OperatorStationPage() {
                     ) : null}
                     {queue.map((entry) => (
                       <option key={entry.step_id} value={entry.order_id}>
-                        {entry.order_code} · {domainLabels[entry.status ?? ""] ?? "Falta completar"}
+                        {formatCode(entry.order_code, true)} ·{" "}
+                        {domainLabels[entry.status ?? ""] ?? "Falta completar"}
                       </option>
                     ))}
                   </select>
@@ -395,7 +396,7 @@ export function OperatorStationPage() {
                 <article className="production-station-task" aria-label="Siguiente">
                   <header>
                     <span>
-                      {detail.order_code} · {stationCodeLabel(step.code)}
+                      {formatCode(detail.order_code, true)} · {stationCodeLabel(step.code)}
                     </span>
                     <span className="ui-value">
                       {detail.steps_done}/{detail.steps_total} pasos

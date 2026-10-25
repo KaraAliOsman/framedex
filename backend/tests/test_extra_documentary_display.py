@@ -16,7 +16,7 @@ def test_itemized_document_keeps_exact_allocation_and_discloses_rounding():
     html = _extra_table([line()], 'CLP', prices=True, base=Decimal('10000'))
     assert '1,56 m' in html and '$1.538' in html and '$2.400' in html
     assert 'Base de la ventana' in html and '$10.000' in html
-    assert '0,72 CLP' in html and '· DEMO' in html
+    assert '0,72 CLP' in html and '· ejemplo' in html
     assert '&lt;fachada&gt;' in html
     assert 'secret-internal-cost' not in html and ',0000' not in html
 

@@ -46,7 +46,7 @@ export function CatalogProvenance({
   const demo =
     row.is_demo || row.data_provenance === "SEED_SYNTHETIC" || authority?.state === "DEMO";
   const label = demo
-    ? "DEMO"
+    ? "Ejemplo"
     : ({
         VERIFIED: "Verificado con evidencia",
         REVIEWED: "Revisado por técnico",

@@ -4,7 +4,7 @@
  * Narrow views over the trace payload's open dicts — every value shown is
  * evidence stored at seal time, never recomputed client-side. */
 
-import { fmtMm, formatDecimal } from "../../format";
+import { formatCode, fmtMm, formatDecimal } from "../../format";
 import { EntityCode } from "../../ui";
 import { t } from "../../i18n/es-CL";
 import {
@@ -233,7 +233,7 @@ export function TracePieceMatches({
       {matches.map((match, index) => {
         const body = (
           <>
-            <strong>{match.work_order?.order_code ?? "—"}</strong>
+            <strong>{formatCode(match.work_order?.order_code, true)}</strong>
             {" · "}
             {stockKindLabel(match.location?.kind)}
             {match.location?.kind === "BAR"

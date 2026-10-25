@@ -398,7 +398,7 @@ export function PositionCollection({
           <span className="position-row__type">
             {domainLabel(position.typology)}
             {position.system_name ? ` · ${position.system_name}` : ""}
-            {position.system_demo && !position.system_name?.includes("DEMO") ? " · DEMO" : ""}
+            {position.system_demo && !position.system_name?.includes("DEMO") ? " · Ejemplo" : ""}
           </span>
           <Dimensions
             position={position}

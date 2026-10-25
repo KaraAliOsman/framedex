@@ -44,7 +44,7 @@ def render_field_act(payload, signature):
         if payload["kind"] == "SERVICE":
             checked = text(evidence.get("note"))
         photo = evidence.get("photo") or {}
-        demo = "DEMO · catálogo sintético" if unit["is_demo"] else ""
+        demo = "Catálogo de ejemplo" if unit["is_demo"] else ""
         units.append(
             f'<section class="field-position"><h2>P{unit["position_index"]:02d} · U{unit["unit_index"]:02d} · {text(unit["location_tag"])}</h2><p>{text(unit["order_code"])} · {demo}</p><div class="field-elevation">{drawing}</div><p class="muted">Vista interior · cotas en mm</p><p>{checked}</p><p class="muted">Foto contextual conservada en el registro privado · huella {text(photo.get("file_sha256", "")[:12])}</p></section>'
         )

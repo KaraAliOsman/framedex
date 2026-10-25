@@ -129,7 +129,7 @@ function DefaultsForm({
           {(systems.data ?? []).map((system) => (
             <option key={system.id} value={system.id}>
               {system.name}
-              {system.is_demo && !system.name.includes("DEMO") ? " · DEMO" : ""}
+              {system.is_demo && !system.name.includes("DEMO") ? " · Ejemplo" : ""}
             </option>
           ))}
         </select>

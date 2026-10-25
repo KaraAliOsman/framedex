@@ -18,6 +18,25 @@ export function formatRevision(code: string | null | undefined): string {
   return match ? `Revisión ${match[1]}` : code;
 }
 
+/** People read «N° 385», not «P-000385». The stored code stays the identity
+ * (search, evidence, copies); this is only how it is shown. `withKind` names
+ * what it is where the context does not («Obra N° 5», «OT N° 12»). */
+const CODE_KINDS: Record<string, string> = {
+  P: "Obra",
+  OT: "OT",
+  OC: "Compra",
+  RT: "Retazo",
+  REC: "Recepción",
+};
+
+export function formatCode(code: string | null | undefined, withKind = false): string {
+  if (!code) return "—";
+  const match = /^([A-Z]{1,4})-0*(\d+)$/.exec(code);
+  if (!match) return code;
+  const kind = CODE_KINDS[match[1]!];
+  return withKind && kind ? `${kind} N° ${match[2]}` : `N° ${match[2]}`;
+}
+
 /** Parse a user-entered number accepting both es-CL and software
  * conventions: "1500", "1500.5", "1500,5" and "1.500,5" all work, and the
  * thousands-dot trap ("1.500" meaning fifteen hundred) reads as 1500 —

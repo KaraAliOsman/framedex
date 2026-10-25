@@ -30,7 +30,7 @@ export function ExtraPriceLines({
           <tr key={index}>
             <td>
               {line.name}
-              {line.synthetic && " · DEMO"}
+              {line.synthetic && " · Ejemplo"}
               {line.width_mm && line.height_mm && (
                 <small className="extra-equation">
                   {fmtMm(line.width_mm)} × {fmtMm(line.height_mm)} mm

@@ -127,7 +127,7 @@ export function ThermalCatalogPanel({ systemId }: { systemId: string }) {
             : "Confirmar revisión técnica",
       body:
         state === "REVIEWED"
-          ? "Declaro que cotejé los valores con el documento original, la inscripción vigente del laboratorio, vigencia, norma y alcance exacto. La revisión no certifica datos DEMO."
+          ? "Declaro que cotejé los valores con el documento original, la inscripción vigente del laboratorio, vigencia, norma y alcance exacto. La revisión no certifica datos de ejemplo."
           : "El informe deja de servir para cálculos nuevos. Las revisiones emitidas conservan los documentos que se usaron al emitir.",
       confirmLabel:
         state === "REVIEWED"
@@ -273,7 +273,7 @@ export function ThermalCatalogPanel({ systemId }: { systemId: string }) {
                     {data.glasses.map((glass) => (
                       <option key={glass.sku} value={glass.sku}>
                         {glass.name}
-                        {glass.synthetic ? " · DEMO" : ""}
+                        {glass.synthetic ? " · Ejemplo" : ""}
                       </option>
                     ))}
                   </select>
@@ -521,7 +521,7 @@ export function ThermalCatalogPanel({ systemId }: { systemId: string }) {
           <header>
             <strong>{kinds[report.kind]}</strong>
             <span>
-              {report.synthetic ? "DEMO · " : ""}
+              {report.synthetic ? "Ejemplo · " : ""}
               {
                 {
                   PENDING: "Pendiente de revisión",

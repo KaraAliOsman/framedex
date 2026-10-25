@@ -112,7 +112,7 @@ def probe(org_id, user_id, data):
     from dekopen_engine.design_operations import apply_operations, validate_operation, BY_NAME
     systems = SystemParamsRepository().list_visible(org_id)
     if not systems:
-        raise contract_error(409, "ai_probe_catalog_required", "La prueba necesita una serie visible. Importa un catálogo o prepara el catálogo DEMO antes de probar.")
+        raise contract_error(409, "ai_probe_catalog_required", "La prueba necesita una serie visible. Importa o prepara un catálogo antes de probar.")
     catalog = None
     for system in systems:
         candidate = catalog_for(org_id, system.id)

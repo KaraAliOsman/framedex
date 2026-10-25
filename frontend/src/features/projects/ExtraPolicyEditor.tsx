@@ -109,7 +109,7 @@ export function ExtraPolicyEditor({
               <details key={index} className="extra-authority-row">
                 <summary>
                   {item.name || "Servicio sin nombre"}
-                  {item.synthetic && " · DEMO"}
+                  {item.synthetic && " · Ejemplo"}
                 </summary>
                 <ExtraDefinitionEditor
                   servicesOnly

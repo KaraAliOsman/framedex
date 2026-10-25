@@ -93,7 +93,7 @@ export function ProjectPositionLibrary({
             {systems.data?.map((system) => (
               <option key={system.id} value={system.id}>
                 {system.name}
-                {system.is_demo ? " · DEMO" : ""}
+                {system.is_demo ? " · Ejemplo" : ""}
               </option>
             ))}
           </select>

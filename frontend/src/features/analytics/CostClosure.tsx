@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { formatCode } from "../../format";
 import { Link } from "react-router-dom";
 import {
   analyticsActualReport,
@@ -165,7 +166,9 @@ export function CostClosure({
   const hasCurrency = currency != null;
   return (
     <Dialog
-      title={order ? `${order.code} · Costos reales` : "Consumos y costos de la OT"}
+      title={
+        order ? `${formatCode(order.code, true)} · Costos reales` : "Consumos y costos de la OT"
+      }
       width="l"
       onClose={onClose}
     >

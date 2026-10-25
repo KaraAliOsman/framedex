@@ -94,8 +94,8 @@ test("onboarding offers exactly the current series admitted by the engine", asyn
     status: 200,
     data: {
       items: [
-        { id: clientId, name: "Serie histórica", is_demo: true, readiness: { quote_ready: true } },
-        { id: projectId, name: "Serie vigente", is_demo: true, readiness: { quote_ready: true } },
+        { id: clientId, name: "Serie histórica", is_demo: false, readiness: { quote_ready: true } },
+        { id: projectId, name: "Serie vigente", is_demo: false, readiness: { quote_ready: true } },
       ],
     },
     headers: new Headers(),
@@ -182,7 +182,7 @@ test("the first project preserves the client's contact for its later sealed quot
     status: 200,
     data: {
       items: [
-        { id: projectId, name: "Serie vigente", is_demo: true, readiness: { quote_ready: true } },
+        { id: projectId, name: "Serie vigente", is_demo: false, readiness: { quote_ready: true } },
       ],
     },
     headers: new Headers(),

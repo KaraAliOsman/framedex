@@ -1,5 +1,6 @@
 """DOC-01 sheet composition. The engine projects money; this module lays it out."""
 
+from documents.human import human_code
 from decimal import Decimal, ROUND_HALF_UP
 from html import escape
 import json
@@ -226,7 +227,7 @@ def field_specs(position: dict, *, authoritative_thermal: bool = False) -> str:
                 glass = GlassProduct.model_validate_json(json.dumps(product, default=str))
                 description = format_glass_notation(glass.composition)
                 if glass.synthetic:
-                    description += " · DEMO"
+                    description += " · ejemplo"
                 rows.append(spec_row("Vidrio", description))
                 # New emissions use the reviewed, scoped evidence in their
                 # sealed thermal annex. Preserve historical snapshots' layout.
@@ -297,7 +298,7 @@ def extras_table(items: list, currency: str, *, prices: bool, base=None, caption
         rows += f'<tr><td>Base de la ventana</td><td></td><td></td><td class="q-num">{escape(_money(base, currency))}</td></tr>'
     for item in items:
         unit = {"EA": "un.", "M": "m", "M2": "m²", "KG": "kg", "WINDOW": "ventanas"}.get(str(item.get("unit")), "")
-        name = known(item.get("name") or item.get("label")) + (" · DEMO" if item.get("synthetic") else "")
+        name = known(item.get("name") or item.get("label")) + (" · ejemplo" if item.get("synthetic") else "")
         qty = _survey_dim(item["quantity"]) if item.get("quantity") is not None else ""
         rows += f'<tr><td>{escape(name)}</td><td class="q-num">{escape(qty + " " + unit)}</td>'
         if prices:
@@ -415,7 +416,7 @@ def render(snapshot: dict, *, portal_url: str | None = None, layout_name: str | 
         revision = "REV-" + revision
     draft = bool(snapshot.get("draft"))
     number = "Borrador" if draft else (known(project.get("commercial_label"))
-                                       or f'COT-{known(project.get("code"))}-{revision}')
+                                       or human_code(known(project.get("code"))))
     date = _cldate(snapshot.get("sealed_at"))
     valid = _cldate(project["quotation_valid_until"]) if project.get("quotation_valid_until") else ""
     # The legal line spans the full width: company name and RUT never break

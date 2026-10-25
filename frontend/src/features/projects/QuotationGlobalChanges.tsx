@@ -280,7 +280,7 @@ export function QuotationGlobalChanges({
                   {systems.data?.map((system) => (
                     <option key={system.id} value={system.id}>
                       {system.name}
-                      {system.is_demo ? " · DEMO" : ""}
+                      {system.is_demo ? " · Ejemplo" : ""}
                     </option>
                   ))}
                 </select>
@@ -352,7 +352,7 @@ export function QuotationGlobalChanges({
                       ? systems.data?.map((system) => (
                           <option key={system.id} value={system.id}>
                             {system.name}
-                            {system.is_demo ? " · DEMO" : ""}
+                            {system.is_demo ? " · Ejemplo" : ""}
                           </option>
                         ))
                       : catalog.data?.finish_authority
@@ -366,7 +366,7 @@ export function QuotationGlobalChanges({
                               {catalog.data?.finish_authority?.colors.find(
                                 (color) => color.code === combination.exterior,
                               )?.name ?? domainLabel(combination.exterior)}
-                              {combination.synthetic ? " · DEMO" : ""}
+                              {combination.synthetic ? " · Ejemplo" : ""}
                             </option>
                           ))
                         : catalog.data?.colors.map((color) => (

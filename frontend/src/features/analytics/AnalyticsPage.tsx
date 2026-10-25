@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { formatCode } from "../../format";
 import { Link, useSearchParams } from "react-router-dom";
 import { analyticsDecisionWorkspace } from "../../api/generated/dekopen";
 import type {
@@ -163,7 +164,7 @@ function MarginChart({ work, onOpen }: { work: Work; onOpen: (key: string) => vo
   return (
     <figure className="analytics-figure" aria-label={`Margen de ${work.code}`}>
       <figcaption>
-        {work.code} · {work.name} {work.demo && <DemoBadge />}
+        {formatCode(work.code, true)} · {work.name} {work.demo && <DemoBadge />}
       </figcaption>
       {[
         { label: "Cotizado", value: work.quoted_margin },

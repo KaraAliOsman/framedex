@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { formatCode } from "../../format";
 import type { ClientDossierResponse } from "../../api/generated/models";
 import { EmptyState, StatusBadge } from "../../ui";
 import { formatDate, formatMoney } from "../money";
@@ -61,7 +62,7 @@ export function CustomerHistory({ history }: { history: ClientDossierResponse })
               <li key={project.id}>
                 <Link to={`/projects/${project.id}`}>
                   <strong>
-                    {project.code} · {project.name}
+                    {formatCode(project.code, true)} · {project.name}
                   </strong>
                 </Link>
                 <StatusBadge

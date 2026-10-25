@@ -156,7 +156,7 @@ export function RectificationPanel({
                     {query.data!.map((item) => (
                       <option key={item.rule.code} value={item.rule.code}>
                         {item.rule.name}
-                        {item.rule.synthetic ? " · DEMO" : ""}
+                        {item.rule.synthetic ? " · Ejemplo" : ""}
                       </option>
                     ))}
                   </select>

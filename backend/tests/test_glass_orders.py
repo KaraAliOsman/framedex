@@ -83,4 +83,4 @@ def test_supplier_pdf_repeats_demo_warning_on_every_page(report):
         "instructions": ["DEMO · catálogo sintético"]} for index in range(1, 25)]
     pages = PdfReader(BytesIO(glass_orders.glass_pdf(report))).pages
     assert len(pages) > 1
-    assert all("DEMO · catálogo sintético" in page.extract_text() for page in pages)
+    assert all("Catálogo de ejemplo" in page.extract_text() for page in pages)

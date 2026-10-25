@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from documents.human import human_code
+
 import base64
 import hashlib
 import json
@@ -1878,7 +1880,7 @@ def _po_parties(order: dict[str, object], snapshot: dict[str, object]) -> str:
         f"{supplier_lines}</div></div>"
         '<div class="po-meta">'
         f'<div class="tb-cell"><span class="tb-label">Orden</span>'
-        f'<span class="tb-value">{escape(_value(order.get("order_code")))}</span></div>'
+        f'<span class="tb-value">{escape(_value(human_code(order.get("order_code"), with_kind=True)))}</span></div>'
         f'<div class="tb-cell"><span class="tb-label">Proyecto</span>'
         f'<span class="tb-value">{escape(_value(order.get("project_code")))}</span></div>'
         f'<div class="tb-cell"><span class="tb-label">Emitida</span>'
@@ -2131,7 +2133,7 @@ def render_pdf_document(
         )
     ):
         body = (
-            '<p class="demo-notice"><strong>DEMO</strong> · Catálogo sintético, sin certificación. Medidas y precios de prueba.</p>'
+            '<p class="demo-notice">Datos de ejemplo, sin fabricante: medidas y precios de prueba.</p>'
             + body
         )
     if snapshot.get("draft") is True and document_type != "DOC-01":

@@ -157,15 +157,13 @@ function SheetFormats({ canWrite }: { canWrite: boolean }): JSX.Element {
                 {data.options.map((item) => (
                   <option key={`${item.kind}:${item.sku}`} value={`${item.kind}:${item.sku}`}>
                     {item.kind === "GLASS" ? "Vidrio" : "Panel"} · {item.name}
-                    {item.is_demo ? " · DEMO" : ""}
+                    {item.is_demo ? " · Ejemplo" : ""}
                   </option>
                 ))}
               </select>
             </label>
             {selected?.is_demo ? (
-              <p>
-                DEMO · Artículo sintético, sin certificación. La declaración conserva esta marca.
-              </p>
+              <p>Artículo de ejemplo, sin fabricante. La declaración conserva esta marca.</p>
             ) : null}
             <label>
               Código de compra del proveedor
@@ -238,7 +236,7 @@ function SheetFormats({ canWrite }: { canWrite: boolean }): JSX.Element {
                 <tr key={item.id}>
                   <td data-label="Artículo / compra">
                     {item.technical_sku} · {item.sku}
-                    {item.is_demo ? " · DEMO" : ""}
+                    {item.is_demo ? " · Ejemplo" : ""}
                   </td>
                   <td className="ui-value" data-label="Formato mm">
                     {fmtMm(item.width_mm)} × {fmtMm(item.height_mm)}

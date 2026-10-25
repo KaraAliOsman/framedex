@@ -71,7 +71,7 @@ export function DemoBadge({
 }): JSX.Element {
   return (
     <span className="ui-demo" title={source}>
-      DEMO
+      Ejemplo
     </span>
   );
 }

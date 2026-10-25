@@ -111,7 +111,7 @@ export function CncMemberDrawing({
           {section ? (
             <>
               <p>
-                {section.synthetic ? "DEMO · sección sintética" : "Sección declarada"} · Origen:{" "}
+                {section.synthetic ? "Sección de ejemplo" : "Sección declarada"} · Origen:{" "}
                 {section.authority_source}
               </p>
               <p>

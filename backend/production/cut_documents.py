@@ -175,7 +175,7 @@ def pack_html(*, order: dict, optimization: dict, snapshot: dict, fingerprint: s
     body = titleblock(order_code, fingerprint, "Pack de corte")
     body += '<main class="workshop"><div class="cut-cover"><h1>Pack de corte</h1><div class="cut-identity"><span class="technical-label">'+escape(order_code)+'</span>'+qr+'</div></div>'
     if snapshot.get("is_demo") or any(pos.get("is_demo") for pos in snapshot.get("positions") or []):
-        body += '<p>DEMO · Catálogo sintético, sin certificación.</p>'
+        body += '<p>Catálogo de ejemplo, sin fabricante.</p>'
     body += '<p class="cut-convention">Extremo inicial a la izquierda; alimentación →. Ángulos izq./der. desde arriba; marca de esquina = inglete. La tabla conserva la secuencia del motor.</p>'
     for bar in ordered_bars(optimization):
         source = "barra nueva" if bar.get("source") != "REMNANT" else f"retazo {bar.get('remnant_code') or 'Falta completar la dirección'}"

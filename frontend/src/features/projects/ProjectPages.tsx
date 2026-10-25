@@ -32,6 +32,7 @@ import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { t, type TranslationKey } from "../../i18n/es-CL";
 import { formatDate, formatMoney } from "../money";
 import {
+  formatCode,
   fmtMm,
   formatDateTime,
   formatRevision,
@@ -782,8 +783,8 @@ function ProjectHeader({
             ) : (
               <span className="project-head__missing">Sin cliente</span>
             )}
-            <span className="project-head__code" title="Código de la obra">
-              {project.code}
+            <span className="project-head__code" title={`Código de la obra ${project.code}`}>
+              {formatCode(project.code)}
             </span>
             {project.current_revision ? (
               <span className="project-head__revision">

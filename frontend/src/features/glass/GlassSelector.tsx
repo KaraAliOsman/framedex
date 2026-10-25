@@ -784,7 +784,7 @@ export function GlassSelector({
                 }
               >
                 {asGlassProduct(choice.product)?.name ?? choice.spec}
-                {asGlassProduct(choice.product)?.synthetic ? " · DEMO" : ""}
+                {asGlassProduct(choice.product)?.synthetic ? " · Ejemplo" : ""}
               </option>
             ))}
           </select>

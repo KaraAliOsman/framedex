@@ -84,9 +84,13 @@ export function OnboardingPage(): JSX.Element {
       if (response.status !== 200) throw new ApiError(response.status, response.data);
       if (available.status !== 200) throw new ApiError(available.status, available.data);
       const visible = new Set(available.data.systems.map((system) => system.id));
-      return response.data.items
-        .filter((system) => visible.has(system.id))
-        .sort((a, b) => a.name.localeCompare(b.name, "es-CL"));
+      return (
+        response.data.items
+          // A workshop starts from its own series and the reference library;
+          // example catalogs stay in the catalog laboratory.
+          .filter((system) => visible.has(system.id) && !system.is_demo)
+          .sort((a, b) => a.name.localeCompare(b.name, "es-CL"))
+      );
     },
   });
   const library = useQuery({
@@ -299,10 +303,7 @@ export function OnboardingPage(): JSX.Element {
         {step === 0 ? (
           <>
             <h2>Serie de perfiles</h2>
-            <p>
-              Define qué aperturas y medidas puede calcular el motor. Los catálogos de prueba se
-              identifican como DEMO.
-            </p>
+            <p>Define qué aperturas y medidas puede calcular el motor.</p>
             {ownSeries ? null : manufacturerSeries}
             {systems.isPending ? (
               <LoadingState label="Cargando series disponibles" />
@@ -348,7 +349,7 @@ export function OnboardingPage(): JSX.Element {
                     </span>
                     {system.is_demo ? (
                       <StatusBadge
-                        label="DEMO"
+                        label="Ejemplo"
                         tone="neutral"
                         title="Datos sintéticos para probar el flujo; no certifican fabricación."
                       />
@@ -488,7 +489,7 @@ export function OnboardingPage(): JSX.Element {
               <>
                 <p>
                   {draft.projectName} · {selected?.name}
-                  {selected?.is_demo && !/\bDEMO\b/u.test(selected.name) ? " · DEMO" : ""}
+                  {selected?.is_demo && !/\bDEMO\b/u.test(selected.name) ? " · Ejemplo" : ""}
                 </p>
                 <Link
                   className="ui-button ui-button--primary"

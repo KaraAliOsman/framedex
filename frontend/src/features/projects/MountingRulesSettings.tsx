@@ -160,7 +160,7 @@ export function MountingRulesSettings({ orgId, canWrite }: { orgId: string; canW
             {systems.data?.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name}
-                {s.is_demo ? " · DEMO" : ""}
+                {s.is_demo ? " · Ejemplo" : ""}
               </option>
             ))}
           </select>
@@ -186,7 +186,7 @@ export function MountingRulesSettings({ orgId, canWrite }: { orgId: string; canW
               <div className="mounting-rule-row" key={item.rule.code}>
                 <p>
                   <strong>{item.rule.name}</strong>
-                  {item.rule.synthetic ? " · DEMO" : ""} · origen {item.revision}
+                  {item.rule.synthetic ? " · Ejemplo" : ""} · origen {item.revision}
                 </p>
                 <p>
                   Holguras:{" "}
@@ -267,7 +267,7 @@ export function MountingRulesSettings({ orgId, canWrite }: { orgId: string; canW
                     checked={draft.synthetic}
                     onChange={(e) => edit({ ...draft, synthetic: e.target.checked })}
                   />
-                  Referencia sintética DEMO, sin certificación
+                  Ejemplo sin fabricante
                 </label>
                 <p>
                   Fabricación = menor medida de obra − holguras − marco − ensanches + traslapes. Los
@@ -325,7 +325,7 @@ export function MountingRulesSettings({ orgId, canWrite }: { orgId: string; canW
                               }
                             />
                             {item.name}
-                            {item.synthetic ? " · DEMO" : ""}
+                            {item.synthetic ? " · Ejemplo" : ""}
                           </label>
                           {selected && item.basis === "SIDES" && (
                             <fieldset>

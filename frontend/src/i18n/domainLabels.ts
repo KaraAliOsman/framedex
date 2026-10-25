@@ -451,7 +451,7 @@ export const domainLabels: Readonly<Record<string, string>> = {
   SCREW: "Tornillo",
   SEAL: "Sello",
   SEALING: "Sellar juntas",
-  SEED_SYNTHETIC: "Semilla sintética DEMO",
+  SEED_SYNTHETIC: "Ejemplo",
   SENT: "Enviado",
   SERIES: "Serie",
   SHEET: "Plancha",

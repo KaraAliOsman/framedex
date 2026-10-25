@@ -464,11 +464,11 @@ def test_demo_warning_uses_only_frozen_document_authority(monkeypatch, demo):
     order = order_snapshot("SUPPLIER_GLASS_PO")
     order["is_demo"] = demo
     render_pdf_document("DOC-02", order, pdf_identifier="d" * 64)
-    assert all(("<strong>DEMO</strong>" in source) is demo for source in html_sources)
+    assert all(("Datos de ejemplo, sin fabricante" in source) is demo for source in html_sources)
     content, _ = render_order_xlsx("DOC-02", order)
     book = load_workbook(BytesIO(content), read_only=True, data_only=False)
     try:
-        assert any(cell.value == "DEMO" for sheet in book for row in sheet for cell in row) is demo
+        assert any(cell.value == "Ejemplo" for sheet in book for row in sheet for cell in row) is demo
     finally:
         book.close()
 

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatCode } from "../format";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { catalogSystemList } from "../api/generated/dekopen";
@@ -136,7 +137,7 @@ function TodayWorkspace(): JSX.Element {
                   <li key={item.project_id}>
                     <Link to={item.href}>
                       <strong>{item.name}</strong>
-                      <span>{item.code}</span>
+                      <span>{formatCode(item.code, true)}</span>
                     </Link>
                   </li>
                 ))}
@@ -150,7 +151,7 @@ function TodayWorkspace(): JSX.Element {
             <section className="today-decision" aria-label="Decisión de precio">
               <div className="today-decision__head">
                 <h2>
-                  {decision.entity_code} · {decision.title}
+                  {formatCode(decision.entity_code, true)} · {decision.title}
                 </h2>
                 <button type="button" onClick={() => setDecision(null)}>
                   Cerrar revisión
@@ -222,7 +223,9 @@ function TodayWorkspace(): JSX.Element {
                         <span className="today-tier">
                           {consequenceLabels[item.consequence] ?? "Por revisar"}
                         </span>
-                        <span className="ui-value today-code">{item.entity_code}</span>
+                        <span className="ui-value today-code">
+                          {formatCode(item.entity_code, true)}
+                        </span>
                         {item.due_on && <DateOnly value={item.due_on} />}
                       </div>
                       <div className="today-action__body">

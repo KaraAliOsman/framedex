@@ -157,7 +157,7 @@ export function HardwarePanel({
     );
   return (
     <section ref={panel} className="hardware-panel" aria-label="Herrajes resueltos">
-      <h5>Herrajes {query.data.is_demo && <span className="hardware-demo">DEMO</span>}</h5>
+      <h5>Herrajes {query.data.is_demo && <span className="hardware-demo">Ejemplo</span>}</h5>
       {query.data.division != null &&
         onTree &&
         (() => {

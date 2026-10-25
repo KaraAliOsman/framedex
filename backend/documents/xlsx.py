@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from documents.human import human_code
+
 from copy import copy
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -215,12 +217,12 @@ def render_order_xlsx(document_type: str, snapshot: dict[str, object]) -> tuple[
 
     metadata = [
         ["Documento", document_type],
-        ["Orden", _text(order.get("order_code"))],
+        ["Orden", _text(human_code(order.get("order_code"), with_kind=True))],
         ["Proveedor", _text(order.get("supplier_name"))],
         ["Revisión", _text(revision.get("revision_code"))],
     ]
     if snapshot.get("is_demo"):
-        metadata.append(["DEMO", "Catálogo sintético de referencia. Sin certificación de fabricante."])
+        metadata.append(["Ejemplo", "Datos de ejemplo, sin fabricante."])
     expected: list[list[str | int]] = [*metadata, headers, *data]
     workbook = Workbook()
     sheet = workbook.active

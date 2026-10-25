@@ -239,7 +239,7 @@ test("P06 bow is created in seven interactions, survives exact reload and synchr
     const simulation = waitForDesignSimulation(page);
     await page
       .getByRole("combobox", { name: "Vidrio", exact: true })
-      .selectOption({ label: "4-16-4 Float Incoloro · DEMO" });
+      .selectOption({ label: "4-16-4 Float Incoloro · Ejemplo" });
     interactions++;
     await simulation;
     await expect(page.getByRole("combobox", { name: "Vidrio", exact: true })).toHaveValue(/.+/);
@@ -317,7 +317,7 @@ test("P06 module drag previews engine geometry and sale, snaps at 30 degrees and
     const simulation = waitForDesignSimulation(page, "set_glass");
     await page
       .getByRole("combobox", { name: "Vidrio", exact: true })
-      .selectOption({ label: "4-16-4 Float Incoloro · DEMO" });
+      .selectOption({ label: "4-16-4 Float Incoloro · Ejemplo" });
     await simulation;
   }
   const price = page.getByRole("button", { name: "Precio neto indicativo", exact: true });
@@ -595,7 +595,7 @@ async function twoLeaves(page: Page) {
   const sku = (await option.getAttribute("value"))!;
   const simulation = waitForDesignSimulation(page, "set_glass");
   const price = waitForIndicativePrice(page, 1, "1400.00", "1400.00", sku);
-  await glass.selectOption({ label: "4-16-4 Float Incoloro · DEMO" });
+  await glass.selectOption({ label: "4-16-4 Float Incoloro · Ejemplo" });
   await simulation;
   await price;
   await expect(page.getByRole("button", { name: "Guardar", exact: true })).toBeEnabled();

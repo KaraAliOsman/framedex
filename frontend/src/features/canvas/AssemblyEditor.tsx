@@ -3446,7 +3446,7 @@ export function AssemblyEditor({
               <h3>Tres paños · centro fijo</h3>
               <p>
                 Laterales abatibles hacia el centro · simulación del motor
-                {options?.is_demo ? " · DEMO" : ""}
+                {options?.is_demo ? " · Ejemplo" : ""}
               </p>
               <p className="editor-proposal-price">
                 Δ neto de línea ·{" "}

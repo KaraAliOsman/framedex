@@ -1223,7 +1223,7 @@ function Survey({
           {unit.mounting_rules.map((r) => (
             <option key={`${r.rule.code}:${r.revision}`} value={`${r.rule.code}:${r.revision}`}>
               {r.rule.name} · revisión {r.revision}
-              {r.rule.synthetic ? " · DEMO" : ""}
+              {r.rule.synthetic ? " · Ejemplo" : ""}
             </option>
           ))}
         </select>
