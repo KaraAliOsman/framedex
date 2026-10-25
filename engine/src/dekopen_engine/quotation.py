@@ -66,6 +66,15 @@ def quotation_summary(lines: Sequence[QuotationLine], sealed_net: Decimal) -> Qu
         return QuotationSummary(sealed_net, before, before - sealed_net)
 
 
+def display_area_m2(width_mm: Decimal, height_mm: Decimal) -> Decimal:
+    """Surface of one unit as a quotation prints it: m² to two decimals."""
+    number(width_mm, positive=True)
+    number(height_mm, positive=True)
+    with localcontext() as context:
+        context.prec = 28
+        return (width_mm * height_mm / Decimal("1000000")).quantize(Decimal("0.01"), rounding="ROUND_HALF_UP")
+
+
 def payment_amounts(total: Decimal, proportions: Sequence[Decimal], currency: str) -> tuple[Decimal, ...]:
     """Allocate rounding to the last declared milestone; sum stays exact."""
     number(total)
