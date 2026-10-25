@@ -187,3 +187,21 @@ def test_successor_seals_selected_alternative_without_adding_its_price(documenta
     assert Decimal(after["project"]["total_price_gross"]) == Decimal(after["pricing"]["result"]["project_gross"])
     from documents.renderers import _doc01
     assert "No incluida en el total de esta propuesta" in _doc01(after)
+
+
+def test_the_queued_document_job_acts_as_the_person_who_asked(documentary_tenant, monkeypatch):
+    """The worker has no request: it must establish the actor before asking
+    which workshop the actor belongs to, with the assurance sealed at enqueue."""
+    from uuid import uuid4 as new_id
+    from jobs.handlers import generate_artifact_job
+    from jobs.registry import JobContext
+    org, _, users, _ = documentary_tenant
+    _, _, version_id = frozen_case(org, users["OWNER"])
+    FakeStorage.uploads = {}
+    monkeypatch.setattr(artifacts, "SupabaseDocumentStorage", FakeStorage)
+    payload = {"document_type": "DOC-01", "format": "PDF", "project_version_id": version_id,
+               "order_id": None, "layout": "STANDARD", "session_aal": "aal2"}
+    context = JobContext(job_id=new_id(), org_id=org, created_by=users["OWNER"], attempt=1,
+                         max_attempts=3, payload=payload)
+    result = generate_artifact_job(payload, context, lambda progress: None)
+    assert result["artifact"]["document_type"] == "DOC-01"

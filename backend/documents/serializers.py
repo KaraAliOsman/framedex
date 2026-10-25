@@ -277,9 +277,16 @@ class ArtifactRequestSerializer(StrictSerializer):
     # Composition of the same sealed data: DOC-01 Esencial/Proyecto/Alternativas,
     # DOC-05 Secuencia (estándar)/Lista compacta/Pedido por obra.
     layout = serializers.ChoiceField(
-        choices=["STANDARD", "ESENCIAL", "PROYECTO", "ALTERNATIVAS", "PLANO", "COMPACTA", "VENTANA", "OBRA"],
+        choices=["STANDARD", "ESENCIAL", "PROYECTO", "ALTERNATIVAS", "PLANO", "OT", "VIDRIOS", "MONTAJE", "COMPACTA", "VENTANA", "OBRA"],
         required=False, default="STANDARD",
     )
+
+
+class ArtifactJobSerializer(ArtifactRequestSerializer):
+    """The queued form: the queue seals the requesting session's assurance
+    from its verified token (never from the client), so the worker acts with
+    the same aal as the person who asked for the document."""
+    session_aal = serializers.ChoiceField(choices=["aal1", "aal2"], required=False)
 
 
 class ArtifactResponseSerializer(serializers.Serializer):

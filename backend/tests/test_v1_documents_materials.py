@@ -262,3 +262,37 @@ def test_design_identity_ignores_transport_and_prices():
               "price_net": "205000"}
     assert materials._design(sealed) == materials._design(stored)
     assert materials._design({**stored, "width_mm": "1201"}) != materials._design(sealed)
+
+
+def _people_snapshot() -> dict:
+    snapshot = revision_snapshot()
+    position = snapshot["positions"][0]
+    result = calculate_geometry(core_node("G6"), demo_60_params())
+    snapshot["bom"] = [{"position_id": position["id"], "quantity": position["quantity"],
+                        "engine_result": result.model_dump(mode="json")}]
+    return snapshot
+
+
+@pytest.mark.parametrize("layout,title", [("OT", "Orden de trabajo"), ("VIDRIOS", "Informe de vidrios"),
+                                          ("MONTAJE", "Listado de montaje")])
+def test_people_workshop_documents_read_the_sealed_revision(layout, title):
+    snapshot = _people_snapshot()
+    text = _text(render_pdf_document("DOC-03", snapshot, pdf_identifier="w", layout=layout)[0])
+    assert title in text and "Ventana 1" in text
+    # People read «Obra N°», never the stored code or the document's internal number.
+    assert "P-0" not in text and "DOC-03" not in text
+    bom = snapshot["bom"][0]["engine_result"]
+    if layout == "OT":
+        compact = text.replace(" ", "").replace(" ", "")
+        for cut in bom["profile_cuts"]:
+            assert str(int(D(str(cut["length_mm"])))) in compact
+    if layout == "VIDRIOS":
+        assert "Verifique las medidas en obra" in text
+
+
+def test_people_workshop_documents_refuse_unreleased_revisions():
+    snapshot = _people_snapshot()
+    snapshot["production_allowed"] = False
+    for layout in ("OT", "VIDRIOS", "MONTAJE"):
+        with pytest.raises(DocumentaryError):
+            render_pdf_document("DOC-03", snapshot, pdf_identifier="w", layout=layout)

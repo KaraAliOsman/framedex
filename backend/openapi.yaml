@@ -40025,6 +40025,9 @@ components:
       - PROYECTO
       - ALTERNATIVAS
       - PLANO
+      - OT
+      - VIDRIOS
+      - MONTAJE
       - COMPACTA
       - VENTANA
       - OBRA
@@ -40035,6 +40038,9 @@ components:
         * `PROYECTO` - PROYECTO
         * `ALTERNATIVAS` - ALTERNATIVAS
         * `PLANO` - PLANO
+        * `OT` - OT
+        * `VIDRIOS` - VIDRIOS
+        * `MONTAJE` - MONTAJE
         * `COMPACTA` - COMPACTA
         * `VENTANA` - VENTANA
         * `OBRA` - OBRA

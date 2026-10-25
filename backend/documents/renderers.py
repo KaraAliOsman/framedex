@@ -1005,6 +1005,13 @@ def frozen_glass_specs(position: dict[str, object]) -> list[str]:
     return _position_glass_specs(position)
 
 
+_DOCUMENT_NAMES = {
+    "DOC-01": "Cotización", "DOC-02": "Pedido de vidrios", "DOC-03": "Orden de trabajo",
+    "DOC-04": "Pedido de perfiles", "DOC-05": "Corte", "DOC-06": "Control final",
+    "DOC-07": "Costos y margen", "DOC-08": "Orden de compra",
+}
+
+
 def _revision_header(
     snapshot: dict[str, object], title: str, doc_code: str, workshop: bool = False
 ) -> tuple[str, str]:
@@ -1036,20 +1043,22 @@ def _revision_header(
     class_name = "workshop" if workshop else ""
     sealed_at = _value(snapshot.get("sealed_at"))
     revision = _value(snapshot.get("revision"))
-    project_code = _value(project.get("code"))
+    from documents.human import human_code
+    project_code = human_code(_value(project.get("code")), with_kind=True) or "—"
+    doc_name = _DOCUMENT_NAMES.get(doc_code, doc_code)
     # The BOM hash is the machine identity — only workshop documents carry it;
     # customer-facing documents keep it in metadata/QR instead of printing a
     # meaningless hex chunk.
     fingerprint = (
-        '<div class="tb-cell tb-wide"><span class="tb-label">Huella BOM</span>'
-        f'<span class="tb-value">{escape(bom_hash[:24] + "…")}</span></div>'
+        '<div class="tb-cell"><span class="tb-label">Control</span>'
+        f'<span class="tb-value">{escape(bom_hash[:10])}</span></div>'
         if workshop and bom_hash != "—"
         else ""
     )
     client = _value(project.get("client_name"))
     titleblock = (
         '<div class="titleblock">'
-        f'<div class="tb-cell"><span class="tb-label">Proyecto</span>'
+        f'<div class="tb-cell"><span class="tb-label">Obra</span>'
         f'<span class="tb-value">{escape(project_code)}</span></div>'
         + (
             '<div class="tb-cell"><span class="tb-label">Cliente</span>'
@@ -1058,7 +1067,7 @@ def _revision_header(
             else ""
         )
         + '<div class="tb-cell"><span class="tb-label">Documento</span>'
-        + f'<span class="tb-value">{escape(doc_code)}</span></div>'
+        + f'<span class="tb-value">{escape(doc_name)}</span></div>'
         f'<div class="tb-cell"><span class="tb-label">Rev.</span>'
         f'<span class="tb-value">{escape(_rev_display(revision))}</span></div>'
         f'<div class="tb-cell"><span class="tb-label">Fecha</span>'
@@ -1073,7 +1082,7 @@ def _revision_header(
         '<div class="meta">'
         f"{issuer}"
         f"<strong>{escape(project_code)}</strong><br>"
-        f"{escape(doc_code)} · Rev. {escape(_rev_display(revision))}<br>"
+        f"{escape(doc_name)} · revisión {escape(_rev_display(revision))}<br>"
         f"{escape(_cldate(sealed_at))}</div></div>"
         '<div class="rule-stack"></div>'
         f"<h1>{escape(title)}</h1>"
@@ -2102,6 +2111,10 @@ def render_pdf_document(
     elif document_type == "DOC-05" and layout == "COMPACTA":
         from documents.workshop_layouts import cut_compact
         body = cut_compact(snapshot)
+    elif document_type == "DOC-03" and layout in ("OT", "VIDRIOS", "MONTAJE"):
+        from documents import workshop_documents
+        body = {"OT": workshop_documents.work_order, "VIDRIOS": workshop_documents.glass_report,
+                "MONTAJE": workshop_documents.assembly_list}[layout](snapshot)
     elif document_type == "DOC-03" and layout == "PLANO":
         from documents.workshop_layouts import technical_plan
         body = technical_plan(snapshot)
