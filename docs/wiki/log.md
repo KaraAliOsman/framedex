@@ -2651,3 +2651,17 @@ de Hoy, las etapas de Obras y la purga global siguen en P05. Se conserva el
   propuestos, altura de manilla declarada por la serie y correos con números
   legibles.
 - Pendiente: documentos de taller (OT por ventana, vidrios, montaje, checklist).
+
+## [2026-10-25] DEKOPEN 3 P12f | Documentos de taller para personas
+
+- Sobre la misma revisión sellada, tres composiciones legibles de DOC-03:
+  «Orden de trabajo» (una hoja por ventana con dibujo, perfiles con lados y
+  ángulos, aceros, herrajes con códigos de compra, tornillos y vidrios, con
+  casillas y firmas), «Informe de vidrios» y «Listado de montaje». La matriz
+  técnica sigue disponible.
+- Encabezado y pie de taller con «Obra N°» y el nombre del documento.
+- La obra ofrece «Documentos para el taller» en cuanto su revisión es
+  fabricable.
+- Corregido un bug previo: el trabajo que genera documentos fallaba siempre
+  con «sin membresía» porque consultaba la membresía antes de fijar la
+  identidad del actor (test de integración que lo reproduce).
