@@ -2636,3 +2636,18 @@ de Hoy, las etapas de Obras y la purga global siguen en P05. Se conserva el
   taller sellados en la revisión que el cliente aprobó. Para un taller de una
   persona (como trabaja NuveraPro) hace falta poder declarar que las medidas de
   la cotización son de fabricación y pasar a taller sin nueva aprobación.
+
+## [2026-10-25] DEKOPEN 3 P12e | De la aprobación a la OT sin otra aprobación
+
+- Nueva preferencia de empresa «Medición en obra»: obligatoria, o «las medidas
+  de la cotización son de fabricación» (como trabaja un taller de una persona).
+  Cada revisión sellada guarda la regla con que se emitió (migración
+  `20270214000000`).
+- La aceptación Proline llega ahora hasta la OT liberada. En el camino se
+  corrigieron: emisión que fallaba por datos de taller (ahora sella solo
+  cotización y registra por qué), enlace de stock de barras importadas, acero
+  compartido como compra única, códigos de compra de componentes de kit con
+  fuente, nueva hoja «Fijaciones» (migración `20270214000100`), accesorios
+  propuestos, altura de manilla declarada por la serie y correos con números
+  legibles.
+- Pendiente: documentos de taller (OT por ventana, vidrios, montaje, checklist).
