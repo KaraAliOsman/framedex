@@ -3044,7 +3044,7 @@ export const messages = {
   "production.deliveryConfirmSubmit": "Emitir comprobante",
   "production.deliveryConfirmError": "El comprobante no pudo emitirse.",
   "production.dxfExportButton": "Plan de corte (DXF)",
-  "production.cutPackButton": "Pack de corte (PDF)",
+  "production.cutPackButton": "Optimización de corte (PDF)",
   "production.cutPackError": "No se pudo descargar el pack de corte",
   "production.cutPackInvalidated": "El plan fue invalidado por una reoptimización",
   "production.productionPackButton": "Pack de producción (PDF)",
