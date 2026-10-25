@@ -657,6 +657,12 @@ function mergePreparationSuggestions(
   );
   return {
     ...position,
+    // Most windows need nothing beyond their bill of materials; the form
+    // shows «Sin accesorios requeridos» chosen, and the estimator changes it.
+    accessory_schedule: position.accessory_schedule ?? {
+      coverage: "NONE_REQUIRED" as CoverageEnum,
+      items: [],
+    },
     workshop_annotations: [...annotations, ...pending.values()],
     glass_polishing: [
       ...position.glass_polishing,
