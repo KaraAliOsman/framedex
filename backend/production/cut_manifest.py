@@ -105,5 +105,7 @@ def piece_context(snapshot: dict) -> dict[str, dict]:
                     "height_mm": (entry.get("rect") or {}).get("height_mm"),
                     "technical_sku": entry.get("technical_sku"),
                     "kind": kind,
+                    # Where the piece goes on its window: top, bottom, left or right.
+                    "side": (home.get("identity") or {}).get("physical_member_slot"),
                 }
     return result

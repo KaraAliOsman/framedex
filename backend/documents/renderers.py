@@ -475,7 +475,8 @@ def _commercial_palette(position: dict[str, object], face: str = "interior") -> 
     if isinstance(resolved, dict) and isinstance(resolved.get(face), dict):
         from dekopen_engine.finishes import finish_rgb_css
         fill, edge = finish_rgb_css(resolved[face]["linear_rgb"]), _G_700
-    elif color == "FOILED" or "FOIL" in color or "WOOD" in color or "MADERA" in color or "ROBLE" in color:
+    elif color == "FOILED" or any(word in color for word in (
+            "FOIL", "WOOD", "MADERA", "ROBLE", "NOGAL", "WALNUT", "WINCHESTER", "CAOBA", "CEREZO", "GOLDEN")):
         fill, edge = "#7B5A3B", "#4E3A24"
     elif "ANTRAC" in color or "GRIS" in color or "GREY" in color or "NEGRO" in color or "BLACK" in color:
         fill, edge = "#3B4045", "#20242A"
@@ -484,7 +485,7 @@ def _commercial_palette(position: dict[str, object], face: str = "interior") -> 
     return {
         "frame_fill": fill, "frame_edge": edge,
         "bay_fill": "#DCEBEE", "bay_edge": edge,
-        "split": edge, "glyph": "#4A7B78", "accent": _MARK,
+        "split": edge, "glyph": "#5A6670", "accent": _MARK,
         "sheen": "#FFFFFF", "hardware": "#3C4346", "label": _G_500,
     }
 
@@ -752,7 +753,7 @@ def _contour_svg_path(
 
 def _position_svg(
     position: dict[str, object], *, commercial: bool = False, view: str = "interior", dimensions: bool = False,
-    dimension_font_divisor: Decimal | None = None, include_sliding_plan: bool = True,
+    dimension_font_divisor: Decimal | None = None, include_sliding_plan: bool = True, caption: bool = True,
 ) -> str:
     if view not in ("interior", "exterior"):
         raise DocumentaryError("invalid_drawing_view")
@@ -961,8 +962,10 @@ def _position_svg(
         f'<svg viewBox="{_pt((min(Decimal("0"), width-drawing_width) if view == "exterior" else Decimal("0"))-label_margin)} {-caption_size * 2} {_pt(max(width, drawing_width)+label_margin*2)} {_pt(max(height, drawing_height) + caption_size * 2)}" '
         'xmlns="http://www.w3.org/2000/svg" role="img" '
         f'aria-label="Ventana {_value(position.get("position_index"))}">'
-        + f'<title>{title}</title><text x="0" y="{-caption_size}" font-family="IBM Plex Sans" '
-          f'font-size="{_pt(caption_size)}" fill="{pal["glyph"]}">{title}</text>' + graphic + "</svg>"
+        + f'<title>{title}</title>'
+        + (f'<text x="0" y="{-caption_size}" font-family="IBM Plex Sans" '
+           f'font-size="{_pt(caption_size)}" fill="{pal["glyph"]}">{title}</text>' if caption else "")
+        + graphic + "</svg>"
     )
 
 

@@ -30,3 +30,13 @@ def test_incomplete_or_invalid_calendar_is_rejected(parts: list[D]) -> None:
 def test_no_discount_does_not_invent_currency_rounding_as_discount() -> None:
     line = quotation_line(quantity=3, net=D("10001"), original_unit=D("3333.6667"), currency="CLP")
     assert quotation_summary([line], D("10001")).discount == D("0")
+
+
+def test_display_area_is_exact_square_metres_to_two_decimals() -> None:
+    from decimal import Decimal
+
+    from dekopen_engine.quotation import display_area_m2
+
+    assert display_area_m2(Decimal("856"), Decimal("2240")) == Decimal("1.92")
+    assert display_area_m2(Decimal("1193"), Decimal("1350")) == Decimal("1.61")
+    assert display_area_m2(Decimal("2385"), Decimal("900")) == Decimal("2.15")

@@ -7,6 +7,7 @@ from html import escape
 from documents.renderers import (
     _CSS, _COLOR_ES, _cldate, _pct, _ROLE_ES, _role_name, _survey_dim, _table,
 )
+from documents.human import human_code
 from production.cut_manifest import grouped_cuts, ordered_bars, ordered_cuts, piece_context
 
 CSS = """
@@ -21,6 +22,7 @@ h3 { font-size: 9pt; margin: 0 0 1mm; }
 .cut-cover h1 { font-size: 14pt; margin: 0; white-space: nowrap; flex: 1; }
 .cut-identity { display: flex; align-items: center; gap: 3mm; }
 .cut-identity svg { width: 15mm; height: 15mm; }
+.cut-order { font-size: 13pt; font-weight: 700; white-space: nowrap; }
 .cut-convention { margin: 0 0 1.5mm; font-size: 8pt; }
 .compact-bar { break-inside: avoid; margin: 0 0 2mm; padding-top: 1mm;
  border-top: 0.5pt solid #CDD5D6; }
@@ -58,17 +60,29 @@ def angle(value: object) -> str:
     return mm(value) + "°" if value is not None else "Falta completar"
 
 
-def compact_bar_svg(bar: dict) -> str:
-    """True longitudinal scale, constant 8.5pt text, no shrunk glyphs.
+SIDES = {"TOP": "arr", "BOTTOM": "aba", "LEFT": "izq", "RIGHT": "der", "CENTER": "centro", "THRESHOLD": "umbral"}
 
-    Wide cuts show their physical code. Narrow cuts use sequence callouts in
-    separate lanes; the table carries the complete code at the same sequence.
-    A lane's occupied interval is never reused. Height grows with real density.
+
+def piece_place(home: dict) -> str:
+    """«04 · arr»: the window it belongs to and the side it goes on."""
+    position = str(home.get("position") or "").lstrip("P").lstrip("0") or ""
+    side = SIDES.get(str(home.get("side") or ""), "")
+    return " · ".join(value for value in (position.zfill(2) if position else "", side) if value)
+
+
+def compact_bar_svg(bar: dict, homes: dict | None = None) -> str:
+    """True longitudinal scale. Each piece shows its cut length large and,
+    beneath it, the window and side it goes on — what the cutter reads.
+
+    Narrow cuts carry the length in a callout on its own lane; the table keeps
+    the complete physical code at the same sequence. A lane is never reused.
     """
+    homes = homes or {}
     width = Decimal("258")
     stock = Decimal(str(bar["stock_length_mm"]))
     scale = width / stock
-    font = Decimal("3")  # 8.5pt in physical mm
+    font = Decimal("3.4")  # cut length, ~9.6pt
+    small = Decimal("2.85")  # window · side, 8pt: the print minimum
     labels = []
     boxes = []
     lanes: list[Decimal] = []
@@ -76,35 +90,40 @@ def compact_bar_svg(bar: dict) -> str:
     for cut in ordered_cuts(bar):
         length = Decimal(str(cut["length_mm"])) * scale
         center = cursor + length / 2
-        code = str(cut.get("piece_code") or "Falta completar")
-        estimated = Decimal(len(code)) * font * Decimal("0.62")
+        size = mm(cut.get("length_mm"))
+        place = piece_place(homes.get(str(cut.get("piece_stable_id")), {}))
+        estimated = Decimal(len(size)) * font * Decimal("0.6")
         if estimated + 2 <= length:
-            labels.append((code, center, Decimal("5"), False, center))
+            labels.append((size, center, Decimal("5.2"), False, center, font, True))
+            if place and Decimal(len(place)) * small * Decimal("0.6") + 2 <= length:
+                labels.append((place, center, Decimal("10.4"), False, center, small, False))
         else:
-            code = str(cut.get("sequence") or "?")
-            estimated = Decimal(len(code)) * font * Decimal("0.62")
             left = max(Decimal("0"), min(center - estimated / 2, width - estimated))
             lane = next((i for i, occupied in enumerate(lanes) if left >= occupied + 2), len(lanes))
             if lane == len(lanes):
                 lanes.append(Decimal("-2"))
             lanes[lane] = left + estimated
-            labels.append((code, left + estimated / 2, Decimal("12") + lane * 4, True, center))
+            labels.append((size, left + estimated / 2, Decimal("18") + lane * Decimal("4.5"), True, center, font, True))
         boxes.append((cursor, length, cut))
         cursor += length + Decimal(str(bar.get("kerf_mm") or 0)) * scale
-    height = Decimal("9") + max(1, len(lanes)) * 4
+    height = Decimal("15.5") + max(1, len(lanes)) * Decimal("4.5")
     result = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" '
               f'width="{width}mm" height="{height}mm">']
-    result.append(f'<rect x="0" y="1" width="{width}" height="7" fill="#EEF2F1" stroke="#465158" stroke-width="0.2"/>')
+    result.append(f'<rect x="0" y="1" width="{width}" height="13" fill="#F1F3F4" stroke="#56616A" stroke-width="0.2"/>')
     for left, length, cut in boxes:
-        result.append(f'<rect x="{left}" y="1" width="{length}" height="7" fill="#D4EFEA" stroke="#465158" stroke-width="0.2"/>')
+        # The physical code stays attached to the piece (labels, scanner); the
+        # cutter reads the length and the place.
+        result.append(f'<rect x="{left}" y="1" width="{length}" height="13" fill="#FFFFFF" stroke="#2B353C" stroke-width="0.25">'
+                      f'<title>{escape(str(cut.get("piece_code") or ""))}</title></rect>')
         for x, value, direction in ((left, cut.get("angle_left"), 1), (left + length, cut.get("angle_right"), -1)):
             if value is not None and Decimal(str(value)) != 90:
-                result.append(f'<path d="M{x} 1 l{direction * min(Decimal("2"), length / 2)} 0 l{-direction * min(Decimal("2"), length / 2)} 2 Z" fill="#075F5A"/>')
-    for text, x, y, leader, source in labels:
+                result.append(f'<path d="M{x} 1 l{direction * min(Decimal("2.4"), length / 2)} 0 l{-direction * min(Decimal("2.4"), length / 2)} 2.4 Z" fill="#2B353C"/>')
+    for text, x, y, leader, source, size, strong in labels:
         if leader:
-            result.append(f'<path d="M{source} 8 L{x} {y - 2}" stroke="#465158" stroke-width="0.15" fill="none"/>')
+            result.append(f'<path d="M{source} 14 L{x} {y - Decimal("2.4")}" stroke="#56616A" stroke-width="0.15" fill="none"/>')
         result.append(f'<text x="{x}" y="{y}" text-anchor="middle" dominant-baseline="middle" '
-                      f'font-family="IBM Plex Mono" font-size="{font}" fill="#161C1F">{escape(text)}</text>')
+                      f'font-family="IBM Plex Sans" font-size="{size}" font-weight="{600 if strong else 400}" '
+                      f'fill="{"#111820" if strong else "#56616A"}">{escape(text)}</text>')
     result.append('</svg>')
     return ''.join(result)
 
@@ -172,8 +191,9 @@ def pack_html(*, order: dict, optimization: dict, snapshot: dict, fingerprint: s
     from production.pieces import entity_address
 
     qr = segno.make(entity_address("/production", order=order.get("id", ""), code=order_code), error="m").svg_inline(border=4, scale=4, omitsize=True)
-    body = titleblock(order_code, fingerprint, "Pack de corte")
-    body += '<main class="workshop"><div class="cut-cover"><h1>Pack de corte</h1><div class="cut-identity"><span class="technical-label">'+escape(order_code)+'</span>'+qr+'</div></div>'
+    shown = human_code(order_code, with_kind=True)
+    body = titleblock(shown, fingerprint, "Optimización de corte")
+    body += '<main class="workshop"><div class="cut-cover"><h1>Optimización de corte</h1><div class="cut-identity"><span class="cut-order">'+escape(shown)+'</span>'+qr+'</div></div>'
     if snapshot.get("is_demo") or any(pos.get("is_demo") for pos in snapshot.get("positions") or []):
         body += '<p>Catálogo de ejemplo, sin fabricante.</p>'
     body += '<p class="cut-convention">Extremo inicial a la izquierda; alimentación →. Ángulos izq./der. desde arriba; marca de esquina = inglete. La tabla conserva la secuencia del motor.</p>'
@@ -182,12 +202,12 @@ def pack_html(*, order: dict, optimization: dict, snapshot: dict, fingerprint: s
         kind = "Refuerzos" if all(cut.get("source_kind") == "REINFORCEMENT" for cut in ordered_cuts(bar)) else (
             "Junquillos" if all(_role_name(cut.get("role")) == "GLAZING_BEAD" for cut in ordered_cuts(bar)) else "Perfiles")
         body += f'<section class="compact-bar"><h3>{kind} · Barra {bar["bar_index"]} · {escape(str(bar.get("commercial_sku") or "Falta completar"))} · {escape(_COLOR_ES.get(str(bar.get("color")), str(bar.get("color") or "Falta completar")))} · {mm(bar["stock_length_mm"])} mm · {escape(source)} · {_pct(bar.get("yield_pct"))} %</h3>'
-        body += compact_bar_svg(bar)
+        body += compact_bar_svg(bar, homes)
         data = []
         for cut in ordered_cuts(bar):
             home = homes.get(str(cut.get("piece_stable_id")), {})
             role = home.get("role_label") or _ROLE_ES.get(_role_name(cut.get("role")), "Falta completar")
-            location = ' · '.join(str(value) for value in (home.get("position"), home.get("bay_code"), home.get("leaf_code")) if value)
+            location = ' · '.join(str(value) for value in (home.get("position"), SIDES.get(str(home.get("side") or "")), home.get("bay_code"), home.get("leaf_code")) if value)
             parent = home.get("parent_code")
             if parent:
                 location += ' → '+parent

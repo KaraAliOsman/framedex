@@ -117,7 +117,7 @@ def test_revision_orders_print_with_density_and_exact_closure(positions):
         pdf = pymupdf.open(stream=doc.write_pdf(), filetype="pdf")
         for page in pdf:
             assert_print_text(page)
-            assert f"OT-{index:06}" in page.get_text()
+            assert f"OT N° {index}" in " ".join(page.get_text().split())
         text = "\n".join(page.get_text() for page in pdf)
         assert f"P{index:02}-U01-I01" in text
         assert "960" in text and "4/12/4" in text

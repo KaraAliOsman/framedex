@@ -9,7 +9,7 @@ from dekopen_engine.glass_composition import GlassProduct, format_glass_notation
 from dekopen_engine.drawing import dimension_chains
 from dekopen_engine.geometry import resolved_sliding_layout
 from dekopen_engine.models import NodeType
-from dekopen_engine.quotation import payment_amounts, quotation_line, quotation_summary, representative_index
+from dekopen_engine.quotation import display_area_m2, payment_amounts, quotation_line, quotation_summary, representative_index
 from documents.preferences import ACCENTS, PAPERS, declared, document_preferences
 from documents.repository import DocumentaryError
 from engine_api.adapter import parse_parametric_node
@@ -174,11 +174,80 @@ CSS = """
 """
 
 
+# DEKOPEN 3 — the quotation sells: letterhead, client band, one card per item
+# with a large drawing in the profile's color, a clear price and quiet terms.
+# The workshop's brand color replaces #075F5A (see stylesheet()).
+CSS_V3 = """
+.quote { font: 9.5pt/1.45 'IBM Plex Sans', sans-serif; color: #1B2328; }
+.quote .q-num { font-family: 'IBM Plex Sans', sans-serif; font-variant-numeric: tabular-nums; }
+.q-masthead { display: flex; justify-content: space-between; align-items: flex-start; gap: 10mm;
+  border-bottom: 2.25pt solid #075F5A; padding: 0 0 4.5mm; margin: 0 0 5mm; }
+.q-issuer-block { min-width: 0; }
+.q-issuer-block .brand { font-size: 17pt; font-weight: 700; letter-spacing: -0.2pt; color: #1B2328; }
+.q-issuer-block .brand-logo { max-height: 18mm; max-width: 60mm; }
+.q-issuer-block p { margin: 0.6mm 0 0; font-size: 8.5pt; color: #56616A; }
+.q-masthead .q-folio { text-align: right; min-width: 52mm; display: block; }
+.q-masthead .q-folio > * { display: block; }
+.q-doc { font-size: 10pt; font-weight: 600; color: #075F5A; }
+.q-masthead .q-number { font-size: 24pt; font-weight: 700; line-height: 1.15; color: #1B2328; margin: 1.6mm 0 1mm; }
+.q-masthead .q-folio span { font-size: 8.5pt; color: #56616A; }
+.quote h1.q-title { font-size: 14pt; font-weight: 600; margin: 0 0 3mm; letter-spacing: -0.1pt; }
+.q-band { display: flex; border: 0.75pt solid #DCE1E4; border-radius: 1.6mm; background: #F7F8F9; margin: 0 0 6mm; break-inside: avoid; }
+.q-band > div { flex: 1 1 0; min-width: 0; padding: 3.2mm 4mm; }
+.q-band > div + div { border-left: 0.75pt solid #DCE1E4; }
+.q-band p { margin: 0.4mm 0 0; font-size: 9pt; color: #3E4951; overflow-wrap: anywhere; }
+.q-band .q-label { font-size: 8pt; font-weight: 600; color: #75808A; margin: 0 0 1mm; }
+.q-band .q-band-main { font-size: 11.5pt; font-weight: 600; color: #1B2328; }
+.q-band .q-band-total { font-size: 16pt; font-weight: 700; color: #075F5A; margin-top: 0; }
+.quote h2 { font-size: 11pt; font-weight: 700; color: #075F5A;
+  border-bottom: 0.75pt solid #DCE1E4; padding-bottom: 1.6mm; margin: 6mm 0 2mm; }
+.q-legend { font-size: 8pt; color: #75808A; margin: 0 0 1mm; }
+.q-spec dt::after { content: " · "; }
+.q-item { display: flex; flex-wrap: wrap; align-items: center; column-gap: 5mm; row-gap: 1.5mm; padding: 3.5mm 0; border-bottom: 0.75pt solid #E6E9EB; break-inside: avoid; }
+.q-item-data { flex: 0 0 50mm; width: 50mm; min-width: 0; }
+.q-item-no { margin: 0; font-size: 8.5pt; font-weight: 600; color: #075F5A; }
+.q-item-head { flex: 0 0 100%; display: flex; align-items: baseline; gap: 3mm; min-width: 0; }
+.q-item-head .q-item-no { flex: none; }
+.q-item h3 { margin: 0; font-size: 11pt; font-weight: 600; line-height: 1.4; overflow-wrap: anywhere; min-width: 0; }
+.q-item-size { margin: 0 0 2.2mm; font-size: 12pt; font-weight: 600; color: #1B2328; }
+.q-item-data dl { margin: 0; }
+.q-item-data .q-spec-row { margin: 0 0 1mm; break-inside: avoid; }
+.q-item-data dt { display: block; font-size: 8.25pt; font-weight: 600; color: #8A949C; }
+.q-item-data dd { display: block; margin: 0; font-size: 9pt; color: #2B353C; overflow-wrap: anywhere; }
+.q-item-figure { flex: 1 1 0; min-width: 0; text-align: center; }
+.q-item-figure svg { width: 100%; max-height: 50mm; }
+.quote svg text { font-family: 'IBM Plex Sans', sans-serif; }
+.q-item-price { flex: 0 0 38mm; width: 38mm; text-align: right; }
+.q-item-price dl { margin: 0 0 2mm; }
+.q-item-price dl > div { display: flex; justify-content: space-between; gap: 2mm; padding: 0.7mm 0; border-bottom: 0.5pt dotted #D3D9DD; }
+.q-item-price dt { font-size: 8pt; color: #75808A; }
+.q-item-price dd { margin: 0; font-size: 9pt; color: #2B353C; }
+.q-item-total { margin: 1mm 0 0; font-size: 14.5pt; font-weight: 700; color: #1B2328; }
+.q-item-note { margin: 0.3mm 0 0; font-size: 7.5pt; color: #75808A; }
+.q-item .q-extra { flex-basis: 100%; }
+.q-commercial { gap: 8mm; }
+.q-totals { border: 0.75pt solid #DCE1E4; border-radius: 1.6mm; }
+.q-totals td { padding: 1.6mm 3mm; border-bottom: 0.5pt solid #EEF0F2; }
+.q-totals .q-quiet td { color: #75808A; font-size: 8.5pt; }
+.q-totals .q-final td { border-top: 1.5pt solid #075F5A; border-bottom: 0; font-size: 15pt; font-weight: 700; color: #075F5A; padding: 2.4mm 3mm; }
+.q-footer { border-top: 0.75pt solid #DCE1E4; color: #75808A; }
+"""
+
+
 def stylesheet(snapshot: dict) -> str:
     org = snapshot.get("organization") or {}
     prefs = document_preferences(org.get("document_preferences"))
     width = {"LETTER": "187.9mm", "OFICIO": "188mm", "A4": "182mm"}[prefs["paper"]]
-    return CSS.replace("187.9mm", width).replace("letter portrait", PAPERS[prefs["paper"]]).replace("#075F5A", ACCENTS[prefs["accent"]])
+    # The workshop's own brand color leads (its contrast is validated when
+    # saved); otherwise its chosen document accent.
+    accent = (org.get("brand_primary_color") if org.get("brand_schema") == 1 and org.get("brand_primary_color")
+              and not org.get("brand_color_fallback") else ACCENTS[prefs["accent"]])
+    return (CSS + CSS_V3).replace("187.9mm", width).replace("letter portrait", PAPERS[prefs["paper"]]).replace("#075F5A", accent)
+
+
+def _area_label(value: Decimal) -> str:
+    """«1,92 m²» — Chilean decimal comma, two decimals as the engine rounds."""
+    return f"{value:.2f}".replace(".", ",") + " m²"
 
 
 def known(value: object) -> str:
@@ -190,7 +259,7 @@ def known(value: object) -> str:
 def spec_row(label: str, value: str, *, numeric: bool = False) -> str:
     if not value:
         return ""
-    return f'<div class="q-spec-row"><dt>{escape(label)} · </dt><dd class="{"q-num" if numeric else ""}">{escape(value)}</dd></div>'
+    return f'<div class="q-spec-row"><dt>{escape(label)}</dt><dd class="{"q-num" if numeric else ""}">{escape(value)}</dd></div>'
 
 
 def field_specs(position: dict, *, authoritative_thermal: bool = False) -> str:
@@ -434,15 +503,19 @@ def render(snapshot: dict, *, portal_url: str | None = None, layout_name: str | 
     body = f'<main class="quote q-{template.lower()}" style="--q-figure:{drawing_width}mm">{footer}'
 
     # Header: compact identity row; the offer starts on the first page.
-    issuer = " · ".join(known(org.get(field)) for field in ("tax_id", "brand_address", "brand_phone", "brand_email") if known(org.get(field)))
-    body += ('<header class="q-head">' + _brand_block({**org, "brand_schema": 1})
-             + f'<div class="q-folio"><span class="q-label">Cotización</span><strong class="q-number">{escape(number)}</strong>'
-             f'<span>Revisión {escape(_rev_display(revision))} · {escape(date)}</span></div></header>')
-    if issuer:
-        body += f'<p class="q-issuer">{escape(issuer)}</p>'
+    issuer_lines = [value for value in (
+        "RUT " + known(org.get("tax_id")) if known(org.get("tax_id")) else "", known(org.get("brand_address")),
+        " · ".join(known(org.get(field)) for field in ("brand_phone", "brand_email") if known(org.get(field)))) if value]
+    folio_dates = f'<span>Revisión {escape(_rev_display(revision))} · {escape(date)}</span>'
+    if valid:
+        folio_dates += f'<span>Válida hasta {escape(valid)}</span>'
+    body += ('<header class="q-head q-masthead"><div class="q-issuer-block">' + _brand_block({**org, "brand_schema": 1})
+             + "".join(f'<p>{escape(line)}</p>' for line in issuer_lines) + '</div>'
+             f'<div class="q-folio"><span class="q-doc">Cotización</span><strong class="q-number">{escape(number)}</strong>'
+             f'{folio_dates}</div></header>')
     if draft:
         body += '<p class="q-draft">Borrador · no emitido. El número se asigna al preparar la versión para emitir.</p>'
-    body += f'<h1>{escape(known(project.get("name")) or "Propuesta para su obra")}</h1>'
+    body += f'<h1 class="q-title">{escape(known(project.get("name")) or "Propuesta para su obra")}</h1>'
 
     def block_intro() -> str:
         text = layout["texts"]["intro"]
@@ -452,22 +525,23 @@ def render(snapshot: dict, *, portal_url: str | None = None, layout_name: str | 
         return f'<div class="q-kv"><dt>{escape(label)}</dt><dd>{escape(value)}</dd></div>' if value else ""
 
     def block_client() -> str:
-        client = ''.join(kv(label, known(project.get(field))) for label, field in [
-            ("RUT", "client_rut"), ("Dirección", "client_address"), ("Comuna", "client_comuna"),
-            ("Contacto", "client_email"), ("Teléfono", "client_phone"), ("Obra", "delivery_address")])
-        # Conditions are printed once, in their own block; the offer column
-        # carries only the scope, the total and the validity.
-        count = sum(int(item["quantity"]) for item in positions)
-        offer = kv("Alcance", f'{len(positions)} {"tipo" if len(positions) == 1 else "tipos"} de ventana · {count} {"unidad" if count == 1 else "unidades"}') if positions else ""
-        if project.get("total_price_gross") is not None:
-            offer += (f'<p class="q-label">Total con impuesto · {escape(currency)}</p>'
-                      f'<p class="q-total">{escape(_money(project["total_price_gross"], currency))}</p>')
-        offer += kv("Vigente hasta", valid)
         client_name = known(project.get("client_name"))
-        name_html = f'<p class="q-client-name">{escape(client_name)}</p>' if client_name else ""
-        return (f'<div class="q-client"><div><p class="q-label">Para</p>'
-                f'{name_html}'
-                f'<dl>{client}</dl></div><div><p class="q-label">Propuesta</p>{offer}</div></div>')
+        who = (f'<p class="q-band-main">{escape(client_name)}</p>' if client_name else "") + "".join(
+            f'<p>{escape(value)}</p>' for value in (
+                "RUT " + known(project.get("client_rut")) if known(project.get("client_rut")) else "",
+                known(project.get("client_email")), known(project.get("client_phone"))) if value)
+        where = "".join(f'<p>{escape(value)}</p>' for value in (
+            known(project.get("delivery_address")),
+            ", ".join(value for value in (known(project.get("client_address")), known(project.get("client_comuna"))) if value)) if value)
+        count = sum(int(item["quantity"]) for item in positions)
+        offer = ""
+        if positions:
+            offer += f'<p>{count} {"unidad" if count == 1 else "unidades"} · {len(positions)} {"ítem" if len(positions) == 1 else "ítems"}</p>'
+        if project.get("total_price_gross") is not None:
+            offer += f'<p class="q-band-total q-num">{escape(_money(project["total_price_gross"], currency))}</p><p>Impuestos incluidos</p>'
+        columns = [("Cliente", who), ("Obra", where), ("Propuesta", offer)]
+        return '<section class="q-band">' + "".join(
+            f'<div><p class="q-label">{label}</p>{content}</div>' for label, content in columns if content) + '</section>'
 
     def block_hero() -> str:
         if len(positions) < 2:
@@ -495,8 +569,7 @@ def render(snapshot: dict, *, portal_url: str | None = None, layout_name: str | 
         return out + '</tbody></table>'
 
     def position_specs(position: dict) -> str:
-        specs = spec_row("Sistema", known(position.get("system_name")))
-        specs += spec_row("Medida", f'{_survey_dim(position["width_mm"])} × {_survey_dim(position["height_mm"])} mm', numeric=True)
+        specs = spec_row("Línea", known(position.get("system_name")))
         finish = position.get("resolved_finish") or {}
         if finish:
             approximate = any((finish.get(face) or {}).get("approximate") for face in ("interior", "exterior"))
@@ -508,7 +581,6 @@ def render(snapshot: dict, *, portal_url: str | None = None, layout_name: str | 
         for item in position.get("commercial_hardware") or []:
             specs += spec_row("Manilla", " · ".join(known(item.get(field)) for field in ("handle_name", "handle_color") if known(item.get(field))))
             specs += spec_row("Opciones", "; ".join(item.get("options") or []))
-        specs += spec_row("Cantidad", str(position["quantity"]) + " un.", numeric=True)
         return specs
 
     def position_price(position: dict) -> str:
@@ -530,15 +602,34 @@ def render(snapshot: dict, *, portal_url: str | None = None, layout_name: str | 
         detail = details.get(str(position["position_index"]), {})
         title = known(position.get("location_tag")) or _product_caption(position)
         figure = _position_svg(position, commercial=True, dimensions=True,
-                               dimension_font_divisor=Decimal("14" if compact else "12"), include_sliding_plan=False)
+                               dimension_font_divisor=Decimal("15"), include_sliding_plan=False, caption=False)
         extras = extras_table(detail.get("sublines") or [], currency, prices=result.get("document_extra_prices", "ITEMIZED") == "ITEMIZED", base=detail.get("base_net"))
-        return (f'<article class="q-position{" q-position--compact" if compact else ""}"><h3><span class="q-index">{escape(str(position["position_index"]))}</span> {escape(title)}</h3>'
-                f'<div class="q-position-body"><div class="q-figure">{figure}{plan_figure(position)}{sliding_specs(position)}</div>'
-                f'<div class="q-spec"><dl>{position_specs(position)}</dl>{position_price(position)}</div></div>{extras}</article>')
+        value = line_values.get(str(position["position_index"]))
+        area = display_area_m2(_num(position["width_mm"]), _num(position["height_mm"]))
+        price = ('<div class="q-item-price"><dl>'
+                 f'<div><dt>Superficie</dt><dd class="q-num">{escape(_area_label(area))}</dd></div>'
+                 f'<div><dt>Unidades</dt><dd class="q-num">{escape(str(position["quantity"]))}</dd></div>')
+        if value and layout["unit_prices"]:
+            price += f'<div><dt>Unitario</dt><dd class="q-num">{escape(_money(value.unit_net, currency))}</dd></div>'
+        price += '</dl>'
+        if value:
+            price += f'<p class="q-item-total q-num">{escape(_money(value.net, currency))}</p><p class="q-item-note">Total neto</p>'
+            discount = _num(position.get("discount_pct") or "0")
+            if discount:
+                price += f'<p class="q-item-note">Incluye descuento del {escape(_discount_label(discount))}</p>'
+            if value.adjustment:
+                price += f'<p class="q-item-note">Ajuste de moneda <span class="q-num">{escape(_money(value.adjustment, currency))}</span></p>'
+        price += '</div>'
+        return (f'<article class="q-item"><header class="q-item-head"><p class="q-item-no">Ítem {escape(str(position["position_index"]).zfill(2))}</p>'
+                f'<h3>{escape(title)}</h3></header><div class="q-item-data">'
+                f'<p class="q-item-size q-num">{escape(_survey_dim(position["width_mm"]))} × {escape(_survey_dim(position["height_mm"]))} mm</p>'
+                f'<dl>{position_specs(position)}</dl></div>'
+                f'<div class="q-item-figure">{figure}{plan_figure(position)}{sliding_specs(position)}</div>'
+                f'{price}{extras}</article>')
 
     def block_positions() -> str:
         out = '<section class="q-details"><h2>Ventanas y puertas</h2>'
-        out += '<p class="q-legend">Vista interior. Línea continua: abre hacia usted; discontinua: se aleja; flecha: corredera.</p>'
+        out += '<p class="q-legend">Vista desde el interior, medidas en milímetros. Línea continua: abre hacia usted; discontinua: se aleja; flecha: corredera.</p>'
         if template == "PROYECTO":
             groups: dict[str, list] = {}
             for position in positions:
@@ -590,6 +681,11 @@ def render(snapshot: dict, *, portal_url: str | None = None, layout_name: str | 
             if summary and summary.before_discount is not None:
                 rows += (f'<tr><td>Neto antes de descuento</td><td class="q-num">{escape(_money(summary.before_discount, currency))}</td></tr>'
                          f'<tr><td>Descuento</td><td class="q-num">{escape(_money(summary.discount, currency))}</td></tr>')
+            units = sum(int(item["quantity"]) for item in positions)
+            surface = sum((display_area_m2(_num(item["width_mm"]), _num(item["height_mm"])) * int(item["quantity"])
+                           for item in positions), Decimal("0"))
+            rows = (f'<tr class="q-quiet"><td>Unidades</td><td class="q-num">{units}</td></tr>'
+                    f'<tr class="q-quiet"><td>Superficie total</td><td class="q-num">{escape(_area_label(surface))}</td></tr>') + rows
             rows += f'<tr><td>Neto</td><td class="q-num">{escape(_money(project["total_price_net"], currency))}</td></tr>'
             pricing = snapshot.get("pricing") or {}
             tax_rate = (pricing.get("input_snapshot") or {}).get("rules", {}).get("tax_rate_pct")
