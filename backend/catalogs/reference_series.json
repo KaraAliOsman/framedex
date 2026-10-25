@@ -289,7 +289,8 @@
                 "unit": "EA",
                 "category": "LOCK",
                 "purchasing_sku": "121000054",
-                "manufacturer_name": "Vorne"
+                "manufacturer_name": "Vorne",
+                "source": "OT 385 del dueño, págs. 6–7"
               },
               {
                 "sku": "121000060",
@@ -298,7 +299,8 @@
                 "unit": "EA",
                 "category": "HINGE",
                 "purchasing_sku": "121000060",
-                "manufacturer_name": "Vorne"
+                "manufacturer_name": "Vorne",
+                "source": "OT 385 del dueño, págs. 6–7"
               },
               {
                 "sku": "121000150",
@@ -307,7 +309,8 @@
                 "unit": "EA",
                 "category": "LOCK",
                 "purchasing_sku": "121000150",
-                "manufacturer_name": "Vorne"
+                "manufacturer_name": "Vorne",
+                "source": "OT 385 del dueño, págs. 6–7"
               },
               {
                 "sku": "120100059",
@@ -316,7 +319,8 @@
                 "unit": "EA",
                 "category": "HANDLE",
                 "purchasing_sku": "120100059",
-                "manufacturer_name": "Vorne"
+                "manufacturer_name": "Vorne",
+                "source": "OT 385 del dueño, págs. 6–7"
               }
             ],
             "source": "ot-385",
@@ -338,7 +342,8 @@
                 "unit": "EA",
                 "category": "LOCK",
                 "purchasing_sku": "121000050",
-                "manufacturer_name": "Vorne"
+                "manufacturer_name": "Vorne",
+                "source": "OT 385 del dueño, págs. 6–7"
               },
               {
                 "sku": "121000060",
@@ -347,7 +352,8 @@
                 "unit": "EA",
                 "category": "HINGE",
                 "purchasing_sku": "121000060",
-                "manufacturer_name": "Vorne"
+                "manufacturer_name": "Vorne",
+                "source": "OT 385 del dueño, págs. 6–7"
               },
               {
                 "sku": "121000150",
@@ -356,7 +362,8 @@
                 "unit": "EA",
                 "category": "LOCK",
                 "purchasing_sku": "121000150",
-                "manufacturer_name": "Vorne"
+                "manufacturer_name": "Vorne",
+                "source": "OT 385 del dueño, págs. 6–7"
               },
               {
                 "sku": "120100059",
@@ -365,7 +372,8 @@
                 "unit": "EA",
                 "category": "HANDLE",
                 "purchasing_sku": "120100059",
-                "manufacturer_name": "Vorne"
+                "manufacturer_name": "Vorne",
+                "source": "OT 385 del dueño, págs. 6–7"
               }
             ],
             "source": "ot-385",

@@ -26,4 +26,9 @@ export interface CatalogHardwareComponentRequest {
    * @maxLength 255
    */
   manufacturer_name?: string;
+  /**
+   * @minLength 1
+   * @maxLength 500
+   */
+  source?: string;
 }

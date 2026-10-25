@@ -17,4 +17,6 @@ export interface CatalogHardwareComponent {
   purchasing_sku?: string;
   /** @maxLength 255 */
   manufacturer_name?: string;
+  /** @maxLength 500 */
+  source?: string;
 }

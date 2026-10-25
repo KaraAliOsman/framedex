@@ -4444,6 +4444,7 @@ paths:
           enum:
           - Barras de refuerzo
           - Colores y SKU por color
+          - Fijaciones
           - Herrajes
           - Límites
           - Perfiles
@@ -5175,6 +5176,7 @@ paths:
           enum:
           - Barras de refuerzo
           - Colores y SKU por color
+          - Fijaciones
           - Herrajes
           - Límites
           - Perfiles
@@ -31868,6 +31870,9 @@ components:
         manufacturer_name:
           type: string
           maxLength: 255
+        source:
+          type: string
+          maxLength: 500
       required:
       - name
       - qty
@@ -31900,6 +31905,10 @@ components:
           type: string
           minLength: 1
           maxLength: 255
+        source:
+          type: string
+          minLength: 1
+          maxLength: 500
       required:
       - name
       - qty

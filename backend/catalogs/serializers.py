@@ -492,10 +492,12 @@ class CatalogHardwareComponentSerializer(StrictSerializer):
     # the kit reaches the purchase order without a separate kit mapping.
     purchasing_sku = serializers.CharField(required=False, max_length=100)
     manufacturer_name = serializers.CharField(required=False, max_length=255)
+    source = serializers.CharField(required=False, max_length=500)
 
     def validate(self, attrs):
-        if ("purchasing_sku" in attrs) != ("manufacturer_name" in attrs):
-            raise serializers.ValidationError("Declara el código de compra junto con su fabricante.")
+        declared = {key for key in ("purchasing_sku", "manufacturer_name", "source") if key in attrs}
+        if declared and declared != {"purchasing_sku", "manufacturer_name", "source"}:
+            raise serializers.ValidationError("Declara el código de compra con su fabricante y su fuente.")
         return attrs
 
 
