@@ -41,6 +41,10 @@ def rows(code: str) -> list[tuple[str, dict]]:
             "system_code": code, "sku": parent, "reinforcement_sku": steel, "commercial_sku": steel,
             "name": name, "stock_length_mm": "5800.00", "purchase_unit": "BAR",
             "manufacturer_name": "Proline", "source": SOURCE}))
+    out.append(("Fijaciones", {
+        "system_code": code, "sku": "120500051", "name": "Tornillo de refuerzo 3,9 × 19 mm",
+        "purchasing_sku": "120500051", "manufacturer_name": "Proveedor de herrajes del taller",
+        "version": 1, "source": SOURCE}))
     out.append(("Vidrios", {
         "system_code": code, "sku": "DVH-4-12-4", "glass_spec": "4-12-4 Float Incoloro",
         "name": "DVH 4 incoloro + 12 + 4 incoloro", "purchasing_sku": "DVH-4-12-4",

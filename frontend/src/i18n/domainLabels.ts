@@ -435,6 +435,7 @@ export const domainLabels: Readonly<Record<string, string>> = {
   REJECTED: "Rechazado",
   RELEASE: "Liberar",
   REMOVED: "Eliminado",
+  REQUIRED: "Obligatorio",
   RESERVATION: "Reserva",
   RESERVED: "Reservado",
   RETAIL: "Particular",

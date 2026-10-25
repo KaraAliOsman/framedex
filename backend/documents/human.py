@@ -17,3 +17,16 @@ def human_code(code, *, with_kind=False):
         return str(code)
     kind = _KINDS.get(match.group(1))
     return f"{kind} N° {match.group(2)}" if with_kind and kind else f"N° {match.group(2)}"
+
+
+_INLINE_CODE = re.compile(r"\b(P|OT|OC|RT|REC)-0*(\d+)\b")
+_REVISION = re.compile(r"\bREV-([A-Z]+)\b")
+
+
+def human_text(text):
+    """Every stored code inside a sentence, as people read it:
+    «P-000044 · REV-A» → «Obra N° 44 · revisión A»."""
+    if not text:
+        return ""
+    text = _INLINE_CODE.sub(lambda match: human_code(match.group(0), with_kind=True), str(text))
+    return _REVISION.sub(lambda match: f"revisión {match.group(1)}", text)

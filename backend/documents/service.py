@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
@@ -88,6 +90,8 @@ from documents.repository import (
 
 D = Decimal
 T = TypeVar("T")
+
+logger = logging.getLogger(__name__)
 
 
 def _json_object(value: object, code: str) -> dict[str, object]:
@@ -1490,9 +1494,10 @@ def compose_revision(
                     panel_skus=panel_skus,
                     fitting_skus={item.technical_sku for item in fittings},
                 )
-            except DocumentaryError:
+            except DocumentaryError as error:
                 if not allow_incomplete_workshop:
                     raise
+                logger.warning("position %s seals quote-only: %s", position_id, error.code)
                 following = None
                 position_production_allowed = False
                 production_allowed = False

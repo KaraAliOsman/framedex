@@ -16,4 +16,14 @@ export interface CatalogHardwareComponentRequest {
   /** @minLength 1 */
   unit: string;
   category?: CategoryEnum;
+  /**
+   * @minLength 1
+   * @maxLength 100
+   */
+  purchasing_sku?: string;
+  /**
+   * @minLength 1
+   * @maxLength 255
+   */
+  manufacturer_name?: string;
 }

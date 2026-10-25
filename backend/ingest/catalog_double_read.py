@@ -17,6 +17,7 @@ IDENTITY = {
     "Vidrios": ("system_code", "sku", "version"),
     "Reglas de vidrio": ("code",),
     "Herrajes": ("system_code", "sku", "opening_type"),
+    "Fijaciones": ("system_code", "sku", "version"),
     "Precios de costo": ("system_code", "sku", "list_code", "valid_from"),
 }
 assert IDENTITY.keys() == SCHEMAS.keys()

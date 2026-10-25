@@ -31862,6 +31862,12 @@ components:
           allOf:
           - $ref: '#/components/schemas/CategoryEnum'
           default: OTHER
+        purchasing_sku:
+          type: string
+          maxLength: 100
+        manufacturer_name:
+          type: string
+          maxLength: 255
       required:
       - name
       - qty
@@ -31886,6 +31892,14 @@ components:
           allOf:
           - $ref: '#/components/schemas/CategoryEnum'
           default: OTHER
+        purchasing_sku:
+          type: string
+          minLength: 1
+          maxLength: 100
+        manufacturer_name:
+          type: string
+          minLength: 1
+          maxLength: 255
       required:
       - name
       - qty

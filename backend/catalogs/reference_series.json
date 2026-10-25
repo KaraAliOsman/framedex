@@ -287,28 +287,36 @@
                 "name": "Cremona abatir E25 1200–1400 3B Vorne",
                 "qty": "1",
                 "unit": "EA",
-                "category": "LOCK"
+                "category": "LOCK",
+                "purchasing_sku": "121000054",
+                "manufacturer_name": "Vorne"
               },
               {
                 "sku": "121000060",
                 "name": "Bisagra 2D 100 mm blanca Vorne",
                 "qty": "3",
                 "unit": "EA",
-                "category": "HINGE"
+                "category": "HINGE",
+                "purchasing_sku": "121000060",
+                "manufacturer_name": "Vorne"
               },
               {
                 "sku": "121000150",
                 "name": "Cerradero abatir R13 Vorne",
                 "qty": "3",
                 "unit": "EA",
-                "category": "LOCK"
+                "category": "LOCK",
+                "purchasing_sku": "121000150",
+                "manufacturer_name": "Vorne"
               },
               {
                 "sku": "120100059",
                 "name": "Manilla recta blanca",
                 "qty": "1",
                 "unit": "EA",
-                "category": "HANDLE"
+                "category": "HANDLE",
+                "purchasing_sku": "120100059",
+                "manufacturer_name": "Vorne"
               }
             ],
             "source": "ot-385",
@@ -328,28 +336,36 @@
                 "name": "Cremona abatir E25 400–600 2B Vorne",
                 "qty": "1",
                 "unit": "EA",
-                "category": "LOCK"
+                "category": "LOCK",
+                "purchasing_sku": "121000050",
+                "manufacturer_name": "Vorne"
               },
               {
                 "sku": "121000060",
                 "name": "Bisagra 2D 100 mm blanca Vorne",
                 "qty": "3",
                 "unit": "EA",
-                "category": "HINGE"
+                "category": "HINGE",
+                "purchasing_sku": "121000060",
+                "manufacturer_name": "Vorne"
               },
               {
                 "sku": "121000150",
                 "name": "Cerradero abatir R13 Vorne",
                 "qty": "3",
                 "unit": "EA",
-                "category": "LOCK"
+                "category": "LOCK",
+                "purchasing_sku": "121000150",
+                "manufacturer_name": "Vorne"
               },
               {
                 "sku": "120100059",
                 "name": "Manilla recta blanca",
                 "qty": "1",
                 "unit": "EA",
-                "category": "HANDLE"
+                "category": "HANDLE",
+                "purchasing_sku": "120100059",
+                "manufacturer_name": "Vorne"
               }
             ],
             "source": "ot-385",
