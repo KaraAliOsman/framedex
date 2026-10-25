@@ -44,3 +44,26 @@ def test_series_without_cited_data_need_the_manufacturer_manual():
             assert series["missing"], series["id"]
         # A reference never claims authority: prices and fabrication come from the workshop.
         assert not series["capabilities"]["quotable"] and not series["capabilities"]["manufacturable"]
+
+
+def test_a_technical_sheet_cites_its_documents_and_creates_a_series_payload():
+    from catalogs.series_serializers import SeriesCreateSerializer
+
+    data = registry()
+    sheets = [series for series in data["series"] if series.get("technical")]
+    assert sheets, "PRO6004 carries the manufacturer's cutting facts"
+    for series in sheets:
+        technical = series["technical"]
+        assert set(technical["sources"]) <= set(data["sources"])
+        for row in technical["profiles"] + technical["glazing"] + technical["hardware"]:
+            assert row["source"] in data["sources"] and row["pages"]
+        strip = lambda row: {key: value for key, value in row.items() if key not in ("source", "pages")}  # noqa: E731
+        payload = SeriesCreateSerializer(data={
+            "template_id": "pvc-casement-60-70", "template_version": 1,
+            "name": series["seed"]["name"], "code": series["seed"]["code"],
+            "manufacturer": series["seed"]["manufacturer"], "rules": technical["rules"],
+            "profiles": [strip(row) for row in technical["profiles"]],
+            "glazing": [strip(row) for row in technical["glazing"]],
+            "hardware": [strip(row) for row in technical["hardware"]],
+        })
+        assert payload.is_valid(), payload.errors

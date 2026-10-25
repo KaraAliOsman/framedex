@@ -51,6 +51,41 @@ class ReferenceCapabilitiesSerializer(serializers.Serializer):
     cnc = serializers.BooleanField()
 
 
+class ReferenceTechnicalProfileSerializer(serializers.Serializer):
+    sku = serializers.CharField()
+    name = serializers.CharField()
+    role = serializers.CharField()
+    face_width_mm = serializers.CharField()
+    commercial_length_mm = serializers.CharField()
+    welding_loss_mm = serializers.CharField()
+    reinforcement_sku = serializers.CharField(required=False)
+    screw_sku = serializers.CharField(required=False)
+    reinforcement_rule = serializers.JSONField(required=False)
+    source = serializers.CharField()
+    pages = serializers.CharField()
+
+
+class ReferenceTechnicalGlazingSerializer(serializers.Serializer):
+    bead_sku = serializers.CharField()
+    glass_thickness_mm = serializers.CharField()
+    bead_width_mm = serializers.CharField()
+    cut_add_mm = serializers.CharField()
+    source = serializers.CharField()
+    pages = serializers.CharField()
+
+
+class ReferenceTechnicalSerializer(serializers.Serializer):
+    """Cited cutting facts a workshop may start its series from (never prices)."""
+
+    note = serializers.CharField()
+    sources = serializers.ListField(child=serializers.CharField())
+    rules = serializers.JSONField()
+    rules_source = serializers.CharField()
+    profiles = ReferenceTechnicalProfileSerializer(many=True)
+    glazing = ReferenceTechnicalGlazingSerializer(many=True)
+    hardware = serializers.JSONField()
+
+
 class ReferenceSeriesSerializer(serializers.Serializer):
     id = serializers.CharField()
     manufacturer = serializers.CharField()
@@ -71,6 +106,7 @@ class ReferenceSeriesSerializer(serializers.Serializer):
     # P10: no cited fact or article yet — the series exists only as a name
     # until the manufacturer's manual is incorporated.
     needs_manufacturer_manual = serializers.BooleanField()
+    technical = ReferenceTechnicalSerializer(required=False, allow_null=True)
 
 
 class ReferenceSourceSerializer(serializers.Serializer):

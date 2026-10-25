@@ -110,7 +110,7 @@
   --z-base: 0;
   --z-sticky: 10;
   --z-rail: 20;
-  --z-popover: 40;
+  --z-popover: 65; /* Above drawers and dialogs that open it; below toasts. */
   --z-drawer: 50;
   --z-dialog: 60;
   --z-toast: 70;

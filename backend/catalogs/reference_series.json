@@ -124,6 +124,238 @@
         "family": "PRO6004",
         "depth_mm": "60",
         "chamber_count": "4"
+      },
+      "technical": {
+        "note": "Cortes del taller del dueño (OT 385: soldadura de 3 mm por extremo); el fabricante indica 2,5 mm. Cada taller ajusta su soldadura en la ventana de prueba.",
+        "sources": [
+          "plantilla-corte",
+          "ot-385"
+        ],
+        "rules": {
+          "sash_overlap_mm": "28.00",
+          "rebate_depth_mm": "20.00",
+          "glass_clearance_white_mm": "5.00",
+          "glass_clearance_foil_mm": "5.00",
+          "end_milling_overlap_mm": "64.00",
+          "opening_capabilities": [
+            {
+              "use": "WINDOW",
+              "movement": "FIXED",
+              "direction": "INWARD",
+              "leaf_role": "SINGLE",
+              "fixed_in_sash": false,
+              "hinge_sides": [
+                "NONE"
+              ],
+              "hardware_kit_skus": [],
+              "handle_rule": null,
+              "source": "Plantilla de corte Proline, pág. 1 (ventana fija)"
+            },
+            {
+              "use": "WINDOW",
+              "movement": "TURN",
+              "direction": "INWARD",
+              "leaf_role": "SINGLE",
+              "fixed_in_sash": false,
+              "hinge_sides": [
+                "LEFT",
+                "RIGHT"
+              ],
+              "hardware_kit_skus": [
+                "PRO6004-KIT-ABATIR-1200",
+                "PRO6004-KIT-ABATIR-400"
+              ],
+              "handle_rule": {
+                "vertical_reference": "CENTER",
+                "default_height_mm": null,
+                "minimum_from_top_mm": "100.00",
+                "minimum_from_bottom_mm": "100.00",
+                "closing_edge_offset_mm": "40.00",
+                "source": "OT 385 del dueño, págs. 6–7 (herrajes Vorne de las hojas de 1284–1292 mm y de 554,5 mm)"
+              },
+              "source": "OT 385 del dueño, págs. 6–7 (herrajes Vorne de las hojas de 1284–1292 mm y de 554,5 mm)"
+            }
+          ]
+        },
+        "profiles": [
+          {
+            "sku": "PRO01",
+            "name": "Marco fijo Pro01 60/64",
+            "role": "FRAME",
+            "face_width_mm": "64.00",
+            "commercial_length_mm": "5800.00",
+            "welding_loss_mm": "6.00",
+            "source": "plantilla-corte",
+            "pages": "1–3",
+            "reinforcement_sku": "PRO-R1",
+            "screw_sku": "120500051",
+            "reinforcement_rule": {
+              "reinforcement_sku": "PRO-R1",
+              "reinforcement_type": "Refuerzo múltiple Pro-R1 28×25×28 · 1,3 mm",
+              "minimum_length_mm": "0.00",
+              "required_finishes": [],
+              "required_non_white": true,
+              "cut_deduction_mm": "114.00",
+              "screws_per_m": "4.0000",
+              "screw_sku": "120500051",
+              "screw_weight_kg": "0.002000",
+              "source": "OT 385 del dueño, págs. 6–7: marco 1199 → refuerzo 1085 (soldadura del taller 3 mm por extremo); masa del tornillo 3,9 × 19 mm estimada en 2 g (confirmar con el proveedor)"
+            }
+          },
+          {
+            "sku": "PRO521",
+            "name": "Hoja ventana exterior Pro521 80 mm",
+            "role": "SASH",
+            "face_width_mm": "80.00",
+            "commercial_length_mm": "5800.00",
+            "welding_loss_mm": "6.00",
+            "source": "plantilla-corte",
+            "pages": "2–3, 14",
+            "reinforcement_sku": "PRO-R2",
+            "screw_sku": "120500051",
+            "reinforcement_rule": {
+              "reinforcement_sku": "PRO-R2",
+              "reinforcement_type": "Refuerzo múltiple Pro-R2 29×28×18 · 1,3 mm",
+              "minimum_length_mm": "0.00",
+              "required_finishes": [],
+              "required_non_white": true,
+              "cut_deduction_mm": "146.00",
+              "screws_per_m": "4.0000",
+              "screw_sku": "120500051",
+              "screw_weight_kg": "0.002000",
+              "source": "OT 385 del dueño, pág. 6: hoja Pro521 554,5 → refuerzo 408,5; masa del tornillo 3,9 × 19 mm estimada en 2 g (confirmar con el proveedor)"
+            }
+          },
+          {
+            "sku": "PRO03",
+            "name": "Travesaño Pro03 80 mm",
+            "role": "MULLION_V",
+            "face_width_mm": "80.00",
+            "commercial_length_mm": "5800.00",
+            "welding_loss_mm": "0.00",
+            "source": "ot-385",
+            "pages": "6–7",
+            "reinforcement_sku": "PRO-R1",
+            "screw_sku": "120500051",
+            "reinforcement_rule": {
+              "reinforcement_sku": "PRO-R1",
+              "reinforcement_type": "Refuerzo múltiple Pro-R1 28×25×28 · 1,3 mm",
+              "minimum_length_mm": "0.00",
+              "required_finishes": [],
+              "required_non_white": true,
+              "cut_deduction_mm": "20.00",
+              "screws_per_m": "4.0000",
+              "screw_sku": "120500051",
+              "screw_weight_kg": "0.002000",
+              "source": "OT 385, págs. 6–7: travesaño 1350 → refuerzo 1330; masa del tornillo 3,9 × 19 mm estimada en 2 g (confirmar con el proveedor)"
+            }
+          },
+          {
+            "sku": "PRO05",
+            "name": "Junquillo Pro05 para termopanel 18–20 mm",
+            "role": "GLAZING_BEAD",
+            "face_width_mm": "19.00",
+            "commercial_length_mm": "5800.00",
+            "welding_loss_mm": "0.00",
+            "source": "plantilla-corte",
+            "pages": "1–3, 14"
+          }
+        ],
+        "glazing": [
+          {
+            "bead_sku": "PRO05",
+            "glass_thickness_mm": "20.00",
+            "bead_width_mm": "19.00",
+            "cut_add_mm": "10.00",
+            "source": "plantilla-corte",
+            "pages": "1–3, 14"
+          }
+        ],
+        "rules_source": "Plantilla de corte · ventanas de PVC Proline, págs. 1–3 y 14 (marco 1000→1005, hoja 933, vidrio 902 y 798)",
+        "hardware": [
+          {
+            "sku": "PRO6004-KIT-ABATIR-1200",
+            "name": "Kit abatir Vorne · hoja 1200–1400 mm",
+            "opening_type": "TURN",
+            "min_leaf_width_mm": "300.00",
+            "max_leaf_width_mm": "900.00",
+            "min_leaf_height_mm": "1200.00",
+            "max_leaf_height_mm": "1400.00",
+            "contents": [
+              {
+                "sku": "121000054",
+                "name": "Cremona abatir E25 1200–1400 3B Vorne",
+                "qty": "1",
+                "unit": "EA",
+                "category": "LOCK"
+              },
+              {
+                "sku": "121000060",
+                "name": "Bisagra 2D 100 mm blanca Vorne",
+                "qty": "3",
+                "unit": "EA",
+                "category": "HINGE"
+              },
+              {
+                "sku": "121000150",
+                "name": "Cerradero abatir R13 Vorne",
+                "qty": "3",
+                "unit": "EA",
+                "category": "LOCK"
+              },
+              {
+                "sku": "120100059",
+                "name": "Manilla recta blanca",
+                "qty": "1",
+                "unit": "EA",
+                "category": "HANDLE"
+              }
+            ],
+            "source": "ot-385",
+            "pages": "6–7"
+          },
+          {
+            "sku": "PRO6004-KIT-ABATIR-400",
+            "name": "Kit abatir Vorne · hoja 400–600 mm",
+            "opening_type": "TURN",
+            "min_leaf_width_mm": "300.00",
+            "max_leaf_width_mm": "900.00",
+            "min_leaf_height_mm": "400.00",
+            "max_leaf_height_mm": "600.00",
+            "contents": [
+              {
+                "sku": "121000050",
+                "name": "Cremona abatir E25 400–600 2B Vorne",
+                "qty": "1",
+                "unit": "EA",
+                "category": "LOCK"
+              },
+              {
+                "sku": "121000060",
+                "name": "Bisagra 2D 100 mm blanca Vorne",
+                "qty": "3",
+                "unit": "EA",
+                "category": "HINGE"
+              },
+              {
+                "sku": "121000150",
+                "name": "Cerradero abatir R13 Vorne",
+                "qty": "3",
+                "unit": "EA",
+                "category": "LOCK"
+              },
+              {
+                "sku": "120100059",
+                "name": "Manilla recta blanca",
+                "qty": "1",
+                "unit": "EA",
+                "category": "HANDLE"
+              }
+            ],
+            "source": "ot-385",
+            "pages": "6–7"
+          }
+        ]
       }
     },
     {
@@ -674,6 +906,14 @@
       "sha256": null,
       "pages_total": null,
       "url": "https://www.deceuninck.cl/nuestros_catalogos.html"
+    },
+    "ot-385": {
+      "title": "Orden de trabajo N° 385 (NuveraPro) con cortes reales de PRO6004",
+      "holder": "Taller del dueño (STARWIN)",
+      "kind": "Documento aportado por el dueño",
+      "sha256": "7ce2fd459ce5a8a95d5045d189ef4eadaae50b25c9ad584c7eaa52f74664ac95",
+      "pages_total": 7,
+      "url": null
     }
   }
 }

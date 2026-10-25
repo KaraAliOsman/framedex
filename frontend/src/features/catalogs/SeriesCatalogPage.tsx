@@ -14,6 +14,10 @@ import type {
   SeriesCell,
   SeriesSheet,
   SystemResponse,
+  TemplateGlazingInputRequest,
+  TemplateHardwareInputRequest,
+  TemplateProfileInputRequest,
+  TemplateSystemInputRequest,
 } from "../../api/generated/models";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { Button, DeniedState, Dialog, Loading } from "../../ui";
@@ -73,6 +77,43 @@ export function templateForReference(
     const system = template.system as { material?: string; system_family?: string };
     return system.material === seed.material && system.system_family === seed.system_family;
   });
+}
+
+/** What a library series contributes to a new workshop series: its identity
+ * and, when the library cites a cutting sheet, the profiles, bead and rules.
+ * Prices stay the workshop's own. */
+export function referenceSeriesInput(reference: ReferenceSeries | null): {
+  rules?: TemplateSystemInputRequest;
+  profiles?: TemplateProfileInputRequest[];
+  glazing?: TemplateGlazingInputRequest[];
+  hardware?: TemplateHardwareInputRequest[];
+} {
+  if (!reference) return {};
+  const rules = {
+    ...(reference.seed.depth_mm ? { depth_mm: reference.seed.depth_mm } : {}),
+    ...(reference.seed.chamber_count
+      ? { chamber_count: Number(reference.seed.chamber_count) }
+      : {}),
+    ...((reference.technical?.rules as Record<string, unknown> | undefined) ?? {}),
+  };
+  const technical = reference.technical;
+  return {
+    ...(Object.keys(rules).length ? { rules: rules as TemplateSystemInputRequest } : {}),
+    ...(technical
+      ? {
+          profiles: technical.profiles.map(
+            ({ source: _source, pages: _pages, ...row }) => row as TemplateProfileInputRequest,
+          ),
+          glazing: technical.glazing.map(
+            ({ source: _source, pages: _pages, ...row }) => row as TemplateGlazingInputRequest,
+          ),
+          hardware: (technical.hardware as Array<Record<string, unknown>>).map(
+            ({ source: _source, pages: _pages, ...row }) =>
+              row as unknown as TemplateHardwareInputRequest,
+          ),
+        }
+      : {}),
+  };
 }
 
 export function SeriesCatalogPage(): JSX.Element {
@@ -217,16 +258,7 @@ function SeriesCatalogHome({
         {
           template_id: template.id,
           template_version: template.version,
-          ...(reference?.seed.depth_mm || reference?.seed.chamber_count
-            ? {
-                rules: {
-                  ...(reference.seed.depth_mm ? { depth_mm: reference.seed.depth_mm } : {}),
-                  ...(reference.seed.chamber_count
-                    ? { chamber_count: Number(reference.seed.chamber_count) }
-                    : {}),
-                },
-              }
-            : {}),
+          ...referenceSeriesInput(reference),
           name: String(form.get("name") ?? "").trim(),
           code: String(form.get("code") ?? "").trim(),
           ...(String(form.get("manufacturer") ?? "").trim()
@@ -511,8 +543,9 @@ function SeriesCatalogHome({
               </label>
               {reference ? (
                 <p>
-                  La biblioteca aporta solo la identidad de {reference.series_name}. Los perfiles,
-                  largos y precios salen del manual de tu fabricante o de tu planilla.
+                  {reference.technical
+                    ? `Trae la identidad de ${reference.series_name} y su hoja de corte citada: ${reference.technical.profiles.length} perfiles, junquillo y reglas. ${reference.technical.note} Los precios son los de tu proveedor.`
+                    : `La biblioteca aporta solo la identidad de ${reference.series_name}. Los perfiles, largos y precios salen del manual de tu fabricante o de tu planilla.`}
                 </p>
               ) : null}
               <p>

@@ -9,6 +9,7 @@ import type { ReferenceArticle } from "./referenceArticle";
 import type { ReferenceCapabilities } from "./referenceCapabilities";
 import type { ReferenceFact } from "./referenceFact";
 import type { ReferenceSeriesSeed } from "./referenceSeriesSeed";
+import type { ReferenceTechnical } from "./referenceTechnical";
 
 export interface ReferenceSeries {
   id: string;
@@ -26,4 +27,5 @@ export interface ReferenceSeries {
   incidents: string[];
   seed: ReferenceSeriesSeed;
   needs_manufacturer_manual: boolean;
+  technical?: ReferenceTechnical | null;
 }

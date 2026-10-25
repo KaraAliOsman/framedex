@@ -21,7 +21,7 @@ def catalog_rows():
                 "manufacturer_name": "Proveedor de prueba", "source": source}))
     for rule in params["dimensional_limits"]:
         rows.append(("Límites", {**rule, "system_code": code, "source": source}))
-    rows.append(("Colores y SKU por color", {"system_code": code, "sku": fixture["articles"][0]["sku"], "finish": "WHITE", "commercial_sku": "COMPRA-MARCO-BLANCO", "physical_stock_identity": "MARCO-BLANCO", "source": source}))
+    rows.append(("Colores y SKU por color", {"system_code": code, "sku": fixture["articles"][0]["sku"], "finish": "WHITE", "commercial_sku": "COMPRA-MARCO-BLANCO", "physical_stock_identity": "MARCO-BLANCO", "manufacturer_name": "Proveedor de prueba", "source": source}))
     for glass in fixture["glasses"]:
         bead=params["glazing_bead_rules"]["24.00" if "16" in glass["glass_spec"] else "4.00"]
         rows.append(("Vidrios", {**glass, **{key:value for key,value in bead.items() if key!="bead_article"},
