@@ -70,6 +70,15 @@ class SteelBarSerializer(StrictSerializer):
     is_active = serializers.BooleanField(required=False)
 
 
+class ProfilePurchaseSerializer(StrictSerializer):
+    profile_article_id = serializers.UUIDField()
+    commercial_sku = serializers.CharField(max_length=150)
+    manufacturer_name = serializers.CharField(max_length=255)
+    supplier_name = serializers.CharField(required=False, allow_null=True, max_length=255)
+    purchase_unit = serializers.ChoiceField(choices=["BAR"])
+    is_active = serializers.BooleanField(required=False)
+
+
 class GlassMappingSerializer(StrictSerializer):
     system_id = serializers.UUIDField()
     technical_sku = serializers.CharField(max_length=100)
@@ -83,6 +92,33 @@ class GlassMappingSerializer(StrictSerializer):
 
 COLORS = service.Resource("catalog_color_skus", ColorSkuSerializer, backend_lock=True)
 STEELS = service.Resource("reinforcement_articles", SteelBarSerializer, backend_lock=True)
+# A series without a finish chart buys plain bars. The table has no system
+# column, so it is written here directly instead of through the catalog service.
+PURCHASES = "profile_purchase_mappings"
+_PURCHASE_FIELDS = ("profile_article_id", "commercial_sku", "manufacturer_name", "supplier_name",
+                    "purchase_unit", "is_active")
+
+
+def _purchase(row):
+    if row is None:
+        return None
+    current = {key: row[key] for key in ("id", "org_id", *_PURCHASE_FIELDS)}
+    return {**current, "revision": service.catalog_revision(current)}
+
+
+def _write_purchase(org_id, row_id, data, *, create):
+    columns = [name for name in _PURCHASE_FIELDS if name in data]
+    with catalog_backend():
+        if create:
+            found = rows(f"INSERT INTO public.{PURCHASES}(org_id,{','.join(columns)}) "
+                         f"VALUES(%s,{','.join(['%s'] * len(columns))}) RETURNING *",
+                         [org_id, *[data[name] for name in columns]])
+        else:
+            found = rows(f"UPDATE public.{PURCHASES} SET {','.join(name + '=%s' for name in columns)} "
+                         "WHERE id=%s AND org_id=%s RETURNING *", [*[data[name] for name in columns], row_id, org_id])
+    if not found:
+        raise contract_error(409, "catalog_undo_stale", "La compra de barra cambió. Revisa su versión actual.")
+    return _purchase(found[0])
 GLASS = service.Resource("glass_purchase_mappings", GlassMappingSerializer, backend_lock=True)
 RESOURCES = {resource.table: resource for resource in
              (service.SYSTEMS, service.ARTICLES, service.BEADS, service.KITS, COLORS, STEELS, GLASS, glass_catalog.COMPOSITIONS)}
@@ -278,6 +314,22 @@ def _plan(org_id, import_row, entries, *, lock=False):
                             errors.append(_error(key, name, "Completa los datos de stock de esta barra de refuerzo."))
                     steel_data["physical_stock_identity"] = uuid5(UUID(str(org_id)), "steel:" + values["commercial_sku"])
                 data = _validated(SteelBarSerializer, steel_data, key, errors)
+            elif not (current.get(("system", code)) or {}).get("finish_authority"):
+                # Without a finish chart the price buys the profile as a plain bar.
+                found = rows(f"SELECT * FROM public.{PURCHASES} WHERE org_id=%s AND profile_article_id=%s AND is_active",
+                             [org_id, profile["id"]]) if profile.get("revision") else []
+                before = _purchase(found[0]) if found else None
+                purchase = {"profile_article_id": profile["id"], "commercial_sku": values["commercial_sku"],
+                    "manufacturer_name": values.get("manufacturer_name"), "purchase_unit": values.get("purchase_unit") or "BAR",
+                    **{name: values[name] for name in ("supplier_name", "is_active") if values.get(name) is not None}}
+                if purchase["manufacturer_name"] is None:
+                    errors.append(_error(key, "manufacturer_name", "Indica el fabricante de la barra."))
+                data = _validated(ProfilePurchaseSerializer, purchase, key, errors)
+                if data is not None:
+                    changes.append(Change(key, sheet, PURCHASES, str(before["id"]) if before else
+                        str(uuid5(UUID(str(import_row["id"])), json_text(identity))), data, before,
+                        "update" if before else "create"))
+                continue
             else:
                 if values["finish"] not in (current.get(("system", code)) or {}).get("finishes", []):
                     errors.append(_error(key, "finish", "Declara este color en la hoja Sistemas antes de asignar su SKU."))
@@ -482,6 +534,14 @@ def publish(*, org_id, actor_id, import_id, items, review_token):
                     undo.append({"table": "cost_lists", "id": str(cost_lists[code]["id"]), "action": "deactivate"})
                 item = admin_write("cost-items", org_id, {**data["item"], "cost_list_id": cost_lists[code]["id"]},
                                    "Publicación revisada de catálogo")
+            elif change.table == PURCHASES:
+                target_id = replacements.get(change.row_id, change.row_id)
+                item = _write_purchase(org_id, target_id, data, create=change.action == "create")
+                replacements[change.row_id] = str(item["id"])
+                undo.append({"table": PURCHASES, "id": str(item["id"]), "action": change.action,
+                             "before": change.before, "after_revision": item["revision"]})
+                result.append({"key": change.key, "table": PURCHASES, "row_id": str(item["id"]), "action": change.action})
+                continue
             else:
                 resource = RESOURCES[change.table]
                 if change.action == "create":
@@ -570,6 +630,16 @@ def undo_publication(*, org_id, actor_id, import_id):
                 continue  # The parent glass mapping is retired; its immutable recipe is retained.
             if change["table"] == "cost_lists":
                 admin_write("cost-lists", org_id, {"is_active": False}, "Deshacer importación de catálogo", row_id=change["id"])
+                continue
+            if change["table"] == PURCHASES:
+                with catalog_backend():
+                    found = rows(f"SELECT * FROM public.{PURCHASES} WHERE id=%s AND org_id=%s FOR UPDATE",
+                                 [change["id"], org_id])
+                if not found or _purchase(found[0])["revision"] != change["after_revision"]:
+                    raise contract_error(409, "catalog_undo_stale", "El catálogo cambió después de publicar. Revisa su nueva versión antes de deshacer.")
+                restore = ({"is_active": False} if change["action"] == "create" else
+                           {key: value for key, value in change["before"].items() if key in _PURCHASE_FIELDS})
+                _write_purchase(org_id, change["id"], restore, create=False)
                 continue
             resource = RESOURCES[change["table"]]
             current = service.retrieve(resource, org_id, change["id"], lock=True)

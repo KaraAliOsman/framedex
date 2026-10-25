@@ -203,7 +203,7 @@ for (const viewport of [
       await wizard.getByRole("button", { name: "Continuar a Manual", exact: true }).click();
       await wizard
         .getByLabel("Archivo del catálogo", { exact: true })
-        .setInputFiles(fixture("p10-pro6004-ficha-sintetica.xlsx"));
+        .setInputFiles(fixture("p12-pro6004-compras.xlsx"));
       await wizard.getByRole("button", { name: "Comparar cambios", exact: true }).click();
       await wizard.getByRole("checkbox", { name: /Revisé la referencia y los cambios/ }).check();
       await capture(page, info, "f1-manual");
@@ -216,8 +216,8 @@ for (const viewport of [
       await wizard.getByRole("button", { name: "Continuar a Precios", exact: true }).click();
       await wizard
         .getByLabel("Archivo de precios", { exact: true })
-        .setInputFiles(fixture("p10-pro6004-precios-sinteticos.xlsx"));
-      await expect(wizard.getByText(/hoja Precios de ensayo · 19 filas/)).toBeVisible();
+        .setInputFiles(fixture("p12-pro6004-precios.xlsx"));
+      await expect(wizard.getByText(/hoja Lista de compra · 10 filas/)).toBeVisible();
       await wizard.getByRole("button", { name: "Crear una lista nueva", exact: true }).click();
       await wizard.getByLabel("Proveedor", { exact: true }).fill("Proline · lista de ensayo");
       await wizard.getByLabel("Vigente desde", { exact: true }).fill(santiagoToday());
@@ -236,11 +236,14 @@ for (const viewport of [
       await wizard
         .getByRole("button", { name: "Continuar a Ventana de prueba", exact: true })
         .click();
+      // An 800 × 1 400 mm side-hung sash fits the Vorne 1200–1400 kit of the work order.
+      await wizard.getByRole("textbox", { name: "Ancho · mm", exact: true }).fill("800");
+      await wizard.getByRole("textbox", { name: "Alto · mm", exact: true }).fill("1400");
       await wizard.getByRole("button", { name: "Calcular ventana", exact: true }).click();
-      // The synthetic sheet is this workshop's manual: 1 200 mm + 2 × 3 mm of weld.
+      // Work order N° 385: the workshop welds 3 mm per end, 800 → 806.
       await wizard
-        .getByRole("textbox", { name: /Marco · PRO6004-ENSAYO-MARCO · largo 1 según tu manual/ })
-        .fill("1206,00");
+        .getByRole("textbox", { name: /Marco · PRO01 · largo 1 según tu manual/ })
+        .fill("806,00");
       await wizard.getByRole("button", { name: "Comparar medidas", exact: true }).click();
       await expect(wizard.getByText("Coincide", { exact: true })).toBeVisible();
       await wizard
@@ -274,7 +277,7 @@ for (const viewport of [
       const work = new URL(page.url()).pathname;
       for (const [starter, place] of [
         ["Fijo · Ventanal fijo de una pieza", "Living · fijo"],
-        ["Una hoja · Oscilobatiente de una hoja", "Dormitorio · una hoja"],
+        ["Fijo · Ventanal fijo de una pieza", "Dormitorio · abatible"],
         ["Fijo · Ventanal fijo de una pieza", "Baño · fijo"],
       ] as const) {
         await page.getByRole("link", { name: "Añadir ventana", exact: true }).first().click();
@@ -283,9 +286,27 @@ for (const viewport of [
         // Below 1280 px the inspector is a sheet, closed by default.
         if (viewport.width < 1280)
           await page.getByRole("button", { name: "Inspector", exact: true }).click();
+        // PRO6004 declares fixed and side-hung sashes (work order N° 385);
+        // an 800 mm side-hung window fits its Vorne 1200–1400 kit.
+        if (place.includes("abatible")) {
+          await page.getByRole("textbox", { name: "Ancho", exact: true }).fill("800");
+          await page.getByRole("textbox", { name: "Ancho", exact: true }).press("Enter");
+          await page
+            .getByRole("button", { name: /^Elegir apertura/ })
+            .first()
+            .click();
+          await page
+            .getByRole("group", { name: "Aperturas del sistema" })
+            .getByRole("button", { name: /Abatible/ })
+            .first()
+            .click();
+          await expect(
+            page.getByRole("button", { name: /^Elegir apertura · Abatible/ }).first(),
+          ).toBeVisible();
+        }
         await page
           .getByRole("combobox", { name: "Vidrio", exact: true })
-          .selectOption({ label: "4-16-4 Float Incoloro" });
+          .selectOption({ label: "DVH 4 incoloro + 12 + 4 incoloro" });
         if (viewport.width < 1280)
           await page.getByRole("button", { name: "Cerrar inspector", exact: true }).click();
         const save = page.getByRole("button", { name: "Guardar", exact: true });

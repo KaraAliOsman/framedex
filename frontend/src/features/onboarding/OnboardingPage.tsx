@@ -136,9 +136,11 @@ export function OnboardingPage(): JSX.Element {
                 label={
                   !item.capabilities.reference
                     ? "Identidad sin resolver"
-                    : item.needs_manufacturer_manual
-                      ? "Necesita manual"
-                      : "Completar para cotizar"
+                    : item.technical
+                      ? "Con hoja de corte"
+                      : item.needs_manufacturer_manual
+                        ? "Necesita manual"
+                        : "Completar para cotizar"
                 }
                 tone="neutral"
               />

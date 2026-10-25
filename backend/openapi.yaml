@@ -49932,6 +49932,10 @@ components:
             type: string
         needs_manufacturer_manual:
           type: boolean
+        technical:
+          allOf:
+          - $ref: '#/components/schemas/ReferenceTechnical'
+          nullable: true
       required:
       - articles
       - capabilities
@@ -49989,6 +49993,92 @@ components:
       - error
       - measurements
       - output
+    ReferenceTechnical:
+      type: object
+      description: Cited cutting facts a workshop may start its series from (never
+        prices).
+      properties:
+        note:
+          type: string
+        sources:
+          type: array
+          items:
+            type: string
+        rules: {}
+        rules_source:
+          type: string
+        profiles:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReferenceTechnicalProfile'
+        glazing:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReferenceTechnicalGlazing'
+        hardware: {}
+      required:
+      - glazing
+      - hardware
+      - note
+      - profiles
+      - rules
+      - rules_source
+      - sources
+    ReferenceTechnicalGlazing:
+      type: object
+      properties:
+        bead_sku:
+          type: string
+        glass_thickness_mm:
+          type: string
+        bead_width_mm:
+          type: string
+        cut_add_mm:
+          type: string
+        source:
+          type: string
+        pages:
+          type: string
+      required:
+      - bead_sku
+      - bead_width_mm
+      - cut_add_mm
+      - glass_thickness_mm
+      - pages
+      - source
+    ReferenceTechnicalProfile:
+      type: object
+      properties:
+        sku:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+        face_width_mm:
+          type: string
+        commercial_length_mm:
+          type: string
+        welding_loss_mm:
+          type: string
+        reinforcement_sku:
+          type: string
+        screw_sku:
+          type: string
+        reinforcement_rule: {}
+        source:
+          type: string
+        pages:
+          type: string
+      required:
+      - commercial_length_mm
+      - face_width_mm
+      - name
+      - pages
+      - role
+      - sku
+      - source
+      - welding_loss_mm
     ReferenceWindow:
       type: object
       properties:
