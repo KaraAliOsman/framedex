@@ -47,6 +47,18 @@ def save_company(org_id, data):
     return get_company(org_id)
 
 
+def site_measurement_policy(org_id):
+    """REQUIRED (confirm a site measurement per window) or QUOTED (the quoted
+    size is the fabrication size)."""
+    found = rows("SELECT site_measurement FROM public.tenancy_organizations WHERE id=%s", [org_id])
+    return found[0]["site_measurement"] if found else "REQUIRED"
+
+
+def set_site_measurement_policy(org_id, value):
+    rows("SELECT private.set_site_measurement(%s,%s)", [org_id, value])
+    return {"site_measurement": site_measurement_policy(org_id)}
+
+
 def users(org_id):
     return {
         "items": rows("SELECT * FROM private.company_users(%s)", [org_id]),

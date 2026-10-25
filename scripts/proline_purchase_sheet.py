@@ -47,7 +47,10 @@ def rows(code: str) -> list[tuple[str, dict]]:
         "manufacturer_name": "Proveedor de vidrio del taller", "version": 1,
         "glass_thickness_mm": "20.00", "bead_sku": "PRO05", "bead_width_mm": "19.00",
         "gasket_interior_mm": "3.00", "gasket_exterior_mm": "3.00", "cut_add_mm": "10.00",
-        "source": SOURCE}))
+        # Two 4 mm float panes at 2.5 kg/m² per mm; the area limit is the
+        # DVH 4 + 4 reference the workshop's supplier sheet would state.
+        "weight_kg_m2": "20.00", "max_area_m2": "2.60",
+        "source": SOURCE + "; peso y área máxima: ficha de vidrio del taller de ensayo"}))
     return out
 
 

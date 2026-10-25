@@ -1128,6 +1128,8 @@ def compose_revision(
         # Process authority is frozen into the sealed position: release must
         # route under the profile and system facts that existed at seal — a
         # later catalog or profile edit can never re-route sealed evidence.
+        from projects.company import site_measurement_policy
+        site_measurement = site_measurement_policy(org_id)
         position_system_ids = [
             str(position["system_id"]) for position in positions if position.get("system_id")
         ]
@@ -1153,7 +1155,9 @@ def compose_revision(
                 'system_id':str(position['system_id']), 'nominal_width_mm':str(position['width_mm']),
                 'nominal_height_mm':str(position['height_mm']), 'color':color, 'parametric_tree':tree},revision)
             measurement_confirmed = bool(measure and measure['current'] and measure['state']=='CONFIRMED')
-            production_allowed = production_allowed and measurement_confirmed
+            # A workshop that declares its quoted sizes as fabrication sizes
+            # releases without a site measurement; the snapshot records it.
+            production_allowed = production_allowed and (measurement_confirmed or site_measurement == "QUOTED")
             system_id = UUID(str(position["system_id"]))
             params = SystemParamsRepository().load_visible(system_id, org_id)
             if position_id in extra_authorities:
@@ -1357,20 +1361,22 @@ def compose_revision(
             intents = handle_intents(position["handle_intents"])
             quantity = int(position["quantity"])
             unit_models: list[tuple[str | None, ManufacturingFactsV1]] = []
+            handles_pending = False
             for module_id, computation, module_tree in calculations:
                 scoped_intents = _synthesized_handle_intents(
                     module_tree,
                     computation.manufacturing_trace,
                     _module_scoped(intents, module_id, "bay_id", "leaf_id"),
                 )
-                if is_assembly and _missing_handle_intents(
+                if (is_assembly or allow_incomplete_workshop) and _missing_handle_intents(
                     computation.manufacturing_trace,
                     policies.handles,
                     scoped_intents,
                 ):
-                    # Quote-only assemblies seal incomplete: a module whose
-                    # handle intents were never saved is not projected rather
-                    # than blocking the commercial freeze.
+                    # A commercial freeze seals incomplete: a module whose
+                    # handle heights were never confirmed is not projected
+                    # rather than blocking the quote. It cannot be released.
+                    handles_pending = True
                     continue
                 for repetition in range(1, quantity + 1):
                     unit_models.append((
@@ -1390,6 +1396,11 @@ def compose_revision(
                         ),
                     ))
             units = [unit for _, unit in unit_models]
+            if handles_pending:
+                position_production_allowed = False
+                position_complete = False
+                production_allowed = False
+                documentary_complete = False
             hardware = [HardwareSelectionV1(
                 repetition_index=repetition,
                 bay_id=item.bay_id,
@@ -1462,22 +1473,36 @@ def compose_revision(
                 infill.technical_sku for unit in units for infill in unit.infills
                 if infill.kind == "PANEL"
             }
-            following = load_purchase_authorities(
-                system_id=system_id,
-                org_id=org_id,
-                color=color,
-                profile_skus=profile_skus,
-                finish_authority=params.finish_authority,
-                reinforcement_skus=reinforcement_skus,
-                glass_skus=glass_skus,
-                hardware_skus={item.technical_kit_sku for item in hardware
-                    if not item.contents or not all(component.purchasing_sku is not None for component in item.contents)},
-                panel_skus=panel_skus,
-                fitting_skus={item.technical_sku for item in fittings},
-            )
-            purchase_authorities = _collect_purchase_authorities(
-                purchase_authorities, following
-            )
+            # A bar or kit without its physical purchase binding cannot be
+            # bought for the workshop. A commercial freeze still seals the
+            # quote, honestly not releasable; the workshop path refuses.
+            try:
+                following = load_purchase_authorities(
+                    system_id=system_id,
+                    org_id=org_id,
+                    color=color,
+                    profile_skus=profile_skus,
+                    finish_authority=params.finish_authority,
+                    reinforcement_skus=reinforcement_skus,
+                    glass_skus=glass_skus,
+                    hardware_skus={item.technical_kit_sku for item in hardware
+                        if not item.contents or not all(component.purchasing_sku is not None for component in item.contents)},
+                    panel_skus=panel_skus,
+                    fitting_skus={item.technical_sku for item in fittings},
+                )
+            except DocumentaryError:
+                if not allow_incomplete_workshop:
+                    raise
+                following = None
+                position_production_allowed = False
+                production_allowed = False
+                documentary_complete = False
+                if purchase_positions and purchase_positions[-1].position_id == position_id:
+                    purchase_positions.pop()
+            if following is not None:
+                purchase_authorities = _collect_purchase_authorities(
+                    purchase_authorities, following
+                )
             from dekopen_engine.finishes import prepare_finish
             from production.cnc_coverage import freeze_profile_sections
             position_inputs.append({
@@ -1576,7 +1601,8 @@ def compose_revision(
             "organization_not_found",
         )
         snapshot = {
-            "measurements_required": True,
+            "measurements_required": site_measurement != "QUOTED",
+            "site_measurement": site_measurement,
             "is_demo": any(item.get("is_demo") for item in position_inputs),
             "schema_version": 1,
             "canonical_version": DOCUMENTARY_CANONICAL_VERSION,

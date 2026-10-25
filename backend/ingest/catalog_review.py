@@ -77,6 +77,10 @@ class ProfilePurchaseSerializer(StrictSerializer):
     supplier_name = serializers.CharField(required=False, allow_null=True, max_length=255)
     purchase_unit = serializers.ChoiceField(choices=["BAR"])
     is_active = serializers.BooleanField(required=False)
+    physical_stock_identity = serializers.UUIDField(required=False)
+    stock_color = serializers.CharField(required=False, max_length=40)
+    cutting_profile_id = serializers.UUIDField(required=False)
+    binding_version = serializers.IntegerField(required=False, min_value=1)
 
 
 class GlassMappingSerializer(StrictSerializer):
@@ -96,7 +100,23 @@ STEELS = service.Resource("reinforcement_articles", SteelBarSerializer, backend_
 # column, so it is written here directly instead of through the catalog service.
 PURCHASES = "profile_purchase_mappings"
 _PURCHASE_FIELDS = ("profile_article_id", "commercial_sku", "manufacturer_name", "supplier_name",
-                    "purchase_unit", "is_active")
+                    "purchase_unit", "is_active", "physical_stock_identity", "stock_color",
+                    "cutting_profile_id", "binding_version")
+
+
+def _plain_bar_binding(org_id, kind, commercial_sku):
+    """The physical stock of a bar bought plain (a series without a finish
+    chart): its identity is the purchase code, its color the plain white the
+    series is sold in, cut with the workshop's own cutting profile. Without it
+    the bar quotes but never reaches the work order."""
+    from engine_api.cutting_repository import CuttingRepository
+    from dekopen_engine.cutting import MissingCuttingProfile, AmbiguousCuttingProfile
+    try:
+        profile = CuttingRepository().cutting_profile(org_id)
+    except (MissingCuttingProfile, AmbiguousCuttingProfile):
+        return {}
+    return {"physical_stock_identity": uuid5(UUID(str(org_id)), f"{kind}:{commercial_sku}"),
+            "stock_color": "WHITE", "cutting_profile_id": UUID(str(profile.id)), "binding_version": 1}
 
 
 def _purchase(row):
@@ -306,6 +326,10 @@ def _plan(org_id, import_row, entries, *, lock=False):
                     except ValueError:
                         errors.append(_error(key, "cutting_profile_code", "Declara un perfil de corte vigente de este taller."))
                 binding = ("manufacturer_name", "stock_color", "cutting_profile_id", "binding_version")
+                if not (current.get(("system", code)) or {}).get("finish_authority") and steel_data.get(
+                        "manufacturer_name") and not any(steel_data.get(name) is not None for name in binding[1:]):
+                    plain = _plain_bar_binding(org_id, "steel", values["commercial_sku"])
+                    steel_data.update({name: plain[name] for name in binding[1:] if name in plain})
                 if (current.get(("system", code)) or {}).get("finish_authority") or any(
                         steel_data.get(name) is not None for name in binding[1:]):
                     # A physical stock binding is all-or-nothing; its identity is the purchase itself.
@@ -321,7 +345,8 @@ def _plan(org_id, import_row, entries, *, lock=False):
                 before = _purchase(found[0]) if found else None
                 purchase = {"profile_article_id": profile["id"], "commercial_sku": values["commercial_sku"],
                     "manufacturer_name": values.get("manufacturer_name"), "purchase_unit": values.get("purchase_unit") or "BAR",
-                    **{name: values[name] for name in ("supplier_name", "is_active") if values.get(name) is not None}}
+                    **{name: values[name] for name in ("supplier_name", "is_active") if values.get(name) is not None},
+                    **_plain_bar_binding(org_id, "profile", values["commercial_sku"])}
                 if purchase["manufacturer_name"] is None:
                     errors.append(_error(key, "manufacturer_name", "Indica el fabricante de la barra."))
                 data = _validated(ProfilePurchaseSerializer, purchase, key, errors)

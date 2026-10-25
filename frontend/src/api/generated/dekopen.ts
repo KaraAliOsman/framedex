@@ -414,6 +414,8 @@ import type {
   SimplePolicyWriteRequest,
   SimulateOpsRequest,
   Simulation,
+  SiteMeasurement,
+  SiteMeasurementWriteRequest,
   StepTransition,
   StepTransitionRequestRequest,
   SuccessorRequestRequest,
@@ -16102,6 +16104,165 @@ export const companyNumbering = async (
   return apiMutator<companyNumberingResponse>(getCompanyNumberingUrl(), {
     ...options,
     method: "GET",
+  });
+};
+
+export type companySiteMeasurementResponse200 = {
+  data: SiteMeasurement;
+  status: 200;
+};
+
+export type companySiteMeasurementResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type companySiteMeasurementResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type companySiteMeasurementResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type companySiteMeasurementResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type companySiteMeasurementResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type companySiteMeasurementResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type companySiteMeasurementResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type companySiteMeasurementResponseSuccess = companySiteMeasurementResponse200 & {
+  headers: Headers;
+};
+export type companySiteMeasurementResponseError = (
+  | companySiteMeasurementResponse400
+  | companySiteMeasurementResponse401
+  | companySiteMeasurementResponse403
+  | companySiteMeasurementResponse404
+  | companySiteMeasurementResponse409
+  | companySiteMeasurementResponse422
+  | companySiteMeasurementResponse503
+) & {
+  headers: Headers;
+};
+
+export type companySiteMeasurementResponse =
+  companySiteMeasurementResponseSuccess | companySiteMeasurementResponseError;
+
+export const getCompanySiteMeasurementUrl = () => {
+  return `/api/v1/organization/site-measurement/`;
+};
+
+/**
+ * Whether a window needs a confirmed site measurement before fabrication.
+ */
+export const companySiteMeasurement = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<companySiteMeasurementResponse> => {
+  return apiMutator<companySiteMeasurementResponse>(getCompanySiteMeasurementUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type companySiteMeasurementSaveResponse200 = {
+  data: SiteMeasurement;
+  status: 200;
+};
+
+export type companySiteMeasurementSaveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type companySiteMeasurementSaveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type companySiteMeasurementSaveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type companySiteMeasurementSaveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type companySiteMeasurementSaveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type companySiteMeasurementSaveResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type companySiteMeasurementSaveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type companySiteMeasurementSaveResponseSuccess = companySiteMeasurementSaveResponse200 & {
+  headers: Headers;
+};
+export type companySiteMeasurementSaveResponseError = (
+  | companySiteMeasurementSaveResponse400
+  | companySiteMeasurementSaveResponse401
+  | companySiteMeasurementSaveResponse403
+  | companySiteMeasurementSaveResponse404
+  | companySiteMeasurementSaveResponse409
+  | companySiteMeasurementSaveResponse422
+  | companySiteMeasurementSaveResponse503
+) & {
+  headers: Headers;
+};
+
+export type companySiteMeasurementSaveResponse =
+  companySiteMeasurementSaveResponseSuccess | companySiteMeasurementSaveResponseError;
+
+export const getCompanySiteMeasurementSaveUrl = () => {
+  return `/api/v1/organization/site-measurement/`;
+};
+
+/**
+ * Whether a window needs a confirmed site measurement before fabrication.
+ */
+export const companySiteMeasurementSave = async (
+  siteMeasurementWriteRequest: SiteMeasurementWriteRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<companySiteMeasurementSaveResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<companySiteMeasurementSaveResponse>(getCompanySiteMeasurementSaveUrl(), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(siteMeasurementWriteRequest),
   });
 };
 

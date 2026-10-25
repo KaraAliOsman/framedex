@@ -526,10 +526,19 @@ function seedHandleIntents(position: DocumentaryPreparationPosition): {
       vertical_reference: reference,
     };
     intents.push(intent);
-    seededKeys.push(seedKeyForIntent(intent));
+    // A height the series declares with its source (the manufacturer's
+    // handle rule) is the authority, not a generated midpoint to confirm.
+    const declared =
+      reference === "LEAF_BOTTOM" &&
+      requirement.default_height_mm !== undefined &&
+      Boolean(requirement.source);
+    if (!declared) seededKeys.push(seedKeyForIntent(intent));
   }
   return {
-    position: seededKeys.length ? { ...position, handle_intents: intents } : position,
+    position:
+      intents.length > position.handle_intents.length
+        ? { ...position, handle_intents: intents }
+        : position,
     seededKeys,
   };
 }

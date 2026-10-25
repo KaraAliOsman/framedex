@@ -204,6 +204,40 @@ class CompanyView(APIView):
             return response(company.save_company(org, data))
 
 
+class SiteMeasurementSerializer(serializers.Serializer):
+    site_measurement = serializers.ChoiceField(choices=("REQUIRED", "QUOTED"))
+
+
+class SiteMeasurementWriteSerializer(StrictSerializer):
+    site_measurement = serializers.ChoiceField(choices=("REQUIRED", "QUOTED"))
+
+
+class CompanySiteMeasurementView(APIView):
+    """Whether a window needs a confirmed site measurement before fabrication."""
+
+    parser_classes = [DecimalJSONParser]
+
+    @extend_schema(
+        operation_id="company_site_measurement",
+        responses={200: SiteMeasurementSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def get(self, request):
+        with scope(request, ROLES) as (_, _, org):
+            return response({"site_measurement": company.site_measurement_policy(org)})
+
+    @extend_schema(
+        operation_id="company_site_measurement_save",
+        request=SiteMeasurementWriteSerializer,
+        responses={200: SiteMeasurementSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def put(self, request):
+        data = validate(SiteMeasurementWriteSerializer, request.data)
+        with scope(request) as (_, _, org):
+            return response(company.set_site_measurement_policy(org, data["site_measurement"]))
+
+
 class CompanyUsersView(APIView):
     @extend_schema(
         operation_id="company_users", responses={200: CompanyUsersSerializer, **ERRORS}, **SCHEMA

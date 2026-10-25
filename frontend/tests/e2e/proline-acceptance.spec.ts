@@ -197,6 +197,8 @@ for (const viewport of [
       await expect(
         wizard.getByRole("button", { name: "Paso 1: Serie", exact: true }),
       ).toHaveAttribute("aria-current", "step");
+      const seriesId = new URL(page.url()).searchParams.get("system");
+      expect(seriesId).toBeTruthy();
       lap("serie");
 
       // 7 · The workshop's technical sheet through the official template.
@@ -319,6 +321,23 @@ for (const viewport of [
       await capture(page, info, "f1-obra");
       lap("tres-ventanas");
 
+      // 11b · Ready for the workshop: this one-person workshop measures before
+      // quoting, and confirms the workshop rules PRO6004 never had.
+      await page.goto("/settings/general?section=production");
+      const measuring = page.getByRole("region", { name: "Medición en obra", exact: true });
+      await measuring
+        .getByRole("radio", { name: /Las medidas de la cotización son de fabricación/ })
+        .check();
+      await expect(measuring.getByRole("status")).toContainText("Guardado");
+      await page.goto(`/catalogs/systems?system=${seriesId}`);
+      await page.getByRole("tab", { name: "Taller", exact: true }).click();
+      const rules = page.getByRole("region", { name: "Reglas de taller", exact: true });
+      await rules.getByRole("button", { name: "Confirmar reglas de taller", exact: true }).click();
+      await expect(rules.getByText("Confirmadas · versión 1", { exact: true })).toBeVisible();
+      await capture(page, info, "f1-reglas-de-taller");
+      await page.goto(work);
+      lap("preparacion-de-taller");
+
       // 12 · Issue the quote and send its link.
       await page.getByRole("button", { name: "Enviar cotización", exact: true }).click();
       await page.getByLabel("Cliente", { exact: true }).fill("Rodrigo Soto · cliente de ensayo");
@@ -360,6 +379,20 @@ for (const viewport of [
       await capture(portal, info, "f1-aprobada");
       await visitor.close();
       lap("aprobacion-del-cliente");
+
+      // 14 · Into the workshop: the approved revision is complete for
+      // fabrication, so it releases straight away.
+      await page.goto(`${work}?section=quote`);
+      await page.getByRole("button", { name: "Liberar a producción", exact: true }).click();
+      await expect(page.getByText(/Liberada: 3 Órdenes de trabajo/)).toBeVisible({
+        timeout: 30_000,
+      });
+      await page.goto(`${work}?section=production&tab=cut`);
+      await expect(
+        page.getByRole("region", { name: "Resumen del corte", exact: true }),
+      ).toBeVisible();
+      await capture(page, info, "f1-orden-de-corte");
+      lap("liberacion-a-taller");
       expect(timings.reduce((total, item) => total + item.ms, 0)).toBeLessThan(420_000);
 
       console.info(JSON.stringify({ surface: "proline-acceptance", viewport, timings }));
