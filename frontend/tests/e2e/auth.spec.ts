@@ -12,7 +12,7 @@ const anonKey = requiredEnvironment("SUPABASE_ANON_KEY");
 const serviceRoleKey = requiredEnvironment("SUPABASE_SERVICE_ROLE_KEY");
 const mailpitUrl = environment("MAILPIT_URL") ?? "http://127.0.0.1:25324";
 const djangoUrl = environment("DJANGO_URL") ?? "http://127.0.0.1:8000";
-const demoSeriesLabel = "PVC practicable 60 mm · acoples v7 · DEMO";
+const demoSeriesLabel = "PVC practicable 60 mm · acoples v7 · Ejemplo";
 
 type FixtureUser = {
   email: string;

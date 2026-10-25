@@ -437,7 +437,7 @@ it("creates a project, navigates to the server ID and renders persisted metadata
     name: "Nombre confirmado por servidor",
   });
   // The project code stays visible as secondary metadata, not as the title.
-  expect(screen.getByText("P-1042")).toBeInTheDocument();
+  expect(screen.getByText("N° 1042")).toBeInTheDocument();
   expect(router.state.location.pathname).toBe("/projects/server-created-id");
   expect(screen.getAllByText("Cliente persistido").length).toBeGreaterThan(0);
   // Contact details and internal notes live in the work's «Actividad» facts.

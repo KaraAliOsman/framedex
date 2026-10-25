@@ -49,7 +49,7 @@ def test_new_emissions_never_reuse_unreviewed_glass_properties():
     }}
     assert "UNREVIEWED-MARKER" in field_specs(position)
     current = field_specs(position, authoritative_thermal=True)
-    assert "DEMO" in current and "UNREVIEWED-MARKER" not in current
+    assert "ejemplo" in current and "UNREVIEWED-MARKER" not in current
 
 
 def test_sealed_annex_pdf_contains_sources_with_no_text_outside_body():

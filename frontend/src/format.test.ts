@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parseLocaleNumber } from "./format";
+import { formatCode, parseLocaleNumber } from "./format";
 
 describe("parseLocaleNumber", () => {
   it("reads plain integers and dot decimals", () => {
@@ -32,5 +32,15 @@ describe("parseLocaleNumber", () => {
     expect(parseLocaleNumber("1.5000")).toBe(1.5);
     expect(parseLocaleNumber("1,5,5")).toBeNull();
     expect(parseLocaleNumber("1.5e3")).toBeNull();
+  });
+});
+
+describe("formatCode", () => {
+  it("shows a stored entity code as people read it", () => {
+    expect(formatCode("P-000385")).toBe("N° 385");
+    expect(formatCode("OT-000012", true)).toBe("OT N° 12");
+    expect(formatCode("P-1042", true)).toBe("Obra N° 1042");
+    expect(formatCode("ENTREGA-7")).toBe("ENTREGA-7");
+    expect(formatCode(null)).toBe("—");
   });
 });

@@ -214,7 +214,7 @@ export function PurchaseNeeds({
                     <tr>
                       <td>
                         <span className="ui-value">{line.sku}</span>
-                        {line.is_demo && <small>DEMO · catálogo sintético</small>}
+                        {line.is_demo && <small>Catálogo de ejemplo</small>}
                         <details>
                           <summary>Ver de qué OT sale</summary>
                           <p>

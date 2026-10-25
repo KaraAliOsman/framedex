@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { ProductionOrder } from "../../api/generated/models";
 import { EmptyState, ErrorState, LoadingState } from "../../ui";
-import { formatDate, formatDecimal } from "../../format";
+import { formatCode, formatDate, formatDecimal } from "../../format";
 import { domainLabels } from "../../i18n/domainLabels";
 import { stationCodeLabel } from "./labels";
 import { Icon } from "../../ui/Icon";
@@ -186,7 +186,9 @@ export function ProductionBoard({
                       </span>
                       <span className="production-board-meta">
                         {order.client_name ? `${order.client_name} · ` : ""}
-                        <span className="production-board-code">{order.order_code}</span>
+                        <span className="production-board-code">
+                          {formatCode(order.order_code, true)}
+                        </span>
                       </span>
                       <span className="production-board-next">
                         Siguiente: {order.next_step?.label ?? stationCodeLabel(station.code)}
@@ -256,7 +258,7 @@ export function ProductionBoard({
             {ended.map((o) => (
               <li key={o.id}>
                 <button type="button" onClick={() => onOpen(o.id)}>
-                  {o.order_code} · {domainLabels[o.status] ?? "Falta completar"}
+                  {formatCode(o.order_code, true)} · {domainLabels[o.status] ?? "Falta completar"}
                 </button>
               </li>
             ))}

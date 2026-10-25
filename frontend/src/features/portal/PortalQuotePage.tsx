@@ -15,7 +15,7 @@ import type {
   PortalQuote,
 } from "../../api/generated/models";
 import { applyAppBrand } from "../../brand/head";
-import { formatDate, formatDateTime, formatRevision, isValidRut } from "../../format";
+import { formatCode, formatDate, formatDateTime, formatRevision, isValidRut } from "../../format";
 import { DemoBadge, Loading, Money, StatusBadge, UnknownValue, ValidatedForm } from "../../ui";
 import { actionErrorDetail } from "../errors";
 import { ProposalDrawing, ProposalThumb } from "./proposalDrawing";
@@ -585,7 +585,8 @@ export function PortalQuotePage(): JSX.Element {
               : "La vigencia de esta propuesta terminó. El fabricante debe emitir una cotización nueva."}
           </p>
           <p>
-            {quote.project_name} · {quote.project_code} · {formatRevision(quote.revision_code)}
+            {quote.project_name} · {formatCode(quote.project_code)} ·{" "}
+            {formatRevision(quote.revision_code)}
           </p>
           {quote.approval_status !== "PENDING" && <ProposalState quote={quote} />}
           <Contact organization={quote.organization} />
@@ -604,7 +605,7 @@ export function PortalQuotePage(): JSX.Element {
         <header className="portal-proposal-head">
           <Issuer organization={quote.organization} />
           <div>
-            <p className="portal-kicker">Cotización · {quote.project_code}</p>
+            <p className="portal-kicker">Cotización {formatCode(quote.project_code)}</p>
             <h1>{quote.project_name || "Su obra"}</h1>
             <p>
               Para {quote.client_name || "cliente sin identificar"} · Oferta ·{" "}

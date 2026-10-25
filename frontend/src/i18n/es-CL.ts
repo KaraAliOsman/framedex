@@ -7,7 +7,7 @@ export const messages = {
   "glass.batchClear": "Limpiar selección",
   "glass.rulesTitle": "Reglas de seguridad del vidrio",
   "glass.rulesHelp":
-    "La seguridad se evalúa por organización, con una referencia citada. Los ejemplos DEMO permiten comprobar el flujo; carga y revisa las reglas oficiales antes de usarlas en fabricación.",
+    "La seguridad se evalúa por organización, con una referencia citada. Los ejemplos permiten comprobar el flujo; carga y revisa las reglas oficiales antes de usarlas en fabricación.",
   "glass.rulesImport": "Importar reglas desde el catálogo",
   "glass.rulesLoading": "Cargando reglas de vidrio…",
   "glass.rulesEmpty":
@@ -24,7 +24,7 @@ export const messages = {
   "glass.mandatory": "Obligatoria · impide guardar cuando no cumple",
   "glass.removeRule": "Quitar regla",
   "glass.addRule": "Agregar regla",
-  "glass.examples": "Revisar ejemplos DEMO",
+  "glass.examples": "Revisar ejemplos",
   "glass.reviewRules": "Revisar cambios de reglas",
   "glass.rulesDiff": "Cambios de reglas",
   "glass.rulesConsequence":
@@ -51,14 +51,14 @@ export const messages = {
   "glass.findings": "Avisos del vidrio",
   "glass.blocked": "Bloqueado",
   "glass.notice": "Aviso",
-  "glass.demo": "DEMO · referencia sintética",
+  "glass.demo": "Ejemplo · sin fabricante",
   "glass.sectionUnknown": "Falta · completa el espesor de cada capa para dibujar el corte.",
   "glass.section": "Corte del vidrio a escala",
   "glass.exterior": "Exterior",
   "glass.interior": "Interior",
   "glass.name": "Nombre comercial",
   "glass.source": "Ficha del proveedor",
-  "glass.synthetic": "Datos sintéticos · DEMO",
+  "glass.synthetic": "Ejemplo · sin fabricante",
   "glass.layerOrder": "Capas ordenadas del exterior al interior.",
   "glass.pane": "Paño de vidrio",
   "glass.chamber": "Cámara",
@@ -1038,7 +1038,7 @@ export const messages = {
   "onboarding.identityWorkspace": "Taller activo en esta sesión",
   "onboarding.systemTitle": "Elige tu sistema principal",
   "onboarding.systemDescription":
-    "El sistema de perfiles que más usarás. Las series marcadas DEMO son sintéticas para explorar — no son una ficha certificada.",
+    "El sistema de perfiles que más usarás. Las series de ejemplo sirven para explorar; no son la ficha de un fabricante.",
   "onboarding.loadingSystems": "Cargando sistemas…",
   "onboarding.systemsError": "No fue posible cargar los sistemas.",
   "onboarding.systemsErrorHint": "Revisa la conexión con el taller e intenta nuevamente.",

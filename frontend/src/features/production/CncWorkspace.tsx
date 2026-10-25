@@ -895,7 +895,7 @@ export function CncWorkspace({ orderId }: { orderId: string }) {
                         {profiles.map((p) => (
                           <option key={p.workshop_sku} value={p.workshop_sku!}>
                             {p.workshop_sku}
-                            {p.preview.section?.synthetic ? " · DEMO" : ""}
+                            {p.preview.section?.synthetic ? " · Ejemplo" : ""}
                           </option>
                         ))}
                       </Select>

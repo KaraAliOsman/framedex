@@ -89,7 +89,7 @@ export const hasRounding = (value: string | undefined) =>
   Boolean(value && !/^[-+]?0(?:\.0*)?$/.test(value));
 
 export function extraDescription(item: ExtraDefinition): string {
-  return `${item.name} · ${extraBasisLabels[item.basis]} · costo ${extraTariff(item.cost_rate, item.currency)}/${extraUnit(item.unit)} · venta ${extraTariff(item.selling_rate, item.currency)}/${extraUnit(item.unit)} · ${item.source}${item.synthetic ? " · DEMO" : ""}`;
+  return `${item.name} · ${extraBasisLabels[item.basis]} · costo ${extraTariff(item.cost_rate, item.currency)}/${extraUnit(item.unit)} · venta ${extraTariff(item.selling_rate, item.currency)}/${extraUnit(item.unit)} · ${item.source}${item.synthetic ? " · Ejemplo" : ""}`;
 }
 
 export function extraImportSummary(value: unknown): string[] {

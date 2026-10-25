@@ -269,7 +269,7 @@ def workspace_evidence(repo,project,positions,request,rules,technical,cost_lines
     for authority in repo.authorities:
         if 'cost' in authority:
             item = authority['cost']
-            label = 'Catálogo DEMO' if item.get('is_demo') else f"Lista de costos vigente desde {human_date(item.get('valid_from','Falta completar'))}"
+            label = 'Precios de ejemplo' if item.get('is_demo') else f"Lista de costos vigente desde {human_date(item.get('valid_from','Falta completar'))}"
         elif 'fx' in authority:
             item = authority['fx']
             label = f"FX {item['base_currency']} → {item['quote_currency']} · {human_date(item['observed_date'])} · {str(item['observed_rate']).replace('.',',')}"

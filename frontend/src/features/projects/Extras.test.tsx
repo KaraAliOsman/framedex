@@ -166,7 +166,7 @@ it("renders the allocated net from the engine instead of multiplying the display
   expect(screen.getByRole("cell", { name: "$2.400" })).toBeInTheDocument();
   expect(screen.getByRole("cell", { name: "1,56 m" })).toBeInTheDocument();
   expect(screen.getByText("Lista verificada")).toBeInTheDocument();
-  expect(screen.getByText("Vierteaguas · DEMO")).toBeInTheDocument();
+  expect(screen.getByText("Vierteaguas · Ejemplo")).toBeInTheDocument();
   expect(screen.getByText("0,72 CLP")).toBeInTheDocument();
   expect(extraTariff(undefined)).toBe("Completar");
 });

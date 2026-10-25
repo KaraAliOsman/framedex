@@ -55,7 +55,7 @@ import type {
 } from "../../api/generated/models";
 import { ApiError, apiFetchBlob } from "../../api/apiMutator";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
-import { formatDateTime } from "../../format";
+import { formatCode, formatRevision, formatDateTime } from "../../format";
 import {
   DeniedState,
   BlockedState,
@@ -1372,7 +1372,8 @@ function ProductionOfficePage(): JSX.Element {
                   {prepVersions.map((version) => (
                     <li key={version.version_id}>
                       <span>
-                        {version.project_code} · {version.revision_code} · {version.positions}{" "}
+                        {formatCode(version.project_code, true)} ·{" "}
+                        {formatRevision(version.revision_code)} · {version.positions}{" "}
                         {t("production.prepPositions")}
                       </span>
                       {/* Non-writers get the same action disabled with a reason —
@@ -1429,7 +1430,7 @@ function ProductionOfficePage(): JSX.Element {
                           )
                         }
                       />
-                      {order.order_code}
+                      {formatCode(order.order_code, true)}
                     </label>
                   </li>
                 ))}
@@ -1456,7 +1457,7 @@ function ProductionOfficePage(): JSX.Element {
             {detail ? (
               <>
                 <header className="production-detail-head">
-                  <h2>{detail.order_code}</h2>
+                  <h2>{formatCode(detail.order_code, true)}</h2>
                   <StatusBadge
                     showIcon={false}
                     className={`production-chip status-${detail.status.toLowerCase()}`}
@@ -1663,7 +1664,10 @@ function ProductionOfficePage(): JSX.Element {
                   ) : null}
                 </header>
                 <p className="production-detail-context ui-value">
-                  {resolvedOrder?.project_code ?? "Falta completar · obra no vinculada"} ·{" "}
+                  {resolvedOrder?.project_code
+                    ? formatCode(resolvedOrder.project_code, true)
+                    : "Falta completar · obra no vinculada"}{" "}
+                  ·{" "}
                   {resolvedOrder?.scheduled_date
                     ? `Compromiso ${formatDate(resolvedOrder.scheduled_date)}`
                     : "Falta completar · agenda de entrega pendiente"}{" "}
@@ -1832,7 +1836,8 @@ function ProductionOfficePage(): JSX.Element {
                     <p className="production-remake-provenance">
                       {source ? (
                         <>
-                          {t("production.remakeOf")} <strong>{source.order_code}</strong>
+                          {t("production.remakeOf")}{" "}
+                          <strong>{formatCode(source.order_code, true)}</strong>
                           {reasonBits.length ? ` — ${reasonBits.join(" · ")}` : ""}
                           {remakes.length ? " · " : ""}
                         </>
@@ -1840,7 +1845,9 @@ function ProductionOfficePage(): JSX.Element {
                       {remakes.length ? (
                         <>
                           {t("production.remadeBy")}{" "}
-                          <strong>{remakes.map((order) => order.order_code).join(", ")}</strong>
+                          <strong>
+                            {remakes.map((order) => formatCode(order.order_code, true)).join(", ")}
+                          </strong>
                         </>
                       ) : null}
                     </p>

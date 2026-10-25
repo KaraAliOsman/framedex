@@ -59,7 +59,7 @@ const optionLabels: Record<string, Parameters<typeof t>[0]> = {
   REINFORCEMENT: "pricing.coverageKind.reinforcement",
 };
 function optionLabel(value: string): string {
-  if (value === "FIXTURE") return "Insumo DEMO";
+  if (value === "FIXTURE") return "Insumo de ejemplo";
   const key = optionLabels[value];
   return key ? t(key) : value;
 }
@@ -1198,19 +1198,19 @@ function DemoCosts({ request }: { request: RequestFn }): JSX.Element {
       className="pricing-demo-costs"
       onToggle={(event) => setOpened(event.currentTarget.open)}
     >
-      <summary>DEMO · precios sintéticos de arranque</summary>
+      <summary>Precios de ejemplo</summary>
       <p>
-        Generados con semilla fija. Se aplican solo a los SKU de sistemas DEMO cuando no hay un
+        Generados con semilla fija. Se aplican solo a los SKU de series de ejemplo cuando no hay un
         costo del proveedor. No representan precios certificados.
       </p>
       {error ? (
         <p role="alert">
-          No se pudieron cargar los costos DEMO. Cierra y vuelve a abrir esta sección.
+          No se pudieron cargar los costos de ejemplo. Cierra y vuelve a abrir esta sección.
         </p>
       ) : loaded === false ? (
-        <p role="status">Cargando costos DEMO…</p>
+        <p role="status">Cargando costos de ejemplo…</p>
       ) : items.length === 0 ? (
-        <p>No hay costos DEMO disponibles. Revisa el catálogo de arranque.</p>
+        <p>No hay costos de ejemplo disponibles.</p>
       ) : (
         <div className="pricing-demo-rows">
           {items.map((item) => (

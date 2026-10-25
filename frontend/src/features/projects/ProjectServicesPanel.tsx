@@ -112,7 +112,7 @@ export function ProjectServicesPanel({
                     />
                     <strong>
                       {item.name}
-                      {item.synthetic && " · DEMO"}
+                      {item.synthetic && " · Ejemplo"}
                     </strong>
                   </label>
                   <small>

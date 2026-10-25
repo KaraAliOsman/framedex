@@ -126,7 +126,7 @@ def glass_order(*, org_id, order_ids, app_url=""):
                     labels.append({"code": code, "link": link, "qr_svg": qr, "order_code": row.order_code,
                         "position_index": row.position_index, "location": row.location,
                         "width_mm": str(row.width_mm), "height_mm": str(row.height_mm),
-                        "composition": ("DEMO · " if is_demo else "") + row.composition,
+                        "composition": ("Ejemplo · " if is_demo else "") + row.composition,
                         "bom_hash": version["bom_hash"]})
     authority_by_order = {code: (revision["project_code"], revision["revision_code"])
                           for revision in revisions.values() for code in revision["order_codes"]}
@@ -186,7 +186,7 @@ def glass_pdf(report):
         f"<p class='dimension'>{escape(_display_size(label['width_mm']))} × {escape(_display_size(label['height_mm']))} mm</p>"
         f"<p>{escape(label['composition'])}</p><div class='label-foot'>{label['qr_svg']}"
         f"<small class='mono'>Despiece emitido<br>{escape(label['bom_hash'][:12])}</small></div></div>" for label in report["labels"])
-    demo = "<p class='demo-notice'>DEMO · catálogo sintético; no certifica seguridad ni rendimiento térmico.</p>" if any(
+    demo = "<p class='demo-notice'>Catálogo de ejemplo: no certifica seguridad ni rendimiento térmico.</p>" if any(
         value.startswith("DEMO") for row in report["rows"] for value in row["instructions"]) else ""
     authorities = "; ".join(f"{item['project_code']} · {item['revision_code']} · {item['bom_hash'][:12]}" for item in report["revisions"])
     html = f"<!doctype html><html lang='es-CL'><head><meta charset='utf-8'><style>{_CSS}{_DEMO_NOTICE_CSS}" \

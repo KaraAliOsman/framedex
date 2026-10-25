@@ -1037,7 +1037,7 @@ function PositionWorkspace({
                 ?.filter((system) => isDrawable(system) && system.is_demo)
                 .map((system) => (
                   <option key={system.id} value={system.id}>
-                    {system.name.replace(/\s*·\s*DEMO\s*$/u, "")} · DEMO
+                    {system.name.replace(/\s*·\s*DEMO\s*$/u, "")} · Ejemplo
                   </option>
                 ))}
             </optgroup>
@@ -1633,7 +1633,7 @@ function CutBar({ lengthMm, maxMm }: { lengthMm: number; maxMm: number }): JSX.E
 type SeriesSummary = { id: string; code: string; name: string; system_family: string | null };
 
 /** First decision of a new window: the series, picked in one click from the
- * same drawable list the strip offers (company first, DEMO apart). */
+ * same drawable list the strip offers (company first, examples apart). */
 function SeriesChooser({
   systems,
   failed,
@@ -1678,7 +1678,7 @@ function SeriesChooser({
                 <span className="series-chooser__meta">
                   {[
                     system.system_family ? domainLabel(system.system_family) : null,
-                    demo ? "DEMO" : null,
+                    demo ? "Ejemplo" : null,
                   ]
                     .filter(Boolean)
                     .join(" · ")}

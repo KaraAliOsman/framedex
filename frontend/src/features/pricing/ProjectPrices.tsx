@@ -6,6 +6,7 @@ import type { PriceResponse, ProjectResponse } from "../../api/generated/models"
 import { ApiError } from "../../api/apiMutator";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import {
+  formatCode,
   formatDate,
   formatDateTime,
   formatDecimal,
@@ -406,9 +407,7 @@ export function Projection({
     <div className="price-reading">
       <div className="price-reading__heading">
         <h2>Actual y propuesto</h2>
-        {value.demo && (
-          <DemoBadge source="El cálculo usa costos y reglas sintéticos del catálogo DEMO." />
-        )}
+        {value.demo && <DemoBadge source="El cálculo usa costos y reglas de ejemplo." />}
       </div>
       <p className="price-reading__context">
         {value.current_revision
@@ -1154,7 +1153,7 @@ export function ProjectPrices({
               <option value="">Selecciona un proyecto</option>
               {projects.map((project) => (
                 <option key={project.id} value={project.id}>
-                  {project.code} · {project.name}
+                  {formatCode(project.code, true)} · {project.name}
                 </option>
               ))}
             </select>

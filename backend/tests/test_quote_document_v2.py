@@ -61,7 +61,7 @@ def test_pdf_pages_have_content_exact_totals_and_no_text_collisions(count, curre
                         overlap = fitz.Rect(first[:4]) & fitz.Rect(second[:4])
                         assert overlap.width <= 0.2 or overlap.height <= 0.2, (page_index, first, second)
             assert f"Página {page_index + 1} / {len(document)}" in " ".join(page.get_text().split())
-            assert "COT-P-000123-REV-B" in page.get_text()
+            assert "Cotización N° 123" in page.get_text()
         assert detected_tables > 0
 
 

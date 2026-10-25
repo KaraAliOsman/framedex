@@ -124,7 +124,7 @@ export function FinishSelector({
               <span className="finish-tile__name">{color.name}</span>
               <span className="finish-tile__kind">
                 {processNames[color.kind] ?? "Acabado"}
-                {color.synthetic ? " · DEMO" : ""}
+                {color.synthetic ? " · Ejemplo" : ""}
               </span>
             </button>
           );

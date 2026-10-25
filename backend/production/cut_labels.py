@@ -105,7 +105,7 @@ body {{ margin: 0; font-size: 8pt; }}
             body += f'<p>{escape(_COLOR_ES.get(str(label.get("color")),str(label.get("color") or "Falta completar")))}</p>'
             body += f'<p>Siguiente: {escape(label["next_station"])}</p>'
             if data.get("is_demo"):
-                body += '<p>DEMO · Catálogo sintético, sin certificación.</p>'
+                body += '<p>Catálogo de ejemplo, sin fabricante.</p>'
             body += f'<p class="label-fingerprint">Huella {escape(label["fingerprint"])}</p></article>'
         if not roll:
             body += '</div>'

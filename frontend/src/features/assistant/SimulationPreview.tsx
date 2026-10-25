@@ -133,7 +133,7 @@ export function SimulationPreview({
     <section className="operation-preview" aria-label="Comparación de la propuesta">
       <p className="operation-preview__view">
         Vista interior · Simulación del motor
-        {systemIds.some((id) => options[id]?.is_demo) ? " · DEMO" : ""}
+        {systemIds.some((id) => options[id]?.is_demo) ? " · Ejemplo" : ""}
       </p>
       <div className="operation-preview__drawings">
         {items.map((item) => (

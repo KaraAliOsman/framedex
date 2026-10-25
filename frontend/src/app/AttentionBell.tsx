@@ -1,4 +1,5 @@
 import { Icon } from "../ui/Icon";
+import { formatCode } from "../format";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { DateOnly, Loading } from "../ui";
@@ -71,7 +72,7 @@ export function AttentionBell(): JSX.Element | null {
                     to={item.href}
                     onClick={() => setOpen(false)}
                   >
-                    <span className="ui-value">{item.entity_code}</span>
+                    <span className="ui-value">{formatCode(item.entity_code, true)}</span>
                     <strong>{item.title}</strong>
                     <span>
                       {consequenceLabels[item.consequence]}

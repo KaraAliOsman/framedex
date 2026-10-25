@@ -1,5 +1,6 @@
 """Public commercial projection. No cost, live design or repricing authority."""
 
+from documents.human import human_code
 from decimal import Decimal
 
 from dekopen_engine.commercial import PricingError
@@ -51,7 +52,7 @@ def commercial_projection(version, positions):
         except (KeyError, TypeError, ValueError, ArithmeticError, PricingError):
             cause = "El calendario de esta revisión necesita revisión del fabricante. Solicite una cotización nueva."
     total = str(result.display_gross) if result else None
-    reference = f"COT-{sealed.get('code')}-{version['revision_code']}"
+    reference = f"{human_code(sealed.get('code'))} · rev. {str(version['revision_code']).removeprefix('REV-')}"
     consent = f"Acepto la propuesta {reference} por {_money(total, currency)} IVA incluido y sus condiciones" if total else None
     return {"positions": positions, "extras": extras, "commercial_terms": terms,
             "payment_schedule": schedule, "display_total_gross": total,

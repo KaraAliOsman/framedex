@@ -152,7 +152,7 @@ export function ExtraDefinitionEditor({
           checked={value.synthetic}
           onChange={(e) => patch({ synthetic: e.target.checked })}
         />
-        Datos sintéticos · DEMO
+        Ejemplo · sin fabricante
       </label>
       {value.kind === "SERVICE" && (
         <label>
@@ -490,7 +490,7 @@ export function ExtraAuthorityEditor({
             <details className="extra-authority-row" key={index}>
               <summary>
                 {item.name || "Extra sin nombre"}
-                {item.synthetic && " · DEMO"}
+                {item.synthetic && " · Ejemplo"}
               </summary>
               <ExtraDefinitionEditor
                 value={item}

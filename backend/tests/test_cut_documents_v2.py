@@ -173,7 +173,7 @@ def test_every_artifact_keeps_the_same_physical_sequence_and_qr():
         assert codes == ordered
         for page in pdf:
             assert_print_text(page)
-            assert "DEMO" in page.get_text()
+            assert "ejemplo" in page.get_text()
         if paper == "ROLL_100_50":
             assert len(pdf) == len(ordered)
             assert abs(pdf[0].rect.width - 100 * 72 / 25.4) < 0.02

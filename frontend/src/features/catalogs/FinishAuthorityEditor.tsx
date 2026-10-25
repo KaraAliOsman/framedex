@@ -150,7 +150,7 @@ export function FinishAuthorityEditor({
                   aria-hidden="true"
                 />{" "}
                 {color.name || `Color ${index + 1}`} · {finishProcessNames[color.kind]}
-                {color.synthetic ? " · DEMO" : ""}
+                {color.synthetic ? " · Ejemplo" : ""}
                 {color.approximate ? " · aproximado" : ""}
               </summary>
               <div className="catalog-fields">
@@ -200,7 +200,7 @@ export function FinishAuthorityEditor({
                 {flag("Muestra aproximada", color.approximate, (approximate) =>
                   patchColor(index, { approximate }),
                 )}
-                {flag("Datos sintéticos DEMO", color.synthetic, (synthetic) =>
+                {flag("Datos de ejemplo", color.synthetic, (synthetic) =>
                   patchColor(index, { synthetic }),
                 )}
                 {input("Ficha de la muestra", color.source, (source) =>
@@ -285,7 +285,7 @@ export function FinishAuthorityEditor({
                     {flag("Manilla aproximada", color.approximate, (approximate) =>
                       edit({ approximate }),
                     )}
-                    {flag("Muestra de manilla DEMO", color.synthetic, (synthetic) =>
+                    {flag("Muestra de manilla de ejemplo", color.synthetic, (synthetic) =>
                       edit({ synthetic }),
                     )}
                   </div>
@@ -335,7 +335,7 @@ export function FinishAuthorityEditor({
                 {value.colors.find((c) => c.code === combo.exterior)?.name || "Completar exterior"}{" "}
                 exterior /{" "}
                 {value.colors.find((c) => c.code === combo.interior)?.name || "Completar interior"}{" "}
-                interior{combo.synthetic ? " · DEMO" : ""}
+                interior{combo.synthetic ? " · Ejemplo" : ""}
               </summary>
               <div className="catalog-fields">
                 {input("Identidad de stock y compra", combo.code, (code) =>
@@ -459,7 +459,7 @@ export function FinishAuthorityEditor({
                 {input("Manual de las restricciones", combo.source, (source) =>
                   patchCombo(index, { source }),
                 )}
-                {flag("Reglas sintéticas DEMO", combo.synthetic, (synthetic) =>
+                {flag("Reglas de ejemplo", combo.synthetic, (synthetic) =>
                   patchCombo(index, { synthetic }),
                 )}
               </div>

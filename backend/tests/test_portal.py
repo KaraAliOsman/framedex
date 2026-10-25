@@ -379,7 +379,7 @@ def test_decide_approves_project_and_replays(monkeypatch) -> None:
             token="tok", decision="APPROVED", decided_by="Ana", note=None,
             decided_rut='12.345.678-5',confirmed=True,
             expected_offering_sha256='a'*64,expected_selected_sha256='a'*64,
-            consent_text='Acepto la propuesta COT-P-1-REV-A por $12 IVA incluido y sus condiciones'
+            consent_text='Acepto la propuesta N° 1 · rev. A por $12 IVA incluido y sus condiciones'
         )
 
     assert any("pricing_backend" in c for c in role_calls)

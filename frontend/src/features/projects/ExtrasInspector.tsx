@@ -333,7 +333,7 @@ export function ExtrasInspector({
                     <p>
                       {extraBasisLabels[definition?.basis ?? ""] ?? "Falta completar"} ·{" "}
                       {definition?.source ?? "Completa el catálogo"}
-                      {definition?.synthetic && " · DEMO"}
+                      {definition?.synthetic && " · Ejemplo"}
                     </p>
                   </details>
                 </li>
@@ -351,7 +351,7 @@ export function ExtrasInspector({
               {available.map((item) => (
                 <option value={item.code} key={item.code}>
                   {item.name}
-                  {item.synthetic ? " · DEMO" : ""}
+                  {item.synthetic ? " · Ejemplo" : ""}
                 </option>
               ))}
             </select>

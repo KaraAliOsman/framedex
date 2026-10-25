@@ -331,7 +331,7 @@ export function MountingInspector({
               {rules.map((item) => (
                 <option key={item.rule.code} value={item.rule.code}>
                   {item.rule.name}
-                  {item.rule.synthetic ? " · DEMO" : ""}
+                  {item.rule.synthetic ? " · Ejemplo" : ""}
                 </option>
               ))}
             </select>
@@ -424,7 +424,7 @@ export function MountingInspector({
                 </p>
                 <p>
                   Origen: {evidence.rule.source}
-                  {evidence.rule.synthetic ? " · DEMO, sin certificación" : ""}
+                  {evidence.rule.synthetic ? " · Ejemplo, sin certificación" : ""}
                 </p>
               </details>
               {evidence.result.warnings.map((w) => (

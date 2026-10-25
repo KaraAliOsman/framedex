@@ -35,7 +35,7 @@ export function HardwareAuthorityView({ value }: { value: unknown }): JSX.Elemen
         <strong>
           {authority.family_name} · {authority.class_name}
         </strong>
-        {authority.synthetic ? " · DEMO, sin certificación" : ""}
+        {authority.synthetic ? " · Ejemplo, sin certificación" : ""}
       </p>
       <p>Documento: {authority.source}</p>
       <p>

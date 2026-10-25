@@ -206,7 +206,7 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
   const requestedRecord = useRef(requested.get("record"));
   const [importExpanded, setImportExpanded] = useState(false);
   const [search, setSearch] = useState("");
-  // Normal shelf by manufacturer; synthetic DEMO series live in Laboratorio.
+  // Normal shelf by manufacturer; synthetic example series live in Laboratorio.
   const [shelf, setShelf] = useState<"brands" | "lab">(() =>
     requested.get("shelf") === "lab" ? "lab" : "brands",
   );
@@ -466,8 +466,8 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
           </label>
           {shelf === "lab" ? (
             <p className="catalog-lab-note">
-              Series sintéticas DEMO para pruebas y obras antiguas. No representan a un fabricante
-              real ni sirven para una cotización real.
+              Series de ejemplo para pruebas y obras antiguas. No representan a un fabricante real
+              ni sirven para una cotización real.
             </p>
           ) : null}
           {(() => {
