@@ -2615,3 +2615,24 @@ de Hoy, las etapas de Obras y la purga global siguen en P05. Se conserva el
 - `proline-acceptance` pasa a 1440 y 390 px (~64 s cada uno), con datos
   sintéticos rotulados; una aceptación con el manual real de Proline sigue
   pendiente de ese documento.
+
+## [2026-10-25] DEKOPEN 3 P12d | Una serie real llega a taller
+
+- Recorrido real con PRO6004 (obra «Casa Rodrigo», aprobada) hasta la orden de
+  corte. Tres bloqueos impedían que cualquier serie creada por un taller
+  llegara a la OT:
+  - las reglas de taller (colocación, manillas, corte del acero, catorce reglas
+    de inspección y holgura de cámara) solo existían para las familias de
+    referencia: nueva pestaña «Taller» en la ficha de la serie, que las propone
+    desde la serie y el dueño confirma (migración `20270213000100`, pgTAP 265);
+  - guardar la primera ventana bloquea la serie y un trigger borraba su
+    verificación: ahora solo invalidan cambios de geometría, y una ventana de
+    prueba con la misma huella sigue probándola;
+  - el aviso «el diseño cambió» comparaba fechas; aplicar los precios al emitir
+    lo disparaba. Ahora compara el diseño sellado.
+- La orden de corte se dibuja a escala por material, con largo y ventana sobre
+  cada pieza e ingletes visibles; los aceros se rotulan como acero.
+- Siguiente (P12e): hoy fabricar exige medidas confirmadas en obra y datos de
+  taller sellados en la revisión que el cliente aprobó. Para un taller de una
+  persona (como trabaja NuveraPro) hace falta poder declarar que las medidas de
+  la cotización son de fabricación y pasar a taller sin nueva aprobación.
