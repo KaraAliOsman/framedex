@@ -29,21 +29,24 @@ BEGIN
 END;
 $$;
 
-CREATE POLICY inspector_rule_configs_catalog_read ON public.inspector_rule_configs
-    FOR SELECT TO catalog_backend
-    USING (org_id IS NULL OR org_id IN (SELECT private.current_user_org_ids()));
-CREATE POLICY inspector_rule_configs_catalog_insert ON public.inspector_rule_configs
-    FOR INSERT TO catalog_backend
-    WITH CHECK (org_id IS NOT NULL AND private.can_manage_catalog(org_id) AND EXISTS (
-        SELECT 1 FROM public.profile_systems s
-        WHERE s.id = inspector_rule_configs.system_id AND s.org_id = inspector_rule_configs.org_id));
-CREATE POLICY inspector_rule_configs_catalog_update ON public.inspector_rule_configs
-    FOR UPDATE TO catalog_backend
-    USING (org_id IS NOT NULL AND private.can_manage_catalog(org_id))
-    WITH CHECK (org_id IS NOT NULL AND private.can_manage_catalog(org_id) AND EXISTS (
-        SELECT 1 FROM public.profile_systems s
-        WHERE s.id = inspector_rule_configs.system_id AND s.org_id = inspector_rule_configs.org_id));
-GRANT SELECT, INSERT, UPDATE ON public.inspector_rule_configs TO catalog_backend;
+-- Inspector rules keep their narrow write path: catalog_backend still has no
+-- table write privilege. The owner's confirmation goes through one function
+-- that checks catalog authority and ownership; the freeze guard still runs.
+CREATE FUNCTION private.declare_inspector_rule(p_system uuid, p_org uuid, p_rule text, p_params jsonb)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$ BEGIN
+ IF p_org IS NULL OR NOT private.can_manage_catalog(p_org) OR NOT EXISTS(
+     SELECT 1 FROM public.profile_systems WHERE id=p_system AND org_id=p_org) THEN
+  RAISE EXCEPTION 'inspector_rule_denied' USING ERRCODE='42501';
+ END IF;
+ IF EXISTS(SELECT 1 FROM public.inspector_rule_configs WHERE system_id=p_system AND org_id=p_org AND rule_id=p_rule) THEN
+  UPDATE public.inspector_rule_configs SET params=p_params,is_active=TRUE,updated_at=clock_timestamp()
+   WHERE system_id=p_system AND org_id=p_org AND rule_id=p_rule;
+ ELSE
+  INSERT INTO public.inspector_rule_configs(system_id,org_id,rule_id,params) VALUES(p_system,p_org,p_rule,p_params);
+ END IF;
+END $$;
+REVOKE ALL ON FUNCTION private.declare_inspector_rule(uuid,uuid,text,jsonb) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION private.declare_inspector_rule(uuid,uuid,text,jsonb) TO catalog_backend;
 
 -- A series already used in a work may still receive the workshop facts it
 -- never had. Declaring the chamber clearance where it was NULL changes no

@@ -181,11 +181,6 @@ def confirm(org_id, system_id, actor_id, data):
                 for rule, params in inspector.items():
                     if current.get(rule) == (True, _numbers(params)):
                         continue
-                    if rule in current:
-                        cursor.execute("UPDATE public.inspector_rule_configs SET params=%s::jsonb,is_active=TRUE,"
-                            "updated_at=NOW() WHERE system_id=%s AND org_id=%s AND rule_id=%s",
-                            [json.dumps(params), system_id, org_id, rule])
-                    else:
-                        cursor.execute("INSERT INTO public.inspector_rule_configs(system_id,org_id,rule_id,params) "
-                            "VALUES(%s,%s,%s,%s::jsonb)", [system_id, org_id, rule, json.dumps(params)])
+                    cursor.execute("SELECT private.declare_inspector_rule(%s,%s,%s,%s::jsonb)",
+                                   [system_id, org_id, rule, json.dumps(params)])
     return workshop_rules(org_id, system_id)

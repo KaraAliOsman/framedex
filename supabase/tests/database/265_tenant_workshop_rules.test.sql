@@ -2,7 +2,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap;
 GRANT USAGE ON SCHEMA extensions TO catalog_backend;
 SET LOCAL search_path=public,private,auth,extensions,pg_temp;
-SELECT plan(13);
+SELECT plan(14);
 
 SELECT ok(has_table_privilege('catalog_backend','public.reinforcement_cut_policies','INSERT'),
  'the owner confirms the workshop rules of their own series');
@@ -11,6 +11,9 @@ SELECT ok(NOT has_table_privilege('catalog_backend','public.reinforcement_cut_po
  'a confirmed workshop policy is never edited or deleted: a change is a new version');
 SELECT ok(NOT has_table_privilege('authenticated','public.inspector_rule_configs','INSERT'),
  'the browser never writes inspector rules directly');
+SELECT ok(NOT has_table_privilege('catalog_backend','public.inspector_rule_configs','INSERT')
+ AND NOT has_table_privilege('catalog_backend','public.inspector_rule_configs','UPDATE'),
+ 'inspector rules are written only through their declaring function');
 
 INSERT INTO tenancy_organizations(id,name,tax_id) VALUES
  ('26500000-0000-4000-8000-000000000001','Taller Proline','E2E-265-A'),
@@ -41,19 +44,19 @@ SELECT throws_ok($$INSERT INTO manufacturing_placement_policies(system_id,org_id
 SELECT throws_ok($$INSERT INTO handle_requirement_policies(system_id,org_id,version,authority)
  VALUES('26500000-0000-4000-8000-000000000005',NULL,9,'{}')$$,
  '42501',NULL,'a workshop cannot author global workshop rules');
-SELECT lives_ok($$INSERT INTO inspector_rule_configs(system_id,org_id,rule_id,params)
- VALUES('26500000-0000-4000-8000-000000000005','26500000-0000-4000-8000-000000000001','R08','{"max_spacing_mm":"800.00"}')$$,
+SELECT lives_ok($$SELECT private.declare_inspector_rule('26500000-0000-4000-8000-000000000005',
+ '26500000-0000-4000-8000-000000000001','R08','{"max_spacing_mm":"800.00"}')$$,
  'the owner declares an inspector rule of their own series');
 
 -- A series already used in a work receives what it never had.
 SELECT lives_ok($$UPDATE profile_systems SET chamber_clearance_mm=12 WHERE id='26500000-0000-4000-8000-000000000006'$$,
  'a used series may declare its missing chamber clearance');
-SELECT lives_ok($$INSERT INTO inspector_rule_configs(system_id,org_id,rule_id,params)
- VALUES('26500000-0000-4000-8000-000000000006','26500000-0000-4000-8000-000000000001','R08','{"max_spacing_mm":"800.00"}')$$,
+SELECT lives_ok($$SELECT private.declare_inspector_rule('26500000-0000-4000-8000-000000000006',
+ '26500000-0000-4000-8000-000000000001','R08','{"max_spacing_mm":"800.00"}')$$,
  'a used series may declare an inspector rule it never had');
 -- ...but keeps what it declared.
-SELECT throws_ok($$UPDATE inspector_rule_configs SET params='{"max_spacing_mm":"700.00"}'
- WHERE system_id='26500000-0000-4000-8000-000000000006' AND rule_id='R08'$$,
+SELECT throws_ok($$SELECT private.declare_inspector_rule('26500000-0000-4000-8000-000000000006',
+ '26500000-0000-4000-8000-000000000001','R08','{"max_spacing_mm":"700.00"}')$$,
  '23514','catalog_authority_referenced','a used series keeps its declared inspector rules');
 SELECT throws_ok($$UPDATE profile_systems SET chamber_clearance_mm=13 WHERE id='26500000-0000-4000-8000-000000000006'$$,
  '23514','catalog_authority_referenced','a used series keeps its declared chamber clearance');
