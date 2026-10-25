@@ -10,7 +10,7 @@ from decimal import Decimal
 
 import pytest
 
-from dekopen_engine import BayOpeningType, NodeType, ParametricNode, ProfileRole, calculate_geometry
+from dekopen_engine import BayOpeningType, EngineResult, NodeType, ParametricNode, ProfileRole, calculate_geometry
 from engine.tests.proline_catalog import pro6004_params
 
 
@@ -40,7 +40,7 @@ def split(case_id: str, width: str, height: str, left: ParametricNode, right: Pa
     )
 
 
-def cuts(result, role, bay_id=None):
+def cuts(result: EngineResult, role: ProfileRole, bay_id: str | None = None) -> list[tuple[Decimal, int]]:
     return sorted(
         (cut.length_mm, cut.qty)
         for cut in result.profile_cuts
@@ -48,11 +48,11 @@ def cuts(result, role, bay_id=None):
     )
 
 
-def steel(result, role):
+def steel(result: EngineResult, role: ProfileRole) -> list[Decimal]:
     return sorted(piece.length_mm for piece in result.reinforcements if piece.role is role)
 
 
-def glass(result, bay_id):
+def glass(result: EngineResult, bay_id: str) -> tuple[Decimal, Decimal]:
     pane = next(item for item in result.glasses if item.bay_id == bay_id)
     return pane.width_mm, pane.height_mm
 
