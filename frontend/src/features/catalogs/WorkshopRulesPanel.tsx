@@ -6,6 +6,7 @@ import {
   catalogSeriesWorkshopRules,
 } from "../../api/generated/dekopen";
 import type { WorkshopRules } from "../../api/generated/models";
+import { ApiError } from "../../api/apiMutator";
 import { Button, Loading, NumberField, StatusBadge } from "../../ui";
 import "./workshop-rules.css";
 
@@ -122,6 +123,22 @@ function angle(value: unknown): string {
   return `${String(value).replace(/\.0+$/, "")}°`;
 }
 
+const ROLE_ORDER = ["FRAME", "SASH", "DOOR_SASH", "MULLION_V", "MULLION_H", "THRESHOLD"];
+
+/** «Marco» → «45° / 45° · 45° / 90°»: the profile cuts that carry steel, per role. */
+function reinforcementByRole(rules: WorkshopRules["reinforcement_rules"]): [string, string[]][] {
+  const grouped = new Map<string, string[]>();
+  for (const rule of rules) {
+    const role = String(rule.role);
+    grouped.set(role, [
+      ...(grouped.get(role) ?? []),
+      `${angle(rule.profile_angle_left)} / ${angle(rule.profile_angle_right)}`,
+    ]);
+  }
+  const rank = (role: string) => ROLE_ORDER.indexOf(role) + 1 || ROLE_ORDER.length + 1;
+  return [...grouped].sort(([left], [right]) => rank(left) - rank(right));
+}
+
 export function WorkshopRulesPanel({
   orgId,
   systemId,
@@ -188,10 +205,13 @@ export function WorkshopRulesPanel({
         tone: "ok",
         text: `Reglas confirmadas (versión ${response.data.version}). Ya puedes preparar la OT de las obras con esta serie.`,
       });
-    } catch {
+    } catch (error) {
       setMessage({
         tone: "error",
-        text: "No se pudieron guardar. Revisa que cada valor sea mayor que cero.",
+        text:
+          error instanceof ApiError && error.status === 409
+            ? "Esta serie ya se usa en obras: lo que ya tenía declarado no cambia. Crea una versión nueva de la serie para cambiarlo."
+            : "No se pudieron guardar. Revisa que cada valor sea mayor que cero.",
       });
     } finally {
       setBusy(false);
@@ -241,13 +261,10 @@ export function WorkshopRulesPanel({
             <p>Esta serie todavía no declara aceros. Agrégalos en Perfiles.</p>
           ) : (
             <ul className="workshop-rules__list">
-              {rules.reinforcement_rules.map((rule) => (
-                <li key={`${rule.role}-${rule.profile_angle_left}-${rule.profile_angle_right}`}>
-                  <strong>{ROLE_LABELS[String(rule.role)] ?? String(rule.role)}</strong>
-                  <span>
-                    perfil {angle(rule.profile_angle_left)} / {angle(rule.profile_angle_right)} ·
-                    acero recto
-                  </span>
+              {reinforcementByRole(rules.reinforcement_rules).map(([role, cuts]) => (
+                <li key={role}>
+                  <strong>{ROLE_LABELS[role] ?? role}</strong>
+                  <span>{cuts.join(" · ")}</span>
                 </li>
               ))}
             </ul>
@@ -257,8 +274,7 @@ export function WorkshopRulesPanel({
 
         <article className="workshop-rules__card">
           <h3>Junquillos</h3>
-          <p>Al ras del vidrio en los cuatro lados.</p>
-          <p className="workshop-rules__source">{rules.sources.beads}</p>
+          <p>{rules.sources.beads}</p>
         </article>
       </div>
 

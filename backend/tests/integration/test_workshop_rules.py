@@ -2,6 +2,8 @@
 
 from uuid import UUID
 
+from django.db import DatabaseError, connection, transaction
+
 import pytest
 
 from authentication.errors import ContractAPIException
@@ -61,3 +63,48 @@ def test_reference_series_and_bad_values_are_refused(documentary_tenant):
             workshop_rules.confirm(org, system_id, users["OWNER"], {
                 **{key: proposal[key] for key in ("chamber_clearance_mm", "reinforcement_rules", "bead_offsets")},
                 "inspector": broken})
+
+
+def test_a_series_used_in_works_receives_missing_rules_but_keeps_declared_ones(documentary_tenant):
+    org, _, users, _ = documentary_tenant
+    with as_user(users["OWNER"]):
+        system_id = UUID(str(prepare(org, users["OWNER"])["id"]))
+        proposal = workshop_rules.workshop_rules(org, system_id)
+    # A saved window locks the series' technical authority.
+    with connection.cursor() as cursor:
+        cursor.execute("RESET ROLE")
+        cursor.execute("UPDATE public.profile_systems SET technical_locked=TRUE WHERE id=%s", [system_id])
+    payload = {key: proposal[key] for key in ("chamber_clearance_mm", "inspector", "reinforcement_rules",
+                                              "bead_offsets")}
+    with as_user(users["OWNER"]):
+        assert workshop_rules.confirm(org, system_id, users["OWNER"], payload)["state"] == "CONFIRMED"
+        # Confirming the same values again is a new policy version, not an edit.
+        assert workshop_rules.confirm(org, system_id, users["OWNER"], payload)["version"] == 2
+        with pytest.raises(DatabaseError, match="catalog_authority_referenced"), transaction.atomic():
+            workshop_rules.confirm(org, system_id, users["OWNER"], {
+                **payload, "inspector": {**payload["inspector"], "R08": {"max_spacing_mm": "700.00"}}})
+        with pytest.raises(DatabaseError, match="catalog_authority_referenced"), transaction.atomic():
+            workshop_rules.confirm(org, system_id, users["OWNER"], {**payload, "chamber_clearance_mm": "13.00"})
+
+
+def test_using_a_verified_series_in_a_work_keeps_it_verified(documentary_tenant):
+    from catalogs.use_levels import series_verification, technical_fingerprint
+    org, _, users, _ = documentary_tenant
+    with as_user(users["OWNER"]):
+        system_id = UUID(str(prepare(org, users["OWNER"])["id"]))
+        fingerprint = technical_fingerprint(org, system_id)
+    with connection.cursor() as cursor:
+        cursor.execute("RESET ROLE")
+        cursor.execute("INSERT INTO public.catalog_reference_windows(org_id,system_id,input,expected_output,"
+            "technical_hash,verified_by) VALUES(%s,%s,'{}','{}',%s,%s)", [org, system_id, fingerprint, users["OWNER"]])
+        cursor.execute("UPDATE public.catalog_series_setup SET verified_at=now(),verified_by=%s,verified_hash=%s "
+            "WHERE system_id=%s", [users["OWNER"], fingerprint, system_id])
+        # The first saved window of a work locks the series: not a technical edit.
+        cursor.execute("UPDATE public.profile_systems SET technical_locked=TRUE WHERE id=%s", [system_id])
+        cursor.execute("SELECT verified_hash FROM public.catalog_series_setup WHERE system_id=%s", [system_id])
+        assert cursor.fetchone()[0] == fingerprint
+        # Rows cleared by the earlier trigger are still proven by their window.
+        cursor.execute("UPDATE public.catalog_series_setup SET verified_at=NULL,verified_by=NULL,verified_hash=NULL "
+            "WHERE system_id=%s", [system_id])
+    with as_user(users["OWNER"]):
+        assert series_verification(org, system_id)["verified_hash"] == fingerprint

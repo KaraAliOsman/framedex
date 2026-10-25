@@ -19,7 +19,7 @@ Policies are immutable, so confirming again creates a new version.
 import json
 from decimal import Decimal
 
-from django.db import transaction
+from django.db import connection, transaction
 
 from authentication.errors import contract_error
 from authentication.rls import catalog_backend
@@ -116,13 +116,17 @@ def workshop_rules(org_id, system_id):
             side: {"x_mm": "0.00", "y_mm": "0.00"} for side in SIDES},
         "sources": {
             "inspector": "Confirmado por el taller" if confirmed else REFERENCE_SOURCE,
-            "reinforcement": "Ángulos de corte de los perfiles de esta serie; el acero se corta "
-                             "a escuadra con el largo que calcula su regla de refuerzo.",
-            "beads": "El junquillo apoya al ras de cada lado del vidrio.",
+            "reinforcement": "Cortes de perfil que llevan acero. El acero va recto, con el largo "
+                             "que calcula la regla de refuerzo de la serie.",
+            "beads": "Al ras del vidrio en los cuatro lados.",
             "handles": "Cada apertura usa la regla de manilla declarada en la serie.",
         },
         "pending_reinforcement": not derived,
     }
+
+
+def _numbers(params):
+    return {key: Decimal(str(value)) for key, value in params.items()}
 
 
 def _decimal_payload(value):
@@ -167,9 +171,21 @@ def confirm(org_id, system_id, actor_id, data):
                 one(f"INSERT INTO public.{table}(system_id,org_id,version,authority) "
                     "VALUES(%s,%s,%s,%s::jsonb) RETURNING id",
                     [system_id, org_id, version, json.dumps(authority)])
-            for rule, params in inspector.items():
-                one("INSERT INTO public.inspector_rule_configs(system_id,org_id,rule_id,params,is_active) "
-                    "VALUES(%s,%s,%s,%s::jsonb,TRUE) ON CONFLICT (system_id,org_id,rule_id) "
-                    "DO UPDATE SET params=EXCLUDED.params,is_active=TRUE,updated_at=NOW() RETURNING id",
-                    [system_id, org_id, rule, json.dumps(params)])
+            # Only a rule that is new or changed is written: a series already
+            # used in a work accepts its first declaration but keeps what it
+            # declared (the database refuses that change).
+            current = {row["rule_id"]: (row["is_active"], _numbers(json.loads(row["params"]))) for row in rows(
+                "SELECT rule_id,is_active,params::text FROM public.inspector_rule_configs "
+                "WHERE system_id=%s AND org_id=%s", [system_id, org_id])}
+            with connection.cursor() as cursor:
+                for rule, params in inspector.items():
+                    if current.get(rule) == (True, _numbers(params)):
+                        continue
+                    if rule in current:
+                        cursor.execute("UPDATE public.inspector_rule_configs SET params=%s::jsonb,is_active=TRUE,"
+                            "updated_at=NOW() WHERE system_id=%s AND org_id=%s AND rule_id=%s",
+                            [json.dumps(params), system_id, org_id, rule])
+                    else:
+                        cursor.execute("INSERT INTO public.inspector_rule_configs(system_id,org_id,rule_id,params) "
+                            "VALUES(%s,%s,%s,%s::jsonb)", [system_id, org_id, rule, json.dumps(params)])
     return workshop_rules(org_id, system_id)

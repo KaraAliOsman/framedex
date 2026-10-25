@@ -171,17 +171,43 @@ def project_materials(org_id: UUID, project_id: UUID) -> dict:
     }
 
 
+DESIGN_FIELDS = ("quantity", "system_id", "width_mm", "height_mm", "color_interior", "color_exterior",
+                 "parametric_tree")
+
+
+def _design(item: dict) -> tuple:
+    def value(key):
+        found = item.get(key)
+        if key == "parametric_tree":
+            return json_text(decoded(found) if isinstance(found, str) else found)
+        if key in ("width_mm", "height_mm") and found is not None:
+            return str(Decimal(str(found)).normalize())
+        return str(found)
+    return tuple(value(key) for key in DESIGN_FIELDS)
+
+
 def _freshness(org_id: UUID, project_id: UUID, positions: list[dict]) -> dict:
-    """Outputs of an issued revision stay historical when the design changed later."""
-    latest = rows(
-        "SELECT id, revision_code, emitted_at FROM public.project_versions "
-        "WHERE project_id=%s AND org_id=%s ORDER BY emitted_at DESC, id DESC LIMIT 1",
-        [str(project_id), str(org_id)],
-    )
+    """Outputs of an issued revision stay historical when the design changed later.
+
+    The design is what the windows are — measures, series, colors and the
+    parametric tree — compared with what the revision sealed. Applying the
+    sealed prices or renaming a window is not a design change.
+    """
+    from documents.repository import documentary_backend
+    with documentary_backend():
+        latest = rows(
+            "SELECT id, revision_code, snapshot_json::text AS snapshot FROM public.project_versions "
+            "WHERE project_id=%s AND org_id=%s ORDER BY emitted_at DESC, id DESC LIMIT 1",
+            [str(project_id), str(org_id)],
+        )
     if not latest:
         return {"latest_revision": None, "design_changed": False}
-    changed = any(position["updated_at"] > latest[0]["emitted_at"] for position in positions)
-    return {"latest_revision": latest[0]["revision_code"], "latest_version_id": str(latest[0]["id"]), "design_changed": changed}
+    sealed = {str(item["id"]): _design(item) for item in decoded(latest[0]["snapshot"]).get("positions", [])}
+    current = {str(item["id"]): _design(item) for item in rows(
+        "SELECT id," + ",".join(DESIGN_FIELDS[:-1]) + ",parametric_tree::text AS parametric_tree "
+        "FROM public.project_positions WHERE project_id=%s AND org_id=%s", [str(project_id), str(org_id)])}
+    return {"latest_revision": latest[0]["revision_code"], "latest_version_id": str(latest[0]["id"]),
+            "design_changed": sealed != current}
 
 
 def cut_draft(org_id: UUID, project_id: UUID) -> dict:

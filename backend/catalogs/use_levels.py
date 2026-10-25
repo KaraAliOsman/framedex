@@ -38,7 +38,23 @@ def _catalog(org_id, system_id):
             grouped[table] = [json.loads(item["data"], parse_float=Decimal) for item in found]
         setup = rows("SELECT verified_at,verified_by,verified_hash FROM public.catalog_series_setup "
             "WHERE system_id=%s AND org_id=%s", [system_id, org_id])
-    return system, grouped, setup[0] if setup else {}
+        windows = rows("SELECT verified_at,verified_by,technical_hash FROM public.catalog_reference_windows "
+            "WHERE system_id=%s AND org_id=%s ORDER BY verified_at DESC,id", [system_id, org_id])
+    return system, grouped, verification(setup[0] if setup else {}, windows, _fingerprint(grouped))
+
+
+def verification(setup, windows, fingerprint):
+    """The series is verified while a human-checked test window matches its
+    current technical fingerprint. The setup row caches the latest one; a
+    window still proves it when that cache was cleared by a non-technical
+    write (locking the series when a work first uses it)."""
+    if setup.get("verified_at") and setup.get("verified_by") and setup.get("verified_hash") == fingerprint:
+        return setup
+    window = next((item for item in windows if item["technical_hash"] == fingerprint), None)
+    if window is None:
+        return setup
+    return {**setup, "verified_at": window["verified_at"], "verified_by": window["verified_by"],
+            "verified_hash": fingerprint}
 
 
 def _fingerprint(grouped):
@@ -46,6 +62,11 @@ def _fingerprint(grouped):
     payload = {table: [{key: value for key, value in row.items() if key in RULE_FIELDS | identity}
         for row in records] for table, records in grouped.items()}
     return "sha256:" + hashlib.sha256(json_text(payload).encode("utf-8")).hexdigest()
+
+
+def series_verification(org_id, system_id):
+    """verified_at/by/hash as readiness sees them (see ``verification``)."""
+    return _catalog(org_id, system_id)[2]
 
 
 def technical_fingerprint(org_id, system_id):
