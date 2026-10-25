@@ -151,6 +151,7 @@ def materials_env(monkeypatch):
                           "updated_at": datetime.now(timezone.utc)})
     monkeypatch.setattr(materials, "_positions", lambda org, project: positions)
     monkeypatch.setattr(materials, "_profile_names", lambda org, systems, skus: {})
+    monkeypatch.setattr(materials, "_article_titles", lambda org, names, systems: {})
     monkeypatch.setattr(materials, "_freshness", lambda org, project, rows: {"latest_revision": None, "design_changed": False})
     state = {"missing_sku": None, "no_profile": False}
 
