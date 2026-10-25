@@ -193,50 +193,189 @@
   gap: var(--space-16px);
 }
 
-.materials__buy h3 {
+.cutplan-summary dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--space-12px);
   margin: 0 0 var(--space-8px);
+}
+
+.cutplan-summary dl > div {
+  padding: var(--space-12px) var(--space-16px);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-2);
+  background: var(--surface-panel);
+}
+
+.cutplan-summary dt {
+  color: var(--text-secondary);
+  font-size: var(--type-dense);
+}
+
+.cutplan-summary dd {
+  margin: 0;
+  font-size: var(--type-subtitle);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.cutplan-summary > p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--type-dense);
+}
+
+.cutplan-buy h3,
+.cutplan-group__head h3 {
+  margin: 0;
   font-size: var(--type-subtitle);
 }
 
-.materials__buy ul {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-8px) var(--space-24px);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.materials__bars {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-24px);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.materials__bar > p {
-  margin: 0 0 var(--space-8px);
-}
-
-.materials__strip {
-  display: block;
-  width: 100%;
-  height: 24px;
+.cutplan-buy h3 {
   margin-bottom: var(--space-8px);
 }
 
-.materials__strip .strip-bar {
-  fill: var(--surface-hover);
-  stroke: var(--border-default);
-  vector-effect: non-scaling-stroke;
+.cutplan-groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-32px);
 }
 
-.materials__strip .strip-cut {
-  fill: var(--cobalt-100);
-  stroke: var(--interactive);
-  vector-effect: non-scaling-stroke;
+.cutplan-group__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-4px) var(--space-12px);
+  padding-bottom: var(--space-8px);
+  border-bottom: 1px solid var(--border-default);
+}
+
+.cutplan-group__head p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--type-dense);
+}
+
+.cutplan-group__bars {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-24px);
+  margin: var(--space-16px) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cutplan-bar__title {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4px) var(--space-12px);
+  margin: 0 0 var(--space-8px);
+  font-size: var(--type-dense);
+}
+
+.cutplan-bar__title span {
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The track is the bar itself: the dark ground shows through every saw cut
+   (kerf) and every mitre, so the drawing reads like the profile on the saw. */
+.cutplan-bar__track {
+  display: flex;
+  height: 48px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--cut-ground);
+}
+
+.cutplan-bar__trim {
+  flex: 0 0 auto;
+}
+
+.cutplan-piece {
+  --l: 0px;
+  --r: 0px;
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--cut-piece);
+  color: var(--cut-piece-ink);
+  line-height: 1.1;
+  white-space: nowrap;
+  clip-path: polygon(var(--l) 0, calc(100% - var(--r)) 0, 100% 100%, 0 100%);
+}
+
+.cutplan-piece[data-left="mitre"] {
+  --l: 9px;
+}
+
+.cutplan-piece[data-right="mitre"] {
+  --r: 9px;
+}
+
+.cutplan-piece[data-steel] {
+  background: var(--cut-steel);
+}
+
+.cutplan-piece b {
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.cutplan-piece small {
+  color: var(--cut-piece-mark);
+  font-size: 0.6875rem;
+}
+
+.cutplan-bar__rest {
+  flex: 0 0 auto;
+  background: var(--cut-rest);
+}
+
+.cutplan-bar__rest:not([data-reusable]) {
+  background: var(--cut-scrap);
+}
+
+.cutplan-bar__pieces {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-4px) var(--space-16px);
+  margin: var(--space-8px) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--type-dense);
+}
+
+.cutplan-bar__pieces li {
+  display: grid;
+  grid-template-columns: 1.25rem 3.25rem minmax(0, 1fr) auto;
+  gap: var(--space-8px);
+  align-items: baseline;
+  font-variant-numeric: tabular-nums;
+}
+
+.cutplan-bar__pieces b {
+  text-align: right;
+}
+
+.cutplan-bar__seq,
+.cutplan-bar__angles {
+  color: var(--text-secondary);
+}
+
+.cutplan-bar__window {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mono {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-variant-numeric: tabular-nums;
 }
 
 .materials__production h3 {

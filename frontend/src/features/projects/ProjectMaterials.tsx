@@ -34,10 +34,13 @@ type Cut = {
   role_label?: string;
   workshop_sku: string;
   unit_index?: number;
+  source_kind?: string;
 };
 type Bar = {
   bar_index: number;
   commercial_sku: string;
+  name?: string | null;
+  material?: string;
   stock_length_mm: string;
   head_trim_mm: string;
   tail_trim_mm: string;
@@ -52,7 +55,19 @@ type Purchase = {
   stock_length_mm: string;
   qty_bars: number;
   color: string;
+  name?: string | null;
 };
+type Metrics = { cuts?: number; productive_length_mm?: string; reusable_remnant_mm?: string };
+
+const percentFormat = new Intl.NumberFormat("es-CL", { maximumFractionDigits: 0 });
+function percent(value: number): string {
+  return `${percentFormat.format(value)} %`;
+}
+
+const meterFormat = new Intl.NumberFormat("es-CL", { maximumFractionDigits: 1 });
+function fmtMeters(mm: string | undefined): string {
+  return mm === undefined ? "—" : `${meterFormat.format(Number(mm) / 1000)} m`;
+}
 
 function consumption(row: MaterialRow): string {
   if (row.length_m !== null) return `${fmtMm(row.length_m)} m`;
@@ -66,7 +81,14 @@ function pieces(row: MaterialRow): string {
 }
 
 function angles(cut: Cut): string {
-  return `${fmtMm(cut.angle_left ?? "")}° / ${fmtMm(cut.angle_right ?? "")}°`;
+  if (cut.angle_left == null || cut.angle_right == null) return "—";
+  return `${fmtMm(cut.angle_left)}° / ${fmtMm(cut.angle_right)}°`;
+}
+
+/** «V3 · Baño · fijo» → «V3»: the window number the cutter writes on the piece. */
+function windowMark(cut: Cut): string {
+  const mark = (cut.window ?? "").split(" · ")[0] ?? "";
+  return cut.unit_index && cut.unit_index > 1 ? `${mark}·${cut.unit_index}` : mark;
 }
 
 /** What the saved design consumes and its draft cut, from the engine's
@@ -292,84 +314,72 @@ function CutDraftView({
     );
   const bars = (draft.bars ?? []) as unknown as Bar[];
   const purchase = (draft.purchase ?? []) as unknown as Purchase[];
+  const metrics = (draft.metrics ?? {}) as Metrics;
+  const used = Number(metrics.productive_length_mm ?? 0);
+  const bought = bars.reduce((total, bar) => total + Number(bar.stock_length_mm), 0);
   return (
     <div className="materials__cut">
-      <div className="materials__strategy">
+      <section className="cutplan-summary" aria-label="Resumen del corte">
+        <dl>
+          <div>
+            <dt>Barras</dt>
+            <dd>{bars.length}</dd>
+          </div>
+          <div>
+            <dt>Piezas</dt>
+            <dd>{metrics.cuts ?? bars.reduce((total, bar) => total + bar.cuts.length, 0)}</dd>
+          </div>
+          <div>
+            <dt>Aprovechamiento</dt>
+            <dd>{bought > 0 ? percent((used / bought) * 100) : "—"}</dd>
+          </div>
+          <div>
+            <dt>Sobrante reutilizable</dt>
+            <dd>{fmtMeters(metrics.reusable_remnant_mm)}</dd>
+          </div>
+        </dl>
         <p>
-          Borrador de corte · perfil de corte {draft.profile?.code} · disco{" "}
-          {fmtMm(draft.profile?.kerf_mm)} mm · despuntes {fmtMm(draft.profile?.head_trim_mm)} /{" "}
-          {fmtMm(draft.profile?.tail_trim_mm)} mm · barras nuevas del catálogo, sin stock ni
-          retazos.
+          Corte con disco de {fmtMm(draft.profile?.kerf_mm)} mm y despuntes de{" "}
+          {fmtMm(draft.profile?.head_trim_mm)} / {fmtMm(draft.profile?.tail_trim_mm)} mm, en barras
+          nuevas. <Link to="/settings/general?section=production">Cambiar en Empresa › Taller</Link>
+          . Al liberar la orden en Producción se usan el stock y los retazos reales.
         </p>
-        <p>
-          Estos valores vienen de la empresa:{" "}
-          <Link to="/settings/general?section=production">cambiarlos en Empresa › Taller</Link>{" "}
-          afecta a todas las obras. Para una sola orden, ajusta el corte al liberarla en Producción;
-          ahí se usan el stock y los retazos reales.
-        </p>
-      </div>
-      <section className="materials__buy">
+      </section>
+      <section className="cutplan-buy" aria-label="Barras a comprar">
         <h3>Barras a comprar</h3>
-        <ul>
-          {purchase.map((line) => (
-            <li key={`${line.commercial_sku}-${line.stock_length_mm}`}>
-              <strong>{line.qty_bars}</strong> barras {line.commercial_sku} de{" "}
-              {fmtMm(line.stock_length_mm)} mm
-            </li>
-          ))}
-        </ul>
+        <table className="materials__table">
+          <thead>
+            <tr>
+              <th>Material</th>
+              <th>Código</th>
+              <th className="num">Barras</th>
+              <th className="num">Largo</th>
+            </tr>
+          </thead>
+          <tbody>
+            {purchase.map((line) => (
+              <tr key={`${line.commercial_sku}-${line.stock_length_mm}`}>
+                <td>{line.name ?? line.commercial_sku}</td>
+                <td className="mono">{line.commercial_sku}</td>
+                <td className="num">{line.qty_bars}</td>
+                <td className="num">{fmtMm(line.stock_length_mm)} mm</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </section>
       <SegmentedControl
         label="Diseño de la orden de corte"
         value={view}
         options={[
-          { value: "sequence", label: "Secuencia" },
+          { value: "sequence", label: "Barras" },
           { value: "compact", label: "Lista compacta" },
           { value: "window", label: "Por ventana" },
         ]}
         onValueChange={(value) => setView(value as CutView)}
       />
       {view === "sequence" ? (
-        <ol className="materials__bars">
-          {bars.map((bar) => (
-            <li key={`${bar.commercial_sku}-${bar.bar_index}`} className="materials__bar">
-              <p>
-                <strong>
-                  {bar.commercial_sku} · barra {bar.bar_index}
-                </strong>{" "}
-                · {fmtMm(bar.stock_length_mm)} mm · sobrante {fmtMm(bar.remainder_mm)} mm
-                {bar.remainder_reusable ? " reutilizable" : ""} · aprovechamiento{" "}
-                {fmtMm(bar.yield_pct)} %
-              </p>
-              <BarStrip bar={bar} />
-              <table className="materials__table materials__table--dense">
-                <thead>
-                  <tr>
-                    <th className="num">Sec.</th>
-                    <th>Pieza</th>
-                    <th>Ventana</th>
-                    <th className="num">Largo mm</th>
-                    <th>Ángulos</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {bar.cuts.map((piece) => (
-                    <tr key={piece.sequence}>
-                      <td className="num">{piece.sequence}</td>
-                      <td>{piece.role_label}</td>
-                      <td>
-                        {piece.window}
-                        {piece.unit_index && piece.unit_index > 1 ? ` · u${piece.unit_index}` : ""}
-                      </td>
-                      <td className="num">{fmtMm(piece.length_mm)}</td>
-                      <td>{angles(piece)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </li>
-          ))}
-        </ol>
+        <CutBars bars={bars} />
       ) : view === "compact" ? (
         <CompactCuts bars={bars} />
       ) : (
@@ -379,29 +389,122 @@ function CutDraftView({
   );
 }
 
-/** Proportional strip of one bar: trims, cuts and remainder. */
-function BarStrip({ bar }: { bar: Bar }): JSX.Element {
+/** Bars grouped by what is cut — profiles first, then steel — each drawn to
+ * scale with every piece's length and window written on it, as the cutter
+ * marks them. Mitred ends are drawn mitred. */
+function CutBars({ bars }: { bars: Bar[] }): JSX.Element {
+  const groups = new Map<string, Bar[]>();
+  for (const bar of bars)
+    groups.set(bar.commercial_sku, [...(groups.get(bar.commercial_sku) ?? []), bar]);
+  const ordered = [...groups].sort(
+    ([, left], [, right]) =>
+      Number(left[0]?.material === "STEEL") - Number(right[0]?.material === "STEEL"),
+  );
+  return (
+    <div className="cutplan-groups">
+      {ordered.map(([sku, items]) => (
+        <section key={sku} className="cutplan-group" aria-label={items[0]?.name ?? sku}>
+          <header className="cutplan-group__head">
+            <h3>{items[0]?.name ?? sku}</h3>
+            <p>
+              <span className="mono">{sku}</span> · {items.length}{" "}
+              {items.length === 1 ? "barra" : "barras"} de {fmtMm(items[0]?.stock_length_mm)} mm
+            </p>
+          </header>
+          <ol className="cutplan-group__bars">
+            {items.map((bar, index) => (
+              <CutBar
+                key={bar.bar_index}
+                bar={bar}
+                number={index + 1}
+                of={items.length}
+                showRole={
+                  new Set(items.flatMap((item) => item.cuts.map((cut) => cut.role_label))).size > 1
+                }
+              />
+            ))}
+          </ol>
+        </section>
+      ))}
+    </div>
+  );
+}
+
+function CutBar({
+  bar,
+  number,
+  of,
+  showRole,
+}: {
+  bar: Bar;
+  number: number;
+  of: number;
+  showRole: boolean;
+}): JSX.Element {
   const total = Number(bar.stock_length_mm) || 1;
-  let cursor = Number(bar.head_trim_mm) || 0;
+  const share = (mm: string | number) => `${(Number(mm) / total) * 100}%`;
   const kerf = Number(bar.kerf_mm) || 0;
   return (
-    <svg
-      className="materials__strip"
-      viewBox={`0 0 ${total} 60`}
-      preserveAspectRatio="none"
-      aria-hidden="true"
-    >
-      <rect x="0" y="0" width={total} height="60" className="strip-bar" />
-      {bar.cuts.map((piece) => {
-        const length = Number(piece.length_mm);
-        const x = cursor;
-        cursor += length + kerf;
-        return (
-          <rect key={piece.sequence} x={x} y="6" width={length} height="48" className="strip-cut" />
-        );
-      })}
-    </svg>
+    <li className="cutplan-bar">
+      <p className="cutplan-bar__title">
+        <strong>
+          Barra {number} de {of}
+        </strong>
+        <span>
+          {bar.cuts.length} {bar.cuts.length === 1 ? "pieza" : "piezas"} · aprovecha{" "}
+          {percent(Number(bar.yield_pct))} · sobra {fmtMm(bar.remainder_mm)} mm
+          {bar.remainder_reusable ? " reutilizable" : ""}
+        </span>
+      </p>
+      <div className="cutplan-bar__track" role="img" aria-label={barDescription(bar)}>
+        <span className="cutplan-bar__trim" style={{ flexBasis: share(bar.head_trim_mm) }} />
+        {bar.cuts.map((cut, index) => (
+          <span
+            key={cut.sequence}
+            className="cutplan-piece"
+            data-steel={cut.source_kind === "REINFORCEMENT" || undefined}
+            data-left={
+              cut.angle_left != null && Number(cut.angle_left) !== 90 ? "mitre" : undefined
+            }
+            data-right={
+              cut.angle_right != null && Number(cut.angle_right) !== 90 ? "mitre" : undefined
+            }
+            style={{
+              flexBasis: share(cut.length_mm),
+              marginRight: index < bar.cuts.length - 1 ? share(kerf) : undefined,
+            }}
+            title={`${cut.role_label ?? ""} · ${cut.window ?? ""} · ${fmtMm(cut.length_mm)} mm · ${angles(cut)}`}
+          >
+            <b>{fmtMm(cut.length_mm)}</b>
+            <small>{windowMark(cut)}</small>
+          </span>
+        ))}
+        <span
+          className="cutplan-bar__rest"
+          data-reusable={bar.remainder_reusable || undefined}
+          style={{ flexBasis: share(bar.remainder_mm) }}
+        />
+      </div>
+      <ol className="cutplan-bar__pieces">
+        {bar.cuts.map((cut) => (
+          <li key={cut.sequence}>
+            <span className="cutplan-bar__seq">{cut.sequence}</span>
+            <b>{fmtMm(cut.length_mm)}</b>
+            <span className="cutplan-bar__window">
+              {showRole ? `${cut.role_label} · ` : ""}
+              {cut.window}
+            </span>
+            <span className="cutplan-bar__angles">{cut.angle_left == null ? "" : angles(cut)}</span>
+          </li>
+        ))}
+      </ol>
+    </li>
   );
+}
+
+function barDescription(bar: Bar): string {
+  const pieces = bar.cuts.map((cut) => `${fmtMm(cut.length_mm)} mm ${windowMark(cut)}`).join(", ");
+  return `Barra ${bar.bar_index} de ${fmtMm(bar.stock_length_mm)} mm: ${pieces}; sobran ${fmtMm(bar.remainder_mm)} mm.`;
 }
 
 function CompactCuts({ bars }: { bars: Bar[] }): JSX.Element {

@@ -81,6 +81,19 @@ def _profile_names(org_id: UUID, systems: set[str], skus: set[str]) -> dict[tupl
     return names
 
 
+def _article_titles(org_id: UUID, names: dict, systems: set[str]) -> dict[str, str]:
+    """Workshop name of each cut SKU: profile articles and their steel bars."""
+    titles = {sku: name for (_, sku), name in names.items() if name}
+    if systems:
+        for row in rows("SELECT sku, commercial_sku, name FROM public.reinforcement_articles "
+                        "WHERE system_id = ANY(%s::uuid[]) AND (org_id IS NULL OR org_id=%s) AND is_active",
+                        [sorted(systems), str(org_id)]):
+            for sku in (row["sku"], row["commercial_sku"]):
+                if sku and row["name"]:
+                    titles.setdefault(sku, row["name"])
+    return titles
+
+
 def _label(position: dict) -> str:
     return f'V{position["position_index"]}' + (f' · {position["location_tag"]}' if position.get("location_tag") else "")
 
@@ -279,10 +292,17 @@ def cut_draft(org_id: UUID, project_id: UUID) -> dict:
             "action": "Revisa el largo comercial del perfil y los despuntes en Catálogos y Empresa › Taller.",
             "path": "/catalogs/systems", "detail": type(error).__name__}]}
     data = plan.model_dump(mode="json")
+    titles = _article_titles(org_id, names, {str(p["system_id"]) for p in positions})
     for bar in data["workshop_cut_plan"]:
         for cut in bar["cuts"]:
             cut["window"] = labels.get(str(cut.get("source_position_id")), "")
-            cut["role_label"] = _role(cut.get("role"))
+            role = _role(cut.get("role"))
+            cut["role_label"] = f"Acero de {role.lower()}" if cut.get("source_kind") == "REINFORCEMENT" else role
+        skus = {cut.get("workshop_sku") for cut in bar["cuts"]}
+        bar["name"] = next((titles[sku] for sku in sorted(skus, key=str) if sku in titles), None)
+    for line in data["purchase_list"]:
+        line["name"] = next((bar["name"] for bar in data["workshop_cut_plan"]
+                             if bar["commercial_sku"] == line["commercial_sku"] and bar.get("name")), None)
     return {
         "state": "READY",
         "missing": [],
