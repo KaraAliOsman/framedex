@@ -1048,14 +1048,34 @@
   text-decoration: none;
 }
 
-/* Bot welcome — the figure on first-open empty states. */
+/* Bot welcome — greets from what is open and offers where to start. */
 .ask-dock__welcome {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  gap: var(--space-8px);
+  padding: var(--space-16px) var(--space-4px) var(--space-8px);
+}
+.ask-dock__greeting {
   align-items: center;
-  gap: 0.5rem;
-  padding: 1rem 0.75rem 0.75rem;
-  text-align: center;
+  display: flex;
+  gap: var(--space-12px);
+}
+.ask-dock__hello {
+  color: var(--text-primary);
+  font-size: var(--type-title-m);
+  font-weight: 600;
+  margin: 0 0 2px;
+  text-wrap: balance;
+}
+.ask-dock__greeting .ask-dock__hint {
+  margin: 0;
+  text-align: left;
+}
+.ask-dock__section {
+  color: var(--text-small-muted);
+  font-size: var(--type-micro);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin: var(--space-12px) 0 0;
 }
 
 .operation-state {
@@ -1121,7 +1141,7 @@
   padding: var(--space-12px);
 }
 .operation-project[data-state="applied"] {
-  border-color: var(--cobalt-100);
+  border-color: var(--petrol-100);
   background: var(--surface-selected);
 }
 .operation-project__label {
@@ -1146,36 +1166,82 @@
   margin-inline-end: auto;
 }
 
-/* Context starting points under the companion. */
+/* Where to start: a short action list, like a command palette. */
 .ask-dock__suggestions {
-  display: grid;
-  gap: var(--space-6px);
-  list-style: none;
-  margin: var(--space-12px) 0 0;
-  padding: 0;
-  width: min(100%, 22rem);
-}
-.ask-dock__suggestion {
-  background: var(--surface-panel);
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-2);
+  display: grid;
+  list-style: none;
+  margin: 0;
+  overflow: hidden;
+  padding: 0;
+}
+.ask-dock__suggestions li + li {
+  border-top: 1px solid var(--border-subtle);
+}
+.ask-dock__suggestion {
+  align-items: center;
+  background: var(--surface-panel);
+  border: 0;
+  border-radius: 0;
   color: var(--text-primary);
+  display: flex;
   font-weight: 400;
-  min-height: 38px;
+  gap: var(--space-8px);
+  justify-content: space-between;
+  min-height: 40px;
   padding: var(--space-8px) var(--space-12px);
   text-align: left;
-  transition:
-    background var(--t-micro) var(--ease-in),
-    border-color var(--t-micro) var(--ease-in),
-    transform 160ms var(--ease-in);
+  transition: background var(--t-micro) var(--ease-in);
   width: 100%;
+}
+.ask-dock__suggestion .ui-icon {
+  color: var(--text-small-muted);
+  flex: none;
+  transition:
+    transform 160ms var(--ease-out),
+    color var(--t-micro) var(--ease-in);
 }
 @media (hover: hover) and (pointer: fine) {
   .ask-dock__suggestion:hover:not(:disabled) {
     background: var(--surface-selected);
-    border-color: var(--interactive);
+  }
+  .ask-dock__suggestion:hover:not(:disabled) .ui-icon {
+    color: var(--interactive);
+    transform: translateX(2px);
   }
 }
 .ask-dock__suggestion:active:not(:disabled) {
-  transform: scale(0.98);
+  background: var(--surface-active);
+}
+
+/* The composer is one card: context, words, attachments and send. */
+.ask-dock__form {
+  background: var(--surface-panel);
+  border: 1px solid var(--border-control);
+  border-radius: var(--r-2);
+  gap: var(--space-6px);
+  margin: var(--space-8px) var(--space-12px) var(--space-12px);
+  padding: var(--space-8px) var(--space-12px);
+  transition:
+    border-color var(--t-micro) var(--ease-in),
+    box-shadow var(--t-micro) var(--ease-in);
+}
+.ask-dock__form:focus-within {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--petrol-100);
+}
+.ask-dock__form textarea,
+.ask-dock__form textarea:focus-visible {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  min-height: 52px;
+  outline: none;
+  padding: var(--space-4px) 0;
+  resize: none;
+}
+.ask-dock__form .ask-dock__compose-row {
+  border-top: 0;
+  padding-top: 0;
 }

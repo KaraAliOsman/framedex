@@ -526,7 +526,7 @@ function commercialSteps(
       labelKey: "projects.step.sent",
       state: sent ? "done" : quoted ? "current" : "pending",
       detail: latestApproval
-        ? `${latestApproval.revision_code} · ${formatDate(latestApproval.created_at)}`
+        ? `${formatRevision(latestApproval.revision_code)} · ${formatDate(latestApproval.created_at)}`
         : sent
           ? undefined
           : quoted

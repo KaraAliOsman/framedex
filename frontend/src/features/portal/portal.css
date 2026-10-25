@@ -6,12 +6,12 @@ body[data-portal-document="true"] .ui-dialog {
   --surface-sheet: var(--paper);
   --surface-hover: var(--g-100);
   --surface-active: var(--g-200);
-  --surface-selected: var(--cobalt-50);
+  --surface-selected: var(--petrol-50);
   --text-primary: var(--g-950);
   --text-secondary: var(--g-700);
   --text-muted: var(--g-700);
-  --interactive: var(--cobalt-700);
-  --interactive-fill: var(--cobalt-800);
+  --interactive: var(--petrol-700);
+  --interactive-fill: var(--petrol-800);
   --text-on-fill: var(--paper);
   --border-default: var(--g-300);
   --border-subtle: var(--g-200);
@@ -35,7 +35,7 @@ body[data-portal-document="true"] .ui-dialog {
   background: var(--paper);
   border: 1px solid var(--border-default);
   box-shadow: var(--sheet);
-  border-top: 2px solid var(--cobalt-800);
+  border-top: 2px solid var(--petrol-800);
   clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
 }
 .portal-card--narrow {
@@ -55,7 +55,7 @@ body[data-portal-document="true"] .ui-dialog button {
   font: inherit;
 }
 body[data-portal-document="true"] .ui-dialog button:focus-visible {
-  outline: 2px solid var(--cobalt-600);
+  outline: 2px solid var(--petrol-600);
   outline-offset: 2px;
 }
 .portal-page h1 {
@@ -80,7 +80,7 @@ body[data-portal-document="true"] .ui-dialog button:focus-visible {
   margin: var(--space-8px) 0;
 }
 .portal-page a {
-  color: var(--cobalt-700);
+  color: var(--petrol-700);
 }
 .portal-page :where(button, input, select, textarea) {
   font: inherit;
@@ -110,21 +110,21 @@ body[data-portal-document="true"] .ui-dialog button:focus-visible {
   opacity: 0.6;
 }
 .portal-page .primary-action {
-  background: var(--cobalt-800);
-  border-color: var(--cobalt-800);
+  background: var(--petrol-800);
+  border-color: var(--petrol-800);
   color: var(--paper);
 }
 .portal-page .primary-action:hover {
-  background: var(--cobalt-900);
+  background: var(--petrol-900);
 }
 .portal-page :where(button, a, input, select, textarea, summary, [tabindex]):focus-visible {
-  outline: 2px solid var(--cobalt-600);
+  outline: 2px solid var(--petrol-600);
   outline-offset: 2px;
 }
 .portal-page summary {
   cursor: pointer;
   padding: var(--space-8px) 0;
-  color: var(--cobalt-700);
+  color: var(--petrol-700);
 }
 .portal-page code {
   overflow-wrap: anywhere;
@@ -183,7 +183,7 @@ body[data-portal-document="true"] .ui-dialog button:focus-visible {
   line-height: inherit;
 }
 .portal-state {
-  border-left: 2px solid var(--cobalt-700);
+  border-left: 2px solid var(--petrol-700);
   padding: var(--space-12px) var(--space-16px);
   background: var(--g-50);
 }
@@ -206,9 +206,9 @@ body[data-portal-document="true"] .ui-dialog button:focus-visible {
   gap: var(--space-8px);
 }
 .portal-option[data-selected="true"] {
-  outline: 2px solid var(--cobalt-700);
+  outline: 2px solid var(--petrol-700);
   outline-offset: -2px;
-  background: var(--cobalt-50);
+  background: var(--petrol-50);
 }
 .portal-option .position-thumb {
   width: 100%;
@@ -355,7 +355,7 @@ body[data-portal-document="true"] .ui-dialog button:focus-visible {
   display: inline-flex;
   align-items: center;
   min-height: 40px;
-  border: 1px solid var(--cobalt-700);
+  border: 1px solid var(--petrol-700);
   padding: var(--space-8px) var(--space-12px);
   margin: var(--space-16px) 0 0;
 }
@@ -380,7 +380,7 @@ body[data-portal-document="true"] .ui-dialog button:focus-visible {
   width: 24px;
   height: 24px;
   min-height: 24px;
-  accent-color: var(--cobalt-800);
+  accent-color: var(--petrol-800);
 }
 .portal-page [role="alert"] {
   color: var(--danger-ink);

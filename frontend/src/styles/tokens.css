@@ -1,65 +1,74 @@
-/* Constitution §3 · Dirección Luz (22-10-2026): white page, near-black ink,
-   one cobalt accent. Physical materials are invariant; chrome uses roles. */
+/* Constitution §3 · Dirección Taller (25-10-2026): warm stone page, graphite
+   ink, one petrol accent — the colour of a float-glass edge — and IBM Plex, the
+   same technical family the workshop documents print with. Physical materials
+   are invariant; chrome uses roles. */
 @font-face {
-  font-family: "Inter";
+  font-family: "IBM Plex Sans";
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("/fonts/inter-latin-400-normal.woff2") format("woff2");
+  src: url("/fonts/ibm-plex-sans-latin-400-normal.woff2") format("woff2");
 }
 @font-face {
-  font-family: "Inter";
+  font-family: "IBM Plex Sans";
   font-style: normal;
   font-weight: 500;
   font-display: swap;
-  src: url("/fonts/inter-latin-500-normal.woff2") format("woff2");
+  src: url("/fonts/ibm-plex-sans-latin-500-normal.woff2") format("woff2");
 }
 @font-face {
-  font-family: "Inter";
+  font-family: "IBM Plex Sans";
   font-style: normal;
   font-weight: 600;
   font-display: swap;
-  src: url("/fonts/inter-latin-600-normal.woff2") format("woff2");
+  src: url("/fonts/ibm-plex-sans-latin-600-normal.woff2") format("woff2");
 }
 @font-face {
-  font-family: "Inter";
+  font-family: "IBM Plex Sans";
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url("/fonts/inter-latin-700-normal.woff2") format("woff2");
+  src: url("/fonts/ibm-plex-sans-latin-600-normal.woff2") format("woff2");
 }
 @font-face {
-  font-family: "Geist Mono";
+  font-family: "IBM Plex Mono";
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("/fonts/geist-mono-latin-400-normal.woff2") format("woff2");
+  src: url("/fonts/ibm-plex-mono-latin-400-normal.woff2") format("woff2");
 }
 @font-face {
-  font-family: "Geist Mono";
+  font-family: "IBM Plex Mono";
   font-style: normal;
   font-weight: 500;
   font-display: swap;
-  src: url("/fonts/geist-mono-latin-500-normal.woff2") format("woff2");
+  src: url("/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/ibm-plex-mono-latin-600-normal.woff2") format("woff2");
 }
 :root {
-  --g-950: #0a0a0a;
-  --g-900: #171717;
-  --g-700: #404040;
-  --g-500: #737373;
-  --g-400: #a3a3a3;
-  --g-300: #d4d4d4;
-  --g-200: #e5e5e5;
-  --g-100: #f5f5f5;
-  --g-50: #fafafa;
-  --g-25: #fcfcfc;
-  --cobalt-950: #0b1a5c;
-  --cobalt-900: #13268a;
-  --cobalt-800: #1634b0;
-  --cobalt-700: #1f45e0;
-  --cobalt-600: #3a5cf0;
-  --cobalt-100: #dfe6ff;
-  --cobalt-50: #eef2ff;
+  --g-950: #1a1d1c;
+  --g-900: #262927;
+  --g-700: #424745;
+  --g-500: #6e7471;
+  --g-400: #9da19e;
+  --g-300: #cdd0cb;
+  --g-200: #e2e3de;
+  --g-100: #efeee8;
+  --g-50: #f7f6f2;
+  --g-25: #fbfbf8;
+  --petrol-950: #06343a;
+  --petrol-900: #0a4a51;
+  --petrol-800: #0b565d;
+  --petrol-700: #0d6168;
+  --petrol-600: #147a82;
+  --petrol-100: #d3eaea;
+  --petrol-50: #e6f2f1;
   --orange-700: #a84418;
   --orange-600: #c24e1e;
   --orange-500: #e56a32;
@@ -75,9 +84,9 @@
   --danger-base: #b3372f;
   --danger-soft: #fbe9e7;
   --danger-ink: #7e1f19;
-  --origin-workshop: #1d4ed8;
-  --font-sans: "Inter", system-ui, sans-serif;
-  --font-mono: "Geist Mono", ui-monospace, monospace;
+  --origin-workshop: #0d6168;
+  --font-sans: "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
   --type-display: 2.25rem;
   --line-display: 2.625rem;
   --type-title-l: 1.875rem;
@@ -215,29 +224,29 @@
 }
 :root,
 [data-density="document"] {
-  --bg-app: var(--paper);
+  --bg-app: var(--g-50);
   --surface-panel: var(--paper);
   --surface-card: var(--g-100);
   --surface-sheet: var(--paper);
   --surface-hover: var(--g-100);
   --surface-active: var(--g-200);
-  --surface-selected: var(--cobalt-50);
-  --border-subtle: #ededed;
+  --surface-selected: var(--petrol-50);
+  --border-subtle: #ebeae4;
   --border-default: var(--g-200);
-  --border-control: #8a8a8a;
+  --border-control: #86898a;
   --border-strong: var(--g-300);
-  --border-focus: var(--cobalt-600);
+  --border-focus: var(--petrol-600);
   --text-primary: var(--g-950);
-  --text-secondary: #525252;
+  --text-secondary: #4e5350;
   --text-muted: var(--g-500);
-  --text-small-muted: #5c5c5c;
+  --text-small-muted: #545955;
   --text-on-fill: var(--paper);
   --text-disabled: var(--g-400);
-  --interactive: var(--cobalt-700);
+  --interactive: var(--petrol-700);
   --interactive-fill: var(--g-950);
-  --interactive-hover: #262626;
-  --interactive-pressed: #000000;
-  --mark: var(--cobalt-600);
+  --interactive-hover: #2c302e;
+  --interactive-pressed: #0f1110;
+  --mark: var(--petrol-600);
   /* Copilot character (contract 06): one stable light body, dark pill eyes. */
   --companion-body: var(--paper);
   --companion-edge: var(--border-strong);
@@ -252,9 +261,9 @@
   --state-danger-soft: var(--danger-soft);
   --state-danger-ink: var(--danger-ink);
   --text-on-danger: var(--paper);
-  --state-info: var(--cobalt-700);
-  --state-info-soft: var(--cobalt-50);
-  --state-info-ink: var(--cobalt-900);
+  --state-info: var(--petrol-700);
+  --state-info-soft: var(--petrol-50);
+  --state-info-ink: var(--petrol-900);
   --state-person: var(--orange-500);
   --state-person-soft: var(--orange-100);
   --state-person-ink: var(--orange-700);
@@ -264,11 +273,11 @@
   --canvas-member: var(--text-primary);
   --canvas-dim: var(--text-secondary);
   --canvas-dim-line: var(--text-muted);
-  --canvas-glazing: rgba(31, 69, 224, 0.05);
-  --canvas-glazing-stroke: var(--cobalt-600);
+  --canvas-glazing: rgba(13, 97, 104, 0.06);
+  --canvas-glazing-stroke: var(--petrol-600);
   --canvas-opening-symbol: var(--text-secondary);
-  --canvas-selection: var(--cobalt-700);
-  --canvas-selection-fill: rgba(31, 69, 224, 0.08);
+  --canvas-selection: var(--petrol-700);
+  --canvas-selection-fill: rgba(13, 97, 104, 0.09);
   --canvas-handle: var(--mark);
   --canvas-handle-stroke: var(--paper);
   --canvas-snap: var(--success-base);

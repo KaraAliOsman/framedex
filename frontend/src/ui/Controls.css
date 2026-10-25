@@ -131,7 +131,7 @@ button:disabled {
   outline-offset: 2px;
 }
 ::selection {
-  background: var(--cobalt-100);
+  background: var(--petrol-100);
 }
 .ui-field,
 .ui-number-field {

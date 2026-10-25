@@ -20,7 +20,7 @@
 > Los ejemplos sintéticos quedan plegados y el editor los ofrece solo al activar
 > **Mostrar ejemplos**. Se incorpora `--origin-workshop` azul, exclusivamente
 > para el punto de origen del taller del mockup; conserva texto además de color,
-> AA, cobalto para acción y naranja/ámbar para atención humana. Las decisiones
+> AA, petróleo para acción y naranja/ámbar para atención humana. Las decisiones
 > pendientes sobre vista de obra, agente y tarifas siguen bajo sus banderas.
 
 > **Enmienda 2026-10-22 (DEKOPEN 2, P05).** El glosario del
@@ -55,7 +55,7 @@ DEKOPEN no puede ser eso, por cinco razones:
 
 > **DEKOPEN se dibuja como se dibuja una ventana.**
 
-La ventana y el documento son los protagonistas y deben parecer trabajo profesional bien resuelto; la interfaz hace fácil manipularlos. Entorno **claro, luminoso y preciso**, un solo acento cobalto, dibujos ricos en material y controles que se reconocen sin pasar el mouse. La personalidad sale de las proporciones, la respuesta inmediata y la claridad, no de metáforas técnicas por todas partes. **No es un SaaS genérico ni un ERP del 2005.**
+La ventana y el documento son los protagonistas y deben parecer trabajo profesional bien resuelto; la interfaz hace fácil manipularlos. Entorno **claro, luminoso y preciso**, un solo acento petróleo, dibujos ricos en material y controles que se reconocen sin pasar el mouse. La personalidad sale de las proporciones, la respuesta inmediata y la claridad, no de metáforas técnicas por todas partes. **No es un SaaS genérico ni un ERP del 2005.**
 
 **La prueba del taller y del cliente:** una persona del oficio debe saber qué hacer en la pantalla sin explicación previa, y un cliente final debe reconocer una propuesta seria en el documento. Falla si parece la promo de un plugin (degradados, sombras de color, copy simpático) y también si parece una consola técnica (mayúsculas pequeñas, todo en monoespaciada, controles que parecen texto).
 
@@ -109,49 +109,49 @@ La ventana y el documento son los protagonistas y deben parecer trabajo profesio
 
 ## 3. Lenguaje visual
 
-### 3.1 Color · dirección Luz
+### 3.1 Color · dirección Taller
 
-**Decisión del dueño, 22-10-2026:** entre tres direcciones (Grafito, Papel, Luz) se elige **Luz**: página blanca, tinta casi negra, grises neutros y **un solo acento cobalto**. Reemplaza la paleta grafito-turquesa anterior. Mockup de referencia: lienzo «DEKOPEN 2 · Mockups», fila «Elige una dirección visual».
+**Decisión del dueño, 25-10-2026:** la dirección Luz (blanco, negro y un solo acento cobalto) se leía como «colores muy IA», genérica. Se reemplaza por **Taller**: página de piedra cálida, tinta grafito, neutros cálidos y **un solo acento petróleo**, el verde azulado del canto del vidrio float, el mismo que ya imprimen los documentos. La app y el papel son una sola marca.
 
-**Un solo tema, claro.** Sin tema oscuro. El cobalto marca acción, selección y foco; el negro es el botón principal. El naranja ya no es acento de marca en la interfaz: queda **solo** como estado «requiere persona».
+**Un solo tema, claro.** Sin tema oscuro. El petróleo marca acción, selección y foco; el grafito es el botón principal. El naranja queda **solo** como estado «requiere persona».
 
 **Rampas**
 
-| Gris | Hex | Rol |
+| Neutro | Hex | Rol |
 |---|---|---|
-| g-950 | `#0A0A0A` | Tinta, texto principal, trazo de perfil, botón principal, píldora de herramientas |
-| g-900 | `#171717` | Hover dentro de la píldora oscura |
-| g-700 | `#404040` | Separadores dentro de la píldora |
-| g-500 | `#737373` | Texto atenuado grande, guías |
-| g-400 | `#A3A3A3` | Placeholder y deshabilitado |
-| g-300 | `#D4D4D4` | Borde fuerte, íconos de la píldora |
-| g-200 | `#E5E5E5` | Borde por defecto |
-| g-100 | `#F5F5F5` | Relleno inset, hover |
-| g-50 | `#FAFAFA` | Fondo del visor 3D |
-| paper | `#FFFFFF` | Página, paneles, hoja de dibujo y documento |
+| g-950 | `#1A1D1C` | Tinta, texto principal, trazo de perfil, botón principal |
+| g-900 | `#262927` | Hover dentro de superficies oscuras |
+| g-700 | `#424745` | Separadores sobre oscuro |
+| g-500 | `#6E7471` | Texto atenuado grande, guías |
+| g-400 | `#9DA19E` | Placeholder y deshabilitado |
+| g-300 | `#CDD0CB` | Borde fuerte |
+| g-200 | `#E2E3DE` | Borde por defecto |
+| g-100 | `#EFEEE8` | Relleno inset, hover |
+| g-50 | `#F7F6F2` | Fondo de la app (piedra) |
+| paper | `#FFFFFF` | Paneles, hoja de dibujo y documento |
 
-| Cobalto | Hex | Rol |
+| Petróleo | Hex | Rol |
 |---|---|---|
-| cobalt-950 | `#0B1A5C` | Reservado |
-| cobalt-900 | `#13268A` | Texto informativo sobre tinte |
-| cobalt-800 | `#1634B0` | Presionado de acento |
-| cobalt-700 | `#1F45E0` | **Texto interactivo**, enlaces, herramienta activa, selección del lienzo |
-| cobalt-600 | `#3A5CF0` | Anillo de foco, manijas, vista previa, trazo del vidrio |
-| cobalt-100 / 50 | `#DFE6FF` / `#EEF2FF` | Rellenos suaves y selección |
+| petrol-950 | `#06343A` | Reservado |
+| petrol-900 | `#0A4A51` | Texto informativo sobre tinte |
+| petrol-800 | `#0B565D` | Presionado de acento |
+| petrol-700 | `#0D6168` | **Texto interactivo**, enlaces, herramienta activa, selección del lienzo |
+| petrol-600 | `#147A82` | Anillo de foco, manijas, vista previa, trazo del vidrio |
+| petrol-100 / 50 | `#D3EAEA` / `#E6F2F1` | Rellenos suaves y selección |
 
 | Naranja (solo estado) | Hex | Rol |
 |---|---|---|
 | orange-700 / 500 / 100 | `#A84418` / `#E56A32` / `#FBEBE2` | «Requiere persona» (fabricación) |
 
-**Semánticos** (texto ≥ 4.5:1 sobre su fondo suave): correcto `#1E7A4C`/`#E3F2EA`/`#13502F` · atención `#B25E09`/`#FDF1E3`/`#7A3D05` · bloqueo `#B3372F`/`#FBE9E7`/`#7E1F19` · información cobalt-700/cobalt-50/cobalt-900 · requiere persona orange-500/orange-100/orange-700.
+**Semánticos** (texto ≥ 4.5:1 sobre su fondo suave): correcto `#1E7A4C`/`#E3F2EA`/`#13502F` · atención `#B25E09`/`#FDF1E3`/`#7A3D05` · bloqueo `#B3372F`/`#FBE9E7`/`#7E1F19` · información petrol-700/petrol-50/petrol-900 · requiere persona orange-500/orange-100/orange-700.
 
-**Roles funcionales:** `bg-app` paper · `surface-panel` paper · `surface-card` g-100 · `surface-hover` g-100 · `surface-active` g-200 · `surface-selected` cobalt-50 · `border-subtle` `#EDEDED` · `border-default` g-200 · `border-control` `#8A8A8A` (≥ 3:1) · `border-focus` cobalt-600 · `text-primary` g-950 · `text-secondary` `#525252` · `text-small-muted` `#5C5C5C` · `interactive` cobalt-700 · `interactive-fill` g-950 (hover `#262626`, presionado `#000`) · `mark` cobalt-600. La prueba de roles AA de `tokens.test.ts` es la autoridad.
+**Roles funcionales:** `bg-app` g-50 · `surface-panel` paper · `surface-card` g-100 · `surface-hover` g-100 · `surface-active` g-200 · `surface-selected` petrol-50 · `border-subtle` `#EBEAE4` · `border-default` g-200 · `border-control` `#86898A` (≥ 3:1) · `border-focus` petrol-600 · `text-primary` g-950 · `text-secondary` `#4E5350` · `text-small-muted` `#545955` · `interactive` petrol-700 · `interactive-fill` g-950 (hover `#2C302E`, presionado `#0F1110`) · `mark` petrol-600. La prueba de roles AA de `tokens.test.ts` es la autoridad.
 
-**Lienzo:** paper liso (sin degradados; una retícula futura se dibuja dentro del SVG del lienzo) · perfil g-950 · cotas `#525252` en Geist Mono · vidrio `rgba(31,69,224,.05)` con trazo cobalt-600 · selección cobalt-700 + 8 % de relleno solo sobre el miembro elegido · manija y vista previa cobalt-600 · ajuste verde discontinuo · inválido = color de bloqueo + achurado.
+**Lienzo:** paper liso (sin degradados; una retícula futura se dibuja dentro del SVG del lienzo) · perfil g-950 · cotas `#525252` en Plex Mono · vidrio `rgba(13,97,104,.06)` con trazo petrol-600 · selección petrol-700 + 8 % de relleno solo sobre el miembro elegido · manija y vista previa petrol-600 · ajuste verde discontinuo · inválido = color de bloqueo + achurado.
 
-### 3.2 Tipografía: Inter y Geist Mono
+### 3.2 Tipografía: IBM Plex Sans y IBM Plex Mono
 
-**Inter** habla de interfaz. **Geist Mono** habla de medidas y códigos. Ambas OFL, autoalojadas (WOFF2 latino, `font-display: swap`). La escala de tamaños y las reglas de esta sección no cambian:
+**IBM Plex Sans** habla de interfaz con el acento técnico de un plano; **IBM Plex Mono** habla de medidas y códigos. Es la familia que imprimen los documentos del taller (decisión 25-10-2026, reemplaza Inter y Geist Mono). Ambas OFL, autoalojadas (WOFF2 latino, `font-display: swap`). La escala de tamaños y las reglas de esta sección no cambian:
 
 | Rol | Especificación | Uso |
 |---|---|---|
@@ -162,7 +162,7 @@ La ventana y el documento son los protagonistas y deben parecer trabajo profesio
 | Etiqueta | Sans Medium 13/18, **en frase** | Etiquetas de campo y encabezados de tabla |
 | Cuerpo | Sans Regular 14/20 (`office`) · 15/22 (`document`) · 16/24 (`workshop`) | Texto de interfaz |
 | Celda | Sans Regular 13/18 | Filas de tabla y texto secundario |
-| **Medida** | **Geist Mono 13/18 o tabulares de Inter** | Medidas técnicas y códigos en Mono; montos en Inter con `tabular-nums` |
+| **Medida** | **Plex Mono 13/18 o tabulares de Plex Sans** | Medidas técnicas y códigos en Mono; montos en Plex Sans con `tabular-nums` |
 | Micro | Sans Regular 12/16 | Metadatos, tolerancias, ayudas breves |
 
 Reglas:
@@ -312,7 +312,7 @@ siguen a un clic para operario e instalador.
 Cabecera compacta: nombre, cliente, estado comercial y **una** acción principal, con el selector textual **Mesa de obra · Estudio** (preferencia por usuario y organización; Mesa por defecto; `?view=mesa|estudio&position=<id>`). Cuatro destinos: **Ventanas · Cotización · Materiales y corte · Actividad**. En **Mesa**, la colección de ventanas es el contenido principal, con dibujo real, ambiente/nombre, medidas, cantidad, acabado y precio, en galería o tabla (formatos locales de la colección, no las vistas). Selección múltiple con alcance visible, cambios en lote y diff antes de aplicar. En **Estudio**, franja de posiciones plegable, dibujo predominante e inspector manual de la misma sesión de edición. Cambiar de vista no guarda, no recalcula y conserva selección, borrador y deshacer.
 
 ### 5.4 Editor (canvas-first)
-El dibujo ocupa dos tercios o más del área de trabajo sobre papel blanco liso. Desde 1024 px las herramientas frecuentes viven en **una píldora oscura flotante**, centrada abajo sobre el dibujo: solo íconos con nombre accesible y tooltip; la activa en cobalto. No hay columna de herramientas. El inspector contextual es **una tarjeta** a la derecha (320 px, radio 16, E2; drawer bajo 1280 px), dedicado a la selección, que **cambia según el objeto elegido**, con lo más usado primero y «Avanzado» plegado. Zoom abajo a la izquierda; avisos con corrección sobre la píldora. El asistente se acopla como panel lateral y no desplaza el inspector. Cotas encadenadas editables en el lugar. Atajos de teclado según el estudio de interacción (`V`, `H`, `F`, `Shift+1`, `Ctrl+K`, etc.).
+El dibujo ocupa dos tercios o más del área de trabajo sobre papel blanco liso. Desde 1024 px las herramientas frecuentes viven en **una píldora oscura flotante**, centrada abajo sobre el dibujo: solo íconos con nombre accesible y tooltip; la activa en petróleo. No hay columna de herramientas. El inspector contextual es **una tarjeta** a la derecha (320 px, radio 16, E2; drawer bajo 1280 px), dedicado a la selección, que **cambia según el objeto elegido**, con lo más usado primero y «Avanzado» plegado. Zoom abajo a la izquierda; avisos con corrección sobre la píldora. El asistente se acopla como panel lateral y no desplaza el inspector. Cotas encadenadas editables en el lugar. Atajos de teclado según el estudio de interacción (`V`, `H`, `F`, `Shift+1`, `Ctrl+K`, etc.).
 
 ### 5.5 Tablas
 Reglas finas, **sin cebra**, encabezado fijo con etiqueta en frase, números alineados a la derecha con cifras tabulares (Mono solo en medidas y códigos), orden y filtro, selección con barra de acciones en lote, virtualización sobre 200 filas, estados vacío/carga/error.
@@ -345,7 +345,7 @@ El **compañero** reproduce con alta fidelidad la gramática del personaje anima
 - **Deshacer siempre:** toda edición en el editor y en lote es deshacible (`Ctrl+Z`) hasta guardar; las acciones consecuentes piden confirmación explícita.
 - **Vista previa antes de aplicar:** cambios manuales en lote, importaciones y emisiones muestran el diff (qué cambia, cuánto cambia el precio) antes del clic. En el copiloto, *Solo proponer* y *Con aprobación* muestran el diff antes de aplicar; *Omitir todo* aplica lo reversible ya delegado y muestra el diff en el recibo final, con deshacer seguro. Los efectos externos piden siempre clic humano.
 - **"¿De dónde sale?"**: cualquier número calculado abre una traza breve (fórmula, entradas, autoridad del catálogo, versión del motor).
-- **Foco visible** de 2 px cobalt-600 con 1 px de separación en todo elemento interactivo; orden de tabulación lógico; todo es operable por teclado.
+- **Foco visible** de 2 px petrol-600 con 1 px de separación en todo elemento interactivo; orden de tabulación lógico; todo es operable por teclado.
 - **Accesibilidad:** AA, objetivos ≥ 24 px en `office` y ≥ 44 px en `workshop`, `aria-label` en todo botón de ícono, sin información transmitida solo por color.
 
 ---

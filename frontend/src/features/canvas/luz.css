@@ -60,7 +60,7 @@
   .assembly-editor.assembly-editor
     .assembly-tools.assembly-tools
     .tool-button:is(.is-active, [aria-pressed="true"], [aria-expanded="true"]) {
-    background: var(--cobalt-700);
+    background: var(--petrol-700);
     color: var(--paper);
   }
   .assembly-editor.assembly-editor .assembly-tools.assembly-tools .tool-button:disabled {

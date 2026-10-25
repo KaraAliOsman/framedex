@@ -169,7 +169,7 @@
 }
 
 .quotation-document__glyph .glyph-fill {
-  fill: var(--cobalt-100);
+  fill: var(--petrol-100);
   stroke: var(--interactive);
   stroke-width: 0.75;
 }
