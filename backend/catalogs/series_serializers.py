@@ -211,3 +211,29 @@ class CellHistoryRowSerializer(serializers.Serializer):
 
 class CellHistorySerializer(serializers.Serializer):
     items = CellHistoryRowSerializer(many=True)
+
+
+class WorkshopRuleSourcesSerializer(serializers.Serializer):
+    inspector = serializers.CharField()
+    reinforcement = serializers.CharField()
+    beads = serializers.CharField()
+    handles = serializers.CharField()
+
+
+class WorkshopRulesConfirmSerializer(serializers.Serializer):
+    chamber_clearance_mm = serializers.DecimalField(max_digits=8, decimal_places=2, min_value=Decimal("0.01"))
+    inspector = serializers.DictField(child=serializers.DictField())
+    reinforcement_rules = serializers.ListField(child=serializers.DictField(), min_length=1)
+    bead_offsets = serializers.DictField(child=serializers.DictField())
+
+
+class WorkshopRulesSerializer(serializers.Serializer):
+    system_id = serializers.UUIDField()
+    state = serializers.ChoiceField(choices=["PENDING", "CONFIRMED"])
+    version = serializers.IntegerField(allow_null=True)
+    chamber_clearance_mm = serializers.CharField()
+    inspector = serializers.DictField(child=serializers.DictField())
+    reinforcement_rules = serializers.ListField(child=serializers.DictField())
+    bead_offsets = serializers.DictField(child=serializers.DictField())
+    sources = WorkshopRuleSourcesSerializer()
+    pending_reinforcement = serializers.BooleanField()
