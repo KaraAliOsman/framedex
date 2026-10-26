@@ -283,6 +283,8 @@ def _contents_json(components):
             + ',"unit":'
             + json.dumps(component["unit"])
             + (',"category":' + json.dumps(component["category"]) if "category" in component else "")
+            + "".join(f',"{key}":' + json.dumps(component[key])
+                      for key in ("purchasing_sku", "manufacturer_name", "source") if component.get(key))
             + "}"
         )
     return "[" + ",".join(encoded) + "]"

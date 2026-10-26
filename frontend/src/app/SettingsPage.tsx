@@ -48,6 +48,7 @@ import {
 } from "../features/settings/AdminSections";
 import { SimplePricingSettings } from "../features/pricing/SimplePricingSettings";
 import { ProductionSettings } from "../features/settings/ProductionSettings";
+import { SiteMeasurementSettings } from "../features/settings/SiteMeasurementSettings";
 import { AnalyticsPreferences } from "../features/analytics/AnalyticsPreferences";
 import type { OrgBrandingWriteRequest, DocumentPreferences } from "../api/generated/models";
 import { useAuthSession } from "../auth/AuthSessionProvider";
@@ -987,6 +988,7 @@ export function SettingsPage(): JSX.Element {
             <>
               {["OWNER", "ESTIMATOR", "WORKSHOP_MANAGER"].includes(org.role) ? (
                 <>
+                  <SiteMeasurementSettings orgId={org.id} canEdit={owner} />
                   <ProductionSettings orgId={org.id} canEdit={workshop} />
                   <DocumentSettings orgId={org.id} canEdit={commercial} section="production" />
                   <MountingRulesSettings orgId={org.id} canWrite={workshop} />

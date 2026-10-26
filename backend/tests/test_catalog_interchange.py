@@ -119,7 +119,7 @@ def test_preview_new_catalog_all_types_is_stable_and_rejects_duplicates(monkeypa
     changes, errors, token = catalog_review._plan(org_id, imported, deepcopy(original))
     assert errors == []
     assert len(changes) == len(original)+2*len([row for row in original if row["sheet"]=="Vidrios"])
-    assert {"profile_systems", "profile_articles", "glazing_bead_matrix", "hardware_kits", "glass_purchase_mappings", "catalog_glass_compositions", "glass_safety_rule_sets", "profile_purchase_mappings", "reinforcement_articles", "cost_list_items"} == {change.table for change in changes}
+    assert {"profile_systems", "profile_articles", "glazing_bead_matrix", "hardware_kits", "glass_purchase_mappings", "catalog_glass_compositions", "glass_safety_rule_sets", "profile_purchase_mappings", "reinforcement_articles", "cost_list_items", "fitting_purchase_mappings"} == {change.table for change in changes}
     assert token == catalog_review._plan(org_id, imported, deepcopy(original))[2]
     duplicate = deepcopy(original[0])
     duplicate["key"] = "duplicate"

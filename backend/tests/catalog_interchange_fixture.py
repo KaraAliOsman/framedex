@@ -1,4 +1,4 @@
-"""Provider-like eleven-sheet fixture; every number has an explicit synthetic source."""
+"""Provider-like twelve-sheet fixture; every number has an explicit synthetic source."""
 from catalogs.demo_fixture import manifest
 from ingest.catalog_template import candidate
 
@@ -28,6 +28,8 @@ def catalog_rows():
             "bead_sku":bead["bead_article"]["sku"], "system_code": code, "purchasing_sku": glass["sku"], "manufacturer_name": "Proveedor de prueba", "version": 1, "source": source}))
     for kit in params["available_hardware_kits"]:
         rows.append(("Herrajes", {**kit, "weight_kg": "2.50", "system_code": code, "is_active": True, "source": source}))
+    rows.append(("Fijaciones", {"system_code": code, "sku": "TORNILLO-REFUERZO", "name": "Tornillo de refuerzo de prueba",
+        "purchasing_sku": "COMPRA-TORNILLO", "manufacturer_name": "Proveedor de prueba", "version": 1, "source": source}))
     rows.append(("Precios de costo", {"system_code": code, "sku": fixture["articles"][0]["sku"], "list_code": "PROVEEDOR-OCTUBRE", "supplier_name": "Proveedor de prueba", "currency": "CLP", "valid_from": "2026-10-01", "valid_to": None, "unit_cost": "14500.25", "item_type": "PROFILE", "unit": "BAR", "source": source}))
     rows.append(("Reglas de vidrio", {"code": "PRUEBA-PUERTA", "name": "Puerta · regla sintética", "zone": "DOOR", "required_classes": ["A", "B", "C"], "mandatory": False, "synthetic": True, "source": source}))
     return [candidate(sheet, values, key=f"r{index}", row=index + 5, method="MANUAL") for index, (sheet, values) in enumerate(rows)]

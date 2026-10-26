@@ -33,6 +33,8 @@ def render(
         "COLLECTION": "Recordatorio de pago de su proyecto",
     }
     title = titles[kind]
+    from documents.human import human_text
+    reference = human_text(reference)
     issuer = (
         "DEKOPEN"
         if internal

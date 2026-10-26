@@ -321,6 +321,10 @@
   background: var(--cut-steel);
 }
 
+.cutplan-piece[data-steel] small {
+  color: var(--cut-piece-ink);
+}
+
 .cutplan-piece b {
   font-size: 0.8125rem;
   font-variant-numeric: tabular-nums;

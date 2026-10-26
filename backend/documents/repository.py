@@ -372,6 +372,19 @@ def _effective_one(values: list[dict[str, object]], org_id: UUID, code: str) -> 
     return effective[0]
 
 
+def _same_physical_bar(values: list[dict[str, object]]) -> list[dict[str, object]]:
+    """One steel bar often reinforces several profiles (frame and mullion):
+    rows that bind the same physical stock the same way are one purchase,
+    not an ambiguity. Rows that differ in any stock fact stay ambiguous."""
+    unique: dict[tuple, dict[str, object]] = {}
+    for row in sorted(values, key=lambda item: str(item["binding_id"])):
+        key = tuple(str(row.get(name)) for name in (
+            "org_id", "physical_stock_identity", "purchasing_sku", "manufacturer_name", "stock_color",
+            "cutting_profile_id", "binding_version", "stock_length_mm"))
+        unique.setdefault(key, row)
+    return list(unique.values())
+
+
 def load_purchase_authorities(
     *, system_id: UUID, org_id: UUID, color: str,
     profile_skus: set[str], reinforcement_skus: set[str], glass_skus: set[str],
@@ -436,7 +449,7 @@ def load_purchase_authorities(
         )
         for sku_value in sorted(reinforcement_skus):
             row = _effective_one(
-                grouped.get(sku_value, []), org_id,
+                _same_physical_bar(grouped.get(sku_value, [])), org_id,
                 "reinforcement_stock_binding_missing_or_ambiguous",
             )
             binding = _stock_binding(row, PhysicalSourceKind.REINFORCEMENT)

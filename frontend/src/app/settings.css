@@ -361,3 +361,36 @@
 .settings-content .pricing-grid {
   grid-template-columns: minmax(0, 1fr);
 }
+
+.site-measurement {
+  display: grid;
+  gap: var(--space-8px);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.site-measurement__option {
+  display: flex;
+  gap: var(--space-12px);
+  align-items: flex-start;
+  padding: var(--space-12px) var(--space-16px);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-2);
+  cursor: pointer;
+}
+
+.site-measurement__option:has(input:checked) {
+  border-color: var(--border-focus);
+  background: var(--surface-selected);
+}
+
+.site-measurement__option > span {
+  display: grid;
+  gap: var(--space-4px);
+}
+
+.site-measurement__option > span > span {
+  color: var(--text-secondary);
+  font-size: var(--type-dense);
+}

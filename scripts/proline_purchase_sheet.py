@@ -41,13 +41,20 @@ def rows(code: str) -> list[tuple[str, dict]]:
             "system_code": code, "sku": parent, "reinforcement_sku": steel, "commercial_sku": steel,
             "name": name, "stock_length_mm": "5800.00", "purchase_unit": "BAR",
             "manufacturer_name": "Proline", "source": SOURCE}))
+    out.append(("Fijaciones", {
+        "system_code": code, "sku": "120500051", "name": "Tornillo de refuerzo 3,9 × 19 mm",
+        "purchasing_sku": "120500051", "manufacturer_name": "Proveedor de herrajes del taller",
+        "version": 1, "source": SOURCE}))
     out.append(("Vidrios", {
         "system_code": code, "sku": "DVH-4-12-4", "glass_spec": "4-12-4 Float Incoloro",
         "name": "DVH 4 incoloro + 12 + 4 incoloro", "purchasing_sku": "DVH-4-12-4",
         "manufacturer_name": "Proveedor de vidrio del taller", "version": 1,
         "glass_thickness_mm": "20.00", "bead_sku": "PRO05", "bead_width_mm": "19.00",
         "gasket_interior_mm": "3.00", "gasket_exterior_mm": "3.00", "cut_add_mm": "10.00",
-        "source": SOURCE}))
+        # Two 4 mm float panes at 2.5 kg/m² per mm; the area limit is the
+        # DVH 4 + 4 reference the workshop's supplier sheet would state.
+        "weight_kg_m2": "20.00", "max_area_m2": "2.60",
+        "source": SOURCE + "; peso y área máxima: ficha de vidrio del taller de ensayo"}))
     return out
 
 

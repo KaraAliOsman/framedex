@@ -13,4 +13,10 @@ export interface CatalogHardwareComponent {
   qty: string;
   unit: string;
   category?: CategoryEnum;
+  /** @maxLength 100 */
+  purchasing_sku?: string;
+  /** @maxLength 255 */
+  manufacturer_name?: string;
+  /** @maxLength 500 */
+  source?: string;
 }

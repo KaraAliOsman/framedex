@@ -4444,6 +4444,7 @@ paths:
           enum:
           - Barras de refuerzo
           - Colores y SKU por color
+          - Fijaciones
           - Herrajes
           - Límites
           - Perfiles
@@ -5175,6 +5176,7 @@ paths:
           enum:
           - Barras de refuerzo
           - Colores y SKU por color
+          - Fijaciones
           - Herrajes
           - Límites
           - Perfiles
@@ -14819,6 +14821,141 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/NumberingList'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/organization/site-measurement/:
+    get:
+      operationId: company_site_measurement
+      description: Whether a window needs a confirmed site measurement before fabrication.
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - projects
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteMeasurement'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    put:
+      operationId: company_site_measurement_save
+      description: Whether a window needs a confirmed site measurement before fabrication.
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SiteMeasurementWriteRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteMeasurement'
           description: ''
         '400':
           content:
@@ -31727,6 +31864,15 @@ components:
           allOf:
           - $ref: '#/components/schemas/CategoryEnum'
           default: OTHER
+        purchasing_sku:
+          type: string
+          maxLength: 100
+        manufacturer_name:
+          type: string
+          maxLength: 255
+        source:
+          type: string
+          maxLength: 500
       required:
       - name
       - qty
@@ -31751,6 +31897,18 @@ components:
           allOf:
           - $ref: '#/components/schemas/CategoryEnum'
           default: OTHER
+        purchasing_sku:
+          type: string
+          minLength: 1
+          maxLength: 100
+        manufacturer_name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        source:
+          type: string
+          minLength: 1
+          maxLength: 500
       required:
       - name
       - qty
@@ -52175,6 +52333,28 @@ components:
       - status
       - system_id
       - valid
+    SiteMeasurement:
+      type: object
+      properties:
+        site_measurement:
+          $ref: '#/components/schemas/SiteMeasurementEnum'
+      required:
+      - site_measurement
+    SiteMeasurementEnum:
+      enum:
+      - REQUIRED
+      - QUOTED
+      type: string
+      description: |-
+        * `REQUIRED` - REQUIRED
+        * `QUOTED` - QUOTED
+    SiteMeasurementWriteRequest:
+      type: object
+      properties:
+        site_measurement:
+          $ref: '#/components/schemas/SiteMeasurementEnum'
+      required:
+      - site_measurement
     SlidingLayoutFacts:
       type: object
       properties:

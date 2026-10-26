@@ -229,7 +229,9 @@ def test_supplier_mail_uses_real_sealed_pdf_mime_and_one_delivery_intent(documen
     assert len(attachments)==1 and attachments[0].get_filename()==order['order_code']+'.pdf'
     assert attachments[0].get_content().startswith(b'%PDF')
     assert attachments[0].get_content()==next(iter(storage.values()))
-    assert order['order_code'] in mime['Subject'] and mime['To'].addresses[0].addr_spec==recipient
+    # The subject reads as people say it («Compra N° 1»); the file keeps the stored code.
+    from documents.human import human_text
+    assert human_text(order['order_code']) in mime['Subject'] and mime['To'].addresses[0].addr_spec==recipient
     with transaction.atomic(),mail_service.mail_backend():
         assert one('SELECT count(*) AS n FROM mail_outbox WHERE org_id=%s',[org])['n']==1
         one("UPDATE mail_outbox SET state='FAILED',attempt=1,error_code='mail_preflight_failed' WHERE id=%s RETURNING id",[row['id']])

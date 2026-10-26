@@ -77,6 +77,10 @@ class ProfilePurchaseSerializer(StrictSerializer):
     supplier_name = serializers.CharField(required=False, allow_null=True, max_length=255)
     purchase_unit = serializers.ChoiceField(choices=["BAR"])
     is_active = serializers.BooleanField(required=False)
+    physical_stock_identity = serializers.UUIDField(required=False)
+    stock_color = serializers.CharField(required=False, max_length=40)
+    cutting_profile_id = serializers.UUIDField(required=False)
+    binding_version = serializers.IntegerField(required=False, min_value=1)
 
 
 class GlassMappingSerializer(StrictSerializer):
@@ -90,13 +94,40 @@ class GlassMappingSerializer(StrictSerializer):
     provenance = serializers.DictField()
 
 
+class FittingMappingSerializer(StrictSerializer):
+    system_id = serializers.UUIDField()
+    technical_sku = serializers.CharField(max_length=100)
+    purchasing_sku = serializers.CharField(max_length=100)
+    manufacturer_name = serializers.CharField(max_length=255)
+    purchase_unit = serializers.ChoiceField(choices=["EA"])
+    version = serializers.IntegerField(min_value=1)
+    provenance = serializers.DictField()
+
+
 COLORS = service.Resource("catalog_color_skus", ColorSkuSerializer, backend_lock=True)
 STEELS = service.Resource("reinforcement_articles", SteelBarSerializer, backend_lock=True)
 # A series without a finish chart buys plain bars. The table has no system
 # column, so it is written here directly instead of through the catalog service.
 PURCHASES = "profile_purchase_mappings"
 _PURCHASE_FIELDS = ("profile_article_id", "commercial_sku", "manufacturer_name", "supplier_name",
-                    "purchase_unit", "is_active")
+                    "purchase_unit", "is_active", "physical_stock_identity", "stock_color",
+                    "cutting_profile_id", "binding_version")
+
+
+def _plain_bar_binding(org_id, kind, commercial_sku):
+    """The physical stock of a bar bought plain (a series without a finish
+    chart): its identity is the purchase code, its color the plain white the
+    series is sold in, cut with the workshop's default cutting profile (its
+    own before the shared one). Without it the bar quotes but never reaches
+    the work order; with no single default profile it stays unbound."""
+    profiles = rows("SELECT id,org_id FROM public.cutting_profiles WHERE is_active AND is_default "
+                    "AND (org_id IS NULL OR org_id=%s)", [org_id])
+    own = [item for item in profiles if item["org_id"] is not None]
+    chosen = own or profiles
+    if len(chosen) != 1:
+        return {}
+    return {"physical_stock_identity": uuid5(UUID(str(org_id)), f"{kind}:{commercial_sku}"),
+            "stock_color": "WHITE", "cutting_profile_id": UUID(str(chosen[0]["id"])), "binding_version": 1}
 
 
 def _purchase(row):
@@ -120,8 +151,11 @@ def _write_purchase(org_id, row_id, data, *, create):
         raise contract_error(409, "catalog_undo_stale", "La compra de barra cambió. Revisa su versión actual.")
     return _purchase(found[0])
 GLASS = service.Resource("glass_purchase_mappings", GlassMappingSerializer, backend_lock=True)
+# Counted fittings (the screws that fix steel inside a profile, clamps): how
+# each is bought. Versioned and immutable, like a glass purchase.
+FITTINGS = service.Resource("fitting_purchase_mappings", FittingMappingSerializer, backend_lock=True)
 RESOURCES = {resource.table: resource for resource in
-             (service.SYSTEMS, service.ARTICLES, service.BEADS, service.KITS, COLORS, STEELS, GLASS, glass_catalog.COMPOSITIONS)}
+             (service.SYSTEMS, service.ARTICLES, service.BEADS, service.KITS, COLORS, STEELS, GLASS, FITTINGS, glass_catalog.COMPOSITIONS)}
 
 
 @dataclass
@@ -306,6 +340,10 @@ def _plan(org_id, import_row, entries, *, lock=False):
                     except ValueError:
                         errors.append(_error(key, "cutting_profile_code", "Declara un perfil de corte vigente de este taller."))
                 binding = ("manufacturer_name", "stock_color", "cutting_profile_id", "binding_version")
+                if not (current.get(("system", code)) or {}).get("finish_authority") and steel_data.get(
+                        "manufacturer_name") and not any(steel_data.get(name) is not None for name in binding[1:]):
+                    plain = _plain_bar_binding(org_id, "steel", values["commercial_sku"])
+                    steel_data.update({name: plain[name] for name in binding[1:] if name in plain})
                 if (current.get(("system", code)) or {}).get("finish_authority") or any(
                         steel_data.get(name) is not None for name in binding[1:]):
                     # A physical stock binding is all-or-nothing; its identity is the purchase itself.
@@ -321,7 +359,8 @@ def _plan(org_id, import_row, entries, *, lock=False):
                 before = _purchase(found[0]) if found else None
                 purchase = {"profile_article_id": profile["id"], "commercial_sku": values["commercial_sku"],
                     "manufacturer_name": values.get("manufacturer_name"), "purchase_unit": values.get("purchase_unit") or "BAR",
-                    **{name: values[name] for name in ("supplier_name", "is_active") if values.get(name) is not None}}
+                    **{name: values[name] for name in ("supplier_name", "is_active") if values.get(name) is not None},
+                    **_plain_bar_binding(org_id, "profile", values["commercial_sku"])}
                 if purchase["manufacturer_name"] is None:
                     errors.append(_error(key, "manufacturer_name", "Indica el fabricante de la barra."))
                 data = _validated(ProfilePurchaseSerializer, purchase, key, errors)
@@ -411,6 +450,17 @@ def _plan(org_id, import_row, entries, *, lock=False):
                 **{name: values[name] for name in ("purchasing_sku", "manufacturer_name", "glass_spec", "version")},
                 "purchase_unit": "EA", "provenance": {"source": values["source"], "method": entry["method"],
                     "catalog_import": str(import_row["id"])}}, key, errors)
+        elif sheet == "Fijaciones":
+            resource = FITTINGS
+            with catalog_backend():
+                found = rows("SELECT id FROM public.fitting_purchase_mappings WHERE org_id=%s AND system_id=%s "
+                    "AND technical_sku=%s AND version=%s", [org_id, systems[code], values["sku"], values["version"]]
+                    ) if ("system", code) in current and current[("system", code)].get("revision") else []
+            before = service.retrieve(FITTINGS, org_id, found[0]["id"]) if found else None
+            data = _validated(FittingMappingSerializer, {"system_id": systems[code], "technical_sku": values["sku"],
+                **{name: values[name] for name in ("purchasing_sku", "manufacturer_name", "version")},
+                "purchase_unit": "EA", "provenance": {"source": values["source"], "method": entry["method"],
+                    "catalog_import": str(import_row["id"])}}, key, errors)
         elif sheet == "Precios de costo":
             if not rows("SELECT private.pricing_role(%s,ARRAY['OWNER']) AS allowed", [org_id])[0]["allowed"]:
                 errors.append(_error(key, "unit_cost", "Solo el dueño puede publicar precios de costo. Excluye esta fila para publicar el resto."))
@@ -435,6 +485,9 @@ def _plan(org_id, import_row, entries, *, lock=False):
             action = "none"
         if before and before.get("read_only"):
             errors.append(_error(key, "system_code", "Este catálogo es de lectura. Usa un código nuevo para tu copia."))
+            continue
+        if resource is FITTINGS and before and action != "none":
+            errors.append(_error(key, "version", "La versión de la fijación es inmutable. Aumenta su versión para corregirla."))
             continue
         if resource is GLASS and before and action != "none":
             errors.append(_error(key, "version", "La versión del vidrio es inmutable. Aumenta su versión para registrar la corrección."))
@@ -646,6 +699,10 @@ def undo_publication(*, org_id, actor_id, import_id):
             if current["revision"] != change["after_revision"]:
                 raise contract_error(409, "catalog_undo_stale", "El catálogo cambió después de publicar. Revisa su nueva versión antes de deshacer.")
             if change["action"] == "create":
+                if resource is FITTINGS:
+                    # Immutable purchase evidence: an undone import keeps the
+                    # row; it only names how a fitting is bought.
+                    continue
                 if resource is GLASS:
                     with catalog_backend():
                         rows("INSERT INTO public.catalog_glass_retractions(mapping_id,org_id,import_id,actor_id) VALUES(%s,%s,%s,%s) RETURNING mapping_id",
