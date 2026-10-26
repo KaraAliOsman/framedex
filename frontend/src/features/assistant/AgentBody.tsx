@@ -1093,27 +1093,40 @@ export function AgentBody({
         ) : null}
         {thread.length === 0 && !live ? (
           <div className="ask-dock__welcome">
-            <Companion state={presenceState(job)} size={64} />
-            <p className="ask-dock__hint">{t("agent.hint")}</p>
+            <div className="ask-dock__greeting">
+              <Companion state={presenceState(job)} size={52} />
+              <div>
+                <p className="ask-dock__hello">
+                  {contextLabel
+                    ? `Estoy contigo en ${contextLabel}.`
+                    : "Listo para trabajar contigo."}
+                </p>
+                <p className="ask-dock__hint">{t("agent.hint")}</p>
+              </div>
+            </div>
             {/* Starting points for what is open: they fill the request, never
              * send it — the person still decides and can edit the words. */}
             {(SUGGESTIONS[surface] ?? SUGGESTIONS.default)!.length ? (
-              <ul className="ask-dock__suggestions" aria-label="Sugerencias">
-                {(SUGGESTIONS[surface] ?? SUGGESTIONS.default)!.map((text) => (
-                  <li key={text}>
-                    <button
-                      type="button"
-                      className="ask-dock__suggestion"
-                      onClick={() => {
-                        setGoal(text);
-                        inputRef.current?.focus();
-                      }}
-                    >
-                      {text}
-                    </button>
-                  </li>
-                ))}
-              </ul>
+              <>
+                <p className="ask-dock__section">Para empezar</p>
+                <ul className="ask-dock__suggestions" aria-label="Sugerencias">
+                  {(SUGGESTIONS[surface] ?? SUGGESTIONS.default)!.map((text) => (
+                    <li key={text}>
+                      <button
+                        type="button"
+                        className="ask-dock__suggestion"
+                        onClick={() => {
+                          setGoal(text);
+                          inputRef.current?.focus();
+                        }}
+                      >
+                        <span>{text}</span>
+                        <Icon name="arrowRight" size={16} />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </>
             ) : null}
           </div>
         ) : (

@@ -110,7 +110,7 @@
 .project-batch-actions {
   align-items: center;
   background: var(--surface-selected);
-  border: 1px solid var(--cobalt-100);
+  border: 1px solid var(--petrol-100);
   border-radius: var(--r-2);
   display: flex;
   flex-wrap: wrap;
