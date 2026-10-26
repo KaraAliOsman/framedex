@@ -122,7 +122,7 @@ La ventana y el documento son los protagonistas y deben parecer trabajo profesio
 | g-950 | `#1A1D1C` | Tinta, texto principal, trazo de perfil, botón principal |
 | g-900 | `#262927` | Hover dentro de superficies oscuras |
 | g-700 | `#424745` | Separadores sobre oscuro |
-| g-500 | `#6E7471` | Texto atenuado grande, guías |
+| g-500 | `#656B68` | Texto atenuado grande, guías |
 | g-400 | `#9DA19E` | Placeholder y deshabilitado |
 | g-300 | `#CDD0CB` | Borde fuerte |
 | g-200 | `#E2E3DE` | Borde por defecto |

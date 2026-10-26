@@ -1229,7 +1229,8 @@
 }
 .ask-dock__form:focus-within {
   border-color: var(--border-focus);
-  box-shadow: 0 0 0 3px var(--petrol-100);
+  outline: 2px solid var(--border-focus);
+  outline-offset: 1px;
 }
 .ask-dock__form textarea,
 .ask-dock__form textarea:focus-visible {

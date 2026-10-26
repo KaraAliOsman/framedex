@@ -1793,7 +1793,7 @@ it("lists human timeline events once the activity section opens", async () => {
   expect(await screen.findByText(t("projects.activityEmitted"))).toBeInTheDocument();
   expect(screen.getByText(t("projects.activityApproved"))).toBeInTheDocument();
   expect(screen.getByText(t("projects.activityPayment"))).toBeInTheDocument();
-  expect(screen.getAllByText(/REV-A/).length).toBeGreaterThan(0);
+  expect(screen.getAllByText(/Revisión A/).length).toBeGreaterThan(0);
 });
 
 it.each([
