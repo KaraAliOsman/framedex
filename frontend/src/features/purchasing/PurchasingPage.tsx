@@ -303,7 +303,7 @@ type DocumentAction = {
   format: string;
   label: Parameters<typeof t>[0];
   /** Composition of the same sealed data (backend documents/artifacts.py). */
-  layout?: "STANDARD" | "PLANO" | "COMPACTA" | "VENTANA" | "OBRA";
+  layout?: "STANDARD" | "PLANO" | "OT" | "VIDRIOS" | "MONTAJE" | "COMPACTA" | "VENTANA" | "OBRA";
 };
 
 function orderDocuments(order: Order, role: string): DocumentAction[] {
@@ -329,10 +329,13 @@ function orderDocuments(order: Order, role: string): DocumentAction[] {
 function revisionDocuments(role: string): DocumentAction[] {
   return (
     [
+      { type: "DOC-03", format: "PDF", label: "purchasing.docWorkOrder", layout: "OT" },
+      { type: "DOC-05", format: "PDF", label: "purchasing.doc05" },
+      { type: "DOC-03", format: "PDF", label: "purchasing.docGlass", layout: "VIDRIOS" },
+      { type: "DOC-03", format: "PDF", label: "purchasing.docAssembly", layout: "MONTAJE" },
       { type: "DOC-01", format: "PDF", label: "purchasing.doc01" },
       { type: "DOC-03", format: "PDF", label: "purchasing.doc03" },
       { type: "DOC-03", format: "PDF", label: "purchasing.doc03Plan", layout: "PLANO" },
-      { type: "DOC-05", format: "PDF", label: "purchasing.doc05" },
       { type: "DOC-05", format: "PDF", label: "purchasing.doc05Compact", layout: "COMPACTA" },
       { type: "DOC-05", format: "PDF", label: "purchasing.doc05Window", layout: "VENTANA" },
       { type: "DOC-05", format: "PDF", label: "purchasing.doc05Work", layout: "OBRA" },

@@ -397,3 +397,33 @@
     overflow-x: auto;
   }
 }
+
+.workshop-docs {
+  padding: var(--space-16px);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-2);
+  background: var(--surface-panel);
+}
+
+.workshop-docs h3 {
+  margin: 0 0 var(--space-12px);
+  font-size: var(--type-title-m);
+}
+
+.workshop-docs__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-8px);
+}
+
+.workshop-docs__label {
+  display: grid;
+  gap: 2px;
+  text-align: left;
+}
+
+.workshop-docs__label small {
+  color: var(--text-secondary);
+  font-size: var(--type-dense);
+  font-weight: 400;
+}

@@ -13,6 +13,7 @@ import type {
 import { fmtMm, formatRevision } from "../../format";
 import { Button, Icon, Loading, SegmentedControl } from "../../ui";
 import "./materials.css";
+import { WorkshopDocuments } from "./WorkshopDocuments";
 
 type Tab = "consolidated" | "windows" | "cut";
 type CutView = "sequence" | "compact" | "window";
@@ -146,6 +147,7 @@ export function ProjectMaterials({
           Orden de corte
         </Button>
       </header>
+      <WorkshopDocuments project={project} orgId={orgId} />
       {freshness?.design_changed ? (
         <p className="materials__stale" role="status">
           <Icon name="warning" size={16} /> El diseño cambió después de la revisión{" "}
