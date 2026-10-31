@@ -4,6 +4,7 @@ import { designProduct, PositionThumb, THUMB_MEMBERS } from "../projects/Positio
 import { withFinishMembers } from "../canvas/members";
 import { openingFactsByModule, type OpeningLeafFact } from "../canvas/physicalOpenings";
 import { Dialog, Dims } from "../../ui";
+import type { MountedOpening } from "../canvas/mountedWall";
 import "../canvas/Tools.css";
 
 const LazyModel3D = lazy(() => import("../canvas/Model3DView"));
@@ -16,6 +17,20 @@ export function proposalDesign(position: PortalPosition): PositionDesign {
     color: position.color_interior ?? "",
     parametric_tree: position.parametric_tree,
   };
+}
+
+/** The sealed vano of each module, as issued with the revision. */
+export function portalMounting(position: PortalPosition): MountedOpening[] {
+  return (position.opening_measurements ?? []).map((item) => ({
+    moduleId: item.module_id ?? null,
+    moduleIndex: item.module_index,
+    widthMm: item.width_mm,
+    heightMm: item.height_mm,
+    ruleName: item.rule_name,
+    synthetic: item.synthetic,
+    sides: item.sides ?? null,
+    warnings: item.warnings ?? [],
+  }));
 }
 
 export function ProposalThumb({ position }: { position: PortalPosition }): JSX.Element {
@@ -56,6 +71,7 @@ function Drawing({
         : {},
     [product, position.opening_leaves],
   );
+  const mounting = useMemo(() => portalMounting(position), [position]);
   const reset = () => setPose({ scale: 1, x: 0, y: 0 });
   const zoom = (factor: number) =>
     setPose((p) => ({ ...p, scale: Math.max(1, Math.min(4, p.scale * factor)) }));
@@ -122,6 +138,7 @@ function Drawing({
               members={members}
               openingFacts={openingFacts}
               audience="portal"
+              mounting={mounting}
             />
           </Suspense>
         ) : (

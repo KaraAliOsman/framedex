@@ -13,6 +13,8 @@ import type { ProductJson } from "./productEditing";
 import type { MemberGeometry } from "./members";
 import type { OpeningLeafFact } from "./physicalOpenings";
 import { buildScene3D, type LeafMotion, type ModuleScene } from "./Product3DScene";
+import { mountedWallBoxes, openingsByModule, type MountedOpening } from "./mountedWall";
+import { formatMillimeters } from "../../format";
 import { Model3DStage } from "./Model3DStage";
 import type { MaterialMode } from "./materials3d";
 import type { LeafPoseMode, LeafPoseState } from "./poses3d";
@@ -51,6 +53,7 @@ export default function Model3DView({
   onSelectBay = NOOP,
   onSelectCoupling = NOOP,
   audience = "office",
+  mounting = EMPTY_MOUNTING,
 }: {
   product: ProductJson;
   members: MemberGeometry;
@@ -61,6 +64,8 @@ export default function Model3DView({
   onSelectBay?(moduleId: string, bayId: string): void;
   onSelectCoupling?(couplingId: string): void;
   audience?: "office" | "portal";
+  /** Sealed site openings: when present, the wall is the measured vano. */
+  mounting?: MountedOpening[];
 }): JSX.Element {
   const [mode, setMode] = useState<MaterialMode>("commercial");
   const [preset, setPreset] = useState<CameraPreset>(
@@ -72,7 +77,7 @@ export default function Model3DView({
   const [states, setStates] = useState<States>({});
   const [clip, setClip] = useState(false),
     [explode, setExplode] = useState(false),
-    [wall, setWall] = useState(false);
+    [wall, setWall] = useState(mounting.length > 0);
   const [error, setError] = useState(false),
     [attempt, setAttempt] = useState(0),
     [exportReady, setExportReady] = useState(false);
@@ -92,6 +97,61 @@ export default function Model3DView({
     [product, members, plan, openingFacts],
   );
   const hasLeaves = scene.modules.some((module) => module.leaves.length > 0);
+  const vanos = useMemo(
+    () =>
+      openingsByModule(
+        scene.modules.map((module) => module.moduleId),
+        mounting,
+      ),
+    [scene, mounting],
+  );
+  const mounted = useMemo(() => {
+    const boxes: Record<string, ReturnType<typeof mountedWallBoxes>> = {};
+    for (const module of scene.modules) {
+      const opening = vanos[module.moduleId];
+      const frame = product.assembly.modules.find((item) => item.id === module.moduleId);
+      if (!opening || !frame) continue;
+      const found = mountedWallBoxes(
+        module,
+        { width: Number(frame.width_mm), height: Number(frame.height_mm) },
+        opening,
+      );
+      if (found.length) boxes[module.moduleId] = found;
+    }
+    return boxes;
+  }, [scene, vanos, product]);
+  const measured = Object.keys(mounted).length > 0;
+  const vanoList = scene.modules.flatMap((module) =>
+    mounted[module.moduleId] && vanos[module.moduleId] ? [vanos[module.moduleId]!] : [],
+  );
+  const vanoCentered = vanoList.some((item) => !item.sides);
+  const portal = audience === "portal";
+  const allOpen =
+    hasLeaves &&
+    scene.modules.every((module) =>
+      module.leaves.every(
+        (leaf) =>
+          Boolean(leaf.fact?.advanced?.pass_through) ||
+          (states[module.moduleId]?.[leaf.leafId]?.amount ?? 0) > 0,
+      ),
+    );
+  const toggleAll = () => {
+    setExplode(false);
+    setStates(
+      allOpen
+        ? {}
+        : Object.fromEntries(
+            scene.modules.map((module) => [
+              module.moduleId,
+              Object.fromEntries(
+                module.leaves
+                  .filter((leaf) => !leaf.fact?.advanced?.pass_through)
+                  .map((leaf) => [leaf.leafId, { amount: 1, mode: "open" as LeafPoseMode }]),
+              ),
+            ]),
+          ),
+    );
+  };
   const schematicHardware = scene.modules.some((module) =>
     module.solids.some((solid) => solid.approximate && ["handle", "hinge"].includes(solid.surface)),
   );
@@ -199,9 +259,9 @@ export default function Model3DView({
         <div className="ui-segmented model3d-segmented" role="group" aria-label="Cámara">
           {(
             [
-              ["interior", "Interior"],
-              ["exterior", "Exterior"],
-              ["detail", "Detalle"],
+              ["interior", portal ? "Desde adentro" : "Interior"],
+              ["exterior", portal ? "Desde afuera" : "Exterior"],
+              ["detail", portal ? "Manilla" : "Detalle"],
             ] as const
           ).map(([value, label]) => (
             <button
@@ -215,22 +275,24 @@ export default function Model3DView({
             </button>
           ))}
         </div>
-        <div className="ui-segmented model3d-segmented" role="group" aria-label="Lectura">
-          <button
-            type="button"
-            aria-pressed={mode === "commercial"}
-            onClick={() => setMode("commercial")}
-          >
-            Comercial
-          </button>
-          <button
-            type="button"
-            aria-pressed={mode === "technical"}
-            onClick={() => setMode("technical")}
-          >
-            Técnica
-          </button>
-        </div>
+        {!portal && (
+          <div className="ui-segmented model3d-segmented" role="group" aria-label="Lectura">
+            <button
+              type="button"
+              aria-pressed={mode === "commercial"}
+              onClick={() => setMode("commercial")}
+            >
+              Comercial
+            </button>
+            <button
+              type="button"
+              aria-pressed={mode === "technical"}
+              onClick={() => setMode("technical")}
+            >
+              Técnica
+            </button>
+          </div>
+        )}
         <button
           type="button"
           className="model3d-icon-button model3d-download"
@@ -243,34 +305,50 @@ export default function Model3DView({
         </button>
       </div>
       <div className="model3d-toolbar model3d-toolbar--toggles" role="toolbar" aria-label="Capas">
-        <button
-          type="button"
-          className="model3d-toggle-chip"
-          aria-pressed={wall}
-          onClick={() => setWall((value) => !value)}
-        >
-          Muro
-        </button>
-        <button
-          type="button"
-          className="model3d-toggle-chip"
-          aria-pressed={clip}
-          onClick={() => setClip((value) => !value)}
-        >
-          Corte
-        </button>
-        <button
-          type="button"
-          className="model3d-toggle-chip"
-          aria-pressed={explode}
-          onClick={() => {
-            setStates({});
-            setExplode((value) => !value);
-          }}
-        >
-          Despiece
-        </button>
         {hasLeaves && (
+          <button
+            type="button"
+            className="model3d-toggle-chip"
+            aria-pressed={allOpen}
+            onClick={toggleAll}
+          >
+            {allOpen ? "Cerrar" : "Abrir"}
+          </button>
+        )}
+        {(!portal || measured) && (
+          <button
+            type="button"
+            className="model3d-toggle-chip"
+            aria-pressed={wall}
+            onClick={() => setWall((value) => !value)}
+          >
+            {measured ? "En la abertura" : "Muro"}
+          </button>
+        )}
+        {!portal && (
+          <>
+            <button
+              type="button"
+              className="model3d-toggle-chip"
+              aria-pressed={clip}
+              onClick={() => setClip((value) => !value)}
+            >
+              Corte
+            </button>
+            <button
+              type="button"
+              className="model3d-toggle-chip"
+              aria-pressed={explode}
+              onClick={() => {
+                setStates({});
+                setExplode((value) => !value);
+              }}
+            >
+              Despiece
+            </button>
+          </>
+        )}
+        {hasLeaves && !portal && (
           <details className="model3d-leaves">
             <summary>Hojas</summary>
             <div className="model3d-leaf-list">
@@ -322,15 +400,53 @@ export default function Model3DView({
           {preset === "exterior" ? "exterior" : preset === "detail" ? "de detalle" : "interior"}
         </span>
       </div>
-      {(approximate || approximateColor || schematicHardware || wall || explode) && (
+      {wall && measured && (
+        <ul className="model3d-vano" aria-label="Montaje en la abertura medida">
+          {vanoList.map((item) => (
+            <li key={item.moduleIndex}>
+              <strong>
+                {vanoList.length > 1 ? `Ventana ${item.moduleIndex} · ` : ""}Abertura de obra{" "}
+                {formatMillimeters(item.widthMm)} × {formatMillimeters(item.heightMm)}
+              </strong>
+              <span>
+                {item.ruleName}
+                {item.synthetic ? " · regla de referencia" : ""}
+                {item.sides ? ` · holgura ${clearances(item.sides)}` : ""}
+              </span>
+              {item.warnings?.map((warning) => (
+                <span key={warning} className="model3d-vano__warning" role="alert">
+                  {warning}
+                </span>
+              ))}
+            </li>
+          ))}
+        </ul>
+      )}
+      {(approximate ||
+        approximateColor ||
+        schematicHardware ||
+        (wall && !measured) ||
+        (wall && vanoCentered) ||
+        explode) && (
         <p className="model3d-illustrative" role="note">
-          {[
-            approximate ? "Sección aproximada" : null,
-            approximateColor ? "Color plano aproximado" : null,
-            schematicHardware ? "Herrajes esquemáticos · altura del modelo" : null,
-            wall ? "Muro de referencia" : null,
-            explode ? "Despiece axial · marco, hojas, junquillos y vidrio" : null,
-          ]
+          {(portal
+            ? [
+                approximate || approximateColor || schematicHardware
+                  ? "Imagen ilustrativa: perfiles, color y manilla aproximados"
+                  : null,
+                wall && measured && vanoCentered ? "Abertura centrada en la imagen" : null,
+              ]
+            : [
+                approximate ? "Sección aproximada" : null,
+                approximateColor ? "Color plano aproximado" : null,
+                schematicHardware ? "Herrajes esquemáticos · altura del modelo" : null,
+                wall && !measured ? "Muro de referencia" : null,
+                wall && measured && vanoCentered
+                  ? "Abertura centrada: esta revisión no guarda holguras por lado"
+                  : null,
+                explode ? "Despiece axial · marco, hojas, junquillos y vidrio" : null,
+              ]
+          )
             .filter(Boolean)
             .join(" · ")}
         </p>
@@ -370,6 +486,7 @@ export default function Model3DView({
             clip={clip}
             explode={explode}
             wall={wall}
+            mounted={mounted}
             onPick={pick}
             onExport={onExport}
             onError={onError}
@@ -378,4 +495,12 @@ export default function Model3DView({
       </RenderBoundary>
     </div>
   );
+}
+const EMPTY_MOUNTING: MountedOpening[] = [];
+const SIDE_LABEL = { left: "izq.", right: "der.", top: "arriba", bottom: "abajo" } as const;
+/** The rule's own clearance per side, as sealed — never a recomputed gap. */
+function clearances(sides: NonNullable<MountedOpening["sides"]>): string {
+  return (["left", "right", "top", "bottom"] as const)
+    .map((side) => `${SIDE_LABEL[side]} ${formatMillimeters(sides[side].clearance_mm)}`)
+    .join(", ");
 }

@@ -34,12 +34,29 @@ class CommercialHardwareSerializer(serializers.Serializer):
     synthetic = serializers.BooleanField()
 
 
+class PortalOpeningSideSerializer(serializers.Serializer):
+    adjustment_mm = serializers.CharField()
+    clearance_mm = serializers.CharField()
+
+
+class PortalOpeningSidesSerializer(serializers.Serializer):
+    left = PortalOpeningSideSerializer()
+    right = PortalOpeningSideSerializer()
+    top = PortalOpeningSideSerializer()
+    bottom = PortalOpeningSideSerializer()
+
+
 class PortalOpeningSerializer(serializers.Serializer):
     module_index = serializers.IntegerField()
+    module_id = serializers.CharField(required=False, allow_null=True)
     width_mm = serializers.CharField()
     height_mm = serializers.CharField()
     rule_name = serializers.CharField()
     synthetic = serializers.BooleanField()
+    kind = serializers.ChoiceField(choices=["IN_OPENING", "SUBFRAME", "OVERLAP", "RENOVATION"],
+                                   required=False, allow_null=True)
+    sides = PortalOpeningSidesSerializer(required=False, allow_null=True)
+    warnings = serializers.ListField(child=serializers.CharField(), required=False)
 
 
 class PortalPositionSerializer(serializers.Serializer):

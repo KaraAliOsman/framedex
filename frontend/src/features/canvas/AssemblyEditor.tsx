@@ -102,6 +102,7 @@ import { MountingInspector } from "../projects/MountingInspector";
 import { MountingDimensions } from "../projects/MountingDimensions";
 import { SourceSummary } from "../../ui/SourceSummary";
 import { Icon } from "../../ui/Icon";
+import type { MountedOpening } from "./mountedWall";
 
 /** §16 3D view: three.js + the scene builder stay out of the editing path —
  * the bundle only loads when the user opens the panel (lazy chunk), and
@@ -2122,7 +2123,10 @@ export function AssemblyEditor({
   onOpenIssues,
   saveBlockReason,
   onChooseSystem,
+  mounting,
 }: {
+  /** Engine evidence of the measured vano, shown around the 3D frame. */
+  mounting?: MountedOpening[];
   organizationId: string;
   couplerSkus: string[];
   glassSkus: string[];
@@ -3542,6 +3546,7 @@ export function AssemblyEditor({
                   onSelectModule={pickModule}
                   onSelectBay={(moduleId, bayId) => select(`${moduleId}/${bayId}`)}
                   onSelectCoupling={select}
+                  mounting={mounting}
                 />
               </Suspense>
             </div>

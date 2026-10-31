@@ -1,5 +1,6 @@
 import { compareDecimal } from "../../decimal";
 import type { ProductJson } from "../canvas/productEditing";
+import type { MountedOpening } from "../canvas/mountedWall";
 import type { ExtraSelection } from "./extraModel";
 
 export function mountingGeometryChanged(
@@ -118,3 +119,26 @@ export const walls: [OpeningSurvey["wall"], string][] = [
   ["PARTITION", "Tabique"],
   ["WOOD", "Madera"],
 ];
+
+/** The 3D vano of each surveyed module, straight from the engine evidence. */
+export function mountedFromEvidence(evidence: MountingEvidence[] = []): MountedOpening[] {
+  return evidence.map((item, index) => ({
+    moduleId: item.survey.module_id,
+    moduleIndex: index + 1,
+    widthMm: item.result.width.opening_mm,
+    heightMm: item.result.height.opening_mm,
+    ruleName: item.rule.name,
+    synthetic: item.rule.synthetic,
+    sides: {
+      left: side(item.result.width.first_adjustment_mm, item.result.width.first),
+      right: side(item.result.width.second_adjustment_mm, item.result.width.second),
+      bottom: side(item.result.height.first_adjustment_mm, item.result.height.first),
+      top: side(item.result.height.second_adjustment_mm, item.result.height.second),
+    },
+    warnings: item.result.warnings,
+  }));
+}
+
+function side(adjustment: string, allowance: Allowance) {
+  return { adjustment_mm: adjustment, clearance_mm: allowance.clearance_mm };
+}
