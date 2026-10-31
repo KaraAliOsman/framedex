@@ -429,16 +429,24 @@ export default function Model3DView({
         (wall && vanoCentered) ||
         explode) && (
         <p className="model3d-illustrative" role="note">
-          {[
-            approximate ? "Sección aproximada" : null,
-            approximateColor ? "Color plano aproximado" : null,
-            schematicHardware ? "Herrajes esquemáticos · altura del modelo" : null,
-            wall && !measured ? "Muro de referencia" : null,
-            wall && measured && vanoCentered
-              ? "Abertura centrada: esta revisión no guarda holguras por lado"
-              : null,
-            explode ? "Despiece axial · marco, hojas, junquillos y vidrio" : null,
-          ]
+          {(portal
+            ? [
+                approximate || approximateColor || schematicHardware
+                  ? "Imagen ilustrativa: perfiles, color y manilla aproximados"
+                  : null,
+                wall && measured && vanoCentered ? "Abertura centrada en la imagen" : null,
+              ]
+            : [
+                approximate ? "Sección aproximada" : null,
+                approximateColor ? "Color plano aproximado" : null,
+                schematicHardware ? "Herrajes esquemáticos · altura del modelo" : null,
+                wall && !measured ? "Muro de referencia" : null,
+                wall && measured && vanoCentered
+                  ? "Abertura centrada: esta revisión no guarda holguras por lado"
+                  : null,
+                explode ? "Despiece axial · marco, hojas, junquillos y vidrio" : null,
+              ]
+          )
             .filter(Boolean)
             .join(" · ")}
         </p>

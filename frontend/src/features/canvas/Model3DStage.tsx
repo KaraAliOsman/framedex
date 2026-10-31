@@ -430,6 +430,21 @@ export function Model3DStage({
   onError(): void;
 }): JSX.Element {
   const clipPlane = useMemo(() => new THREE.Plane(new THREE.Vector3(-1, 0, 0), 0), []);
+  // The masonry under a measured opening stands on the floor, not through it.
+  const floor = useMemo(
+    () =>
+      Math.min(
+        scene.bounds.min[1],
+        ...scene.modules.flatMap((module) =>
+          wall
+            ? (mounted[module.moduleId] ?? []).map(
+                (box) => module.position[1] + box.center[1] - box.size[1] / 2,
+              )
+            : [],
+        ),
+      ),
+    [scene, mounted, wall],
+  );
   const renderSolid = (solid: Solid3D, key: string) => (
     <SolidMesh
       key={key}
@@ -453,10 +468,7 @@ export function Model3DStage({
           intensity={mode === "commercial" ? light.intensity : light.intensity * 0.7}
         />
       ))}
-      <mesh
-        rotation={[-Math.PI / 2, 0, 0]}
-        position={[0, scene.bounds.min[1] - scene.center[1] - 2, 0]}
-      >
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, floor - scene.center[1] - 2, 0]}>
         <planeGeometry args={[scene.radius * 5, scene.radius * 4]} />
         <meshStandardMaterial color={studioColor(STUDIO_GROUND)} roughness={0.95} />
       </mesh>

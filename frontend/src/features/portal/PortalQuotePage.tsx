@@ -77,7 +77,9 @@ function useProposalHead(organization?: PortalOrganization, code?: string): void
       type: link.getAttribute("type"),
     }));
     const issuer = organization?.commercial_name || organization?.name;
-    document.title = [issuer, "Cotización", code].filter(Boolean).join(" · ");
+    document.title = [issuer, code ? `Cotización ${formatCode(code)}` : "Cotización"]
+      .filter(Boolean)
+      .join(" · ");
     for (const link of icons) {
       if (link.rel === "manifest") link.removeAttribute("href");
       else {

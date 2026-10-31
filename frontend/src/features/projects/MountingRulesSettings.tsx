@@ -157,12 +157,16 @@ export function MountingRulesSettings({ orgId, canWrite }: { orgId: string; canW
             }}
           >
             <option value="">Elige una serie</option>
-            {systems.data?.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-                {s.is_demo ? " · Ejemplo" : ""}
-              </option>
-            ))}
+            {/* The workshop's own series; synthetic examples stay out of the
+                interface unless one is already selected. */}
+            {systems.data
+              ?.filter((s) => !s.is_demo || s.id === system)
+              .map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                  {s.is_demo ? " · Ejemplo" : ""}
+                </option>
+              ))}
           </select>
         </label>
       )}
