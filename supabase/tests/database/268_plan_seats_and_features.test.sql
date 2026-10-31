@@ -61,7 +61,7 @@ SELECT lives_ok($$SELECT create_company_invitation('26800000-0000-4000-8000-0000
 RESET ROLE;
 SET LOCAL ROLE portal_backend;
 SELECT set_config('app.portal_org_id','26800000-0000-4000-8000-000000000001',TRUE);
-SELECT is(portal_plan_features(),'[]'::jsonb,'the client of a Taller sees no 3D');
+SELECT ok(portal_plan_features()='[]'::jsonb,'the client of a Taller sees no 3D');
 RESET ROLE;
 
 SELECT * FROM finish();
