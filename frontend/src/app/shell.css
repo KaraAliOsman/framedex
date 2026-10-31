@@ -36,6 +36,7 @@
   flex: 1;
   flex-direction: column;
   gap: var(--space-4px);
+  overflow-x: hidden;
   overflow-y: auto;
   padding: var(--space-8px) var(--space-16px);
 }

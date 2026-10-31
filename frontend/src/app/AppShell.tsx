@@ -24,6 +24,7 @@ import { roleLabel } from "./shellUtils";
 import { areaFor, homeFor, navigationFor, paletteNavigationFor } from "./navigation";
 import { ShortcutHelp } from "./ShortcutHelp";
 import { obraVistaUnica } from "./productFeatures";
+import { useApplyInterface, useInterfacePreferences } from "./interfacePreferences";
 
 /** The product shell (constitution §5.1): Hoy, Obras, Taller, Catálogo and Empresa,
  * a 56 px top bar with search, notices and the assistant, and the area's own
@@ -34,8 +35,13 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
   const navigate = useNavigate();
   const org = auth.me?.active_organization;
   const role = org?.role;
+  const look = useInterfacePreferences(org?.id);
+  useApplyInterface(look.preferences);
   const workshop =
-    location.pathname.startsWith("/production") || role === "OPERATOR" || role === "INSTALLER";
+    look.preferences.density === "workshop" ||
+    location.pathname.startsWith("/production") ||
+    role === "OPERATOR" ||
+    role === "INSTALLER";
   const [leaf, setLeafState] = useState<string | null>(null);
   const setLeaf = useCallback((label: string | null) => setLeafState(label), []);
   const leafContext = useMemo(() => ({ leaf, setLeaf }), [leaf, setLeaf]);
@@ -44,13 +50,7 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
   const [railOpen, setRailOpen] = useState(false);
   const railRef = useRef<HTMLElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
-  const [collapsed, setCollapsed] = useState(() => {
-    try {
-      return localStorage.getItem("dekopen.rail-collapsed") === "true";
-    } catch {
-      return false;
-    }
-  });
+  const collapsed = look.preferences.rail_collapsed;
 
   // The drawer only exists below the tablet breakpoint; it closes on route
   // change and on Escape, and traps focus while open.
@@ -254,16 +254,7 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
                   className="rail-collapse"
                   aria-label={collapsed ? "Expandir navegación" : "Contraer navegación"}
                   aria-pressed={collapsed}
-                  onClick={() =>
-                    setCollapsed((value) => {
-                      try {
-                        localStorage.setItem("dekopen.rail-collapsed", String(!value));
-                      } catch {
-                        /* Session preference remains usable. */
-                      }
-                      return !value;
-                    })
-                  }
+                  onClick={() => void look.save({ rail_collapsed: !collapsed })}
                 >
                   <Icon name="sidebar" size={20} />
                 </button>

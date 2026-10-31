@@ -43,6 +43,7 @@ def test_openapi_contains_only_authorized_shot_11_paths_and_bearer_security() ->
         "/api/v1/documents/projects/{project_id}/quick-draft/",
         "/api/v1/organization/design-defaults/",
         "/api/v1/organization/site-measurement/",
+        "/api/v1/me/interface/",
         "/api/v1/organization/finish-references/",
         "/api/v1/organization/finish-references/{reference_id}/",
         "/api/v1/organization/finish-references/{reference_id}/image/",

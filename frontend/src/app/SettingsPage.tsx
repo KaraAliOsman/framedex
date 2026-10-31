@@ -49,6 +49,7 @@ import {
 import { SimplePricingSettings } from "../features/pricing/SimplePricingSettings";
 import { ProductionSettings } from "../features/settings/ProductionSettings";
 import { SiteMeasurementSettings } from "../features/settings/SiteMeasurementSettings";
+import { InterfaceSettings } from "../features/settings/InterfaceSettings";
 import { AnalyticsPreferences } from "../features/analytics/AnalyticsPreferences";
 import type { OrgBrandingWriteRequest, DocumentPreferences } from "../api/generated/models";
 import { useAuthSession } from "../auth/AuthSessionProvider";
@@ -897,6 +898,7 @@ export function SettingsPage(): JSX.Element {
                   Configurar segundo factor
                 </Link>
               </section>
+              <InterfaceSettings orgId={org.id} />
               <section className="settings-card">
                 <h2>Organizaciones</h2>
                 <ul className="settings-list">

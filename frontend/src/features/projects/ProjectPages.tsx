@@ -3,11 +3,12 @@ import { ValidatedForm } from "../../ui/FormValidation";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import { ApiError } from "../../api/apiMutator";
 import { UnsavedChangesGuard } from "../../app/UnsavedChangesGuard";
 import { obraVistaUnica } from "../../app/productFeatures";
+import { useInterfacePreferences } from "../../app/interfacePreferences";
 import { useCopilot } from "../assistant/copilotBridge";
 import {
   clientsList,
@@ -1365,6 +1366,11 @@ function ProjectWorkspace({
   const confirm = useConfirm();
   const queryClient = useQueryClient();
   const [params, setParams] = useSearchParams();
+  const location = useLocation();
+  const look = useInterfacePreferences(orgId);
+  // The tab a work opens on is the person's choice (P14); it applies once,
+  // when the work opens without a section of its own.
+  const landed = useRef(false);
   const [draft, setDraft] = useState<Draft | null>(() =>
     !id && canWrite && params.get("create") === "1"
       ? {
@@ -1427,9 +1433,30 @@ function ProjectWorkspace({
       "compare",
     ];
     const section = allowed.find((value) => value === requested) ?? null;
+    if (!landed.current && id && (requested || look.loaded)) {
+      landed.current = true;
+      const preferred = look.preferences.project_tab;
+      if (
+        !requested &&
+        preferred !== "positions" &&
+        location.pathname === `/projects/${id}` &&
+        !params.get("position")
+      ) {
+        setParams(
+          (current) => {
+            const next = new URLSearchParams(current);
+            next.set("section", preferred);
+            return next;
+          },
+          { replace: true },
+        );
+        return;
+      }
+    }
     setSectionState(section);
     setVisited((current) => new Set([...current, section ?? "positions"]));
-  }, [params]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the preferred tab applies once per opened work
+  }, [params, look.loaded]);
 
   useEffect(() => {
     const controller = new AbortController();

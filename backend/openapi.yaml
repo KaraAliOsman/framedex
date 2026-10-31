@@ -13114,6 +13114,140 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/me/interface/:
+    get:
+      operationId: interface_preferences
+      description: How the interface looks for the signed-in person in this workshop.
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - projects
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InterfacePreferencesResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    patch:
+      operationId: interface_preferences_save
+      description: How the interface looks for the signed-in person in this workshop.
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedInterfacePreferencesRequest'
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InterfacePreferencesResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/organization/branding/:
     get:
       operationId: organization_branding_get
@@ -29199,6 +29333,12 @@ components:
         project_id:
           type: string
           format: uuid
+        preferences: {}
+        tasks:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
         origins:
           type: array
           items:
@@ -30446,14 +30586,14 @@ components:
         operation_id:
           type: string
           format: uuid
+          nullable: true
         project_id:
           type: string
           format: uuid
+          nullable: true
         reason:
           type: string
       required:
-      - operation_id
-      - project_id
       - reason
       - step_index
       - turn_index
@@ -34993,6 +35133,14 @@ components:
         * `ON_ROUTE` - ON_ROUTE
         * `DELIVERED` - DELIVERED
         * `FAILED` - FAILED
+    DensityEnum:
+      enum:
+      - office
+      - workshop
+      type: string
+      description: |-
+        * `office` - office
+        * `workshop` - workshop
     DesignAlternativesRequestRequest:
       type: object
       properties:
@@ -39291,6 +39439,25 @@ components:
       description: |-
         * `chat` - chat
         * `work` - work
+    InterfacePreferencesResponse:
+      type: object
+      properties:
+        density:
+          $ref: '#/components/schemas/DensityEnum'
+        text_size:
+          $ref: '#/components/schemas/TextSizeEnum'
+        reduce_motion:
+          type: boolean
+        project_tab:
+          $ref: '#/components/schemas/ProjectTabEnum'
+        rail_collapsed:
+          type: boolean
+      required:
+      - density
+      - project_tab
+      - rail_collapsed
+      - reduce_motion
+      - text_size
     InternalApprovalRequest:
       type: object
       properties:
@@ -45406,6 +45573,19 @@ components:
           maxLength: 12
         grain:
           $ref: '#/components/schemas/GrainEnum'
+    PatchedInterfacePreferencesRequest:
+      type: object
+      properties:
+        density:
+          $ref: '#/components/schemas/DensityEnum'
+        text_size:
+          $ref: '#/components/schemas/TextSizeEnum'
+        reduce_motion:
+          type: boolean
+        project_tab:
+          $ref: '#/components/schemas/ProjectTabEnum'
+        rail_collapsed:
+          type: boolean
     PatchedKitWriteRequest:
       type: object
       properties:
@@ -49009,6 +49189,18 @@ components:
       description: |-
         * `removed` - removed
         * `kept` - kept
+    ProjectTabEnum:
+      enum:
+      - positions
+      - quote
+      - production
+      - activity
+      type: string
+      description: |-
+        * `positions` - positions
+        * `quote` - quote
+        * `production` - production
+        * `activity` - activity
     ProjectVersionResponse:
       type: object
       properties:
@@ -53749,6 +53941,14 @@ components:
           type: string
           format: uuid
           nullable: true
+    TextSizeEnum:
+      enum:
+      - normal
+      - large
+      type: string
+      description: |-
+        * `normal` - normal
+        * `large` - large
     ThermalAlternative:
       type: object
       properties:

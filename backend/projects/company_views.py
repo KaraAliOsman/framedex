@@ -238,6 +238,39 @@ class CompanySiteMeasurementView(APIView):
             return response(company.set_site_measurement_policy(org, data["site_measurement"]))
 
 
+def interface_request_serializer():
+    from projects.interface import InterfacePreferencesSerializer
+    return InterfacePreferencesSerializer
+
+
+class InterfacePreferencesResponseSerializer(serializers.Serializer):
+    density = serializers.ChoiceField(choices=("office", "workshop"))
+    text_size = serializers.ChoiceField(choices=("normal", "large"))
+    reduce_motion = serializers.BooleanField()
+    project_tab = serializers.ChoiceField(choices=("positions", "quote", "production", "activity"))
+    rail_collapsed = serializers.BooleanField()
+
+
+class InterfacePreferencesView(APIView):
+    """How the interface looks for the signed-in person in this workshop."""
+
+    parser_classes = [DecimalJSONParser]
+
+    @extend_schema(operation_id="interface_preferences",
+                   responses={200: InterfacePreferencesResponseSerializer, **ERRORS}, **SCHEMA)
+    def get(self, request):
+        from projects import interface
+        with scope(request, ROLES) as (token, _, org):
+            return response(interface.get_preferences(org, token.user_id))
+
+    @extend_schema(operation_id="interface_preferences_save", request=interface_request_serializer(),
+                   responses={200: InterfacePreferencesResponseSerializer, **ERRORS}, **SCHEMA)
+    def patch(self, request):
+        from projects import interface
+        with scope(request, ROLES) as (token, _, org):
+            return response(interface.save_preferences(org, token.user_id, request.data or {}))
+
+
 class CompanyUsersView(APIView):
     @extend_schema(
         operation_id="company_users", responses={200: CompanyUsersSerializer, **ERRORS}, **SCHEMA

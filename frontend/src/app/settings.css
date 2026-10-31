@@ -394,3 +394,24 @@
   color: var(--text-secondary);
   font-size: var(--type-dense);
 }
+
+.interface-settings .site-measurement {
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  margin-block: var(--space-12px);
+}
+
+.interface-settings legend {
+  margin-bottom: var(--space-8px);
+  padding: 0;
+  font-weight: 600;
+}
+
+.interface-settings__rows {
+  display: grid;
+  gap: var(--space-8px);
+  justify-items: start;
+}
+
+.interface-settings__rows select {
+  margin-left: var(--space-8px);
+}

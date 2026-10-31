@@ -347,10 +347,20 @@ textarea.ui-field__input {
   border: none;
   color: inherit;
 }
-[data-density="workshop"] :is(button, a, input, select, textarea, summary),
+[data-density="workshop"]
+  :is(button, a, input:not([type="checkbox"], [type="radio"]), select, textarea, summary),
 [data-density="workshop"] .ui-check {
   min-height: var(--density-loose);
   min-width: var(--density-loose);
+}
+/* A native box stays a box: it grows to a thumb-size mark and its label
+   carries the touch target, instead of an empty 44 px square. */
+[data-density="workshop"] input:is([type="checkbox"], [type="radio"]) {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+[data-density="workshop"] label:has(> input:is([type="checkbox"], [type="radio"])) {
+  min-height: var(--density-loose);
 }
 /* Workshop and field surfaces: touch-size segments (constitution §3.7). */
 [data-density="workshop"] .ui-segmented > button,

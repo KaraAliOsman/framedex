@@ -164,6 +164,8 @@ def ai_agent_run(
                 # Sealed at submit (ids + hashes); ownership and hash are
                 # re-validated when the parts are read for this run.
                 attachments=list(payload.get("attachments") or []),
+                delegation={"session_aal": str(payload.get("session_aal") or "aal1"),
+                            "parent_ai_job_id": payload.get("parent_ai_job_id")},
             )
         report(95)
     except _Unclaimable:

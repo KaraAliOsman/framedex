@@ -527,6 +527,13 @@ export const domainLabels: Readonly<Record<string, string>> = {
   pack: "Paquete",
   percent: "Porcentaje",
   production: "Producción",
+  // P14 · Tu interfaz (presentation for one person).
+  office: "Oficina",
+  workshop: "Taller",
+  normal: "Normal",
+  large: "Grande",
+  quote: "Cotización",
+  activity: "Actividad",
   profile_articles: "Artículos de perfil",
   profile_systems: "Sistemas de perfiles",
   reinforcement_cut_policies: "Políticas de corte de refuerzo",

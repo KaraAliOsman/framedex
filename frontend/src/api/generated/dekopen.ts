@@ -227,6 +227,7 @@ import type {
   ImportRequestRequest,
   ImportUploadRequest,
   InstallationRequestRequest,
+  InterfacePreferencesResponse,
   InternalApprovalRequest,
   InternalApprovalResult,
   InternalDocumentRequestRequest,
@@ -282,6 +283,7 @@ import type {
   PatchedCncMachinePatchRequest,
   PatchedCncToolPatchRequest,
   PatchedFinishReferenceUpdateRequest,
+  PatchedInterfacePreferencesRequest,
   PatchedKitWriteRequest,
   PatchedProjectUpdateRequest,
   PatchedQuotationCustomerRequestRequest,
@@ -14153,6 +14155,165 @@ export const mailRecover = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(mailRecoveryRequest),
+  });
+};
+
+export type interfacePreferencesResponse200 = {
+  data: InterfacePreferencesResponse;
+  status: 200;
+};
+
+export type interfacePreferencesResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type interfacePreferencesResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type interfacePreferencesResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type interfacePreferencesResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type interfacePreferencesResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type interfacePreferencesResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type interfacePreferencesResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type interfacePreferencesResponseSuccess = interfacePreferencesResponse200 & {
+  headers: Headers;
+};
+export type interfacePreferencesResponseError = (
+  | interfacePreferencesResponse400
+  | interfacePreferencesResponse401
+  | interfacePreferencesResponse403
+  | interfacePreferencesResponse404
+  | interfacePreferencesResponse409
+  | interfacePreferencesResponse422
+  | interfacePreferencesResponse503
+) & {
+  headers: Headers;
+};
+
+export type interfacePreferencesResponse =
+  interfacePreferencesResponseSuccess | interfacePreferencesResponseError;
+
+export const getInterfacePreferencesUrl = () => {
+  return `/api/v1/me/interface/`;
+};
+
+/**
+ * How the interface looks for the signed-in person in this workshop.
+ */
+export const interfacePreferences = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<interfacePreferencesResponse> => {
+  return apiMutator<interfacePreferencesResponse>(getInterfacePreferencesUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type interfacePreferencesSaveResponse200 = {
+  data: InterfacePreferencesResponse;
+  status: 200;
+};
+
+export type interfacePreferencesSaveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type interfacePreferencesSaveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type interfacePreferencesSaveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type interfacePreferencesSaveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type interfacePreferencesSaveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type interfacePreferencesSaveResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type interfacePreferencesSaveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type interfacePreferencesSaveResponseSuccess = interfacePreferencesSaveResponse200 & {
+  headers: Headers;
+};
+export type interfacePreferencesSaveResponseError = (
+  | interfacePreferencesSaveResponse400
+  | interfacePreferencesSaveResponse401
+  | interfacePreferencesSaveResponse403
+  | interfacePreferencesSaveResponse404
+  | interfacePreferencesSaveResponse409
+  | interfacePreferencesSaveResponse422
+  | interfacePreferencesSaveResponse503
+) & {
+  headers: Headers;
+};
+
+export type interfacePreferencesSaveResponse =
+  interfacePreferencesSaveResponseSuccess | interfacePreferencesSaveResponseError;
+
+export const getInterfacePreferencesSaveUrl = () => {
+  return `/api/v1/me/interface/`;
+};
+
+/**
+ * How the interface looks for the signed-in person in this workshop.
+ */
+export const interfacePreferencesSave = async (
+  patchedInterfacePreferencesRequest?: PatchedInterfacePreferencesRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<interfacePreferencesSaveResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<interfacePreferencesSaveResponse>(getInterfacePreferencesSaveUrl(), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(patchedInterfacePreferencesRequest),
   });
 };
 

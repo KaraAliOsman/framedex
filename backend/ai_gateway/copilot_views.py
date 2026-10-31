@@ -277,7 +277,7 @@ class AiJobApproveView(APIView):
     )
     def post(self, request, job_id: UUID):
         from ai_gateway import quote_flow
-        from ai_gateway.agent import _apply_document_layout, _apply_reversible
+        from ai_gateway.agent import REVERSIBLE_KINDS, apply_step
         from ai_gateway.postconditions import refresh_receipt
 
         with documentary_scope(request, _WRITERS) as (token, _, org_id):
@@ -305,13 +305,21 @@ class AiJobApproveView(APIView):
                 if step.get("kind") == "quote_draft":
                     quotes.append(index)
                     continue
-                if step.get("kind") not in ("project_ops", "document_layout"):
+                if step.get("kind") == "delegate":
+                    from ai_gateway import subagents
+
+                    step["applied"] = subagents.spawn(
+                        org_id=org_id, user_id=token.user_id, parent_job_id=job_id, step=step,
+                        key=f"ai:{job_id}:{turn_index}:{index}", session_aal=getattr(token, "aal", "aal1"),
+                        autonomy=str(transcript[turn_index].get("autonomy") or "approve"),
+                        surface=str(job.get("surface") or "dashboard"), refs=dict(job.get("refs") or {}))
+                    entries.append({"turn_index": turn_index, "step_index": index, "action": "applied",
+                                    "ops": ["delegate"], "recorded_by": "human"})
+                    continue
+                if step.get("kind") not in REVERSIBLE_KINDS:
                     continue
                 try:
-                    applied = (
-                        _apply_document_layout(org_id, step) if step["kind"] == "document_layout"
-                        else _apply_reversible(org_id, token.user_id, step, f"ai:{job_id}:{turn_index}:{index}")
-                    )
+                    applied = apply_step(org_id, token.user_id, step, f"ai:{job_id}:{turn_index}:{index}")
                 except Exception as error:  # noqa: BLE001 — a stale change stays visible with its cause
                     step["apply_error"] = str(getattr(error, "public_detail", None) or "La obra cambió; vuelve a preparar este cambio.")[:240]
                     entries.append({"turn_index": turn_index, "step_index": index, "action": "apply_failed",
@@ -321,7 +329,7 @@ class AiJobApproveView(APIView):
                 entries.append({
                     "turn_index": turn_index, "step_index": index, "action": "applied", "recorded_by": "human",
                     "ops": ([str(op.get("op") if isinstance(op, dict) else op)[:80] for op in step.get("ops") or []][:200]
-                            if step["kind"] == "project_ops" else ["document_layout"]),
+                            if step["kind"] == "project_ops" else [step["kind"]]),
                     **({"operation_id": applied["operation_id"]} if step["kind"] == "project_ops" else {}),
                 })
             if not entries and not quotes:
