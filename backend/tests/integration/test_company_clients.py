@@ -368,6 +368,8 @@ def test_invitation_verified_email_acceptance_replay_revocation_and_mfa(people):
     import hashlib
 
     org, other, users, outsider = people
+    # Every role and seat: the invitation mechanics, not the plan limits (P16).
+    write("UPDATE public.tenancy_organizations SET subscription_tier='BUSINESS' WHERE id=%s", [org])
     user = uuid4()
     write(
         "INSERT INTO auth.users(id,email,email_confirmed_at) VALUES(%s,'new@example.test',now())",
@@ -433,6 +435,8 @@ def test_invitation_replay_requires_live_verified_identity_and_owner(people):
     import hashlib
 
     org, _, users, _ = people
+    # Every role and seat: the invitation mechanics, not the plan limits (P16).
+    write("UPDATE public.tenancy_organizations SET subscription_tier='BUSINESS' WHERE id=%s", [org])
     invited = uuid4()
     write("INSERT INTO auth.users(id,email) VALUES(%s,'pending-p22@example.test')", [invited])
     token = "invitation-test-" + uuid4().hex

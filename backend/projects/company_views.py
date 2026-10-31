@@ -55,6 +55,14 @@ COMPANY_ERRORS = {
         404,
         "La invitación venció o fue revocada. Pide un nuevo enlace al dueño.",
     ),
+    "company_plan_seats_full": (
+        409,
+        "Tu plan ya ocupa todas sus personas. Revoca una invitación, desactiva un acceso o cambia de plan.",
+    ),
+    "company_plan_role_unavailable": (
+        409,
+        "Tu plan no incluye ese rol. Elige otro o pasa al plan Empresa para usar todos los roles.",
+    ),
     "company_invitation_not_pending": (
         409,
         "La invitación ya cambió de estado. Actualiza la lista antes de revocarla.",
@@ -134,6 +142,21 @@ class InvitationSerializer(serializers.Serializer):
 class CompanyUsersSerializer(serializers.Serializer):
     items = CompanyUserSerializer(many=True)
     invitations = InvitationSerializer(many=True)
+
+
+FEATURES = ("client_3d", "purchasing", "cnc", "roles", "subagents", "stations", "field")
+
+
+class OrganizationPlanSerializer(serializers.Serializer):
+    code = serializers.ChoiceField(choices=("TRIAL", "STARTER", "PRO", "BUSINESS", "BUSINESS_2X"))
+    seats = serializers.IntegerField(allow_null=True)
+    active_members = serializers.IntegerField()
+    pending_invitations = serializers.IntegerField()
+    seats_left = serializers.IntegerField(allow_null=True)
+    roles = serializers.ListField(child=serializers.ChoiceField(choices=ROLES))
+    features = serializers.ListField(child=serializers.ChoiceField(choices=FEATURES))
+    ai = serializers.BooleanField()
+    solo = serializers.BooleanField()
 
 
 class InvitationWriteSerializer(StrictSerializer):
@@ -291,6 +314,19 @@ class CompanyUserView(APIView):
         data = validate(CompanyUserWriteSerializer, request.data)
         with scope(request) as (_, _, org):
             return response(company.change_user(org, identity, data))
+
+
+class OrganizationPlanView(APIView):
+    @extend_schema(
+        operation_id="organization_plan",
+        responses={200: OrganizationPlanSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def get(self, request):
+        from billing import plans
+
+        with scope(request, ROLES) as (_, _, org):
+            return response(plans.organization_plan(org))
 
 
 class CompanyInvitationsView(APIView):

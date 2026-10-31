@@ -730,7 +730,7 @@ export function PortalQuotePage(): JSX.Element {
                   )}
                 </header>
                 <div className="portal-position-body">
-                  <ProposalDrawing position={p} />
+                  <ProposalDrawing position={p} threeD={quote.client_3d !== false} />
                   <div className="portal-position-spec">
                     <dl>
                       <div>

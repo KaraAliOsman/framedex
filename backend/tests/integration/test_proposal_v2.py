@@ -328,3 +328,16 @@ def test_concurrent_tokens_preserve_first_human_decision(documentary_committed_t
     with connection.cursor() as cursor:
         cursor.execute('SELECT count(*) FROM quote_decisions WHERE org_id=%s',[org])
         assert cursor.fetchone()[0]==1
+
+
+def test_the_client_sees_the_3d_only_when_the_issuer_plan_includes_it(documentary_tenant):
+    org, _, users, _ = documentary_tenant
+    _, _, _, token = issue(org, users['OWNER'])
+    assert portal.portal_quote(token, track=False)['client_3d'] is True
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT current_setting('role')")
+        role = cursor.fetchone()[0]
+        cursor.execute("RESET ROLE")
+        cursor.execute("UPDATE public.tenancy_organizations SET subscription_tier='STARTER' WHERE id=%s", [org])
+        cursor.execute(f"SET ROLE {role}" if role != "none" else "RESET ROLE")
+    assert portal.portal_quote(token, track=False)['client_3d'] is False

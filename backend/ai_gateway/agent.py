@@ -21,6 +21,7 @@ from typing import Any
 from uuid import UUID
 
 from ai_gateway import jobs, service as gateway
+from billing import plans
 from ai_gateway.assist import (
     _ALLOWED_PATHS,
     _OPAQUE_TOKEN_RE,
@@ -1760,7 +1761,7 @@ def act(
         may_prepare_destination=effective == "approve" and role in DRAFT_ROLES,
         # Subtasks run as the same person; a subtask never delegates again.
         may_delegate=(interaction_mode == "work" and role in DRAFT_ROLES and delegation is not None
-                      and not delegation.get("parent_ai_job_id")),
+                      and not delegation.get("parent_ai_job_id") and plans.allows(org_id, "subagents")),
     )
 
     # Reversible drafts the person asked for are saved now, inside this job's

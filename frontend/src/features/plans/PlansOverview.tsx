@@ -1,5 +1,6 @@
 import type { CapabilitiesResponse } from "../../api/generated/models/capabilitiesResponse";
-import { t } from "../../i18n/es-CL";
+import { planName, seatsText, useOrganizationPlan } from "../../app/organizationPlan";
+import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { useCapabilities } from "./useCapabilities";
 
 /** Empresa › Planes (dirección final 06 · 8): «Manual completo» and «La
@@ -8,12 +9,24 @@ import { useCapabilities } from "./useCapabilities";
  * resolution (frozen legacy allowances) — nothing here sells a smarter AI,
  * better openings or more control by price, and nothing activates a sale. */
 
-const PLAN_LABEL: Record<string, Parameters<typeof t>[0]> = {
-  STARTER: "billing.STARTER",
-  TRIAL: "billing.TRIAL",
-  PRO: "billing.PRO",
-  BUSINESS: "billing.BUSINESS",
-  BUSINESS_2X: "billing.BUSINESS_2X",
+/** What each plan includes (docs/dekopen3/PLAN.md · Planes). Seats and roles
+ * are enforced by the server; credits come from its resolution. */
+const COLUMNS = ["STARTER", "PRO", "BUSINESS"] as const;
+const INCLUDED: { label: string; plans: readonly string[] }[] = [
+  {
+    label: "Catálogo, cotización y portal del cliente, OT, cortes, vidrios, materiales y montaje",
+    plans: COLUMNS,
+  },
+  { label: "3D para el cliente", plans: ["PRO", "BUSINESS"] },
+  { label: "Pedidos de compra a proveedores", plans: ["PRO", "BUSINESS"] },
+  { label: "Exportación CNC", plans: ["PRO", "BUSINESS"] },
+  { label: "Roles, estaciones de producción y terreno", plans: ["BUSINESS"] },
+  { label: "Trabajo en paralelo del asistente", plans: ["BUSINESS"] },
+];
+const PEOPLE: Record<(typeof COLUMNS)[number], string> = {
+  STARTER: "1 persona que hace todo",
+  PRO: "Hasta 3 personas",
+  BUSINESS: "Sin límite, con roles",
 };
 
 const NUMBER = new Intl.NumberFormat("es-CL");
@@ -21,11 +34,6 @@ const DATE = new Intl.DateTimeFormat("es-CL", {
   dateStyle: "medium",
   timeZone: "America/Santiago",
 });
-
-function planName(code: string): string {
-  const key = PLAN_LABEL[code];
-  return key ? t(key) : code;
-}
 
 function windowText(kind: string): string {
   return kind === "trial_total" ? "en total durante la prueba" : "por mes de servicio";
@@ -40,24 +48,85 @@ function originText(origin: string | null): string {
 
 export function PlansOverview(): JSX.Element | null {
   const capabilities = useCapabilities();
+  const orgId = useAuthSession().me?.active_organization?.id;
+  const organization = useOrganizationPlan(orgId).data;
   const data: CapabilitiesResponse | undefined = capabilities.data;
   if (!data) return null;
   const aiPlans = data.plans.filter((plan) => plan.ai && plan.code !== "TRIAL");
   const owner = data.role === "OWNER";
+  // The trial has Pro's features; Empresa 2× reads as Empresa with more credits.
+  const current =
+    data.plan.code === "TRIAL"
+      ? "PRO"
+      : data.plan.code === "BUSINESS_2X"
+        ? "BUSINESS"
+        : data.plan.code;
+  const credits = (code: string) =>
+    data.plans.find((plan) => plan.code === code)?.included_credits ?? 0;
   return (
     <section aria-labelledby="plans-title" className="settings-group plans-overview">
       <h2 id="plans-title" className="settings-group__title">
         Planes
       </h2>
+      {organization ? (
+        <p className="plans-overview__current">
+          Tu plan: <strong>{planName(organization.code)}</strong> · {seatsText(organization)}
+          {data.plan.code === "TRIAL" ? " · prueba con las funciones de Pro" : ""}
+        </p>
+      ) : null}
+      <div
+        className="plans-overview__compare"
+        role="region"
+        aria-label="Qué incluye cada plan"
+        tabIndex={0}
+      >
+        <table className="plans-overview__table plans-overview__matrix">
+          <thead>
+            <tr>
+              <th scope="col">Incluye</th>
+              {COLUMNS.map((code) => (
+                <th scope="col" key={code} aria-current={code === current ? "true" : undefined}>
+                  {planName(code)}
+                  {code === current ? (
+                    <span className="plans-overview__mine"> · tu plan</span>
+                  ) : null}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Personas</th>
+              {COLUMNS.map((code) => (
+                <td key={code}>{PEOPLE[code]}</td>
+              ))}
+            </tr>
+            <tr>
+              <th scope="row">Asistente IA</th>
+              {COLUMNS.map((code) => (
+                <td key={code}>
+                  {code === "STARTER"
+                    ? "No incluido"
+                    : `${NUMBER.format(credits(code))} créditos al mes${
+                        code === "BUSINESS"
+                          ? ` (Empresa 2×: ${NUMBER.format(credits("BUSINESS_2X"))})`
+                          : ""
+                      }`}
+                </td>
+              ))}
+            </tr>
+            {INCLUDED.map((row) => (
+              <tr key={row.label}>
+                <th scope="row">{row.label}</th>
+                {COLUMNS.map((code) => (
+                  <td key={code}>{row.plans.includes(code) ? "Sí" : "—"}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       <div className="plans-overview__grid">
-        <article className="plans-overview__card">
-          <h3>Manual completo</h3>
-          <p>
-            Cotizador profesional sin IA: catálogos, obras, ventanas y aperturas, Mesa de obra y
-            Estudio, motor de cálculo, precios, PDF, cortes, compras, taller y terreno. No depende
-            del asistente ni consume créditos.
-          </p>
-        </article>
         <article className="plans-overview__card">
           <h3>La misma IA, más capacidad de uso</h3>
           <p>

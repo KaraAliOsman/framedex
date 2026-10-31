@@ -91,3 +91,10 @@ acceptance reports; read them at `git show 588e6332:docs/wiki/log.md`.
 - Portal: controles para el cliente («Abrir», adentro/afuera, en la abertura);
   los técnicos quedan en la oficina. Ver `product/physical-3d.md`.
 
+## [2026-10-31] DEKOPEN 3 P16 | Planes en la app y modo una persona
+
+- La base aplica personas y roles por plan al invitar, aceptar y reactivar:
+  Taller 1, Pro 3 (socio, oficina, taller), Empresa sin límite y con roles.
+- Pedidos de compra y 3D del cliente desde Pro; subasistentes solo en Empresa.
+- «Equipo» en Ajustes se adapta: una persona que hace todo, invitar por lo que
+  hará la persona, o roles completos. Ver `product/subscription-credits.md`.

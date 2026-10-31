@@ -14998,6 +14998,70 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/organization/plan/:
+    get:
+      operationId: organization_plan
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - projects
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationPlan'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/organization/site-measurement/:
     get:
       operationId: company_site_measurement
@@ -45129,6 +45193,43 @@ components:
           type: string
           nullable: true
           maxLength: 255
+    OrganizationPlan:
+      type: object
+      properties:
+        code:
+          $ref: '#/components/schemas/PlanCodeEnum'
+        seats:
+          type: integer
+          nullable: true
+        active_members:
+          type: integer
+        pending_invitations:
+          type: integer
+        seats_left:
+          type: integer
+          nullable: true
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/MembershipRoleEnum'
+        features:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlanFeatureEnum'
+        ai:
+          type: boolean
+        solo:
+          type: boolean
+      required:
+      - active_members
+      - ai
+      - code
+      - features
+      - pending_invitations
+      - roles
+      - seats
+      - seats_left
+      - solo
     PackingLabel:
       type: object
       properties:
@@ -46480,6 +46581,20 @@ components:
       - phase
       - source
       - unknown_count
+    PlanCodeEnum:
+      enum:
+      - TRIAL
+      - STARTER
+      - PRO
+      - BUSINESS
+      - BUSINESS_2X
+      type: string
+      description: |-
+        * `TRIAL` - TRIAL
+        * `STARTER` - STARTER
+        * `PRO` - PRO
+        * `BUSINESS` - BUSINESS
+        * `BUSINESS_2X` - BUSINESS_2X
     PlanCoupling:
       type: object
       properties:
@@ -46492,6 +46607,24 @@ components:
       required:
       - coupling_id
       - polygon
+    PlanFeatureEnum:
+      enum:
+      - client_3d
+      - purchasing
+      - cnc
+      - roles
+      - subagents
+      - stations
+      - field
+      type: string
+      description: |-
+        * `client_3d` - client_3d
+        * `purchasing` - purchasing
+        * `cnc` - cnc
+        * `roles` - roles
+        * `subagents` - subagents
+        * `stations` - stations
+        * `field` - field
     PlanGeometry:
       type: object
       properties:
@@ -47056,6 +47189,9 @@ components:
         quote_pdf_url:
           type: string
           nullable: true
+        client_3d:
+          type: boolean
+          default: true
       required:
       - approval_status
       - client_name

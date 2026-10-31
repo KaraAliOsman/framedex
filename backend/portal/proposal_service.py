@@ -115,6 +115,8 @@ def read(token, *, track=True):
             from portal.payments import pending_path
             payment_url = pending_path(token=token, approval=approval, revision=selected['revision_code'],
                                        balance=Decimal(payment['balance']), provider=provider)
+        plan = rows("SELECT private.portal_plan_features() AS features", [])
+        features = decoded(plan[0]["features"]) or [] if plan else []
         return {"schema": "portal_quote_v2", "organization": service._sealed_organization(offering),
             "project_code": offered_project.get("code") or "", "project_name": offered_project.get("name") or "",
             "client_name": offered_project.get("client_name") or "", "revision_code": offering["revision_code"],
@@ -133,7 +135,8 @@ def read(token, *, track=True):
             "decided_at": ((decided or {}).get('decided_at') or approval['decided_at'] or legacy_approval).isoformat()
                 if (decided or {}).get("decided_at") or approval["decided_at"] or legacy_approval else None,
             "payment": payment, "payment_provider": provider, "payment_url": payment_url,
-            "quote_pdf_url": selected_option['quote_pdf_url']}
+            "quote_pdf_url": selected_option['quote_pdf_url'],
+            "client_3d": "client_3d" in features}
 
 
 def decide(*, token, decision, decided_by, note=None, decided_rut=None, selected_revision=None,

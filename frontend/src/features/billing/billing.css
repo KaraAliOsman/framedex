@@ -100,6 +100,34 @@
   background: var(--surface-selected);
 }
 
+/* P16 · What each plan includes, with the current one marked. */
+.plans-overview__current {
+  font-size: var(--type-body);
+  margin: 0 0 var(--space-12px);
+}
+
+.plans-overview__compare {
+  margin-bottom: var(--space-16px);
+  overflow-x: auto;
+}
+
+.plans-overview__matrix {
+  min-width: 520px;
+}
+
+.plans-overview__matrix th[scope="col"][aria-current="true"] {
+  background: var(--surface-selected);
+}
+
+.plans-overview__matrix tbody th {
+  font-weight: 400;
+}
+
+.plans-overview__mine {
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
 .plans-overview__usage {
   display: flex;
   flex-direction: column;

@@ -12,6 +12,16 @@ vi.mock("../../auth/AuthSessionProvider", () => ({
   useAuthSession: () => ({ me: { active_organization: identity } }),
 }));
 vi.mock("../../api/apiMutator", () => ({ apiMutator: vi.fn(), ApiError: class extends Error {} }));
+const plan = vi.hoisted(() => ({
+  data: { code: "PRO", features: ["client_3d", "purchasing", "cnc"] } as {
+    code: string;
+    features: string[];
+  },
+}));
+vi.mock("../../app/organizationPlan", async (original) => ({
+  ...(await original<object>()),
+  useOrganizationPlan: () => ({ data: plan.data }),
+}));
 
 const versionItem = {
   id: "version-a",
@@ -432,4 +442,31 @@ it("lists org-wide orders with supplier, expected date and outstanding, filtered
   fireEvent.click(within(index).getByRole("button", { name: t("purchasing.sent") }));
   expect(within(index).getByText("OC-HW-7")).toBeInTheDocument();
   expect(within(index).queryByText("OC-GL-2")).not.toBeInTheDocument();
+});
+
+it("a Taller sees what is missing but sends no supplier order", async () => {
+  plan.data = { code: "STARTER", features: [] };
+  mockState({
+    orders: [
+      {
+        id: "order-1",
+        order_code: "OC-GLASS-1",
+        order_type: "SUPPLIER_GLASS_PO",
+        status: "DRAFT",
+        supplier_name: "Vidrios SPA",
+        order_snapshot_hash: "e".repeat(64),
+      },
+    ],
+  });
+  try {
+    renderPage();
+    const orderCard = (await screen.findByText("OC-GLASS-1")).closest("article")!;
+    expect(screen.getByRole("note")).toHaveTextContent(
+      "Tu plan Taller muestra lo que falta comprar. Los pedidos a proveedores están en el plan Pro.",
+    );
+    expect(within(orderCard).queryByRole("button", { name: t("purchasing.send") })).toBeNull();
+    expect(screen.queryByText(/El dueño o jefe de taller puede crear órdenes/)).toBeNull();
+  } finally {
+    plan.data = { code: "PRO", features: ["client_3d", "purchasing", "cnc"] };
+  }
 });

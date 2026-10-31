@@ -49,9 +49,11 @@ export function ProposalThumb({ position }: { position: PortalPosition }): JSX.E
 function Drawing({
   position,
   large = false,
+  threeD = true,
 }: {
   position: PortalPosition;
   large?: boolean;
+  threeD?: boolean;
 }): JSX.Element {
   const [view, setView] = useState<"elevation" | "studio" | "three">("elevation");
   const [face, setFace] = useState<"interior" | "exterior">("interior");
@@ -99,16 +101,18 @@ function Drawing({
           >
             Comercial
           </button>
-          <button
-            type="button"
-            aria-pressed={view === "three"}
-            onClick={() => {
-              setView("three");
-              reset();
-            }}
-          >
-            3D
-          </button>
+          {threeD && (
+            <button
+              type="button"
+              aria-pressed={view === "three"}
+              onClick={() => {
+                setView("three");
+                reset();
+              }}
+            >
+              3D
+            </button>
+          )}
         </div>
         {view !== "three" && (
           <button
@@ -227,11 +231,18 @@ function Drawing({
   );
 }
 
-export function ProposalDrawing({ position }: { position: PortalPosition }): JSX.Element {
+export function ProposalDrawing({
+  position,
+  threeD = true,
+}: {
+  position: PortalPosition;
+  /** The issuer's plan shows the window in 3D to the client. */
+  threeD?: boolean;
+}): JSX.Element {
   const [expanded, setExpanded] = useState(false);
   return (
     <div className="portal-drawing-sheet">
-      <Drawing position={position} />
+      <Drawing position={position} threeD={threeD} />
       <button type="button" className="portal-expand" onClick={() => setExpanded(true)}>
         Abrir dibujo ampliado
       </button>
@@ -241,7 +252,7 @@ export function ProposalDrawing({ position }: { position: PortalPosition }): JSX
           onClose={() => setExpanded(false)}
           title={`Ventana ${position.position_index} · ${position.location_tag || "Ubicación sin declarar"}`}
         >
-          <Drawing position={position} large />
+          <Drawing position={position} large threeD={threeD} />
         </Dialog>
       )}
     </div>
