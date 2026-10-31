@@ -810,7 +810,7 @@ const SETTINGS_SECTIONS = [
   ["company", "Empresa"],
   ["design", "Valores habituales"],
   ["prices", "Cómo calculo mis precios"],
-  ["users", "Usuarios y roles"],
+  ["users", "Equipo"],
   ["commercial", "Comercial"],
   ["documents", "Documentos"],
   ["numbering", "Numeración"],

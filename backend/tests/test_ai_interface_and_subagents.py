@@ -16,8 +16,10 @@ def _envelope(output: str):
             "tokens_prompt": 1, "tokens_completion": 1, "latency_ms": 1, "credits_debited": 1}
 
 
-def _run(monkeypatch, steps, *, delegation=None, autonomy="draft", mode="work", role="ESTIMATOR"):
+def _run(monkeypatch, steps, *, delegation=None, autonomy="draft", mode="work", role="ESTIMATOR",
+         features=("subagents",)):
     calls, spawned, saved, outcomes = [], [], [], []
+    monkeypatch.setattr(agent.plans, "allows", lambda org_id, feature: feature in features)
     output = json.dumps({"reply": "Listo.", "steps": steps, "warnings": []}, ensure_ascii=False)
 
     def fake_invoke(**kwargs):
@@ -118,3 +120,12 @@ def test_operator_cannot_delegate(monkeypatch):
         delegation={"session_aal": "aal2"}, role="OPERATOR")
     assert calls[0]["input_payload"]["actions"]["may_delegate"] is False
     assert spawned == []
+
+
+def test_delegation_needs_the_empresa_plan(monkeypatch):
+    tasks = [{"goal": "Revisa la obra 12", "label": "Obra 12"}, {"goal": "Revisa la obra 13", "label": "Obra 13"}]
+    result, calls, spawned, _, _ = _run(
+        monkeypatch, [{"kind": "delegate", "tasks": tasks, "label": "Dos", "apply": True}],
+        delegation={"session_aal": "aal2", "parent_ai_job_id": None}, features=())
+    assert calls[0]["input_payload"]["actions"]["may_delegate"] is False
+    assert not spawned

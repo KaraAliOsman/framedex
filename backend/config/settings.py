@@ -142,6 +142,8 @@ REST_FRAMEWORK = {
 
 SPECTACULAR_SETTINGS = {
     "ENUM_NAME_OVERRIDES": {
+        "PlanCodeEnum": ["TRIAL", "STARTER", "PRO", "BUSINESS", "BUSINESS_2X"],
+        "PlanFeatureEnum": ["client_3d", "purchasing", "cnc", "roles", "subagents", "stations", "field"],
         "CatalogOriginEnum": ["MANUAL", "WORKSHOP", "SUGGESTED"],
         "CatalogSuggestionEnum": ["SUGGESTED"],
         "CatalogUseLevelEnum": ["DRAWABLE", "QUOTABLE", "MANUFACTURABLE", "MACHINE_READY"],

@@ -9,7 +9,7 @@ import {
   useState,
   type FormEvent,
 } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 import { apiMutator, ApiError } from "../../api/apiMutator";
 import { EntityCode, PageHeader, Qty, useConfirm } from "../../ui";
@@ -19,6 +19,7 @@ import { PurchaseNeeds, PurchaseMail } from "./PurchaseNeeds";
 import { Money } from "../../ui";
 import { runJob } from "../jobs/runJob";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
+import { planIncludes, planName, useOrganizationPlan } from "../../app/organizationPlan";
 import { DeniedState } from "../../ui";
 import { fmtMm } from "../../format";
 import { t } from "../../i18n/es-CL";
@@ -367,6 +368,10 @@ function PurchasingWorkspace({
   const [message, setMessage] = useState("");
   const [revision, setRevision] = useState(0);
   const canWrite = role === "WORKSHOP_MANAGER" || role === "OWNER";
+  // P16 · Supplier orders are a Pro feature; needs, receiving and cancelling stay.
+  const plan = useOrganizationPlan(orgId).data;
+  const ordersIncluded = planIncludes(plan, "purchasing");
+  const canOrder = canWrite && ordersIncluded;
   // Independent side-loads fail per-section, not into a fake empty state.
   const [failedSections, setFailedSections] = useState<ReadonlySet<string>>(new Set());
   function markSection(section: string, failed: boolean): void {
@@ -556,12 +561,19 @@ function PurchasingWorkspace({
   return (
     <section className="purchasing-page">
       <PageHeader context={t("purchasing.subtitle")} title={t("purchasing.title")} />
+      {!ordersIncluded && plan && (
+        <p className="purchasing-plan-note" role="note">
+          Tu plan {planName(plan.code)} muestra lo que falta comprar. Los pedidos a proveedores
+          están en el plan Pro. <Link to="/settings/billing">Ver planes</Link>
+        </p>
+      )}
       {message && <p role="alert">{message}</p>}
       {busy && <p role="status">{t("purchasing.loading")}</p>}
       {!busy && versions.length === 0 && <p>{t("purchasing.empty")}</p>}
       <PurchaseNeeds
         request={request}
-        canWrite={canWrite}
+        canWrite={canOrder}
+        blockedByPlan={canWrite && !ordersIncluded}
         revision={revision}
         onCreated={() => setRevision((n) => n + 1)}
       />
@@ -736,7 +748,7 @@ function PurchasingWorkspace({
             eligibilities={eligibilities.filter((item) => item.order_type === orderType)}
             allocations={allocations}
             confirmed={confirmedTypes.has(orderType)}
-            canWrite={canWrite}
+            canWrite={canOrder}
             busy={busy}
             versionId={state.version!.id}
             request={request}
@@ -755,6 +767,7 @@ function PurchasingWorkspace({
               order={order}
               role={role}
               canWrite={canWrite}
+              canOrder={canOrder}
               busy={busy}
               request={request}
               action={action}
@@ -1190,6 +1203,7 @@ function OrderCard({
   order,
   role,
   canWrite,
+  canOrder,
   busy,
   request,
   action,
@@ -1198,6 +1212,8 @@ function OrderCard({
   order: Order;
   role: string;
   canWrite: boolean;
+  /** Sending and mailing supplier orders need the plan; receiving does not. */
+  canOrder: boolean;
   busy: boolean;
   request: RequestFn;
   action: (task: Promise<unknown>) => Promise<boolean>;
@@ -1239,7 +1255,7 @@ function OrderCard({
           <Money value={order.net_amount} currency={order.currency ?? "CLP"} />
         )}
       </p>
-      {canWrite && ["SENT", "PARTIALLY_RECEIVED", "FULFILLED"].includes(order.status) && (
+      {canOrder && ["SENT", "PARTIALLY_RECEIVED", "FULFILLED"].includes(order.status) && (
         <PurchaseMail request={request} orderId={order.id} />
       )}
       {(order.expected_at || order.sent_to) && (
@@ -1283,7 +1299,7 @@ function OrderCard({
           {t("purchasing.damagedIncidence")}: {fmtMm(order.damaged_qty)}
         </p>
       )}
-      {order.status === "DRAFT" && canWrite && (
+      {order.status === "DRAFT" && canOrder && (
         <ValidatedForm
           onSubmit={(event) => {
             event.preventDefault();

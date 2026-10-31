@@ -71,4 +71,5 @@ export interface PortalQuote {
   decided_note: string | null;
   /** @nullable */
   quote_pdf_url: string | null;
+  client_3d?: boolean;
 }

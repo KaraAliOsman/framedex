@@ -46,11 +46,14 @@ const units: Record<string, string> = {
 export function PurchaseNeeds({
   request,
   canWrite,
+  blockedByPlan = false,
   revision,
   onCreated,
 }: {
   request: Request;
   canWrite: boolean;
+  /** The person may order, but the plan does not include supplier orders. */
+  blockedByPlan?: boolean;
   revision: number;
   onCreated: () => void;
 }): JSX.Element {
@@ -366,7 +369,7 @@ export function PurchaseNeeds({
           </button>
         )}
       </ValidatedForm>
-      {!canWrite && (
+      {!canWrite && !blockedByPlan && (
         <p>
           El dueño o jefe de taller puede crear órdenes y reservar material. Solicita su revisión.
         </p>

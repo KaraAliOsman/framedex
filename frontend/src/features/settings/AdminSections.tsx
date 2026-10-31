@@ -18,6 +18,7 @@ import {
 } from "../../api/generated/dekopen";
 import type { Company, CompanyUser, OrgBrandingWriteRequest } from "../../api/generated/models";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
+import { planIncludes, planName, seatsText, useOrganizationPlan } from "../../app/organizationPlan";
 import { actionErrorDetail } from "../errors";
 import { formatDate } from "../money";
 import {
@@ -38,6 +39,21 @@ export const roleNames: Record<string, string> = {
   WORKSHOP_MANAGER: "Jefe de taller",
   OPERATOR: "Operario",
   INSTALLER: "Instalador",
+};
+
+/** Without the Empresa roles, each person is named by what they do. */
+const SEAT_NAMES: Record<string, string> = {
+  OWNER: "Dueño o socio",
+  ESTIMATOR: "Oficina",
+  WORKSHOP_MANAGER: "Taller",
+  OPERATOR: "Operario",
+  INSTALLER: "Instalador",
+};
+
+const SEAT_DUTIES: Record<string, string> = {
+  OWNER: "Socio: ve y hace todo, también el plan y los cobros.",
+  ESTIMATOR: "Oficina: cotiza, vende y cobra.",
+  WORKSHOP_MANAGER: "Taller: produce, compra y despacha.",
 };
 
 export function CompanyCard({
@@ -200,10 +216,15 @@ function UserRow({
   user,
   orgId,
   onSaved,
+  roles,
+  names,
 }: {
   user: CompanyUser;
   orgId: string;
   onSaved: () => Promise<unknown>;
+  /** The roles the plan offers; a role kept from a larger plan stays listed. */
+  roles: string[];
+  names: Record<string, string>;
 }): JSX.Element {
   const confirm = useConfirm();
   const [role, setRole] = useState(user.role),
@@ -224,7 +245,7 @@ function UserRow({
             busy ||
             !(await confirm({
               title: "Cambiar acceso",
-              body: `${user.email}: ${roleNames[role]} · ${active ? "activo" : "desactivado"}. El cambio se aplica en su siguiente petición y queda auditado.`,
+              body: `${user.email}: ${names[role]} · ${active ? "activo" : "desactivado"}. El cambio se aplica en su siguiente petición y queda auditado.`,
             }))
           )
             return;
@@ -252,17 +273,19 @@ function UserRow({
     >
       <strong>{user.email}</strong>
       <label>
-        Rol
+        Hace
         <select
           value={role}
           disabled={busy}
           onChange={(event) => setRole(event.target.value as CompanyUser["role"])}
         >
-          {Object.entries(roleNames).map(([value, label]) => (
-            <option value={value} key={value}>
-              {label}
-            </option>
-          ))}
+          {Object.entries(names)
+            .filter(([value]) => roles.includes(value) || value === user.role)
+            .map(([value, label]) => (
+              <option value={value} key={value}>
+                {label}
+              </option>
+            ))}
         </select>
       </label>
       <label>
@@ -289,6 +312,7 @@ function UserRow({
 export function UsersCard({ orgId, canEdit }: { orgId: string; canEdit: boolean }): JSX.Element {
   const confirm = useConfirm(),
     options = { headers: { "X-Organization-ID": orgId } };
+  const plan = useOrganizationPlan(canEdit ? orgId : undefined);
   const [email, setEmail] = useState(""),
     [role, setRole] = useState<CompanyUser["role"]>("ESTIMATOR"),
     [busy, setBusy] = useState(false),
@@ -307,106 +331,182 @@ export function UsersCard({ orgId, canEdit }: { orgId: string; canEdit: boolean 
     return (
       <DeniedState reason="Solo el dueño invita usuarios, cambia roles y desactiva accesos. Pídele que revise tu acceso." />
     );
-  if (query.isPending) return <LoadingState label="Cargando usuarios e invitaciones" />;
-  if (query.isError)
+  if (query.isPending || plan.isPending)
+    return <LoadingState label="Cargando usuarios e invitaciones" />;
+  if (query.isError || plan.isError)
     return (
       <ErrorState
         body="No pudimos consultar usuarios. Reintenta la conexión."
-        onRetry={() => void query.refetch()}
+        onRetry={() => void Promise.all([query.refetch(), plan.refetch()])}
       />
     );
+  const terms = plan.data;
+  const withRoles = planIncludes(terms, "roles");
+  const names = withRoles ? roleNames : SEAT_NAMES;
+  const offered: string[] = terms.roles;
+  // Office first when the plan offers it; the owner is the fallback.
+  const chosen = (
+    offered.includes(role) ? role : offered.includes("ESTIMATOR") ? "ESTIMATOR" : offered[0]
+  ) as CompanyUser["role"];
+  const refresh = () => Promise.all([query.refetch(), plan.refetch()]);
+  // One person who does everything; a downgraded team keeps its people instead.
+  const solo = terms.seats === 1 && terms.active_members <= 1;
+  const canInvite = !solo && terms.seats_left !== 0;
   return (
     <section className="settings-card">
-      <h2>Usuarios y roles</h2>
-      <p>
-        Los cambios de acceso se registran. La empresa siempre conserva al menos un dueño activo.
+      <h2>{withRoles ? "Usuarios y roles" : "Equipo"}</h2>
+      <p className="settings-plan-seats">
+        Plan {planName(terms.code)} · {seatsText(terms)}
       </p>
-      {query.data.items.map((user) => (
-        <UserRow key={user.id} user={user} orgId={orgId} onSaved={query.refetch} />
-      ))}
-      <h3>Invitar a la empresa</h3>
-      <ValidatedForm
-        className="settings-invite"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void (async () => {
-            if (
-              busy ||
-              !(await confirm({
-                title: "Enviar invitación",
-                body: `Se enviará a ${email} una invitación como ${roleNames[role]}. El enlace vence en siete días; la persona debe aceptar con ese correo.`,
-              }))
-            )
-              return;
-            setBusy(true);
-            setMessage("");
-            try {
-              await companyInvite({ email, role, operation_key: key, confirmed: true }, options);
-              setMessage(
-                "Invitación registrada en la bandeja de correo. Revisa su estado de entrega en Integraciones.",
-              );
-              setEmail("");
-              setKey(crypto.randomUUID());
-              await query.refetch();
-            } catch (error) {
-              setMessage(
-                actionErrorDetail(
-                  error,
-                  "No se pudo invitar. Revisa si el correo ya pertenece a la empresa o tiene una invitación pendiente.",
-                ),
-              );
-            } finally {
-              setBusy(false);
-            }
-          })();
-        }}
-      >
-        <label>
-          Correo invitado
-          <input
-            type="email"
-            required
-            maxLength={255}
-            disabled={busy}
-            value={email}
-            onChange={(event) => {
-              setEmail(event.target.value);
-              setKey(crypto.randomUUID());
-            }}
+      {solo ? (
+        <div className="settings-solo">
+          <p>
+            Trabajas solo y ves todo: cotización, taller, vidrios, montaje y la impresión para el
+            maestro. No hay roles que configurar.
+          </p>
+          <p>
+            Para sumar a alguien de oficina o de taller, el plan Pro incluye hasta tres personas.
+          </p>
+          <Link className="ui-button" to="/settings/billing">
+            Ver planes
+          </Link>
+        </div>
+      ) : (
+        <p>
+          {withRoles
+            ? "Cada persona entra con su rol. Los cambios de acceso se registran y la empresa siempre conserva al menos un dueño activo."
+            : "Cada persona ve lo que necesita para su trabajo, sin configurar roles. Los cambios se registran y la empresa siempre conserva al menos un dueño activo."}
+        </p>
+      )}
+      {query.data.items.length > 1 &&
+        query.data.items.map((user) => (
+          <UserRow
+            key={user.id}
+            user={user}
+            orgId={orgId}
+            onSaved={refresh}
+            roles={offered}
+            names={names}
           />
-        </label>
-        <label>
-          Rol de ingreso
-          <select
-            disabled={busy}
-            value={role}
-            onChange={(event) => {
-              setRole(event.target.value as CompanyUser["role"]);
-              setKey(crypto.randomUUID());
-            }}
-          >
-            {Object.entries(roleNames).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <Button type="submit" variant="primary" disabled={busy}>
-          Invitar y enviar correo
-        </Button>
-      </ValidatedForm>
+        ))}
+      {!solo && !canInvite && (
+        <p className="settings-plan-full" role="note">
+          Tu plan ya ocupa {terms.seats === 1 ? "su única persona" : `sus ${terms.seats} personas`}.
+          Revoca una invitación, desactiva un acceso o cambia de plan para sumar a alguien.
+        </p>
+      )}
+      {canInvite && <h3>Invitar a la empresa</h3>}
+      {canInvite && (
+        <ValidatedForm
+          className="settings-invite"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void (async () => {
+              if (
+                busy ||
+                !(await confirm({
+                  title: "Enviar invitación",
+                  body: `Se enviará a ${email} una invitación como ${names[chosen]}. El enlace vence en siete días; la persona debe aceptar con ese correo.`,
+                }))
+              )
+                return;
+              setBusy(true);
+              setMessage("");
+              try {
+                await companyInvite(
+                  { email, role: chosen, operation_key: key, confirmed: true },
+                  options,
+                );
+                setMessage(
+                  "Invitación registrada en la bandeja de correo. Revisa su estado de entrega en Integraciones.",
+                );
+                setEmail("");
+                setKey(crypto.randomUUID());
+                await refresh();
+              } catch (error) {
+                setMessage(
+                  actionErrorDetail(
+                    error,
+                    "No se pudo invitar. Revisa si el correo ya pertenece a la empresa o tiene una invitación pendiente.",
+                  ),
+                );
+              } finally {
+                setBusy(false);
+              }
+            })();
+          }}
+        >
+          <label>
+            Correo invitado
+            <input
+              type="email"
+              required
+              maxLength={255}
+              disabled={busy}
+              value={email}
+              onChange={(event) => {
+                setEmail(event.target.value);
+                setKey(crypto.randomUUID());
+              }}
+            />
+          </label>
+          {withRoles ? (
+            <label>
+              Rol de ingreso
+              <select
+                disabled={busy}
+                value={chosen}
+                onChange={(event) => {
+                  setRole(event.target.value as CompanyUser["role"]);
+                  setKey(crypto.randomUUID());
+                }}
+              >
+                {offered.map((value) => (
+                  <option key={value} value={value}>
+                    {roleNames[value]}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : (
+            <fieldset className="settings-seat-choice">
+              <legend>¿Qué hará?</legend>
+              {offered.map((value) => (
+                <label key={value}>
+                  <input
+                    type="radio"
+                    name="seat"
+                    value={value}
+                    disabled={busy}
+                    checked={chosen === value}
+                    onChange={() => {
+                      setRole(value as CompanyUser["role"]);
+                      setKey(crypto.randomUUID());
+                    }}
+                  />
+                  {SEAT_DUTIES[value] ?? names[value]}
+                </label>
+              ))}
+            </fieldset>
+          )}
+          <Button type="submit" variant="primary" disabled={busy}>
+            Invitar y enviar correo
+          </Button>
+        </ValidatedForm>
+      )}
       {message && <p role="status">{message}</p>}
-      <h3>Invitaciones</h3>
+      {(!solo || query.data.invitations.length > 0) && <h3>Invitaciones</h3>}
       {!query.data.invitations.length ? (
-        <p>Sin invitaciones todavía.</p>
+        solo ? null : (
+          <p>Sin invitaciones todavía.</p>
+        )
       ) : (
         <ul className="settings-invitations">
           {query.data.invitations.map((invite) => (
             <li key={invite.id}>
               <strong>{invite.email}</strong>
               <span>
-                {roleNames[invite.role]} · vence {formatDate(invite.expires_at)}
+                {names[invite.role]} · vence {formatDate(invite.expires_at)}
               </span>
               <StatusBadge
                 label={
@@ -435,7 +535,7 @@ export function UsersCard({ orgId, canEdit }: { orgId: string; canEdit: boolean 
                       setBusy(true);
                       try {
                         await companyInvitationRevoke(invite.id, options);
-                        await query.refetch();
+                        await refresh();
                       } catch (error) {
                         setMessage(
                           actionErrorDetail(

@@ -151,6 +151,8 @@ class PortalQuoteSerializer(serializers.Serializer):
     decided_at = serializers.DateTimeField(allow_null=True)
     decided_note = serializers.CharField(allow_null=True)
     quote_pdf_url = serializers.CharField(allow_null=True)
+    # The issuer's plan shows the window in 3D to the client (Pro and above).
+    client_3d = serializers.BooleanField(default=True)
 
 
 class ApprovalRecordSerializer(serializers.Serializer):

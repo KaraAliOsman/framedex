@@ -10,6 +10,7 @@ from purchasing.serializers import (PurchaseNeedsSerializer,PurchaseNeedsConfirm
 from rest_framework.views import APIView
 
 from authentication.serializers import ACTIVE_ORGANIZATION_HEADER
+from billing import plans
 from documents.views import ERRORS, documentary_scope, validate
 from purchasing.serializers import (
     AllocationRequestSerializer,
@@ -117,6 +118,7 @@ class ConfirmBatchView(APIView):
     def post(self, request, version_id: UUID):
         data = validate(ConfirmBatchRequestSerializer, request.data)
         with documentary_scope(request, _ALLOWED) as (token, _, org_id):
+            plans.require(org_id, "purchasing")
             output, created = confirm_order_type_batch(
                 org_id=org_id,
                 actor_id=token.user_id,
@@ -142,6 +144,7 @@ class PurchasingNeedsConfirmView(APIView):
     def post(self,request):
         data=validate(PurchaseNeedsConfirmSerializer,request.data)
         with documentary_scope(request,_ALLOWED) as (token,_,org_id):
+            plans.require(org_id,"purchasing")
             output=needs.confirm_proposal(org_id=org_id,actor_id=token.user_id,data=data)
         return Response(output)
 
@@ -159,6 +162,7 @@ class PurchaseMailView(APIView):
     def post(self,request,order_id:UUID):
         data=validate(PurchaseMailRequestSerializer,request.data)
         with documentary_scope(request,_ALLOWED) as (token,tenant,org_id):
+            plans.require(org_id,"purchasing")
             output=supplier_mail.send(org_id=org_id,order_id=order_id,actor_id=token.user_id,role=tenant.active_organization.role,**data)
         return Response(output)
 
@@ -174,6 +178,7 @@ class SendOrderView(APIView):
     def post(self, request, order_id: UUID):
         data = validate(SendOrderRequestSerializer, request.data)
         with documentary_scope(request, _ALLOWED) as (token, _, org_id):
+            plans.require(org_id, "purchasing")
             output = send_order(
                 org_id=org_id,
                 actor_id=token.user_id,

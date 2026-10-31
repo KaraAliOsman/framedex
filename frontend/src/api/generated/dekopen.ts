@@ -274,6 +274,7 @@ import type {
   OrgBranding,
   OrgBrandingWriteRequest,
   OrganizationBrandingLogoUploadBody,
+  OrganizationPlan,
   PackingLabels,
   PackingManifest,
   PatchedAiThreadUpdateRequest,
@@ -16263,6 +16264,77 @@ export const companyNumbering = async (
   options?: Parameters<typeof apiMutator>[1],
 ): Promise<companyNumberingResponse> => {
   return apiMutator<companyNumberingResponse>(getCompanyNumberingUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type organizationPlanResponse200 = {
+  data: OrganizationPlan;
+  status: 200;
+};
+
+export type organizationPlanResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type organizationPlanResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type organizationPlanResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type organizationPlanResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type organizationPlanResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type organizationPlanResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type organizationPlanResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type organizationPlanResponseSuccess = organizationPlanResponse200 & {
+  headers: Headers;
+};
+export type organizationPlanResponseError = (
+  | organizationPlanResponse400
+  | organizationPlanResponse401
+  | organizationPlanResponse403
+  | organizationPlanResponse404
+  | organizationPlanResponse409
+  | organizationPlanResponse422
+  | organizationPlanResponse503
+) & {
+  headers: Headers;
+};
+
+export type organizationPlanResponse =
+  organizationPlanResponseSuccess | organizationPlanResponseError;
+
+export const getOrganizationPlanUrl = () => {
+  return `/api/v1/organization/plan/`;
+};
+
+export const organizationPlan = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<organizationPlanResponse> => {
+  return apiMutator<organizationPlanResponse>(getOrganizationPlanUrl(), {
     ...options,
     method: "GET",
   });

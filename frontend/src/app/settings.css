@@ -253,6 +253,46 @@
   list-style: none;
   padding: 0;
 }
+/* P16 · Team: the plan line, the one-person note and «¿Qué hará?». */
+.settings-plan-seats {
+  color: var(--text-secondary);
+  font-size: var(--type-dense);
+  margin: 0;
+}
+.settings-solo {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+}
+.settings-solo p {
+  margin: 0;
+}
+.settings-invite .settings-seat-choice {
+  border: 0;
+  display: grid;
+  flex-basis: 100%;
+  gap: var(--space-2);
+  margin: 0;
+  order: 1;
+  padding: 0;
+}
+.settings-invite .settings-seat-choice legend {
+  font-weight: 600;
+  margin-bottom: var(--space-1);
+  padding: 0;
+}
+.settings-invite .settings-seat-choice label {
+  align-items: center;
+  display: flex;
+  gap: var(--space-2);
+}
+.settings-invite .settings-seat-choice input {
+  flex: none;
+  margin: 0;
+}
+.settings-invite > .ui-button {
+  order: 2;
+}
 .settings-invitations li {
   display: flex;
   align-items: center;

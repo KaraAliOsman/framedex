@@ -21,7 +21,7 @@ specification and the linked domain pages, then inspect current code.
 | Purchasing and inventory | `backend/{purchasing,inventory}/`, `frontend/src/features/purchasing/` | `backend/tests/`, colocated UI tests | [Purchasing / inventory](product/purchasing-inventory.md); [PRD-16](../PRD/PRD-16.md) |
 | Payments, company, roles and security | `backend/{billing,authentication}/`, `frontend/src/features/{billing,settings}/`, `supabase/migrations/` | `backend/tests/`, `supabase/tests/`, colocated UI tests | [Collections](product/collections.md), [company / customers](product/company-customers.md); [PRD-03](../PRD/PRD-03.md), [PRD-02](../PRD/PRD-02.md), [PRD-19](../PRD/PRD-19.md) |
 | Dispatch, installation and post-sale | `backend/production/`, `frontend/src/features/field/` | `backend/tests/integration/test_field_work.py`, colocated UI tests | [Field work](product/field-work.md) |
-| SaaS subscription, AI credits and usage | `engine/src/dekopen_engine/billing.py`, `backend/billing/`, `backend/ai_gateway/{service,usage}.py` | `backend/tests/integration/test_shot11_lifecycle.py`, `backend/tests/integration/test_ai_provider_operations.py` | [Subscription / credits](product/subscription-credits.md), [latest owner clarification](sources/owner-credits-and-grokbot-2026-10-18.md); [PRD-03](../PRD/PRD-03.md) |
+| SaaS subscription, plan seats/features, AI credits and usage | `engine/src/dekopen_engine/billing.py`, `backend/billing/` (`plans.py`), `backend/ai_gateway/{service,usage}.py` | `backend/tests/integration/test_shot11_lifecycle.py`, `backend/tests/integration/test_organization_plan.py`, `supabase/tests/database/268_plan_seats_and_features.test.sql` | [Subscription / credits](product/subscription-credits.md), [latest owner clarification](sources/owner-credits-and-grokbot-2026-10-18.md); [PRD-03](../PRD/PRD-03.md) |
 | Analytics, Today and search | `backend/{analytics,search}/`, `frontend/src/features/analytics/`, `frontend/src/app/navigation.ts` | `backend/tests/`, colocated UI tests | [Analytics](product/decision-analytics.md), [Today](product/today-workflow.md) |
 | Local stack and repository maintenance | `scripts/review_stack.py`, `scripts/local_gates.py`, `scripts/dev_fixture.py` | Inspect affected script and ownership guards | [Stack skill](../../.agents/skills/testing-framedex/SKILL.md), [workspace](../operations/WORKSPACE.md), [review guide](../GUIA-REVISION.md) |
 
@@ -113,7 +113,7 @@ acceptance claims keep separate refs; newer code always requires verification.
 
 - [Conexiones de producción](quality/production-connections.md) — dominio/Cloudflare, Railway/Redis, Supabase, Flow, MiMo, SMTP y recuperación de archivos; inventario estático y condiciones verificadas de proveedores.
 
-- [Suscripción SaaS y créditos](product/subscription-credits.md) — MiMo común, cupos/paquetes/presupuesto, divergencia PRD/código y propuesta de límites sin activación comercial.
+- [Suscripción SaaS y créditos](product/subscription-credits.md) — personas, roles y funciones por plan (P16), MiMo común, cupos/paquetes/presupuesto, divergencia PRD/código y propuesta de límites sin activación comercial.
 
 - [AI provider and authority](product/ai-provider.md) — real transport, tenant settings, budget, physical usage and verified limits.
 
