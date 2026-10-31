@@ -61,8 +61,10 @@ SELECT lives_ok($$SELECT create_company_invitation('26800000-0000-4000-8000-0000
 RESET ROLE;
 SET LOCAL ROLE portal_backend;
 SELECT set_config('app.portal_org_id','26800000-0000-4000-8000-000000000001',TRUE);
-SELECT ok(portal_plan_features()='[]'::jsonb,'the client of a Taller sees no 3D');
+-- Read under the portal role; assert after it, where pgTAP is visible.
+SELECT set_config('test.portal_features',portal_plan_features()::text,TRUE);
 RESET ROLE;
+SELECT is(current_setting('test.portal_features'),'[]','the client of a Taller sees no 3D');
 
 SELECT * FROM finish();
 ROLLBACK;
