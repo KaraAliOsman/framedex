@@ -8,6 +8,19 @@
     transition-duration: 0.01ms !important;
   }
 }
+/* The person's own choice in «Tu interfaz» (or asked of the assistant). */
+:root[data-reduce-motion] *,
+:root[data-reduce-motion] *::before,
+:root[data-reduce-motion] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  scroll-behavior: auto !important;
+  transition-duration: 0.01ms !important;
+}
+/* Every type step is in rem, so the root carries the larger reading size. */
+:root[data-text-size="large"] {
+  font-size: 112.5%;
+}
 label:has(> input[type="checkbox"]),
 label.settings-inline {
   display: inline-flex;

@@ -9,7 +9,9 @@
 export interface AiUndoKept {
   turn_index: number;
   step_index: number;
-  operation_id: string;
-  project_id: string;
+  /** @nullable */
+  operation_id?: string | null;
+  /** @nullable */
+  project_id?: string | null;
   reason: string;
 }

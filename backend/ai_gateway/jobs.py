@@ -682,7 +682,7 @@ def record_outcome(
                 if 0 <= recorded["step_index"] < len(steps)
                 else None
             )
-            if step is None or step.get("kind") not in ("ops", "batch_ops", "prepare", "project_ops", "document_layout"):
+            if step is None or step.get("kind") not in ("ops", "batch_ops", "prepare", "project_ops", "document_layout", "interface", "delegate"):
                 return None
             if recorded["action"] == "undone" and not any(
                 outcome.get("turn_index") == recorded["turn_index"]
@@ -725,7 +725,7 @@ def record_outcome(
                     (turn_index, step_index)
                     for turn_index, turn_row in enumerate(transcript)
                     for step_index, step_row in enumerate(turn_row.get("steps") or [])
-                    if step_row.get("kind") in ("ops", "batch_ops", "prepare", "project_ops", "document_layout")
+                    if step_row.get("kind") in ("ops", "batch_ops", "prepare", "project_ops", "document_layout", "interface", "delegate")
                 ]
                 resolved = {
                     (outcome["turn_index"], outcome["step_index"])
@@ -762,7 +762,7 @@ def store_approval(*, job_id: UUID, transcript: list, entries: list[dict]) -> No
     and the job settles when no gated change is left waiting."""
     now = datetime.now(timezone.utc).isoformat()
     stamped = [{**entry, "recorded_at": now} for entry in entries]
-    gated = ("prepare", "ops", "batch_ops", "project_ops", "document_layout", "quote_draft")
+    gated = ("prepare", "ops", "batch_ops", "project_ops", "document_layout", "interface", "delegate", "quote_draft")
     agent_turns = [index for index, turn in enumerate(transcript)
                    if isinstance(turn, dict) and turn.get("role") == "agent"]
     latest = transcript[agent_turns[-1]] if agent_turns else {}

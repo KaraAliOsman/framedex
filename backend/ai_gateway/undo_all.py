@@ -38,6 +38,27 @@ def _applied(job: dict) -> list[dict]:
     return list(reversed(found))
 
 
+def _applied_interface(job: dict) -> list[dict]:
+    """Interface preferences the job saved and that are still standing."""
+    outcomes = [item for item in job.get("outcomes") or [] if isinstance(item, dict)]
+    undone = {(item.get("turn_index"), item.get("step_index"))
+              for item in outcomes if item.get("action") == "undone"}
+    transcript = job.get("transcript") or []
+    found = []
+    for item in outcomes:
+        key = (item.get("turn_index"), item.get("step_index"))
+        if item.get("action") != "applied" or key in undone:
+            continue
+        turn = transcript[key[0]] if isinstance(key[0], int) and 0 <= key[0] < len(transcript) else {}
+        steps = turn.get("steps") or [] if isinstance(turn, dict) else []
+        step = steps[key[1]] if isinstance(key[1], int) and 0 <= key[1] < len(steps) else {}
+        applied = step.get("applied") or {}
+        if step.get("kind") == "interface" and isinstance(applied.get("previous"), dict):
+            found.append({"turn_index": key[0], "step_index": key[1], "previous": applied["previous"],
+                          "preferences": applied.get("preferences") or {}})
+    return list(reversed(found))
+
+
 def _created_project(job: dict) -> str | None:
     created = (job.get("result") or {}).get("created_project") or {}
     return str(created["project_id"]) if created.get("project_id") else None
@@ -82,10 +103,21 @@ def undo_all(*, org_id: UUID, user_id: UUID, job_id: UUID) -> dict:
                                                or "La obra cambió después; revísala antes de deshacer.")[:240]})
             break
         undone.append(item)
+    from projects import interface
+
+    for item in _applied_interface(job):
+        # Only what the job set is restored; a later change by the person stays.
+        if interface.get_preferences(org_id, user_id) != item["preferences"]:
+            kept.append({"turn_index": item["turn_index"], "step_index": item["step_index"],
+                         "reason": "Cambiaste tu interfaz después; la dejamos como está."})
+            continue
+        interface.save_preferences(org_id, user_id, item["previous"])
+        undone.append({"turn_index": item["turn_index"], "step_index": item["step_index"], "operation_id": None})
     if undone:
         jobs.record_assistant_outcomes(job_id=job_id, entries=[
             {"turn_index": item["turn_index"], "step_index": item["step_index"], "action": "undone",
-             "ops": ["undo_all"], "recorded_by": "human", "operation_id": item["operation_id"]}
+             "ops": ["undo_all"], "recorded_by": "human",
+             **({"operation_id": item["operation_id"]} if item.get("operation_id") else {})}
             for item in undone
         ])
     project = _created_project(job)

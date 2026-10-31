@@ -19,6 +19,7 @@ import {
   projectQuoteLinksList,
   projectsClone,
   projectsCreate,
+  interfacePreferences,
   projectsList,
   projectsRetrieve,
   projectsUpdate,
@@ -57,6 +58,7 @@ vi.mock("../../api/generated/dekopen", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../api/generated/dekopen")>();
   return {
     ...actual,
+    interfacePreferences: vi.fn(),
     projectsList: vi.fn(),
     projectsCreate: vi.fn(),
     projectsRetrieve: vi.fn(),
@@ -335,6 +337,15 @@ beforeEach(() => {
   vi.spyOn(window, "confirm").mockReturnValue(true);
   vi.mocked(projectsList).mockResolvedValue(response(200, { items: [] }));
   vi.mocked(projectsRetrieve).mockResolvedValue(response(200, makeProject()));
+  vi.mocked(interfacePreferences).mockResolvedValue(
+    response(200, {
+      density: "office",
+      text_size: "normal",
+      reduce_motion: false,
+      project_tab: "positions",
+      rail_collapsed: false,
+    }),
+  );
   vi.mocked(projectExtraServices).mockResolvedValue(
     response(200, {
       definitions: [],
@@ -1592,6 +1603,25 @@ it("asks before cloning away from dirty quotation preparation edits", async () =
   await screen.findByRole("heading", { level: 1, name: "Casa original" });
   expect(router.state.location.pathname).toBe("/projects/copy-server-id");
   expect(projectsClone).toHaveBeenCalledTimes(1);
+});
+
+it("opens a work on the tab the person chose in «Tu interfaz»", async () => {
+  vi.mocked(interfacePreferences).mockResolvedValue(
+    response(200, {
+      density: "office",
+      text_size: "normal",
+      reduce_motion: false,
+      project_tab: "quote",
+      rail_collapsed: false,
+    }),
+  );
+  vi.mocked(projectsRetrieve).mockResolvedValue(
+    response(200, makeProject({ status: "QUOTED", versions: [] })),
+  );
+  mount("/projects/project-a");
+  expect(
+    await screen.findByRole("button", { name: t("quotation.editQuoted") }),
+  ).toBeInTheDocument();
 });
 
 it("opens one idempotent editable successor from a quoted revision", async () => {

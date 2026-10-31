@@ -14,7 +14,7 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-_GATED = ("ops", "batch_ops", "project_ops", "document_layout", "quote_draft")
+_GATED = ("ops", "batch_ops", "project_ops", "document_layout", "interface", "delegate", "quote_draft")
 
 
 def _project_positions(org_id: UUID, project_id: str) -> dict[str, dict] | None:
@@ -157,7 +157,7 @@ def build_receipt(*, org_id: UUID, result: dict, interaction_mode: str, autonomy
                                            operation_id=applied.get("operation_id")))
                     continue
             applied_any = True
-            objects.append(_object("project_change" if kind != "document_layout" else "document_layout",
+            objects.append(_object(kind if kind in ("document_layout", "interface", "delegate") else "project_change",
                                    f"step-{index}", label, "applied", url=url,
                                    operation_id=applied.get("operation_id")))
         elif decision == "undone":

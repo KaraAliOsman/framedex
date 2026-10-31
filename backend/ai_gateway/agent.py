@@ -279,6 +279,50 @@ def _apply_document_layout(org_id: UUID, step: dict) -> dict:
     return {"previous": previous, "layout": saved["layout"], "project_id": step["project_id"]}
 
 
+def _interface_step(item: dict, *, may_apply: bool, rejected: list) -> dict | None:
+    """How the person's own interface looks (density, text size, motion, the
+    work's default view and tab, the side rail) — presentation only, for them
+    alone, validated against the closed preference schema."""
+    from projects import interface
+
+    try:
+        preferences = interface.clean(item.get("preferences"))
+    except Exception:  # noqa: BLE001 — an unknown key or value is refused, never stored
+        rejected.append({"op": "interface", "reason": "preferences_invalid"})
+        return None
+    if not preferences:
+        rejected.append({"op": "interface", "reason": "preferences_empty"})
+        return None
+    return {
+        "kind": "interface",
+        "tool": "set_interface_preferences",
+        "label": str(item.get("label") or "").strip()[:MAX_LABEL] or "Cambios en tu interfaz",
+        "preferences": preferences,
+        "apply_requested": item.get("apply") is True and may_apply,
+    }
+
+
+def _apply_interface(org_id: UUID, user_id: UUID, step: dict) -> dict:
+    """Saves the person's preferences and keeps the previous ones for undo."""
+    from projects import interface
+
+    previous = interface.get_preferences(org_id, user_id)
+    saved = interface.save_preferences(org_id, user_id, step["preferences"])
+    return {"previous": previous, "preferences": saved}
+
+
+def apply_step(org_id: UUID, user_id: UUID, step: dict, key: str) -> dict:
+    """One reversible change the person asked for, by kind."""
+    if step["kind"] == "document_layout":
+        return _apply_document_layout(org_id, step)
+    if step["kind"] == "interface":
+        return _apply_interface(org_id, user_id, step)
+    return _apply_reversible(org_id, user_id, step, key)
+
+
+REVERSIBLE_KINDS = ("project_ops", "document_layout", "interface")
+
+
 def _apply_reversible(org_id: UUID, user_id: UUID, step: dict, key: str) -> dict:
     """Save a reversible project change the person asked for, through the same
     idempotent service the manual review uses (preview → apply → undo)."""
@@ -944,6 +988,7 @@ def _act(
     attachment_manifest: list | None = None,
     attachment_texts: list | None = None,
     may_prepare_destination: bool = False,
+    may_delegate: bool = False,
 ) -> dict:
     def _report(value: float, phase: str = "CONSULTING_PROJECT") -> None:
         # Progress lands on the job_runs row — the only channel a reader can
@@ -1047,6 +1092,9 @@ def _act(
                     # Whether this conversation lets the assistant save the
                     # reversible drafts the person asks for (apply:true).
                     "may_draft": may_draft,
+                    # Whether it may split independent work into parallel
+                    # sub-assistants (never from inside a sub-assistant).
+                    "may_delegate": may_delegate,
                     "created_project": created_project,
                 },
                 "product": product,
@@ -1409,6 +1457,27 @@ def _act(
             if out is not None:
                 steps.append(out)
             continue
+        if kind == "interface":
+            out = _interface_step(item, may_apply=may_draft, rejected=rejected)
+            if out is not None:
+                steps.append(out)
+            continue
+        if kind == "delegate":
+            from ai_gateway import subagents
+
+            tasks = subagents.tasks_from(item) if may_delegate else None
+            if tasks is None:
+                rejected.append({"op": "delegate", "reason": "delegation_not_allowed" if not may_delegate
+                                 else "tasks_invalid"})
+                continue
+            steps.append({
+                "kind": "delegate",
+                "tool": "delegate_tasks",
+                "label": str(item.get("label") or "").strip()[:MAX_LABEL] or "Tareas en paralelo",
+                "tasks": tasks,
+                "apply_requested": item.get("apply") is True and may_draft,
+            })
+            continue
         if kind == "quote_draft":
             # Flow A11: engine price with the company's current rules and the
             # canonical «Borrador» PDF of the work. It runs after the
@@ -1619,6 +1688,7 @@ def act(
     role: str | None = None,
     interaction_mode: str = "work",
     attachments: list | None = None,
+    delegation: dict | None = None,
 ) -> dict:
     """§07-B — every agent run is a durable job. The transcript carries the
     user's turn plus the model's grounded round; artifacts, claims and
@@ -1688,6 +1758,9 @@ def act(
         attachment_manifest=manifest,
         attachment_texts=evidence,
         may_prepare_destination=effective == "approve" and role in DRAFT_ROLES,
+        # Subtasks run as the same person; a subtask never delegates again.
+        may_delegate=(interaction_mode == "work" and role in DRAFT_ROLES and delegation is not None
+                      and not delegation.get("parent_ai_job_id")),
     )
 
     # Reversible drafts the person asked for are saved now, inside this job's
@@ -1696,14 +1769,22 @@ def act(
     agent_turn = len(transcript)
     assistant_outcomes: list[dict] = []
     if executes and job.get("id"):
+        from ai_gateway import subagents
+
         for index, step in enumerate(result["steps"]):
-            if step.get("kind") not in ("project_ops", "document_layout") or not step.get("apply_requested"):
+            if step.get("kind") != "delegate" or not step.get("apply_requested"):
+                continue
+            step["applied"] = subagents.spawn(
+                org_id=org_id, user_id=user_id, parent_job_id=UUID(str(job["id"])), step=step,
+                key=f"ai:{job['id']}:{agent_turn}:{index}", session_aal=str((delegation or {}).get("session_aal") or "aal1"),
+                autonomy=effective, surface=surface, refs=refs)
+            assistant_outcomes.append({"turn_index": agent_turn, "step_index": index, "action": "applied",
+                                       "ops": ["delegate"], "recorded_by": "assistant"})
+        for index, step in enumerate(result["steps"]):
+            if step.get("kind") not in REVERSIBLE_KINDS or not step.get("apply_requested"):
                 continue
             try:
-                step["applied"] = (
-                    _apply_document_layout(org_id, step) if step["kind"] == "document_layout"
-                    else _apply_reversible(org_id, user_id, step, f"ai:{job['id']}:{agent_turn}:{index}")
-                )
+                step["applied"] = apply_step(org_id, user_id, step, f"ai:{job['id']}:{agent_turn}:{index}")
             except Exception as error:  # noqa: BLE001 — a stale draft stays a proposal
                 step["apply_error"] = str(getattr(error, "public_detail", None) or "El proyecto cambió; revisa la propuesta.")[:240]
                 continue
@@ -1712,7 +1793,7 @@ def act(
                 "step_index": index,
                 "action": "applied",
                 "ops": ([str(op.get("op") if isinstance(op, dict) else op)[:80] for op in step["ops"]][:200]
-                        if step["kind"] == "project_ops" else ["document_layout"]),
+                        if step["kind"] == "project_ops" else [step["kind"]]),
                 "recorded_by": "assistant",
                 **({"operation_id": step["applied"]["operation_id"]} if step["kind"] == "project_ops" else {}),
             })
@@ -1726,12 +1807,12 @@ def act(
         if isinstance(o, dict) and o.get("action") in ("applied", "declined", "undone")
     }
     pending_approvals = any(
-        step.get("kind") in ("prepare", "ops", "batch_ops", "project_ops", "document_layout", "quote_draft")
+        step.get("kind") in ("prepare", "ops", "batch_ops", "project_ops", "document_layout", "interface", "delegate", "quote_draft")
         and (turn_index, step_index) not in resolved
         for turn_index, turn_row in enumerate(transcript)
         for step_index, step in enumerate(turn_row.get("steps") or [])
     ) or any(
-        step.get("kind") in ("prepare", "ops", "batch_ops", "project_ops", "document_layout", "quote_draft")
+        step.get("kind") in ("prepare", "ops", "batch_ops", "project_ops", "document_layout", "interface", "delegate", "quote_draft")
         and not step.get("applied")
         for step in result["steps"]
     ) or any(

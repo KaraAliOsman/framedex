@@ -29,6 +29,8 @@ import { useDesignOpsBridge } from "./assistantContext";
 import { BatchOpsStep } from "./BatchOpsStep";
 import { ProjectOpsStep } from "./ProjectOpsStep";
 import { DocumentLayoutStep } from "./DocumentLayoutStep";
+import { InterfaceStep } from "./InterfaceStep";
+import { DelegateStep } from "./DelegateStep";
 import { SimulationPreview } from "./SimulationPreview";
 import { RejectedOperations } from "./RejectedOperations";
 import { publishAssistantJob, presenceState } from "./useAssistantPresence";
@@ -945,7 +947,9 @@ export function AgentBody({
     job.state === "WAITING_FOR_APPROVAL" &&
     (thread.at(-1)?.result?.steps ?? []).some(
       (step) =>
-        ["project_ops", "document_layout", "quote_draft"].includes(step.kind) &&
+        ["project_ops", "document_layout", "interface", "delegate", "quote_draft"].includes(
+          step.kind,
+        ) &&
         !(step as { applied?: unknown }).applied &&
         !(step as { apply_error?: string }).apply_error,
     );
@@ -962,7 +966,8 @@ export function AgentBody({
       };
       return (
         outcome.action === "applied" &&
-        Boolean(outcome.operation_id) &&
+        (Boolean(outcome.operation_id) ||
+          (outcome as { ops?: string[] }).ops?.includes("interface")) &&
         !(job.outcomes ?? []).some((other) => {
           const later = other as { turn_index?: number; step_index?: number; action?: string };
           return (
@@ -977,7 +982,15 @@ export function AgentBody({
   const chatProposal =
     lastTurn?.mode === "chat" &&
     (lastTurn.result?.steps ?? []).some((step) =>
-      ["ops", "batch_ops", "project_ops", "document_layout", "quote_draft"].includes(step.kind),
+      [
+        "ops",
+        "batch_ops",
+        "project_ops",
+        "document_layout",
+        "interface",
+        "delegate",
+        "quote_draft",
+      ].includes(step.kind),
     );
   // Settled task about another work or window: the next message starts a
   // new task on what is open (said plainly, no action required).
@@ -1171,9 +1184,15 @@ export function AgentBody({
                       ) : null}
                       {turn.result.reply &&
                       !turn.result.steps?.some((step) =>
-                        ["ops", "batch_ops", "project_ops", "prepare", "document_layout"].includes(
-                          step.kind,
-                        ),
+                        [
+                          "ops",
+                          "batch_ops",
+                          "project_ops",
+                          "prepare",
+                          "document_layout",
+                          "interface",
+                          "delegate",
+                        ].includes(step.kind),
                       ) ? (
                         <p className="ask-dock__answer">{assistantText(turn.result.reply)}</p>
                       ) : null}
@@ -1338,6 +1357,41 @@ export function AgentBody({
                                       { op: "document_layout" },
                                     ])
                                   }
+                                />
+                              );
+                            }
+                            if (step.kind === "interface" && job) {
+                              return (
+                                <InterfaceStep
+                                  key={stepIndex}
+                                  step={step}
+                                  organizationId={organizationId}
+                                  declined={(job.outcomes ?? []).some((value) => {
+                                    const outcome = value as {
+                                      turn_index?: number;
+                                      step_index?: number;
+                                      action?: string;
+                                    };
+                                    return (
+                                      outcome.turn_index === turn.transcriptIndex &&
+                                      outcome.step_index === stepIndex &&
+                                      outcome.action === "declined"
+                                    );
+                                  })}
+                                  onSettled={(action) =>
+                                    reportOutcome(turn.transcriptIndex, stepIndex, action, [
+                                      { op: "interface" },
+                                    ])
+                                  }
+                                />
+                              );
+                            }
+                            if (step.kind === "delegate") {
+                              return (
+                                <DelegateStep
+                                  key={stepIndex}
+                                  step={step}
+                                  organizationId={organizationId}
                                 />
                               );
                             }

@@ -184,6 +184,10 @@ class AiAgentStepSerializer(serializers.Serializer):
     # document_layout: the quotation composition proposed for this work.
     layout = serializers.JSONField(required=False)
     project_id = serializers.UUIDField(required=False)
+    # interface: the person's own presentation preferences proposed or applied.
+    preferences = serializers.JSONField(required=False)
+    # delegate: the subtasks this task splits into, each its own job.
+    tasks = serializers.ListField(child=serializers.DictField(), required=False)
     # project_ops read from a request (P08): origin of each new window, the
     # assumptions to confirm and the texts the origins point into.
     origins = AiStepOriginSerializer(many=True, required=False)
@@ -254,6 +258,9 @@ class AiAgentRunSerializer(serializers.Serializer):
     # client: an owner's run keeps the second factor of the session that
     # delegated it (owner decision, 22-10-2026).
     session_aal = serializers.ChoiceField(choices=["aal1", "aal2"], required=False, default="aal1")
+    # A subagent: the task that delegated it. Set by the server when it
+    # spawns the child; a child never delegates again (depth one).
+    parent_ai_job_id = serializers.UUIDField(required=False, allow_null=True)
 
 
 class AiAgentResultSerializer(serializers.Serializer):
@@ -396,8 +403,9 @@ class AiJobDetailSerializer(AiJobSerializer):
 class AiUndoKeptSerializer(serializers.Serializer):
     turn_index = serializers.IntegerField()
     step_index = serializers.IntegerField()
-    operation_id = serializers.UUIDField()
-    project_id = serializers.UUIDField()
+    # Window changes carry their operation and work; an interface change has none.
+    operation_id = serializers.UUIDField(required=False, allow_null=True)
+    project_id = serializers.UUIDField(required=False, allow_null=True)
     reason = serializers.CharField()
 
 
