@@ -6,12 +6,7 @@ volatility: high
 verified_ref: de6cfcaba1833b679f8b4c35254655aa31adb59d
 sources:
   - https://github.com/KaraAliOsman/framedex/pull/157
-  - docs/cola/ESTADO.md
-  - docs/redesign/acceptance-2026-10-12.md
   - docs/operations/ACTIVACION.md
-  - docs/redesign/2026-10-18-final/acceptance.md
-  - docs/redesign/2026-10-18-final/production-handoff.md
-  - docs/wiki/quality/review-2026-10-18.md
 ---
 
 # Estado vigente de DEKOPEN v1
@@ -43,7 +38,7 @@ apertura, popup e historial, catálogo por fabricante y descarga de PDF real.
 Encuentra pendientes falsos en el checklist antes de cargar la preparación y
 una vista previa PDF vacía en el navegador integrado (el archivo sí renderiza).
 Proline sigue como referencia no cotizable y sin autoridad de fabricación.
-Véase [revisión y límites](../quality/review-2026-10-18.md).
+Véase revisión y límites.
 La aprobación del dueño y el lanzamiento siguen pendientes.
 
 ## Campaña de entrega de Claude · 19-10-2026
@@ -64,14 +59,14 @@ commit `de6cfcab`; conserva el contexto de su propia campaña:
 - Bloqueos: puerta 6 sin autoridad de fabricante ni costos privados; `test-db`
   no ejecutado (requiere stack limpio); dos golden del motor en rojo desde antes.
 
-Detalle y evidencia: [aceptación](../../redesign/2026-10-18-final/acceptance.md);
-conexiones finales: [traspaso](../../redesign/2026-10-18-final/production-handoff.md).
+Detalle y evidencia: aceptación;
+conexiones finales: traspaso.
 
 ## Investigación posterior a la reversión · 17-10-2026
 
 HEAD auditado: `6f78e3299d93816991fb7c2fe2a2044458fc5e7a`; no se modifica
 código de aplicación. El dueño encarga investigación y preparación para Claude.
-El [paquete](../../research/2026-10-17-claude/README.md) distingue hechos del
+El paquete distingue hechos del
 código restaurado, capturas históricas, fuentes externas y propuestas pendientes.
 No es otro rediseño ejecutado ni una aceptación nueva.
 
@@ -101,7 +96,7 @@ Los resultados descritos más abajo pertenecen a la integración histórica de v
 [PR #157](https://github.com/KaraAliOsman/framedex/pull/157), squash
 `2db4e13171884b93a989e68508a55f5590f9b34d`, mergeado el 12-10-2026 por instrucción del dueño.
 GitHub registra SUCCESS para Lint & Typecheck, Test Suite, Frontend Build y
-Database Gate en sus dos corridas. La [cola](../../cola/ESTADO.md) registra
+Database Gate en sus dos corridas. La cola registra
 39 encargos mergeados y ninguno bloqueado.
 
 La consulta de refs, PR y archivos durante la limpieza confirma la integración.
@@ -110,7 +105,7 @@ no se repitieron pruebas ni una auditoría del producto en esta limpieza.
 
 ## Alcance aceptado y límites
 
-La [aceptación final](../../redesign/acceptance-2026-10-12.md) conserva los
+La aceptación final conserva los
 catorce recorridos, la rúbrica editorial, los refs y los límites de cada medición.
 La matriz UX tiene 912 vistas; dominio, 175 posiciones positivas y 35 rechazos
 por junquillo ausente. La suite MiMo real conserva 21/26 casos PASA, E/J 18/21
@@ -132,8 +127,8 @@ El [índice de la wiki](../index.md) enlaza las páginas de producto: catálogo,
 vidrio, aperturas, herrajes, colores, extras, vano, dibujo/3D, proyecto, precios,
 emisión/portal, IA, producción, compras, CNC, terreno, empresa y analítica.
 Estas páginas conservan decisiones, fuentes, reglas y verificación por encargo.
-Los informes de aceptación por ID permanecen en `docs/redesign/` y las
-aceptaciones D01–D07/IA1–IA3 en sus carpetas originales.
+Los informes de aceptación por fase, capturas y la cola v1 se retiraron el
+31-10-2026; se recuperan desde Git en `588e6332`.
 
 Antes de afirmar comportamiento actual, compruebe el ref objetivo, el código,
 las migraciones y los PR posteriores. Para números manda el motor y el catálogo
@@ -148,7 +143,7 @@ conserva sus archivos privados y servicios, sin renovar sesiones ni llamar a IA.
 El detalle y la lista de protección están en
 [WORKSPACE](../../operations/WORKSPACE.md); no presuma que `.run/` es descartable.
 
-El [mapa de evidencia](../../redesign/captures/README.md) distingue aceptación
+El mapa de evidencia distingue aceptación
 conservada y capturas históricas retiradas. Los mapas extensos de fases anteriores
 se reemplazaron por esta síntesis para evitar repetir estados ya superados.
 El [estado anterior completo](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/wiki/state/current-reality.md)

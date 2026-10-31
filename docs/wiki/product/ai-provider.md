@@ -9,8 +9,6 @@ sources:
   - backend/ai_gateway/configuration.py
   - backend/ai_gateway/usage.py
   - supabase/migrations/20270106000000_ai_provider_operations.sql
-  - docs/ai/IA3-ACEPTACION.md
-  - docs/ai/IA3-CAPACIDADES.json
 ---
 
 # Proveedor de IA y su autoridad
@@ -82,8 +80,8 @@ editor 13/13, proyecto 6/8, planta 1/3 y general 2/2; editor/proyecto 19/21.
 Dominio, auditoría y billetera sin cambios; delta físico: 53 llamadas y 104 eventos.
 J04/J08/F03 carecen de contexto suficiente; F02 no supera su oráculo de negocio.
 Las corridas completas anteriores se conservan sin seleccionar los mejores casos.
-Véanse [aceptación](../../ai/IA3-ACEPTACION.md) y
-[comparativa completa](../../ai/evals/2026-10-07-ia3-comparativa-review.md).
+Véanse aceptación y
+comparativa completa.
 
 Una tarea resuelta requiere su oráculo de negocio; un transporte correcto
 solo acredita la llamada. La corrida IA3 previa 19/26 y la IA2 histórica

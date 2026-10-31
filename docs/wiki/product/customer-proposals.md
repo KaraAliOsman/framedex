@@ -4,7 +4,6 @@ status: active
 updated: 2026-10-11
 volatility: medium
 sources:
-  - docs/redesign/P10-ACEPTACION.md
   - backend/documents/agreements.py
   - backend/portal/proposal_service.py
   - backend/portal/payments.py

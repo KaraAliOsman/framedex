@@ -21,7 +21,7 @@ Durable decisions that should survive chat/session boundaries.
 The owner explicitly adds documents, images and other supported files as AI
 inputs. See the [source](../sources/owner-attachments-and-innovation-2026-10-18.md).
 This is functional scope for the candidate, not a deferred production connection.
-The [copilot contract](../../research/2026-10-18-direccion-final/03-copiloto-y-planes.md)
+The copilot contract
 and prompt 05 specify popup attachments, persistence, truthful support/coverage,
 source references and domain authority. They do not claim implementation.
 
@@ -36,7 +36,7 @@ final production connections/configuration for **Railway, Supabase and payments*
 Implementation, persistence, auth/RLS, AI, credits and payment logic are part of
 the complete product; deployment files and exact connection steps are included.
 See the [source](../sources/owner-launch-boundary-2026-10-18.md) and
-[master brief](../../research/2026-10-18-direccion-final/prompt-maestro.md).
+master brief.
 
 Development 01–06 and technical QA/correction 07 precede the owner's review.
 After approval of the executable candidate, final connections and launch-environment
@@ -68,7 +68,7 @@ a **global popup**, without a permanent column or replacement of the inspector.
 The higher plans must justify their value through useful delegated work.
 
 See the [latest source](../sources/owner-final-direction-2026-10-18.md) and
-[final implementation package](../../research/2026-10-18-direccion-final/README.md).
+final implementation package.
 This resolves the earlier choice: Centro de encargos is not the main entry.
 The previous mocks and token values remain unapproved as finished visual design.
 Chat/Work and the three autonomies remain; Omitir todo finishes reversible
@@ -106,7 +106,7 @@ in a dossier or Claude prompt.
 The latest owner request authorizes deep research, source/visual review, a full
 improvement plan and staged prompts for Claude, **not application changes or
 execution of those prompts in this session**. See the [source synthesis](../sources/owner-research-handoff-2026-10.md)
-and [research package](../../research/2026-10-17-claude/README.md).
+and research package.
 
 New product intent: saved company preferences with minimal essential questions;
 contextual AI that performs reversible authorized work and presents a concrete

@@ -104,4 +104,4 @@ con commits separados y guard de lease. Los logs `ai_provider_exchange` y
 
 IA1 sigue revirtiendo catálogo, proyectos, auditoría y billetera. El informe
 separa el delta físico esperado; ninguna tabla de dominio pierde su comprobación
-de aislamiento. Evidencia y límites: `docs/ai/IA3-ACEPTACION.md`.
+de aislamiento.

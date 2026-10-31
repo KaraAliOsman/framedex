@@ -6,7 +6,6 @@ volatility: low
 sources:
   - owner conversation and autonomy clarification, 2026-10-18
   - owner original PRD attachment b8dca4f1-0c32-4aa3-824c-68bad9f2bf23
-  - docs/research/2026-10-18-revision-profunda/README.md
 ---
 
 # Nueva revisión del dueño · 18 de octubre
@@ -50,7 +49,7 @@ apertura izquierda→derecha, restaurada con Deshacer sin guardar. Eso acota la
 denuncia; no prueba que el caso del dueño funcione. Se observó además un encargo
 «Completado» con ventanas pendientes y una obra de cero posiciones. Fuentes,
 identificadores, alcance y referencia de trabajo están en la
-[auditoría](../../research/2026-10-18-revision-profunda/auditoria-dekopen.md).
+auditoría.
 
 ## Propuestas pendientes
 
@@ -59,7 +58,7 @@ dueño](owner-final-direction-2026-10-18.md) resuelve Mesa + Estudio y popup glo
 opcional. Sustituye la elección pendiente y composición acoplada siguientes;
 la investigación y denuncias originales conservan su fecha.
 
-[Estudio, Mesa de obra y Centro de encargos](../../research/2026-10-18-revision-profunda/tres-direcciones.md)
+Estudio, Mesa de obra y Centro de encargos
 son alternativas, no decisiones aceptadas. Mesa de obra es recomendación del
 investigador. Solo proponer / Con aprobación / Omitir todo es el contrato propuesto
 para expresar autonomía, separado de Chat/Trabajo. El dueño confirmó Omitir todo;

@@ -7,7 +7,6 @@ sources:
   - supabase/migrations/20270107000000_human_entity_codes.sql
   - backend/production/pieces.py
   - backend/tests/integration/test_human_codes.py
-  - docs/redesign/P02-ACEPTACION.md
 ---
 
 # Human addresses without rewriting history

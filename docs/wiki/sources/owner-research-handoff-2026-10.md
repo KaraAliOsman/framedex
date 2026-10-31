@@ -5,7 +5,6 @@ updated: 2026-10-17
 volatility: low
 sources:
   - owner conversation, 2026-10-17, research-only Claude handoff after rollback
-  - docs/research/2026-10-17-claude/00-encargo-y-criterios.md
 ---
 
 # Encargo de investigación y preparación para Claude · octubre 2026
@@ -17,7 +16,7 @@ investigación competitiva y preparación de un plan/prompts para Claude Opus 5.
 La instrucción actual es **no escribir código de aplicación ni ejecutar la
 implementación**. Las retiradas de UI se documentan como decisiones futuras.
 
-El [paquete de investigación](../../research/2026-10-17-claude/README.md) conserva
+El paquete de investigación conserva
 requisitos, evidencia, propuestas y prompts. Fue preparado sobre
 `6f78e3299d93816991fb7c2fe2a2044458fc5e7a`, con producto restaurado al ref
 `edcfd2844d2c2fc7cbb0d3b543b50e9089ab9b3f`.

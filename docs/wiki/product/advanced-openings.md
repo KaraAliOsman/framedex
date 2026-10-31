@@ -10,7 +10,6 @@ sources:
   - backend/catalogs/demo_advanced.py
   - supabase/migrations/20270126000000_advanced_opening_authority.sql
   - supabase/migrations/20270126000100_demo_advanced_catalog.sql
-  - docs/redesign/D08-ACEPTACION.md
 ---
 
 # Tipologías avanzadas con autoridad
@@ -47,7 +46,7 @@ Python, PDF y React comparten símbolos. La proyección visual JS compara a
 del motor y el PDF conservan Decimal. La planta explica trazo cerrado/abierto.
 El portal proyecta la revisión sellada sin exponer costos ni fuentes privadas.
 Se ejercitan las catorce recetas, 84 vistas, emisión DOC-01 y dos propuestas
-MiMo reales. Véase [aceptación](../../redesign/D08-ACEPTACION.md).
+MiMo reales. Véase aceptación.
 
 ## Intención y límites
 

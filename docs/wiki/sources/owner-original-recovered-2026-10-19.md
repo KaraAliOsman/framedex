@@ -52,7 +52,7 @@ para Claude: sustituir modelos antiguos por MiMo, quitar explicaciones del
 Product Pass y material accesorio, y explicar que la primera idea era un
 punto de partida para un SaaS grande, mejor en todos los aspectos.
 
-Se prepara [la versión para Claude](../../research/2026-10-19-idea-original-para-claude.md)
+Se prepara la versión para Claude
 en primera persona, identificada como redacción adaptada, no como cita literal.
 Conserva la base manual, el copiloto opcional, los catálogos compartidos con
 precios privados y la continuidad comercial/fabricación. Los adjuntos originales

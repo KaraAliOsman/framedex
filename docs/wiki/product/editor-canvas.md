@@ -5,11 +5,8 @@ updated: 2026-10-22
 volatility: medium
 verified_ref: gpt/dk2-p06a-obra-unica
 sources:
-  - docs/redesign/captures/dk2-p06a/aceptacion.md
-  - P04 acceptance in docs/redesign/P04-ACEPTACION.md
   - frontend/tests/e2e/editor.spec.ts
   - backend/tests/integration/test_project_operations.py
-  - docs/redesign/captures/aceptacion-final/ux/error-posicion/produccion-verificacion.json
 ---
 
 # Editor centrado en el dibujo
@@ -38,7 +35,7 @@ undo/redo y rechazo de respuestas obsoletas. No cambia una fórmula ni un catál
 
 No hay transiciones nuevas en edición frecuente. El desplazamiento a los avisos
 respeta `prefers-reduced-motion`; el 3D conserva carga diferida. Véanse
-[capturas, pruebas y límites de P06a](../../redesign/captures/dk2-p06a/aceptacion.md).
+capturas, pruebas y límites de P06a.
 
 La intención del dueño es diseñar desde el lienzo, con cotas editables y
 herramientas reconocibles. P04 convierte esa intención en franja compacta,
@@ -63,7 +60,7 @@ conservan el guard de cambios pendientes.
 Pan/zoom se acotan sobre dibujo físico, separado del margen de cotas para
 ajustar. La prueba de 10.000 px comprueba visibilidad antes de Centrar.
 Once campos/lecturas se verifican a 1024×768. La
-[aceptación](../../redesign/P04-ACEPTACION.md) conserva los recorridos.
+aceptación conserva los recorridos.
 
 El alcance es interacción/layout. P05 continúa glifos/cotas técnicas, P06
 bow/planta y P19 3D. DEMO no acredita fabricación real.

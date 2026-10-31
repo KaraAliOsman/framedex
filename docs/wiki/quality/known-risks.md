@@ -27,7 +27,7 @@ La suite MiMo de P20 cumple E/J 18/21, pero conserva cinco fallos. La auditoría
 numérica sin cifras finales inventadas no acredita éxito de un plan faltante.
 Tarifas reales de IA, catálogos, costos, ensayos térmicos y calibración CNC
 requieren fuentes del dueño/proveedor; no se completan con estimaciones del LLM.
-Véase [aceptación](../../redesign/acceptance-2026-10-12.md) y
+Véase aceptación y
 [activación](../../operations/ACTIVACION.md).
 
 D04 verifies class expansion, exact sealed mass, component/length picking and

@@ -22,7 +22,7 @@ copilot that executes delegated work through the same domain functions.
 The owner's [18 October correction](../sources/owner-final-direction-2026-10-18.md)
 chooses Mesa de obra + Estudio and a global optional popup. Earlier AI-native/core
 interface language in PRODUCT and historical plans does not require AI to work.
-The [final package](../../research/2026-10-18-direccion-final/README.md) is an
+The final package is an
 implementation brief, not an implemented redesign or visual acceptance.
 
 The [later clarification](../sources/owner-credits-and-grokbot-2026-10-18.md)

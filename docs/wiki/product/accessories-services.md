@@ -11,7 +11,6 @@ sources:
   - backend/projects/extras.py
   - supabase/migrations/20270103000000_accessory_services.sql
   - supabase/migrations/20270103000100_demo_extra_catalog.sql
-  - docs/redesign/captures/accesorios-extras/aceptacion.md
 ---
 
 # Accesorios, servicios y precio sellado
@@ -79,7 +78,7 @@ los servicios aparecen en el resumen comercial. P07/P09 continúan sus rediseño
 Las fichas y tarifas sintéticas no certifican producción. Contornos y vidrio sin
 marco con extras sin autoridad quedan incompletos de forma explícita. Los
 hallazgos heredados del editor/cromo permanecen en sus encargos de rediseño.
-El [incidente del gate previo](../../operations/INCIDENTE-GATE-2026-10-06.md)
+El incidente del gate previo
 afectó una base local ajena; su evidencia se excluye de aceptación y no acredita
 conservación de sus datos. D06 usa exclusivamente stacks propios y aislados.
 
@@ -87,5 +86,5 @@ conservación de sus datos. D06 usa exclusivamente stacks propios y aislados.
 
 El Musterangebot adjunto inspira la agrupación documental de sublíneas. No
 aporta tarifas de producción, dimensiones de fabricación ni autoridad numérica
-para este catálogo. Véase la [aceptación](../../redesign/captures/accesorios-extras/aceptacion.md)
+para este catálogo. Véase la aceptación
 para pruebas, capturas y reglas registradas.

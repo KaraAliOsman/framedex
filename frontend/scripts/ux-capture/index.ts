@@ -67,7 +67,7 @@ const coverage = new Map<
 let ownedFactor: { id: string; session: AuthSession } | undefined;
 
 function parseArgs(argv: string[]): Args {
-  const args: Args = { out: "docs/redesign/captures/ux-run" };
+  const args: Args = { out: ".run/ux-run" };
   for (let index = 0; index < argv.length; index += 1) {
     const item = argv[index];
     if (item === "--out") args.out = argv[++index] ?? args.out;

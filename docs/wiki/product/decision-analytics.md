@@ -9,7 +9,6 @@ sources:
   - backend/analytics/sql/
   - supabase/migrations/20270128000000_analytics_evidence.sql
   - docs/analytics/metricas.md
-  - docs/redesign/P24-ACEPTACION.md
 ---
 
 # Analítica con evidencia de decisiones

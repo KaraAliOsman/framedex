@@ -5,9 +5,6 @@ updated: 2026-10-18
 volatility: medium
 sources:
   - docs/wiki/sources/owner-innovation-review-2026-10-18.md
-  - docs/research/2026-10-18-innovacion/README.md
-  - docs/research/2026-10-18-innovacion/01-fuentes.md
-  - docs/research/2026-10-18-innovacion/02-base-actual.md
 ---
 
 # Innovación: certeza técnica, margen y continuidad
@@ -38,7 +35,7 @@ valora las ideas y añade explícitamente documentos/imágenes/archivos compatib
 al copiloto. Se integró ese requisito en contrato 03, prompt maestro/05 y QA 07;
 las demás oportunidades no pasan automáticamente a ser alcance obligatorio.
 
-El dossier añade un séptimo documento: [archivos y mejoras con sentido](../../research/2026-10-18-innovacion/06-archivos-y-mejoras-con-sentido.md).
+El dossier añade un séptimo documento: archivos y mejoras con sentido.
 Cinco páginas oficiales adicionales documentan visión MiMo 2.6 Pro, citas y matriz
 de soporte Adobe, control de fuentes Microsoft y anotaciones Autodesk. No hubo
 operación de esas cuentas ni llamada MiMo. La inspección estática de extractores,
@@ -77,7 +74,7 @@ parcial no demuestra margen definitivo. El modelo no calcula cifras fuera del
 motor y no autoriza efectos externos. Los datos privados no se usan por defecto
 para benchmarks ni entrenamiento entre organizaciones.
 
-El [paquete de implementación vigente](../../research/2026-10-18-direccion-final/README.md)
+El paquete de implementación vigente
 y la [secuencia de lanzamiento](../sources/owner-launch-boundary-2026-10-18.md)
 se mantienen. La investigación no ejecutó producto, suites, proveedores, cobros,
 despliegues ni cambios de condiciones comerciales.

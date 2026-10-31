@@ -18,7 +18,7 @@ decisiones vigentes —base manual, Mesa/Estudio, popup opcional, MiMo común y
 créditos— se conservan. La condición de conexiones finales de Railway,
 Supabase y pagos tampoco cambia por investigar oportunidades.
 
-La respuesta se conserva en el [dossier de innovación](../../research/2026-10-18-innovacion/README.md).
+La respuesta se conserva en el dossier de innovación.
 Sus prioridades, pilotos y posibles beneficios comerciales son recomendaciones,
 no resultados medidos, aceptación del producto ni tarifas aprobadas. La
 [síntesis](../research/innovation-2026-10-18.md) separa evidencia y propuesta.

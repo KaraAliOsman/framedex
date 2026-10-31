@@ -5,15 +5,9 @@ updated: 2026-10-12
 volatility: high
 verified_ref: 484182126c4f7ba32ba41f3e77b1a1ba31faf04c
 sources:
-  - docs/redesign/captures/aceptacion-final/ia-suite/resumen.json
-  - docs/redesign/captures/aceptacion-final/ia-suite/numeros.json
-  - docs/cola/prompts/IA1-diagnostico-evals.md
   - backend/ai_gateway/evals/cases.yaml
   - backend/ai_gateway/evals/run.py
   - docs/ai/evals/README.md
-  - docs/redesign/captures/diagnostico-evals/aceptacion.md
-  - docs/ai/evals/2026-10-07-ia2-mimo.json
-  - docs/ai/evals/2026-10-07-ia2-comparativa.md
 ---
 
 # AI acceptance by outcome
@@ -34,7 +28,7 @@ Dos rondas rechazadas permanecen registradas; dos errores no tienen respuesta
 final. Ese resultado no acredita corrección semántica de los cinco fallos.
 
 El editor y la ingesta PDF/XLSX también recorren MiMo real con revisión humana.
-Véase [aceptación P20](../../redesign/acceptance-2026-10-12.md).
+Véase aceptación P20.
 
 ## IA3 · medición histórica (07-10-2026)
 
@@ -43,8 +37,8 @@ editor 13/13, proyecto 6/8, planta 1/3 y general 2/2; editor/proyecto 19/21.
 Dominio, auditoría y billetera sin cambios; delta físico: 53 llamadas y 104 eventos.
 J04/J08/F03 carecen de contexto suficiente; F02 no supera su oráculo de negocio.
 Las corridas completas anteriores se conservan sin seleccionar los mejores casos.
-Véanse [aceptación](../../ai/IA3-ACEPTACION.md) y
-[comparativa completa](../../ai/evals/2026-10-07-ia3-comparativa-review.md).
+Véanse aceptación y
+comparativa completa.
 
 La corrida previa IA3 19/26 y la histórica IA2 21/26 permanecen completas,
 sin seleccionar resultados de otras ejecuciones. La fuente ejecutada es estable
@@ -86,8 +80,8 @@ desconocido. Las regresiones verifican RLS, IDs/metadatos restaurados y
 obsolescencia tras una edición documental. La evaluación completa se repitió
 sobre estas correcciones; sus casos no se mezclan con la corrida anterior.
 
-Véanse la [comparativa por caso y categoría](../../ai/evals/2026-10-07-ia2-comparativa.md)
-y la [aceptación de navegador y rúbrica](../../redesign/captures/operaciones-herramientas/aceptacion.md).
+Véanse la comparativa por caso y categoría
+y la aceptación de navegador y rúbrica.
 El PR [#126](https://github.com/KaraAliOsman/framedex/pull/126) está integrado
 por squash `0835e3f0834e2680674458693626617a84cc19f8` con sus cuatro checks
 verdes sobre la revisión corregida `3f475b5c`. IA3 continúa proveedor/configuración

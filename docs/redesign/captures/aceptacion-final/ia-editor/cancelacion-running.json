@@ -1,9 +1,0 @@
-{
-  "result": "PASA",
-  "provider": "MIMO",
-  "stateBeforeClick": "RUNNING",
-  "stateAfterClick": "CANCELED",
-  "humanClick": true,
-  "consequentialOutcomes": 0,
-  "job": "74f86c34-e2ec-4955-8b3b-1ae79547d7ad"
-}

@@ -10,7 +10,6 @@ sources:
   - engine/tests/golden_hardware_classes.json
   - backend/tests/integration/test_hardware_flow.py
   - supabase/migrations/20270101000000_hardware_classes.sql
-  - docs/redesign/captures/herrajes-clases/aceptacion.md
 ---
 
 # Herrajes por familia y clase
@@ -69,4 +68,4 @@ tarifas siguiendo [activación](../../operations/ACTIVACION.md).
 Colores de perfiles D05, accesorios D06 y movimientos D08 siguen en la cola.
 
 Véanse [aperturas](physical-openings.md), [catálogo](catalog-authority.md) y la
-[aceptación con evidencia](../../redesign/captures/herrajes-clases/aceptacion.md).
+aceptación con evidencia.

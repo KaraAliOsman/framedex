@@ -110,5 +110,5 @@ correo del dominio y webhooks. Añada catálogo, precios, tarifas, datos térmic
 calibración industrial con fuentes reales. La marca DEMO desaparece solo al
 reemplazar la autoridad sintética mediante revisión y publicación.
 
-El [informe de aceptación](redesign/acceptance-2026-10-12.md) conserva las pruebas,
+El informe de aceptación conserva las pruebas,
 capturas, mediciones y límites que acompañan el PR de revisión.

@@ -5,9 +5,6 @@ updated: 2026-10-18
 volatility: medium
 sources:
   - docs/wiki/sources/owner-revision-profunda-2026-10-18.md
-  - docs/research/2026-10-18-revision-profunda/README.md
-  - docs/research/2026-10-18-revision-profunda/fuentes.json
-  - docs/research/2026-10-18-revision-profunda/rea-evidencia.md
 ---
 
 # Investigación y propuestas · 18 de octubre de 2026
@@ -16,12 +13,12 @@ sources:
 [dirección final](final-direction-2026-10-18.md): Mesa + Estudio y copiloto en
 popup opcional, con base manual completa. Los apartados de elección pendiente
 de esta página describen la fase histórica; las fuentes y evidencia siguen
-vigentes con sus límites. El [nuevo prompt](../../research/2026-10-18-direccion-final/prompt-maestro.md)
+vigentes con sus límites. El nuevo prompt
 sustituye al prompt anterior del dossier.
 
 ## Resultado y límites de la investigación externa
 
-El [dossier](../../research/2026-10-18-revision-profunda/README.md) reúne quince
+El dossier reúne quince
 familias independientes: Klaes, PrefSuite, RA Workshop, Logikal, SchüCal,
 V6 Advantage, A+W Cantor, FeneVision, Matrix, Windowmaker, WindowCC/WindoorCraft,
 3E LOOK, NuveraPRO, Winart y WinMaker 10. Moxisys tiene ficha como canal de
@@ -35,7 +32,7 @@ no editor operado. Se inspeccionaron fotogramas concretos de un tutorial de
 Winart, no todo el vídeo continuo. REA produjo capturas, un bundle de evidencia
 y análisis parcial de JavaScript público de WindoorCraft; no recuperó algoritmos
 industriales privados. Los límites están en cada ficha y en el
-[recibo REA](../../research/2026-10-18-revision-profunda/rea-evidencia.md).
+recibo REA.
 
 Las 24 dimensiones de la matriz estructurada incluyen punteros a evidencia de
 grupo donde falta una inspección específica; no son 24 pruebas adicionales por
@@ -61,7 +58,7 @@ Revisión en `claude/v1-implementacion`, HEAD
   al jefe de taller. Hace falta exponer requisito y responsable en el mismo sitio.
 
 Los identificadores de obra, posición, job y OT, código y recetas de reproducción
-están en la [auditoría](../../research/2026-10-18-revision-profunda/auditoria-dekopen.md).
+están en la auditoría.
 
 ## Decisiones que la evidencia recomienda
 
@@ -75,11 +72,11 @@ están en la [auditoría](../../research/2026-10-18-revision-profunda/auditoria-
 5. Corte/taller organizados por revisión, piezas, plan, estación y rol.
 
 Estas recomendaciones se concretan en el
-[contrato](../../research/2026-10-18-revision-profunda/contrato-asistente.md),
-[catálogos reales](../../research/2026-10-18-revision-profunda/catalogos-reales.md)
-y [tres direcciones](../../research/2026-10-18-revision-profunda/tres-direcciones.md).
+contrato,
+catálogos reales
+y tres direcciones.
 La elección posterior conserva Mesa + Estudio con popup global opcional; véase
 la [síntesis final](final-direction-2026-10-18.md). El prompt anterior queda
-sustituido por el [prompt maestro vigente](../../research/2026-10-18-direccion-final/prompt-maestro.md).
+sustituido por el prompt maestro vigente.
 No se implementó el rediseño ni se certificó un catálogo real o la preparación
 final de fabricación durante la investigación.

@@ -4,11 +4,9 @@ status: active
 updated: 2026-10-07
 volatility: medium
 sources:
-  - docs/cola/prompts/D07-vano-fabricacion.md
   - engine/src/dekopen_engine/mounting.py
   - backend/projects/mounting.py
   - supabase/migrations/20270104000000_opening_mounting.sql
-  - docs/redesign/captures/vano-fabricacion/aceptacion.md
 ---
 
 # Vano, montaje y fabricación

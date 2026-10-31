@@ -43,7 +43,7 @@ comerciales aún no decididos.
 
 ## Documentos actualizados
 
-[Prompt maestro](../../research/2026-10-18-direccion-final/prompt-maestro.md),
-[cierre 07](../../research/2026-10-18-direccion-final/prompts/07-cierre-qa.md),
-[criterios](../../research/2026-10-18-direccion-final/criterios-de-entrega.md)
+Prompt maestro,
+cierre 07,
+criterios
 y [síntesis](../research/final-direction-2026-10-18.md).

@@ -9,8 +9,6 @@ sources:
   - backend/production/quality.py
   - backend/production/pieces.py
   - supabase/migrations/20270112000000_operator_station.sql
-  - frontend/scripts/verify-p12-flow.mjs
-  - docs/redesign/P12-ACEPTACION.md
 ---
 
 # Producción por estación

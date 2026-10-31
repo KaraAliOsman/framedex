@@ -5,10 +5,7 @@ updated: 2026-10-22
 volatility: medium
 verified_ref: gpt/dk2-p06a-obra-unica
 sources:
-  - docs/redesign/captures/dk2-p06a/aceptacion.md
   - P21 PR https://github.com/KaraAliOsman/framedex/pull/146, CI 4/4 sobre 50a00fe9e509338cdee706459c17395119e036a8, corrida https://github.com/KaraAliOsman/framedex/actions/runs/38110211964, squash 412029ac1ea688a0f5bf1d560ba9b2e99871fae6, 2026-10-11.
-  - docs/cola/prompts/P21-proyecto-hub.md
-  - docs/redesign/P21-ACEPTACION.md
   - backend/tests/integration/test_project_workspace.py
 ---
 
@@ -34,13 +31,13 @@ seleccionar la ventana creada: así el id nuevo no se normaliza contra la lista
 anterior y el total no queda obsoleto. La reapertura desde la colección reutiliza
 la sesión; la prueba recarga expresamente para comprobar datos persistidos.
 
-La [aceptación de P06a](../../redesign/captures/dk2-p06a/aceptacion.md) separa
+La aceptación de P06a separa
 esta composición del trabajo pendiente de P06: respuesta menor de 100 ms,
 chips de corrección, precio vivo simple y extremos de la lista persistente.
 
 ## Dirección previa del dueño · 18-10-2026
 
-[Mesa de obra + Estudio](../../research/2026-10-18-direccion-final/01-producto-y-dos-vistas.md)
+Mesa de obra + Estudio
 son dos vistas del mismo proyecto y sesión manual; Mesa es el inicio recomendado.
 Ambas conservan selección, revisión, borrador, undo y permisos. La nueva
 preferencia no equivale al selector galería/tabla. El copiloto es popup opcional

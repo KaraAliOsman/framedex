@@ -5,7 +5,6 @@ updated: 2026-10-22
 volatility: high
 verified_ref: gpt/dk2-p05k-diagnosticos
 sources:
-  - docs/research/2026-10-21-competencia/prompts/P05-navegacion-hoy-obras.md
   - docs/design/CONSTITUCION.md
   - frontend/scripts/check-catalog-copy.mjs
   - frontend/src/decimal.ts
@@ -18,16 +17,12 @@ sources:
   - backend/pricing/workspace.py
   - backend/analytics/metrics.py
   - backend/search/service.py
-  - docs/redesign/captures/dk2-p05j/aceptacion.md
-  - docs/redesign/captures/dk2-p05k/aceptacion.md
   - backend/ai_gateway/prompts/agent-v2.md
   - backend/ai_gateway/evals/outcomes.py
   - engine/src/dekopen_engine/inspector.py
   - backend/documents/quotation.py
   - backend/production/cut_documents.py
   - backend/production/field_pdf.py
-  - docs/redesign/captures/dk2-p05i/aceptacion.md
-  - docs/redesign/captures/dk2-p05g/aceptacion.md
 ---
 
 # Lenguaje de la interfaz

@@ -11,7 +11,6 @@ sources:
   - supabase/migrations/20270127000000_thermal_authority.sql
   - docs/engineering/thermal/README.md
   - docs/engineering/thermal/oguc-ds15-transcripcion.json
-  - docs/redesign/P18-ACEPTACION.md
 ---
 
 # Autoridad térmica de ventanas

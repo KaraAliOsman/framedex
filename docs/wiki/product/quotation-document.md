@@ -5,7 +5,6 @@ updated: 2026-10-18
 volatility: medium
 verified_ref: 97aea5dfec6e4dddcb429a48b421c7598e758a0d
 sources:
-  - docs/redesign/P09-ACEPTACION.md
   - backend/documents/quotation.py
   - engine/src/dekopen_engine/quotation.py
   - backend/tests/integration/test_quote_document_v2.py
@@ -36,7 +35,7 @@ Esto es un hecho del árbol de trabajo en la rama `claude/v1-implementacion`. No
 ## Intención de producto posterior · 17-10-2026
 
 El dueño pide firma/aceptación opcionales, numeración comercial sencilla y edición
-manual/IA de plantillas y borradores. El [plan documental](../../research/2026-10-17-claude/06-documentos-y-editor.md)
+manual/IA de plantillas y borradores. El plan documental
 concreta tres cotizaciones, dos pedidos y tres cortes. Propone originales
 estructurados versionados; no está implementado. En el ref restaurado
 `6f78e329`, `quotation.py:387` añade aceptación incondicional y el folio usa
@@ -66,7 +65,7 @@ cifra y su hash pertenece a una aprobación del portal. Compartir reemplaza
 solo enlaces compartidos. Revocar el QR bloquea su portal y conserva el PDF.
 Un fallo de render/upload revierte la aprobación y el registro de capacidad.
 
-Véase [aceptación](../../redesign/P09-ACEPTACION.md): fixtures de 1/12/24/100,
+Véase aceptación: fixtures de 1/12/24/100,
 tablas sin intersecciones, 40 páginas normales y 45 con nombres largos,
 calendario/alternativas/QR e inmutabilidad por recorrido real. Es evidencia
 DEMO de comportamiento, sin certificación manufacturera. Los artefactos

@@ -6,7 +6,6 @@ volatility: medium
 verified_ref: c01fd3fe720f71ca8acf7ef8d86510d106e73075
 sources:
   - P06 PR https://github.com/KaraAliOsman/framedex/pull/138, CI 4/4 sobre a77e21927feef91b7f519266ee5955688cc8f579, squash c01fd3fe720f71ca8acf7ef8d86510d106e73075, 2026-10-09
-  - docs/redesign/P06-ACEPTACION.md
   - engine/src/dekopen_engine/assembly_measures.py
   - engine/tests/test_gold_cases_assemblies.py
   - frontend/tests/e2e/editor.spec.ts
@@ -47,5 +46,5 @@ Intención del dueño: construir conjuntos con la facilidad de una ventana
 y conservar determinismo. Verificación: siete interacciones E2E para
 el bow 600/1 200/600 a 22,5°, selección/igualdad después de recargar,
 arrastre a 30° y deshacer, rechazo de 89°, cinco recetas y PDF real.
-La [aceptación](../../redesign/P06-ACEPTACION.md) conserva evidencia y
+La aceptación conserva evidencia y
 límites; 3D de conjuntos pertenece a P19.

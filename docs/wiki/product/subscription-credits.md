@@ -7,7 +7,6 @@ verified_ref: 6f78e3299d93816991fb7c2fe2a2044458fc5e7a
 sources:
   - docs/wiki/sources/owner-credits-and-grokbot-2026-10-18.md
   - docs/PRD/PRD-03.md
-  - docs/research/2026-10-18-direccion-final/04-planes-creditos-y-limites.md
 ---
 
 # Suscripción SaaS, créditos y límites de IA
@@ -20,7 +19,7 @@ expreso suyo. La diferencia principal es capacidad de consumo; pueden existir
 extras profesionales concretos. DeepSeek es un candidato posterior sin validar
 o configurar. Los importes 30/49/99/149 no son una oferta autorizada.
 
-El [contrato propuesto para Claude](../../research/2026-10-18-direccion-final/04-planes-creditos-y-limites.md)
+El contrato propuesto para Claude
 usa cuota Q = m × U, una unidad común y multiplicadores versionados. Separa
 crédito, token, costo físico, retención de saldo y presupuesto operativo.
 Las tres autonomías y los tres flujos obligatorios no son una IA menos capaz

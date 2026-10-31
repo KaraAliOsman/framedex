@@ -5,7 +5,6 @@ updated: 2026-10-11
 volatility: high
 verified_ref: ff210e7a439b861349d1d602c4137ebe4e65d0c8
 sources:
-  - docs/redesign/P19-ACEPTACION.md
   - scripts/generate_scene3d_fixtures.py
   - frontend/src/features/canvas/poses3d.test.ts
   - frontend/src/features/canvas/Product3DScene.test.ts

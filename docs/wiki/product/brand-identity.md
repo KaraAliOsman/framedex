@@ -6,7 +6,6 @@ volatility: medium
 verified_ref: 588835689c0324b6f76f0ea474f6460c6c22f0b1
 sources:
   - docs/design/marca.md
-  - docs/redesign/P25-ACEPTACION.md
   - backend/notifications/
   - supabase/migrations/20270108000000_brand_and_mail.sql
 ---

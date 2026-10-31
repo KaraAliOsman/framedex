@@ -6,8 +6,6 @@ volatility: medium
 sources:
   - docs/wiki/sources/owner-final-direction-2026-10-18.md
   - docs/wiki/sources/owner-launch-boundary-2026-10-18.md
-  - docs/research/2026-10-18-direccion-final/README.md
-  - docs/research/2026-10-18-revision-profunda/README.md
 ---
 
 # Dirección final para la implementación de Claude
@@ -20,7 +18,7 @@ misma sesión y autoridad. Base manual completa sin IA. Copiloto global opcional
 en popup, con historial y espacio ampliable voluntario. Centro de encargos ya
 no es la puerta principal; los píxeles de las propuestas previas no se aceptaron.
 
-El [nuevo paquete](../../research/2026-10-18-direccion-final/README.md) integra
+El nuevo paquete integra
 tres revisiones especializadas: producto/editor, copiloto/planes y
 diseño/documentos/operación. Contiene dirección única, seis contratos, prompt
 maestro, siete prompts y criterios de entrega. 01–06 construyen; 07 concentra
@@ -83,7 +81,7 @@ inspeccionadas; no se operaron Apple/Adobe/Shapr3D. Grok Bot añade observación
 de su demo pública y cuatro capturas seleccionadas. REA analizó tres scripts
 públicos de 62 inventariados (319.612 bytes), con grafo parcial/truncado; su
 escenario de runtime recibió bloqueo WAF y no contiene la interfaz del bot.
-Ver [alcance exacto e identidades](../../research/2026-10-18-direccion-final/06-grok-bot-personaje-y-movimiento.md).
+Ver alcance exacto e identidades.
 
 ## Reglas duraderas
 
