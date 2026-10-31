@@ -1121,6 +1121,53 @@ it("renders the design library with rendered starter cards", async () => {
   expect(within(list).getAllByTestId("product-front").length).toBeGreaterThan(0);
 });
 
+async function includeSyntheticExample() {
+  const response = await engineSystems();
+  if (response.status !== 200) throw new Error("Expected systems fixture");
+  vi.mocked(engineSystems).mockResolvedValue(
+    ok({
+      systems: [
+        ...response.data.systems,
+        {
+          ...response.data.systems[0]!,
+          id: "example-system",
+          name: "Serie sintética de ejemplo",
+          code: "EXAMPLE",
+          is_demo: true,
+        },
+      ],
+    }),
+  );
+}
+
+it("only offers synthetic series in the selector after activating Mostrar ejemplos", async () => {
+  await includeSyntheticExample();
+  mount();
+  await ready();
+  fireEvent.click(document.querySelector<HTMLButtonElement>(".editor-system-chip")!);
+  expect(
+    screen.queryByRole("option", { name: /Serie sintética de ejemplo/ }),
+  ).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("checkbox", { name: "Mostrar ejemplos" }));
+  expect(screen.getByRole("option", { name: /Serie sintética de ejemplo/ })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("checkbox", { name: "Mostrar ejemplos" }));
+  expect(
+    screen.queryByRole("option", { name: /Serie sintética de ejemplo/ }),
+  ).not.toBeInTheDocument();
+  expect(screen.getByRole("option", { name: "Sistema A" })).toBeInTheDocument();
+});
+
+it("keeps examples hidden when choosing the first series of a new window", async () => {
+  await includeSyntheticExample();
+  mount("/projects/project-a/positions/new");
+  const toggle = await screen.findByRole("checkbox", { name: "Mostrar ejemplos" });
+  expect(
+    screen.queryByRole("button", { name: /Serie sintética de ejemplo/ }),
+  ).not.toBeInTheDocument();
+  fireEvent.click(toggle);
+  expect(screen.getByRole("button", { name: /Serie sintética de ejemplo/ })).toBeInTheDocument();
+});
+
 it("picking a sliding starter card builds a sliding product", async () => {
   mount("/projects/project-a/positions/new");
   await screen.findByRole("heading", { name: t("projects.position") });

@@ -496,7 +496,7 @@ class KitWriteSerializer(StrictSerializer):
         for axis in ("width", "height"):
             lower, upper = f"min_leaf_{axis}_mm", f"max_leaf_{axis}_mm"
             if lower in effective and upper in effective and effective[lower] > effective[upper]:
-                raise serializers.ValidationError({upper: "Maximum must not be below minimum."})
+                raise serializers.ValidationError({upper: "El máximo debe ser mayor o igual al mínimo."})
         if effective.get("class_authority") is not None and effective.get("contents"):
             raise serializers.ValidationError({"contents": "Una clase expandible declara sus componentes en la autoridad. Deja vacío el contenido histórico para evitar dos fuentes."})
         return attrs
@@ -679,6 +679,8 @@ class CatalogFilterSerializer(StrictSerializer):
 
 class SystemListFilterSerializer(StrictSerializer):
     summary = serializers.BooleanField(required=False, default=False)
+    is_demo = serializers.BooleanField(required=False)
+    owned_only = serializers.BooleanField(required=False, default=False)
 
 
 class ReinforcementRowSerializer(serializers.Serializer):

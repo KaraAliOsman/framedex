@@ -64,14 +64,28 @@ def cell_history(org_id, system_id, table, row_id, field_name):
         for item in history]
 
 
+def index_versions(versions):
+    return {(item["authority_table"], str(item["row_id"]), item["field_name"]): item for item in versions}
+
+
+def index_evidence(evidence):
+    grouped = {}
+    for item in evidence:
+        grouped.setdefault((item["authority_table"], str(item["row_id"])), []).append(item)
+    return grouped
+
+
 def resolve_origin(table, row, field_name, value, versions, evidence=()):
-    current = next((item for item in versions if item["authority_table"] == table
-        and str(item["row_id"]) == str(row["id"]) and item["field_name"] == field_name), None)
+    current = (versions.get((table, str(row["id"]), field_name)) if isinstance(versions, dict) else
+        next((item for item in versions if item["authority_table"] == table
+        and str(item["row_id"]) == str(row["id"]) and item["field_name"] == field_name), None))
     if current is not None and _equivalent(value, _stored_value(current)):
         return {"origin": current["origin"], "source_ref": current["source_ref"],
             "set_by": current["set_by"], "set_at": current["set_at"], "version_id": current["id"]}
     synthetic = row.get("is_demo") or row.get("data_provenance") == "SEED_SYNTHETIC"
     if not synthetic:
+        if isinstance(evidence, dict):
+            evidence = evidence.get((table, str(row["id"])), ())
         matching = [item for item in evidence if item["authority_table"] == table
             and str(item["row_id"]) == str(row["id"])
             and (field_name == item["field_name"] or field_name.startswith(item["field_name"] + "."))

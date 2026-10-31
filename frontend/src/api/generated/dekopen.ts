@@ -285,6 +285,7 @@ import type {
   PatchedProjectUpdateRequest,
   PatchedQuotationCustomerRequestRequest,
   PatchedSeriesBatchEditRequest,
+  PatchedSeriesPriceEditRequest,
   PatchedSystemWriteRequest,
   PaymentIntegrationRequest,
   PaymentIntegrationStatus,
@@ -308,6 +309,7 @@ import type {
   PositionUpdateRequest,
   PositionWriteRequest,
   PositionsDestroyParams,
+  PriceHistory,
   PriceRequestRequest,
   PriceResponse,
   PricingOptions,
@@ -8333,6 +8335,153 @@ export const catalogSeriesCellHistory = async (
 ): Promise<catalogSeriesCellHistoryResponse> => {
   return apiMutator<catalogSeriesCellHistoryResponse>(
     getCatalogSeriesCellHistoryUrl(systemId, params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export type catalogSeriesEditPricesResponse200 = {
+  data: SeriesSheet;
+  status: 200;
+};
+
+export type catalogSeriesEditPricesResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogSeriesEditPricesResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogSeriesEditPricesResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogSeriesEditPricesResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogSeriesEditPricesResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogSeriesEditPricesResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogSeriesEditPricesResponseSuccess = catalogSeriesEditPricesResponse200 & {
+  headers: Headers;
+};
+export type catalogSeriesEditPricesResponseError = (
+  | catalogSeriesEditPricesResponse400
+  | catalogSeriesEditPricesResponse401
+  | catalogSeriesEditPricesResponse403
+  | catalogSeriesEditPricesResponse404
+  | catalogSeriesEditPricesResponse409
+  | catalogSeriesEditPricesResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogSeriesEditPricesResponse =
+  catalogSeriesEditPricesResponseSuccess | catalogSeriesEditPricesResponseError;
+
+export const getCatalogSeriesEditPricesUrl = (systemId: string) => {
+  return `/api/v1/catalogs/series/${systemId}/prices/`;
+};
+
+export const catalogSeriesEditPrices = async (
+  systemId: string,
+  patchedSeriesPriceEditRequest?: PatchedSeriesPriceEditRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogSeriesEditPricesResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<catalogSeriesEditPricesResponse>(getCatalogSeriesEditPricesUrl(systemId), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(patchedSeriesPriceEditRequest),
+  });
+};
+
+export type catalogSeriesPriceHistoryResponse200 = {
+  data: PriceHistory;
+  status: 200;
+};
+
+export type catalogSeriesPriceHistoryResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogSeriesPriceHistoryResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogSeriesPriceHistoryResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogSeriesPriceHistoryResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogSeriesPriceHistoryResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogSeriesPriceHistoryResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogSeriesPriceHistoryResponseSuccess = catalogSeriesPriceHistoryResponse200 & {
+  headers: Headers;
+};
+export type catalogSeriesPriceHistoryResponseError = (
+  | catalogSeriesPriceHistoryResponse400
+  | catalogSeriesPriceHistoryResponse401
+  | catalogSeriesPriceHistoryResponse403
+  | catalogSeriesPriceHistoryResponse404
+  | catalogSeriesPriceHistoryResponse409
+  | catalogSeriesPriceHistoryResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogSeriesPriceHistoryResponse =
+  catalogSeriesPriceHistoryResponseSuccess | catalogSeriesPriceHistoryResponseError;
+
+export const getCatalogSeriesPriceHistoryUrl = (systemId: string, priceId: string) => {
+  return `/api/v1/catalogs/series/${systemId}/prices/${priceId}/history/`;
+};
+
+export const catalogSeriesPriceHistory = async (
+  systemId: string,
+  priceId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogSeriesPriceHistoryResponse> => {
+  return apiMutator<catalogSeriesPriceHistoryResponse>(
+    getCatalogSeriesPriceHistoryUrl(systemId, priceId),
     {
       ...options,
       method: "GET",

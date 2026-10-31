@@ -24,28 +24,29 @@ export function openingAuthorityProblem(
 ): string | null {
   for (const [index, cap] of capabilities.entries()) {
     const name = `Capacidad ${index + 1}`;
-    if (!cap.source.trim()) return `${name}: falta la fuente del fabricante.`;
+    if (!cap.source.trim()) return `${name}: falta la referencia del fabricante.`;
     if (!cap.hinge_sides.length) return `${name}: elige al menos un lado de bisagras.`;
     if (requiresRecipe(cap) && !cap.advanced_recipes?.length)
-      return `${name}: declara un esquema avanzado con fuente.`;
+      return `${name}: declara un esquema avanzado con referencia.`;
     if (cap.movement !== "FIXED" && !cap.hardware_kit_skus.length)
-      return `${name}: elige los herrajes compatibles de la fuente.`;
+      return `${name}: elige los herrajes compatibles de la referencia.`;
     if (["ACTIVE", "PASSIVE"].includes(cap.leaf_role) && !paired)
-      return `${name}: declara el encuentro con inversor y su fuente.`;
+      return `${name}: declara el encuentro con inversor y su referencia.`;
     if (
       cap.movement !== "FIXED" &&
       (cap.movement !== "SLIDE" || requiresRecipe(cap)) &&
       cap.leaf_role !== "PASSIVE"
     ) {
       const rule = cap.handle_rule;
-      if (!rule || !rule.source.trim()) return `${name}: declara la regla de manilla y su fuente.`;
+      if (!rule || !rule.source.trim())
+        return `${name}: declara la regla de manilla y su referencia.`;
       if (
         !rule.minimum_from_top_mm.trim() ||
         !rule.minimum_from_bottom_mm.trim() ||
         !rule.closing_edge_offset_mm.trim() ||
         (rule.vertical_reference !== "CENTER" && !rule.default_height_mm?.trim())
       )
-        return `${name}: completa las medidas de la regla de manilla desde su fuente.`;
+        return `${name}: completa las medidas de la regla de manilla desde su referencia.`;
     }
   }
   if (
@@ -55,7 +56,7 @@ export function openingAuthorityProblem(
       !paired.meeting_gap_mm.trim() ||
       !paired.inversor_end_deduction_mm.trim())
   )
-    return "Encuentro con inversor: completa las medidas y su fuente.";
+    return "Encuentro con inversor: completa las medidas y su referencia.";
   return null;
 }
 
@@ -144,24 +145,25 @@ export function OpeningCapabilitiesEditor({
     <fieldset className="catalog-group">
       <legend>Capacidades de apertura</legend>
       <p>
-        Declara cada combinación que la fuente del sistema admite. Una capacidad sin fuente o sin
-        herrajes compatibles impide guardar.
+        Declara cada combinación que la referencia del sistema admite. Una capacidad sin referencia
+        o sin herrajes compatibles impide guardar.
       </p>
       {capabilities.length === 0 && (
-        <p>Sin dato: agrega una capacidad respaldada por el catálogo del fabricante.</p>
+        <p>Falta información: agrega una capacidad respaldada por el catálogo del fabricante.</p>
       )}
       {capabilities.map((cap, index) => (
         <fieldset className="catalog-group" key={index}>
           <legend>Capacidad {index + 1}</legend>
           {!cap.source.trim() && (
             <p role="status">
-              Bloqueado: falta la fuente de esta capacidad. Completa «Fuente de la capacidad» antes
-              de guardar.
+              Bloqueado: falta la referencia de esta capacidad. Completa «Manual de esta apertura»
+              antes de guardar.
             </p>
           )}
           {cap.movement !== "FIXED" && cap.hardware_kit_skus.length === 0 && (
             <p role="status">
-              Bloqueado: falta el herraje de esta apertura. Elige un kit respaldado por la fuente.
+              Bloqueado: falta el herraje de esta apertura. Elige un kit respaldado por la
+              referencia.
             </p>
           )}
           <div className="catalog-fields">
@@ -208,7 +210,7 @@ export function OpeningCapabilitiesEditor({
                 <option value="PASSIVE">Pasiva con falleba</option>
               </select>
             </label>
-            {input("Fuente de la capacidad", cap.source, (source) => patch(index, { source }))}
+            {input("Manual de esta apertura", cap.source, (source) => patch(index, { source }))}
             {cap.movement === "FIXED" && (
               <label>
                 <input
@@ -243,7 +245,9 @@ export function OpeningCapabilitiesEditor({
           {cap.movement !== "FIXED" && (
             <fieldset className="catalog-group">
               <legend>Herrajes que respaldan la capacidad</legend>
-              {kits.length === 0 && <p>Sin dato: registra primero los herrajes de este sistema.</p>}
+              {kits.length === 0 && (
+                <p>Falta información: registra primero los herrajes de este sistema.</p>
+              )}
               {kits.map((kit) => (
                 <label key={kit.id}>
                   <input
@@ -307,7 +311,7 @@ export function OpeningCapabilitiesEditor({
                     </label>
                     {cap.handle_rule.vertical_reference !== "CENTER" &&
                       input(
-                        "Altura de fuente · mm",
+                        "Altura de referencia · mm",
                         cap.handle_rule.default_height_mm ?? "",
                         (value) => handle(index, { default_height_mm: value }),
                         true,
@@ -330,7 +334,7 @@ export function OpeningCapabilitiesEditor({
                       (value) => handle(index, { closing_edge_offset_mm: value }),
                       true,
                     )}
-                    {input("Fuente de manilla", cap.handle_rule.source, (value) =>
+                    {input("Manual de la manilla", cap.handle_rule.source, (value) =>
                       handle(index, { source: value }),
                     )}
                   </div>
@@ -411,7 +415,7 @@ export function OpeningCapabilitiesEditor({
             (value) => onPair({ ...paired, inversor_end_deduction_mm: value }),
             true,
           )}
-          {input("Fuente del encuentro", paired.source, (value) =>
+          {input("Manual del encuentro", paired.source, (value) =>
             onPair({ ...paired, source: value }),
           )}
         </div>

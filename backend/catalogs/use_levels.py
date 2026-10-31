@@ -13,7 +13,7 @@ from authentication.errors import contract_error
 from authentication.rls import authenticated_read, catalog_backend
 from dekopen_engine.models import MaterialType, ProfileRole
 from catalogs.evidence import list_evidence
-from catalogs.value_origins import RULE_FIELDS, cells, latest_versions, resolve_origin
+from catalogs.value_origins import RULE_FIELDS, cells, latest_versions, resolve_origin, index_versions, index_evidence
 from engine_api.repository import SystemNotFound, SystemParamsRepository, UnsupportedCatalogContract
 from pricing.repository import json_text, rows
 
@@ -105,9 +105,9 @@ def series_use(org_id, system_id, *, params=None, result=None, priced=False, eff
 
     synthetic = bool(system["is_demo"] and system["is_global"] and system["org_id"] is None)
     with catalog_backend():
-        versions = latest_versions(org_id, system_id)
+        versions = index_versions(latest_versions(org_id, system_id))
     with authenticated_read():
-        evidence = list_evidence(org_id=org_id, system_id=system_id)
+        evidence = index_evidence(list_evidence(org_id=org_id, system_id=system_id))
     suggested_count = 0
     for table, records in grouped.items():
         for row in records:

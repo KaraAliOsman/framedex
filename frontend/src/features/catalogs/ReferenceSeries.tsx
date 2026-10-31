@@ -63,7 +63,7 @@ export function CapabilityChips({
   capabilities: ReferenceSeriesRecord["capabilities"];
 }): JSX.Element {
   const rows: [keyof typeof capabilities, string][] = [
-    ["reference", "Referencia con fuente"],
+    ["reference", "Manual disponible"],
     ["quotable", "Cotizable"],
     ["manufacturable", "Fabricable"],
     ["cnc", "CNC"],
@@ -107,14 +107,16 @@ export function ReferenceSeriesPanel({
           </p>
         </div>
         <StatusBadge tone="warning" showIcon={false}>
-          {series.capabilities.reference ? "Referencia · no cotizable" : "Identidad sin resolver"}
+          {series.capabilities.reference
+            ? "Completar serie para cotizar"
+            : "Identidad sin resolver"}
         </StatusBadge>
       </header>
       <CapabilityChips capabilities={series.capabilities} />
 
       {series.facts.length ? (
         <section>
-          <h3>Datos de la fuente</h3>
+          <h3>Datos de la referencia</h3>
           <dl className="reference-series__facts">
             {series.facts.map((fact) => (
               <div key={fact.label}>
@@ -142,9 +144,9 @@ export function ReferenceSeriesPanel({
                   <span className="sr-only">Silueta</span>
                 </th>
                 <th>Código</th>
-                <th>Nombre en la fuente</th>
+                <th>Nombre en la referencia</th>
                 <th>Función</th>
-                <th>Fuente</th>
+                <th>Documento</th>
               </tr>
             </thead>
             <tbody>
@@ -166,7 +168,7 @@ export function ReferenceSeriesPanel({
           </table>
           <p className="reference-series__hint">
             Las siluetas son ilustrativas de cada familia, no secciones verificadas. Sin largos de
-            barra, pesos ni costos: la fuente no los acredita.
+            barra, pesos ni costos: la referencia no los acredita.
           </p>
         </section>
       ) : null}
@@ -187,7 +189,7 @@ export function ReferenceSeriesPanel({
 
       {series.incidents.length ? (
         <section>
-          <h3>Incidencias de la propia fuente</h3>
+          <h3>Incidencias de la propia referencia</h3>
           <ul>
             {series.incidents.map((item) => (
               <li key={item}>{item}</li>
@@ -198,7 +200,7 @@ export function ReferenceSeriesPanel({
 
       {series.sources.length ? (
         <section>
-          <h3>Fuentes</h3>
+          <h3>Documentos</h3>
           <ul className="reference-series__sources">
             {series.sources.map((id) => {
               const item = source(id);

@@ -55,6 +55,35 @@ Los serializadores omiten los campos aditivos ausentes en contratos históricos;
 El historial de autoridades descrito abajo sigue siendo aplicable a los
 contratos existentes.
 
+### Preparación P02b: descubrir y editar sin perder precisión
+
+Verificación local posterior a P02a: `is_demo` y `owned_only` filtran antes de
+resolver los niveles exactos. El inicio de Catálogo pide únicamente series
+propias no sintéticas; ejemplos y biblioteca tienen consultas separadas. La
+API sin filtros conserva su contrato anterior y las políticas RLS.
+
+La resolución de orígenes y evidencia usa índices por tabla, fila y campo,
+comparando siempre el valor vigente. Los metadatos se agrupan por petición;
+no hay caché entre empresas. Dieciocho unitarias verifican paridad y el caso
+de 300 perfiles. El perfilado local de 51 versiones pasó de 8,647 s/2.336
+consultas a 2,421 s/383 al filtrar ejemplos e indexar. El navegador que pide
+solo las series propias carga en torno a 1,5 s; son mediciones sintéticas.
+
+Los endpoints `series/{id}/prices/` y `prices/{price_id}/history/` permiten al
+dueño editar costos exactos y consultar su historia. El lote comprueba revisión,
+pertenencia y valor previo, con rollback y auditoría. Revertir añade otro evento.
+`price_audit_logs.event_order` desempata fechas transaccionales iguales sin
+modificar valores ni actores. En historia previa solo ofrece un orden estable;
+no reconstruye una cronología que no se registró. Las integraciones cubren
+aislamiento, roles, conflictos y cero explícito; nueve aserciones pgTAP cubren
+orden e inmutabilidad. Los nombres de actores se resuelven entre miembros
+activos del mismo tenant; la identidad histórica permanece aunque no haya nombre.
+
+La validación fallida de un lote añade recurso/fila y mantiene el diagnóstico
+por campo para situarlo en la celda. La transacción conserva tanto las reglas
+como su historia cuando otra fila falla. P02 sigue en curso: estos contratos
+no implementan la verificación de P03 ni cambian fórmulas del motor.
+
 ### Origen por celda y datos de plantilla
 
 En `gpt/dk2-p01c-valores-y-plantillas`, `catalog_value_history` añade versiones

@@ -27,8 +27,8 @@ function Authoring(): JSX.Element {
 
 function start(): void {
   render(<Authoring />);
-  fireEvent.click(screen.getByRole("button", { name: "Agregar esquema desde fuente" }));
-  fireEvent.click(screen.getByRole("button", { name: "Agregar panel desde fuente" }));
+  fireEvent.click(screen.getByRole("button", { name: "Agregar esquema desde referencia" }));
+  fireEvent.click(screen.getByRole("button", { name: "Agregar panel desde referencia" }));
 }
 
 describe("exact sourced recipe authoring", () => {

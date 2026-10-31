@@ -8,6 +8,14 @@
 
 export type CatalogSystemListParams = {
   /**
+   * Optional example filter, applied before calculating exact use levels.
+   */
+  is_demo?: boolean;
+  /**
+   * Limit discovery to the active organization's own series; global library is separate.
+   */
+  owned_only?: boolean;
+  /**
    * Exact v2 use levels without the deprecated workshop diagnostic ladder.
    */
   summary?: boolean;

@@ -30,7 +30,7 @@ export function WorkspaceGlasses({ glasses = [] }: { glasses?: WorkspaceGlass[] 
       {!glasses.length ? (
         <p>
           Sin composiciones declaradas. Importa la ficha del proveedor para revisar su composición y
-          fuente.
+          referencia.
         </p>
       ) : (
         <div className="ws-glass-list">
@@ -39,8 +39,8 @@ export function WorkspaceGlasses({ glasses = [] }: { glasses?: WorkspaceGlass[] 
               <h4>
                 {glass.name} {glass.synthetic ? <DemoBadge /> : null}
               </h4>
-              <p className="mono">{glass.notation ?? "Composición: Sin dato"}</p>
-              <p>Fuente: {glass.source ?? "Sin dato; revisa la ficha del proveedor"}</p>
+              <p className="mono">{glass.notation ?? "Completar composición"}</p>
+              <p>Documento: {glass.source ?? "Completar; revisa la ficha del proveedor"}</p>
               {error ? null : !formats ? (
                 <Loading label="Cargando formatos…" />
               ) : (
@@ -50,16 +50,16 @@ export function WorkspaceGlasses({ glasses = [] }: { glasses?: WorkspaceGlass[] 
                     .map((item) => (
                       <li key={item.id}>
                         {fmtMm(item.width_mm)} × {fmtMm(item.height_mm)} mm · despunte{" "}
-                        {fmtMm(item.edge_trim_mm)} mm · {item.supplier ?? "Proveedor: Sin dato"}
+                        {fmtMm(item.edge_trim_mm)} mm · {item.supplier ?? "Completar proveedor"}
                         <p>
-                          {item.source ?? "Fuente: Sin dato"}
+                          {item.source ?? "Completar documento"}
                           {item.is_demo ? <DemoBadge /> : null}
                         </p>
                       </li>
                     ))}
                   {!formats.items.some((item) => item.technical_sku === glass.technical_sku) ? (
                     <li>
-                      Formato de lámina: Sin dato. Decláralo con la fuente del proveedor antes de
+                      Falta el formato de lámina. Agrégalo con la referencia del proveedor antes de
                       optimizar.
                     </li>
                   ) : null}
@@ -143,7 +143,7 @@ export function WorkspaceCosts() {
                   <li key={`${item.sku}-${index}`}>
                     <strong>{item.name}</strong> {item.is_demo ? <DemoBadge /> : null} ·{" "}
                     {item.blocker ??
-                      (item.active_cost_items > 0 ? "Costo vigente declarado" : "Sin dato")}
+                      (item.active_cost_items > 0 ? "Costo vigente declarado" : "Completar")}
                   </li>
                 ))}
               </ul>

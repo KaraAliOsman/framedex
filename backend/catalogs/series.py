@@ -5,16 +5,17 @@ from decimal import Decimal
 
 from django.db import connection, transaction
 
-from authentication.errors import contract_error
+from authentication.errors import ContractAPIException, contract_error
 from authentication.rls import catalog_backend
 from catalogs import service
 from catalogs.evidence import list_evidence
 from catalogs.family_templates import family_template
 from catalogs.value_origins import (
     RULE_FIELDS, annotated_cells, cell_history, cells, latest_versions,
-    record_origin, resolve_origin,
+    record_origin, resolve_origin, index_versions, index_evidence,
 )
-from pricing.repository import commercial_backend, json_text, one, rows
+from pricing.repository import admin_write, commercial_backend, json_text, one, rows
+from documents.repository import documentary_backend
 
 RESOURCES = {"systems": service.SYSTEMS, "articles": service.ARTICLES,
     "glazing": service.BEADS, "hardware-kits": service.KITS}
@@ -106,7 +107,9 @@ def _sheet_rows(workspace):
 
 
 def _cell_projections(org_id, system_id, grouped, versions):
-    evidence = list_evidence(org_id=org_id, system_id=system_id)
+    evidence = index_evidence(list_evidence(org_id=org_id, system_id=system_id))
+    versions = index_versions(versions)
+    people = _actor_names(org_id)
     output = []
     for name, records in grouped.items():
         resource = RESOURCES[name]
@@ -119,8 +122,17 @@ def _cell_projections(org_id, system_id, grouped, versions):
                 origin = resolve_origin(resource.table, row, field, value, versions, evidence) if value is not None else {
                     "origin": None, "source_ref": None, "set_by": None, "set_at": None, "version_id": None}
                 output.append({"resource": name, "row_id": row["id"], "field": field,
-                    "value": value_text(value), **origin})
+                    "value": value_text(value), **origin,
+                    "actor_name": people.get(str(origin["set_by"]))})
     return output
+
+
+def _actor_names(org_id):
+    # The existing tenant-checked function exposes active workshop names only.
+    # It never makes auth.users or another tenant's people available to callers.
+    with documentary_backend():
+        people = rows("SELECT user_id,display_name FROM private.field_people(%s)", [org_id])
+    return {str(person["user_id"]): person["display_name"] for person in people}
 
 
 def price_items(org_id, system_id):
@@ -222,8 +234,14 @@ def edit_cells(org_id, system_id, actor_id, data, *, can_view_prices=False):
                     raise contract_error(400, "catalog_cell_invalid", "La regla indicada no contiene esta celda.")
                 target[path[-1]] = item["value"]
         for group in grouped.values():
-            service.update(group["resource"], org_id, group["row"]["id"], group["values"],
-                expected_revision='"' + group["row"]["revision"] + '"', actor_id=actor_id)
+            try:
+                service.update(group["resource"], org_id, group["row"]["id"], group["values"],
+                    expected_revision='"' + group["row"]["revision"] + '"', actor_id=actor_id)
+            except ContractAPIException as error:
+                if error.status_code == 400 and error.contract_code == "catalog_validation_error":
+                    error.error_extra.update(resource=next(name for name, value in RESOURCES.items()
+                        if value is group["resource"]), row_id=str(group["row"]["id"]))
+                raise
         return series_sheet(org_id, system_id, can_view_prices=can_view_prices)
 
 
@@ -242,11 +260,47 @@ def confirm_cells(org_id, system_id, actor_id, data, *, can_view_prices=False):
         return series_sheet(org_id, system_id, can_view_prices=can_view_prices)
 
 
+def edit_prices(org_id, system_id, data):
+    """One audited batch, guarded against both catalog and cost changes."""
+    ids = [str(item["id"]) for item in data["changes"]]
+    if len(ids) != len(set(ids)):
+        raise contract_error(400, "catalog_duplicate_price", "Un precio aparece más de una vez en el lote.")
+    with transaction.atomic():
+        _lock_sheet(org_id, system_id, data["revision"])
+        allowed = {str(item["id"]) for item in price_items(org_id, system_id)}
+        if not set(ids) <= allowed:
+            raise contract_error(404, "catalog_price_missing", "El precio no pertenece a esta serie.")
+        # Writes use the owner's existing authenticated RLS and audit trigger.
+        # pricing_backend deliberately has read-only access to purchase costs.
+        locked = rows("SELECT id,unit_cost FROM public.cost_list_items WHERE org_id=%s "
+            "AND id=ANY(%s::uuid[]) ORDER BY id FOR UPDATE", [org_id, ids])
+        current = {str(item["id"]): item["unit_cost"] for item in locked}
+        if any(current.get(str(item["id"])) != item["previous_unit_cost"] for item in data["changes"]):
+            raise contract_error(409, "catalog_stale_price", "Un precio cambió. Recarga antes de guardar el lote.")
+        for item in data["changes"]:
+            admin_write("cost-items", org_id, {"unit_cost": item["unit_cost"]}, data["reason"], item["id"])
+        return series_sheet(org_id, system_id, can_view_prices=True)
+
+
+def price_history(org_id, system_id, price_id):
+    service.retrieve(service.SYSTEMS, org_id, system_id)
+    if str(price_id) not in {str(item["id"]) for item in price_items(org_id, system_id)}:
+        raise contract_error(404, "catalog_price_missing", "El precio no pertenece a esta serie.")
+    people = _actor_names(org_id)
+    entries = rows("SELECT id,old_value::text AS previous_value,new_value::text AS value,"
+        "actor_user_id AS set_by,created_at AS set_at,reason FROM public.price_audit_logs "
+        "WHERE org_id=%s AND entity='cost_list_items' AND entity_id=%s ORDER BY created_at DESC,event_order DESC",
+        [org_id, price_id])
+    return {"items": [{**entry, "actor_name": people.get(str(entry["set_by"]))} for entry in entries]}
+
+
 def history(org_id, system_id, item):
     service.retrieve(service.SYSTEMS, org_id, system_id)
     resource = RESOURCES[item["resource"]]
     entries = cell_history(org_id, system_id, resource.table, item["row_id"], item["field"])
     if not entries:
         _target(org_id, system_id, item, writable=False)
-    return {"items": [{**entry, "value": value_text(entry["value"]), "previous_value": value_text(entry["previous_value"])}
+    people = _actor_names(org_id)
+    return {"items": [{**entry, "value": value_text(entry["value"]), "previous_value": value_text(entry["previous_value"]),
+        "actor_name": people.get(str(entry["set_by"]))}
         for entry in entries]}

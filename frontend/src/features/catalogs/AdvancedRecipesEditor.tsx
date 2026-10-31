@@ -91,7 +91,7 @@ function SourceDecimalField({
       />
       {invalid && (
         <span id={id} role="alert">
-          Completa un número decimal desde la fuente. El valor escrito se conserva.
+          Completa un número decimal desde la referencia. El valor escrito se conserva.
         </span>
       )}
     </label>
@@ -127,7 +127,7 @@ export function AdvancedRecipesEditor({
     <label>
       <span>{label}</span>
       <select value={value ?? ""} onChange={(event) => update(event.target.value)}>
-        <option value="">Sin dato / no corresponde</option>
+        <option value="">Completar o indicar que no corresponde</option>
         {choices.map(([key, name]) => (
           <option key={key} value={key}>
             {name}
@@ -166,7 +166,7 @@ export function AdvancedRecipesEditor({
   );
   return (
     <fieldset className="catalog-group">
-      <legend>Esquemas avanzados con fuente</legend>
+      <legend>Esquemas avanzados con referencia</legend>
       <p>
         Declara las medidas, perfiles y movimientos desde el documento del fabricante. El motor
         valida la composición y sus herrajes al guardar.
@@ -178,7 +178,7 @@ export function AdvancedRecipesEditor({
             {text("Código del esquema", recipe.code, (code) => patch(at, { code }))}
             {text("Nombre para el estimador", recipe.name, (name) => patch(at, { name }))}
             {text("Composición (A, C, 3+0…)", recipe.scheme, (scheme) => patch(at, { scheme }))}
-            {text("Documento, página y revisión de fuente", recipe.source, (source) =>
+            {text("Documento, página y revisión de referencia", recipe.source, (source) =>
               patch(at, { source }),
             )}
             {select(
@@ -219,7 +219,7 @@ export function AdvancedRecipesEditor({
                 checked={recipe.synthetic}
                 onChange={(event) => patch(at, { synthetic: event.target.checked })}
               />
-              Autoridad sintética · DEMO sin certificación
+              Ejemplo sintético · sin certificación
             </label>
             <label>
               <input
@@ -273,7 +273,7 @@ export function AdvancedRecipesEditor({
                 })
               }
             >
-              Agregar guía desde fuente
+              Agregar guía desde referencia
             </button>
           </fieldset>
           {kitList(at, recipe, "hardware_kit_skus", "Herrajes del esquema")}
@@ -427,7 +427,7 @@ export function AdvancedRecipesEditor({
               })
             }
           >
-            Agregar panel desde fuente
+            Agregar panel desde referencia
           </button>
           <button
             type="button"
@@ -472,7 +472,7 @@ export function AdvancedRecipesEditor({
           ])
         }
       >
-        Agregar esquema desde fuente
+        Agregar esquema desde referencia
       </button>
     </fieldset>
   );

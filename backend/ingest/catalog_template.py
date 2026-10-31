@@ -248,6 +248,11 @@ def normalize(value: object, column: Column) -> object:
     return text
 
 
+def display_label(column: Column) -> str:
+    # Public UI labels may evolve without breaking the versioned XLSX headers.
+    return column.label.replace("Fuente", "Documento").replace("fuente", "referencia")
+
+
 def candidate(sheet: str, raw: dict, *, key: str, row: int, method: str,
               refs: dict | None = None) -> dict:
     values, evidence, errors = {}, {}, []
@@ -262,11 +267,11 @@ def candidate(sheet: str, raw: dict, *, key: str, row: int, method: str,
             if method == "AI" and reference.get("confidence") != "HIGH":
                 value = None
             if value is None and column.required:
-                raise ValueError("Sin dato: completa este campo con su fuente")
+                raise ValueError("Completa este campo con su referencia")
         except (ValueError, TypeError, InvalidOperation) as error:
             value = None
-            errors.append({"field": column.key, "column": column.label,
-                           "message": f"Fila {row}, columna ‘{column.label}’: {error}."})
+            errors.append({"field": column.key, "column": display_label(column),
+                           "message": f"Fila {row}, columna ‘{display_label(column)}’: {error}."})
         values[column.key] = value
         evidence[column.key] = {**reference, "method": method}
     doubtful = any(field.get("confidence") == "LOW" for field in evidence.values())
@@ -393,6 +398,6 @@ def export_csv(sheet: str, candidates: list[dict]) -> bytes:
 
 def public_schema() -> dict:
     return {"version": VERSION, "sheets": [{"name": name,
-        "columns": [{"key": column.key, "label": column.label, "kind": column.kind,
+        "columns": [{"key": column.key, "label": display_label(column), "kind": column.kind,
                      "required": column.required, "choices": column.choices}
                     for column in columns]} for name, columns in SCHEMAS.items()]}

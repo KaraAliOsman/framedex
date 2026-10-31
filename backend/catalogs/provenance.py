@@ -80,8 +80,18 @@ def decorate(resource, records, org_id):
     evidence = rows("SELECT * FROM public.catalog_parameter_evidence WHERE authority_table=%s "
                     "AND row_id=ANY(%s::uuid[]) AND (org_id IS NULL OR org_id=%s) "
                     "ORDER BY declared_at,id", [resource.table, ids, org_id])
+    evidence_by_row = {}
+    for item in evidence:
+        evidence_by_row.setdefault(str(item["row_id"]), []).append(item)
+    parents = {}
+    parent_ids = list({str(row["system_id"]) for row in records if row.get("system_id") is not None
+        and not (row.get("is_demo") or row.get("data_provenance") == "SEED_SYNTHETIC")})
+    if resource.table != "profile_systems" and parent_ids:
+        parents = {str(item["id"]): item["is_demo"] for item in rows(
+            "SELECT id,is_demo FROM public.profile_systems WHERE id=ANY(%s::uuid[])", [parent_ids])}
+    reviewers = {}
     for row in records:
-        current = [ev for ev in evidence if str(ev["row_id"]) == str(row["id"])]
+        current = evidence_by_row.get(str(row["id"]), [])
         matching = [ev for ev in current if ev["review_state"] == "REVIEWED"
                     and evidence_matches(row, ev) and
                     (ev.get("source_page") or ev.get("source_ref") or ev.get("source_url")) and
@@ -100,14 +110,15 @@ def decorate(resource, records, org_id):
             row["section_facts"] = section_facts(row)
         synthetic = row.get("is_demo") or row.get("data_provenance") == "SEED_SYNTHETIC"
         if resource.table != "profile_systems" and not synthetic:
-            parent = rows("SELECT is_demo FROM public.profile_systems WHERE id=%s", [row.get("system_id")])
-            synthetic = bool(parent and parent[0]["is_demo"])
+            synthetic = bool(parents.get(str(row.get("system_id"))))
         reviewed = bool(row.get("technical_reviewed_at") and not row.get("review_pending"))
         reviewer = None
         if reviewed:
-            people = rows("SELECT private.catalog_reviewer_label(%s,%s) AS label",
-                          [row["technical_reviewed_by"], org_id])
-            reviewer = people[0]["label"] if people else None
+            actor = row["technical_reviewed_by"]
+            if actor not in reviewers:
+                people = rows("SELECT private.catalog_reviewer_label(%s,%s) AS label", [actor, org_id])
+                reviewers[actor] = people[0]["label"] if people else None
+            reviewer = reviewers[actor]
         valid_section = row.get("section_facts", {}).get("valid", True)
         verified = reviewed and bool(required) and not missing and valid_section
         state = ("DEMO" if synthetic else "VERIFIED" if verified else "REVIEWED" if reviewed
@@ -119,4 +130,4 @@ def decorate(resource, records, org_id):
             "reason": ("Datos sintéticos; sin certificación del fabricante" if synthetic else
                        "Revisión técnica con evidencia vigente" if verified else
                        "La revisión técnica no certifica valores sin evidencia vigente" if reviewed else
-                       "Fuente o revisión técnica pendiente")}
+                       "Documento o revisión del taller pendiente")}

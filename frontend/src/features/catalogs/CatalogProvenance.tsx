@@ -11,7 +11,7 @@ export function SourceHighlight({
   quote?: string | null;
   literal?: string | null;
 }) {
-  if (!quote) return <p>La fuente no declara este campo.</p>;
+  if (!quote) return <p>La referencia no declara este campo.</p>;
   const at = literal ? quote.indexOf(literal) : -1;
   return (
     <blockquote>
@@ -51,8 +51,8 @@ export function CatalogProvenance({
         VERIFIED: "Verificado con evidencia",
         REVIEWED: "Revisado por técnico",
         DECLARED: "Declarado",
-        UNKNOWN: "Sin fuente verificada",
-      }[authority?.state ?? ""] ?? "Fuente pendiente");
+        UNKNOWN: "Sin referencia verificada",
+      }[authority?.state ?? ""] ?? "Documento pendiente");
   const sources = evidence.filter((source) => source.row_id === row.id);
   return (
     <details className="catalog-provenance">
@@ -73,10 +73,10 @@ export function CatalogProvenance({
               : "La revisión humana no equivale a un certificado del fabricante.")}
         </p>
         <p>
-          {authority?.reviewer ?? "Revisor: Sin dato"} ·{" "}
+          {authority?.reviewer ?? "Falta indicar quién revisó"} ·{" "}
           {authority?.reviewed_at
             ? formatDateTime(authority.reviewed_at)
-            : "Fecha de revisión: Sin dato"}
+            : "Falta la fecha de revisión"}
         </p>
         {authority?.missing_fields.length ? (
           <p>
@@ -96,7 +96,7 @@ export function CatalogProvenance({
               </summary>
               <p>
                 {source.source_ref ??
-                  (source.source_page ? `Página ${source.source_page}` : "Referencia: Sin dato")}
+                  (source.source_page ? `Página ${source.source_page}` : "Referencia: completar")}
               </p>
               <SourceHighlight quote={source.source_quote} literal={source.source_literal} />
               <p>
@@ -122,9 +122,7 @@ export function CatalogProvenance({
             </details>
           ))
         ) : (
-          <p>
-            Documento de origen: Sin dato. Declara y revisa una fuente para respaldar los valores.
-          </p>
+          <p>Agrega y revisa el manual para respaldar estos valores.</p>
         )}
       </div>
     </details>
@@ -158,11 +156,11 @@ export function SectionReviewFacts({ facts }: { facts?: SectionFacts }) {
       <dl>
         <div>
           <dt>Orientación</dt>
-          <dd>{orientations[facts?.orientation ?? ""] ?? "Sin dato"}</dd>
+          <dd>{orientations[facts?.orientation ?? ""] ?? "Completar"}</dd>
         </div>
         <div>
           <dt>Origen local</dt>
-          <dd>{origins[facts?.local_origin ?? ""] ?? "Sin dato"}</dd>
+          <dd>{origins[facts?.local_origin ?? ""] ?? "Completar"}</dd>
         </div>
         {facts?.bounds ? (
           <div>

@@ -20,12 +20,12 @@ export function ImportedSectionFields({
   if (!section)
     return (
       <div>
-        <p>Sección: Sin dato. Contrasta el dibujo y su unidad antes de declarar las coordenadas.</p>
+        <p>Falta la sección. Contrasta el dibujo y su unidad antes de declarar las coordenadas.</p>
         <button
           type="button"
           onClick={() => onChange({ source: "POLYGON", polygon: [], axes: [] })}
         >
-          Declarar sección desde la fuente
+          Declarar sección desde la referencia
         </button>
       </div>
     );
@@ -46,7 +46,7 @@ export function ImportedSectionFields({
           value={section.orientation ?? ""}
           onChange={(event) => patch("orientation", event.target.value)}
         >
-          <option value="">Sin dato</option>
+          <option value="">Completar</option>
           {Object.entries({
             EXTERIOR_DOWN: "Abajo",
             EXTERIOR_UP: "Arriba",
@@ -65,7 +65,7 @@ export function ImportedSectionFields({
           value={section.local_origin ?? ""}
           onChange={(event) => patch("local_origin", event.target.value)}
         >
-          <option value="">Sin dato</option>
+          <option value="">Completar</option>
           {Object.entries({
             TOP_LEFT: "Superior izquierdo",
             TOP_RIGHT: "Superior derecho",
@@ -139,7 +139,7 @@ export function ImportedSectionFields({
         <SectionPreviewSvg section={section as ProfileSection} faceWidthMm={0} />
       ) : null}
       <button type="button" onClick={() => onChange(null)}>
-        Dejar sección sin dato
+        Completar sección después
       </button>
     </div>
   );

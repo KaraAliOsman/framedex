@@ -145,7 +145,8 @@ class CatalogCollectionView(APIView):
                 self.resource,
                 org_id,
                 filters.get("system_id"),
-                **({"summary": filters["summary"]} if self.resource is service.SYSTEMS else {}),
+                **({"summary": filters["summary"], "is_demo": filters.get("is_demo"), "owned_only": filters["owned_only"]}
+                    if self.resource is service.SYSTEMS else {}),
             )
             output = self.list_serializer({"items": rows}).data
         return Response(output)
@@ -242,7 +243,11 @@ def _endpoint_classes(name, resource, response_serializer, list_serializer):
     detail = type(f"{name}DetailView", (CatalogDetailView,), attributes)
     filters = (
         [OpenApiParameter("summary", OpenApiTypes.BOOL, OpenApiParameter.QUERY,
-            description="Exact v2 use levels without the deprecated workshop diagnostic ladder.")]
+            description="Exact v2 use levels without the deprecated workshop diagnostic ladder."),
+         OpenApiParameter("is_demo", OpenApiTypes.BOOL, OpenApiParameter.QUERY,
+            description="Optional example filter, applied before calculating exact use levels."),
+         OpenApiParameter("owned_only", OpenApiTypes.BOOL, OpenApiParameter.QUERY,
+            description="Limit discovery to the active organization's own series; global library is separate.")]
         if resource is service.SYSTEMS
         else [
             OpenApiParameter("system_id", OpenApiTypes.UUID, OpenApiParameter.QUERY),

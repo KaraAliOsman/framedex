@@ -784,7 +784,7 @@ describe("CatalogPage sourced physical opening authority", () => {
   it("saves sourced motion and exact handle heights without manufacturing a default", async () => {
     vi.mocked(client.catalogSystemUpdate).mockResolvedValue(ok(authority()));
     await open();
-    fireEvent.change(screen.getByLabelText("Fuente de la capacidad"), {
+    fireEvent.change(screen.getByLabelText("Manual de esta apertura"), {
       target: { value: "Ficha revisada" },
     });
     fireEvent.submit(editorForm());
@@ -795,10 +795,10 @@ describe("CatalogPage sourced physical opening authority", () => {
   });
   it("keeps a source-less capability local and names its missing authority", async () => {
     await open();
-    fireEvent.change(screen.getByLabelText("Fuente de la capacidad"), { target: { value: "" } });
+    fireEvent.change(screen.getByLabelText("Manual de esta apertura"), { target: { value: "" } });
     fireEvent.submit(editorForm());
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Capacidad 1: falta la fuente del fabricante",
+      "Capacidad 1: falta la referencia del fabricante",
     );
     expectNoWrites();
   });
@@ -808,14 +808,14 @@ describe("CatalogPage sourced physical opening authority", () => {
     fireEvent.submit(editorForm());
     expect(await screen.findByRole("alert")).toHaveTextContent("elige los herrajes compatibles");
     expectNoWrites();
-    expect(screen.queryByLabelText("Altura de fuente · mm")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Altura de referencia · mm")).not.toBeInTheDocument();
   });
   it("exposes sources to the estimator with all authority controls disabled", async () => {
     identity.role = "ESTIMATOR";
     await open(true);
-    expect(screen.getByLabelText("Fuente de la capacidad")).toBeDisabled();
+    expect(screen.getByLabelText("Manual de esta apertura")).toBeDisabled();
     expect(screen.getByLabelText("Movimiento")).toBeDisabled();
-    expect(screen.getByLabelText("Altura de fuente · mm")).toBeDisabled();
+    expect(screen.getByLabelText("Altura de referencia · mm")).toBeDisabled();
     expectNoWrites();
   });
 });

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Fast source guards protecting DEKOPEN's hard invariants.
 
-Run via `make lint`. These are plain greps/regex checks — no orchestration.
+Run via `make lint`. Source checks use Python and the installed TypeScript parser.
 The deeper proofs live in the test suites (engine purity tests, pgTAP).
 """
 
@@ -13,6 +13,7 @@ import hashlib
 import json
 from pathlib import Path
 import re
+import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -197,6 +198,10 @@ def main() -> None:
     check_no_hex_in_frontend()
     check_database_contract()
     check_design_ratchet()
+    catalog_copy = subprocess.run(["node", str(ROOT / "frontend/scripts/check-catalog-copy.mjs")],
+        cwd=ROOT, check=False)
+    if catalog_copy.returncode:
+        fail("catalog interface copy or its detector tests failed")
     if FAILURES:
         print(f"[FAIL] {len(FAILURES)} guard violation(s)", flush=True)
         sys.exit(1)

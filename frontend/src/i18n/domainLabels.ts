@@ -278,7 +278,7 @@ export const domainLabels: Readonly<Record<string, string>> = {
   BAR: "Barra",
   BLOCK: "Bloquear",
   BLOCKED: "Bloqueado",
-  BLOCKED_MISSING_AUTHORITY: "Bloqueado por falta de autoridad",
+  BLOCKED_MISSING_AUTHORITY: "Completa las reglas para continuar",
   BOTTOM_LEFT: "Inferior izquierda",
   BOTTOM_RIGHT: "Inferior derecha",
   CANCELED: "Cancelado",
@@ -394,7 +394,7 @@ export const domainLabels: Readonly<Record<string, string>> = {
   ORDER: "Pedido",
   ORG: "Organización",
   OTHER: "Otro",
-  OTHER_DECLARED: "Otra fuente declarada",
+  OTHER_DECLARED: "Otra referencia declarada",
   OUTER_BOTTOM: "Desde el borde exterior inferior",
   OUTER_TOP: "Desde el borde exterior superior",
   OWNER: "Dueño",
@@ -443,7 +443,7 @@ export const domainLabels: Readonly<Record<string, string>> = {
   SCRAPPED: "Descartado",
   SCREW: "Tornillo",
   SEAL: "Sello",
-  SEALING: "Sellado",
+  SEALING: "Sellar juntas",
   SEED_SYNTHETIC: "Semilla sintética DEMO",
   SENT: "Enviado",
   SERIES: "Serie",
@@ -567,7 +567,7 @@ export const domainLabels: Readonly<Record<string, string>> = {
 };
 
 export function domainLabel(value: string | null | undefined): string {
-  return value == null ? "Sin dato" : (domainLabels[value] ?? "Sin traducción disponible");
+  return value == null ? "Completar" : (domainLabels[value] ?? "Sin traducción disponible");
 }
 export type DomainTone =
   "success" | "warning" | "danger" | "info" | "unknown" | "blocked" | "neutral";

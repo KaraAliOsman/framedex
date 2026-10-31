@@ -13,7 +13,7 @@ export const finishProcessNames: Record<string, string> = {
 
 export function finishAuthorityProblem(value: FinishAuthority | null): string | null {
   if (!value) return null;
-  if (!value.source.trim()) return "Carta de colores: falta la fuente del fabricante.";
+  if (!value.source.trim()) return "Carta de colores: falta la referencia del fabricante.";
   if (!value.colors.length || !value.combinations.length)
     return "Carta de colores: declara colores y al menos una combinación permitida.";
   for (const color of [...value.colors, ...(value.handle_colors ?? [])]) {
@@ -22,7 +22,7 @@ export function finishAuthorityProblem(value: FinishAuthority | null): string | 
         (v) => v.trim(),
       )
     )
-      return "Color: completa su identidad, los tres canales lineales y la fuente.";
+      return "Color: completa su identidad, los tres canales lineales y la referencia.";
   }
   for (const combo of value.combinations) {
     if (
@@ -37,7 +37,7 @@ export function finishAuthorityProblem(value: FinishAuthority | null): string | 
         combo.surcharge.source,
       ].every((v) => v.trim())
     )
-      return "Combinación: completa caras, stock de refuerzo, holgura, recargo y fuentes.";
+      return "Combinación: completa caras, stock de refuerzo, holgura, recargo y referencias.";
     if (value.material === "PVC" && !combo.base)
       return "Combinación PVC: declara el color de masa de la base.";
   }
@@ -78,7 +78,7 @@ export function FinishAuthorityEditor({
       <span>{label}</span>
       <input
         value={decimal ? decimalInputValue(current ?? "") : (current ?? "")}
-        placeholder="Sin dato"
+        placeholder="Completar"
         inputMode={decimal ? "decimal" : undefined}
         onChange={(e) => edit(decimal ? e.target.value.replace(",", ".") : e.target.value)}
       />
@@ -97,7 +97,7 @@ export function FinishAuthorityEditor({
     <label>
       <span>{label}</span>
       <select value={current ?? ""} onChange={(e) => edit(e.target.value)}>
-        <option value="">Sin dato</option>
+        <option value="">Completar</option>
         {value?.colors
           .filter((c) => !base || c.kind === "MASS")
           .map((c, i) => (
@@ -112,8 +112,8 @@ export function FinishAuthorityEditor({
     <fieldset className="catalog-group finish-authority">
       <legend>Carta de colores y acabados</legend>
       <p>
-        Declara las muestras y las combinaciones de la fuente. Las caras comparten una identidad de
-        compra; el acero conserva su propio acabado. Los campos vacíos siguen Sin dato.
+        Declara las muestras y las combinaciones de la referencia. Las caras comparten una identidad
+        de compra; el acero conserva su propio acabado. Completa los campos vacíos con el manual.
       </p>
       {!value ? (
         <>
@@ -124,16 +124,16 @@ export function FinishAuthorityEditor({
               onChange({ schema_version: 1, material, source: "", colors: [], combinations: [] })
             }
           >
-            Declarar carta desde una fuente
+            Declarar carta desde una referencia
           </button>
         </>
       ) : (
         <>
-          {input("Fuente de la carta", value.source, (source) => onChange({ ...value, source }))}
+          {input("Carta del fabricante", value.source, (source) => onChange({ ...value, source }))}
           {value.material !== material && (
             <p role="alert">
-              El material de la carta no coincide con la serie. Revise la fuente y vuelva a declarar
-              la carta.
+              El material de la carta no coincide con la serie. Revise la referencia y vuelva a
+              declarar la carta.
             </p>
           )}
           <h4>Muestras del fabricante</h4>
@@ -203,7 +203,7 @@ export function FinishAuthorityEditor({
                 {flag("Datos sintéticos DEMO", color.synthetic, (synthetic) =>
                   patchColor(index, { synthetic }),
                 )}
-                {input("Fuente de la muestra", color.source, (source) =>
+                {input("Ficha de la muestra", color.source, (source) =>
                   patchColor(index, { source }),
                 )}
               </div>
@@ -279,7 +279,7 @@ export function FinishAuthorityEditor({
                         true,
                       ),
                     )}
-                    {input("Fuente de la muestra de manilla", color.source, (source) =>
+                    {input("Ficha de la muestra de manilla", color.source, (source) =>
                       edit({ source }),
                     )}
                     {flag("Manilla aproximada", color.approximate, (approximate) =>
@@ -332,9 +332,9 @@ export function FinishAuthorityEditor({
           {value.combinations.map((combo, index) => (
             <details key={index} className="catalog-group">
               <summary>
-                {value.colors.find((c) => c.code === combo.exterior)?.name || "Exterior sin dato"}{" "}
+                {value.colors.find((c) => c.code === combo.exterior)?.name || "Completar exterior"}{" "}
                 exterior /{" "}
-                {value.colors.find((c) => c.code === combo.interior)?.name || "Interior sin dato"}{" "}
+                {value.colors.find((c) => c.code === combo.interior)?.name || "Completar interior"}{" "}
                 interior{combo.synthetic ? " · DEMO" : ""}
               </summary>
               <div className="catalog-fields">
@@ -387,7 +387,7 @@ export function FinishAuthorityEditor({
                   ),
                 )}
                 <label>
-                  <span>Días adicionales (vacío: Sin dato)</span>
+                  <span>Días adicionales (vacío: completar después)</span>
                   <input
                     value={combo.extra_lead_days ?? ""}
                     inputMode="numeric"
@@ -442,7 +442,7 @@ export function FinishAuthorityEditor({
                     ))}
                   </select>
                 </label>
-                {input("Fuente del recargo", combo.surcharge.source, (source) =>
+                {input("Documento del recargo", combo.surcharge.source, (source) =>
                   patchCombo(index, { surcharge: { ...combo.surcharge, source } }),
                 )}
                 {input(
@@ -456,7 +456,7 @@ export function FinishAuthorityEditor({
                         .filter(Boolean),
                     }),
                 )}
-                {input("Fuente de las restricciones", combo.source, (source) =>
+                {input("Manual de las restricciones", combo.source, (source) =>
                   patchCombo(index, { source }),
                 )}
                 {flag("Reglas sintéticas DEMO", combo.synthetic, (synthetic) =>
