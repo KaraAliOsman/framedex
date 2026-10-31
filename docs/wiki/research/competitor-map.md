@@ -6,7 +6,6 @@ volatility: medium
 sources:
   - public vendor material
   - owner competitor references
-  - docs/research/2026-10-17-claude/02-competencia-y-fuentes.md
 ---
 
 # Competitor capability map
@@ -20,9 +19,9 @@ channel for WindoorCraft, not an additional independent engine. WinMaker 10 and
 Windowmaker are separate products. Historical screenshots, commercial claims,
 manual procedures and actual local execution keep different evidence labels.
 There is no invented numerical ranking of private suites. See the
-[complete dossier](../../research/2026-10-18-revision-profunda/README.md).
+complete dossier.
 
-The [17 October research ledger](../../research/2026-10-17-claude/02-competencia-y-fuentes.md)
+The 17 October research ledger
 adds primary vendor sources for NuveraPRO, Moxisys, Winart, Logikal, Windowmaker,
 Klaes, A+W, RA Workshop and Lepton. It distinguishes documentation, vendor claims,
 re-examined historical video frames and unperformed private/product tests.

@@ -5,13 +5,11 @@ updated: 2026-10-11
 volatility: medium
 verified_ref: d6921a893fcc3b303fcd693bd934380e7227f3d0
 sources:
-  - docs/redesign/D08-ACEPTACION.md
   - engine/src/dekopen_engine/openings.py
   - engine/src/dekopen_engine/models.py
   - engine/tests/golden_openings.json
   - scripts/check_opening_upgrade.py
   - supabase/migrations/20261231000000_opening_capabilities.sql
-  - docs/redesign/captures/aperturas-tipologias/aceptacion.md
 ---
 
 # Aperturas físicas y composiciones

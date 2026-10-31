@@ -121,5 +121,5 @@ El test compara bytes/datos y repite el oráculo con precisión ambiente reducid
 `supabase/tests/database/246_analytics_evidence.test.sql` verifica RLS, grants
 y guardas; la integración prueba el aislamiento efectivo. Los tests de UI
 prueban F6, fuente exacta, recuperación, ausencia de cero ficticio y dos clics
-para registrar. Las capturas en `docs/redesign/captures/analitica/` son evidencia
-de presentación; no convierten el oráculo DEMO en contabilidad certificada.
+para registrar. Las capturas de presentación no convierten el oráculo en
+contabilidad certificada.

@@ -4,7 +4,6 @@ status: active
 updated: 2026-10-10
 volatility: medium
 sources:
-  - docs/redesign/P14-ACEPTACION.md
   - engine/src/dekopen_engine/cnc_authorization.py
   - supabase/migrations/20270120000000_cnc_authority.sql
 ---

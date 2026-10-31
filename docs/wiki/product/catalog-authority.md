@@ -10,9 +10,7 @@ sources:
   - supabase/migrations/20261229000100_catalog_family_authorities.sql
   - supabase/migrations/20261229000300_catalog_review_interchange.sql
   - scripts/check_catalog_family_upgrade.py
-  - docs/redesign/captures/sistemas-catalogo/aceptacion.md
   - docs/wiki/product/glass-composition.md
-  - docs/redesign/P16-ACEPTACION.md
   - engine/src/dekopen_engine/catalog_authority.py
   - backend/catalogs/authority.py
   - supabase/migrations/20270121000000_catalog_review_sources.sql
@@ -22,7 +20,6 @@ sources:
   - supabase/migrations/20270204000000_quote_without_workshop_policies.sql
   - frontend/src/features/catalogs/SupplierPriceImport.tsx
   - frontend/tests/e2e/catalog-prices.spec.ts
-  - docs/redesign/captures/dk2-p03f/aceptacion.md
   - frontend/src/features/catalogs/SeriesSetupWizard.tsx
   - frontend/tests/e2e/catalog-setup.spec.ts
   - backend/tests/integration/test_new_project_series.py
@@ -41,7 +38,7 @@ Los conflictos conservan el borrador y evitan revertir cambios ajenos.
 La ruta `/dev/tabla` permite revisar vacío, una fila, nombres de 80 caracteres
 y 300 perfiles. Trece pruebas unitarias y cuatro E2E verifican pegado, teclado,
 precisión y accesibilidad a dos tamaños. Las capturas y límites de rendimiento
-están en [la aceptación](../../redesign/captures/dk2-p02a/aceptacion.md).
+están en la aceptación.
 El build excluye la ruta de desarrollo. Esta entrega prepara la ficha: todavía
 no conecta el catálogo ni implementa la verificación humana de P03.
 
@@ -183,7 +180,7 @@ puede congelar esos informes y conservar el permiso físico bloqueado.
 
 ## Biblioteca real y fuentes reunidas · 18-10-2026
 
-El [paquete final](../../research/2026-10-18-direccion-final/README.md) conserva
+El paquete final conserva
 esta exigencia en el producto manual: incorporar/usar una serie real no puede
 depender de IA ni de créditos. La IA de planes superiores acelera preparación
 y excepciones con la misma revisión técnica. La fase actual sigue documental:
@@ -192,7 +189,7 @@ no hay nueva publicación ni aceptación de fabricación por escribir el prompt.
 El dueño pide fabricante → serie/sistema → configuraciones/artículos, imágenes
 útiles y separación de demos. PRO6004 y PROSLIDE70 se agrupan bajo Proline;
 un número comercial 60/70 no demuestra equivalencia. «Vinhaus» sigue ambiguo.
-La [revisión de fuentes](../../research/2026-10-18-revision-profunda/catalogos-reales.md)
+La revisión de fuentes
 incluye Proline, Winhouse, Deceuninck e Indalum y separa procedencia, identidad
 de proveedor y preparación para cotizar/fabricar/CNC.
 
@@ -206,12 +203,12 @@ un catálogo ni se certificó fabricación mediante esta investigación.
 La app local del 18-10 en `claude/v1-implementacion` (`6f78e329` más cambios
 locales) muestra lista plana dominada por DEMO; no está vacía de registros.
 La propuesta mejora su organización sin borrar la DB ni revisiones existentes.
-Ver [auditoría](../../research/2026-10-18-revision-profunda/auditoria-dekopen.md).
+Ver auditoría.
 
 ## Investigación posterior · 17-10-2026
 
 El dueño pide PDF como entrada única habitual, integración asistida y revisión
-de excepciones. El [plan](../../research/2026-10-17-claude/08-catalogos-y-ocr.md)
+de excepciones. El plan
 propone extracción por regiones, trabajos reanudables, relaciones y preparación
 por capacidad. No está implementado. En `6f78e329`, el helper multimodal de
 `backend/ai_gateway/multimodal.py` admite como máximo 20 páginas y omite imagen
@@ -292,7 +289,7 @@ D05–D07 ya integraron [colores](color-finishes.md),
 cada uno con sus propias pruebas de autoridad. La plantilla no certifica una
 declaración del fabricante por contener columnas para esas capacidades.
 
-La evidencia y las limitaciones están en [la aceptación](../../redesign/captures/sistemas-catalogo/aceptacion.md).
+La evidencia y las limitaciones están en la aceptación.
 
 ## Autoridad visible en P16
 
@@ -313,7 +310,7 @@ Los eventos de importación y los valores/fuentes de la evidencia son inmutables
 Los cambios de estado de revisión requieren actor técnico correcto; el miembro
 no puede autocertificarse. Originales potencialmente comerciales solo se descargan
 por dueño/jefe de taller; los historiales respetan la visibilidad del import.
-Véase [aceptación P16](../../redesign/P16-ACEPTACION.md).
+Véase aceptación P16.
 
 
 ## Ficha editable de DEKOPEN 2 · P02c
@@ -328,8 +325,8 @@ canónica, actualizando nivel y pendientes sin recarga.
 
 Las 31 unitarias y dos E2E integrados pasan. La ruta se activará en P02e;
 la captura integra también componentes pendientes de esa sub-PR. Véanse
-[evidencia](../../redesign/captures/dk2-p02/aceptacion-ficha.md) y
-[estado de fases](../../dekopen2/ESTADO.md). La verificación de fabricación
+evidencia y
+estado de fases. La verificación de fabricación
 continúa pendiente de P03.
 
 
@@ -360,7 +357,7 @@ Dos E2E reales comprueban pegado de cinco reglas, dos confirmaciones, nivel y
 franja sin recarga, seis pestañas, precio/historia/deshacer, extremos y alta.
 La prueba preliminar llama al motor con opciones compatibles del catálogo;
 no persiste aún verificación. P03 añadirá revisión de cortes y caso dorado.
-La [aceptación integrada](../../redesign/captures/dk2-p02/aceptacion.md) distingue
+La aceptación integrada distingue
 las pruebas locales, las 19 capturas y los gates todavía requeridos de CI.
 
 ## Ventana de referencia · preparación P03a
@@ -374,7 +371,7 @@ paso de corte impide la coincidencia. Los cuatro casos de
 `test_gold_cases_calibration.py` congelan la ventana completa corregida;
 los casos dorados anteriores conservan sus bytes. Esta base pura todavía
 no persiste verificación ni protege ediciones del catálogo: corresponde a las
-sub-PR siguientes de P03. Véase [estado](../../dekopen2/ESTADO.md).
+sub-PR siguientes de P03. Véase estado.
 
 ## Caso del taller y edición protegida · preparación P03b
 
@@ -445,7 +442,7 @@ El E2E real verifica y luego cambia una regla: cancelar mantiene fabricación;
 aceptar guarda el cambio y exige verificar de nuevo. Los casos dorados
 originales no se reescriben. El ensayo móvil detectó un problema del diálogo
 compartido, corregido aislando el fondo para teclado y lector de pantalla.
-La [aceptación](../../redesign/captures/dk2-p03e/aceptacion.md) conserva pruebas,
+La aceptación conserva pruebas,
 capturas y límites. Faltan los otros pasos del alta; P03 no está completa.
 
 ## Importación visual de precios · preparación P03f
@@ -477,7 +474,7 @@ sin las cuatro colecciones completas del catálogo. Los cambios invalidan las
 fichas y el inicio del catálogo de esa empresa. Los borradores mantienen la
 edición completa a un clic y las diferencias se paginan por diez filas.
 
-La [aceptación](../../redesign/captures/dk2-p03g/aceptacion.md) distingue las
+La aceptación distingue las
 dos respuestas simuladas del modelo de las APIs, almacenamiento y PostgreSQL
 reales. Comprueba el límite humano de escritura y el origen MANUAL de una
 lectura citada. El asistente y la primera obra siguen pendientes; no se declara
@@ -505,7 +502,7 @@ La acción final exige capacidad QUOTABLE y ningún borrador pendiente; visitar
 ese paso nunca verifica la fabricación. Las capacidades son independientes:
 MACHINE_READY no sustituye la comprobación de precios para cotizar.
 
-La [evidencia](../../redesign/captures/dk2-p03h/aceptacion.md) distingue los
+La evidencia distingue los
 precios/perfiles sintéticos y respuestas documentales simuladas de la base,
 autenticación y almacenamiento reales. El precio automático y una aceptación
 con los datos reales del dueño corresponden a P04 y P10 respectivamente.
@@ -527,6 +524,6 @@ Hallazgo relacionado: con carta de colores, las compras de perfil se leen de
 perfil de corte y versión. Sin carta se leen de `profile_purchase_mappings`,
 que ninguna importación de taller escribe todavía.
 
-La [aceptación](../../redesign/captures/dk2-p10/aceptacion.md) usa una ficha
+La aceptación usa una ficha
 PRO6004 sintética generada con `scripts/catalog_interchange_fixture.py` y
 recorre del registro a la aprobación del cliente en unos 64 s por tamaño.

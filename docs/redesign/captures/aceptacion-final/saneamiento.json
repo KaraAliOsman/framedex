@@ -1,5 +1,0 @@
-{
-  "files": 112,
-  "findings": [],
-  "method": "Values read only in memory; no secret is copied to the report or output."
-}

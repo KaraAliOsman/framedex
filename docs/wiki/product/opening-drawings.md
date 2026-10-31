@@ -5,13 +5,11 @@ updated: 2026-10-11
 volatility: medium
 verified_ref: 13e03a5f
 sources:
-  - docs/redesign/D08-ACEPTACION.md
   - P05 PR #131, CI run 37861454814 on 10805d86, squash 52f3ee81, 2026-10-08
   - engine/src/dekopen_engine/symbols.py
   - engine/src/dekopen_engine/drawing.py
   - engine/tests/fixtures/symbols/
   - docs/PRD/opening-symbols.md
-  - docs/redesign/P05-ACEPTACION.md
 ---
 
 # Dibujo de aperturas y cotas

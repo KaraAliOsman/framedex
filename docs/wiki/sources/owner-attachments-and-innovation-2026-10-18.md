@@ -20,13 +20,13 @@ que las veinticuatro oportunidades y seis apuestas sean todas obligatorias para
 esta salida. No altera Mesa/Estudio, base manual, popup, autonomías, MiMo/créditos
 ni la condición de conexiones finales.
 
-El [contrato actualizado](../../research/2026-10-18-direccion-final/03-copiloto-y-planes.md#adjuntos-multimodales--ampliación-explícita-del-dueño)
-y el [prompt 05](../../research/2026-10-18-direccion-final/prompts/05-copiloto.md)
+El contrato actualizado
+y el prompt 05
 concretan su implementación. La selección inicial de formatos, matriz de soporte,
 evidencia por campo y estados es especificación propuesta para cumplir el pedido,
 no una lista literal del dueño ni comportamiento ya comprobado.
 
-La [nota de innovación](../../research/2026-10-18-innovacion/06-archivos-y-mejoras-con-sentido.md)
+La nota de innovación
 recomienda fuentes reutilizables de obra, conflictos localizados y selección con
 nota; distingue requisitos existentes de ampliaciones. No se implementó producto,
 se operó una cuenta MiMo ni se probaron estos recorridos al documentarlos.

@@ -31,10 +31,10 @@ For navigation/auth entry points use `frontend/src/App.tsx`,
 The [constitution](../design/CONSTITUCION.md) applies to every product surface.
 Generated API/OpenAPI, golden JSON, completed queue prompts and historical
 payloads are omitted from broad ripgrep discovery; read them by explicit path
-when the task needs them. The dated [v1 acceptance](../redesign/acceptance-2026-10-12.md)
+when the task needs them. The dated v1 acceptance
 and [current reality](state/current-reality.md) orient integration work.
 
-The owner's [complete functional report · 12-10-2026](../reports/DEKOPEN-FUNCIONALIDAD-2026-10-12.md)
+The owner's complete functional report · 12-10-2026
 is a dated snapshot with 57 chapters and contract inventories. Read it only
 when the task needs a full report; it is excluded from broad search and is
 not part of the default bootstrap. Its static inspection and historical
@@ -52,7 +52,7 @@ acceptance claims keep separate refs; newer code always requires verification.
 ## Product direction
 
 - [Owner decisions](decisions/owner-decisions.md) — durable product and engineering decisions extracted from project conversations.
-- [Dirección final · 18-10-2026](research/final-direction-2026-10-18.md) — Mesa + Estudio, base manual completa y copiloto opcional en popup; [encargo vigente para Claude](../research/2026-10-18-direccion-final/prompt-maestro.md).
+- [Dirección final · 18-10-2026](research/final-direction-2026-10-18.md) — Mesa + Estudio, base manual completa y copiloto opcional en popup; encargo vigente para Claude.
 - [Product vision](product/vision.md) — what DEKOPEN is trying to become and what it is explicitly not.
 - [Fenestration + UX principles](product/fenestration-and-ux.md) — domain/interaction rules that prevent visually plausible but physically wrong software.
 - [Lenguaje de la interfaz](product/interface-language.md) — glosario global, detector de textos y distinción entre documento, dato físico y evidencia histórica.
@@ -105,13 +105,11 @@ acceptance claims keep separate refs; newer code always requires verification.
 - [Price workspace](product/price-workspace.md) — exact cascades and frozen replay, private purchase authority, margin approval and requester receipts.
 
 - [Current reality](state/current-reality.md) — volatile map of implementation state; must always carry a verification ref/date.
-- [v1 acceptance](../redesign/acceptance-2026-10-12.md) — final scope and limits; [evidence map](../redesign/captures/README.md) separates retained acceptance from historical captures.
+- v1 acceptance — final scope and limits; evidence map separates retained acceptance from historical captures.
 
 ## Quality
 
-- [Revisión local de los cambios de Claude · 19-10-2026](quality/review-2026-10-19.md) — REVIEW actualizado sin reset; cuatro PDF rápidos descargados, popup contextual visible y 72 tests dirigidos aprobados.
 
-- [Revisión local de la candidata · 18-10-2026](quality/review-2026-10-18.md) — pantallas abiertas, aperturas y PDF ejercitados; incidencias del checklist/visor y límites de catálogo real.
 
 - [Conexiones de producción](quality/production-connections.md) — dominio/Cloudflare, Railway/Redis, Supabase, Flow, MiMo, SMTP y recuperación de archivos; inventario estático y condiciones verificadas de proveedores.
 
@@ -124,18 +122,18 @@ acceptance claims keep separate refs; newer code always requires verification.
 
 ## Research
 
-- [DEKOPEN 2 · dirección y prompts · 21-10-2026](../research/2026-10-21-competencia/00-README.md) — auditoría medida, competencia (30+ productos, REA), estrategia, catálogo con valores sugeridos, agente, 9 mockups y 11 fases para GPT; propuestas pendientes del dueño marcadas.
+- DEKOPEN 2 · dirección y prompts · 21-10-2026 — auditoría medida, competencia (30+ productos, REA), estrategia, catálogo con valores sugeridos, agente, 9 mockups y 11 fases para GPT; propuestas pendientes del dueño marcadas.
 - [Innovación y oportunidades · 18-10-2026](research/innovation-2026-10-18.md) — veinte fuentes, capacidades actuales contrastadas, veinticuatro mejoras y seis apuestas; recomendaciones exploratorias, no ampliación aprobada del lanzamiento.
-- [Dirección final y prompts · 18-10-2026](research/final-direction-2026-10-18.md) — corrección posterior del dueño e integración de tres revisiones especializadas; [paquete final](../research/2026-10-18-direccion-final/README.md).
-- [Revisión profunda y tres direcciones · 18-10-2026](research/revision-profunda-2026-10-18.md) — quince familias, rúbrica común, evidencia visual/REA y auditoría local; la elección posterior sustituye la propuesta acoplada; [dossier](../research/2026-10-18-revision-profunda/README.md).
+- [Dirección final y prompts · 18-10-2026](research/final-direction-2026-10-18.md) — corrección posterior del dueño e integración de tres revisiones especializadas; paquete final.
+- [Revisión profunda y tres direcciones · 18-10-2026](research/revision-profunda-2026-10-18.md) — quince familias, rúbrica común, evidencia visual/REA y auditoría local; la elección posterior sustituye la propuesta acoplada; dossier.
 - [Competitor capability map](research/competitor-map.md) — sector references and what DEKOPEN should learn from them.
-- [Research and Claude handoff · 17-10-2026](../research/2026-10-17-claude/README.md) — dated source audit, public competitor research, proposed UX/AI/catalog/PDF reconstruction and unexecuted staged prompts.
+- Research and Claude handoff · 17-10-2026 — dated source audit, public competitor research, proposed UX/AI/catalog/PDF reconstruction and unexecuted staged prompts.
 
 ## Sources
 
 - [Planteamiento original recuperado · 19-10-2026](sources/owner-original-recovered-2026-10-19.md) — procedencia de los dos adjuntos iniciales, voz literal del dueño y aclaraciones históricas; compilación completa privada en `.run/`.
 
-- [Adjuntos y criterio de innovación · 18-10-2026](sources/owner-attachments-and-innovation-2026-10-18.md) — documentos e imágenes en el popup como requisito; refinamientos con valor, sin inflar el lanzamiento. [Análisis adicional](../research/2026-10-18-innovacion/06-archivos-y-mejoras-con-sentido.md).
+- [Adjuntos y criterio de innovación · 18-10-2026](sources/owner-attachments-and-innovation-2026-10-18.md) — documentos e imágenes en el popup como requisito; refinamientos con valor, sin inflar el lanzamiento. Análisis adicional.
 
 - [Ambición del producto · 19-10-2026](sources/owner-ambition-brief-2026-10-19.md) — versión ordenada por el dueño: un diseño para todo, MiMo, catálogos, documentos, 3D del oficio y nivel Apple; quitar lo inservible.
 

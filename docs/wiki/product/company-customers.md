@@ -12,7 +12,6 @@ sources:
   - backend/projects/client_history.py
   - backend/projects/company.py
   - backend/tests/integration/test_company_clients.py
-  - docs/redesign/P22-ACEPTACION.md
 ---
 
 # Empresa, clientes y ajustes

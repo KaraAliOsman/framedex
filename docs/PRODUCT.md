@@ -5,7 +5,7 @@ professionals that a fenestration company can run end to end **without AI**:
 configure products, see manufacturability and price, produce documents,
 BOM/cutting data and workshop work — without ever thinking about the
 repository behind it. AI is an optional copilot that operates the same system
-when a person delegates work to it ([owner direction 2026-10-18](research/2026-10-18-direccion-final/README.md)).
+when a person delegates work to it (owner direction 2026-10-18).
 
 ## What the product is
 

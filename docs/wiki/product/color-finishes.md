@@ -11,7 +11,6 @@ sources:
   - supabase/migrations/20270102000000_finish_authority.sql
   - supabase/migrations/20270102000100_demo_finish_catalog.sql
   - scripts/check_finish_upgrade.py
-  - docs/redesign/captures/colores-acabados/aceptacion.md
 ---
 
 # Colores, caras y autoridad de compra

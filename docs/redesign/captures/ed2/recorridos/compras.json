@@ -1,9 +1,0 @@
-[
-  {
-    "flow": "Faltante del motor → compra revisada → envío confirmado → recepción parcial → stock/REC → retazo y etiqueta RT",
-    "result": "PASA",
-    "versionId": "7a697ff7-9a11-4b8a-8f87-70d76fed6624",
-    "purchaseOrder": "2a289abe-67f0-51a8-8b07-5d06385c335d",
-    "remnant": "RT-000059"
-  }
-]

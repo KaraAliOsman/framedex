@@ -4,7 +4,6 @@ status: active
 updated: 2026-10-10
 volatility: medium
 sources:
-  - docs/redesign/P15-ACEPTACION.md
   - backend/purchasing/needs.py
   - backend/inventory/service.py
   - supabase/migrations/20270118000000_purchasing_inventory_trace.sql
@@ -46,4 +45,4 @@ requiere comprobación humana. Véase [identidad y correo](brand-identity.md).
 La intención del dueño es saber qué falta, qué llega y qué sobra. La aceptación
 verifica el flujo local con material DEMO; no certifica un fabricante, no conecta
 un proveedor real y no modifica PDFs históricos. Los riesgos operativos y las
-pruebas concretas están en la [aceptación P15](../../redesign/P15-ACEPTACION.md).
+pruebas concretas están en la aceptación P15.

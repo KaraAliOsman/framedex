@@ -10,7 +10,6 @@ sources:
   - backend/tests/integration/test_glass_products.py
   - supabase/migrations/20261230000000_glass_composition_and_rules.sql
   - scripts/check_glass_upgrade.py
-  - docs/redesign/captures/vidrios-compuestos/aceptacion.md
 ---
 
 # Composición y autoridad de vidrio

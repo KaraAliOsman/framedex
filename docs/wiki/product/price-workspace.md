@@ -18,7 +18,6 @@ sources:
   - supabase/migrations/20270110000100_p07_price_workspace.sql
   - supabase/migrations/20270129000000_pricing_read_scope.sql
   - backend/tests/integration/test_pricing_read_performance.py
-  - docs/redesign/P07-ACEPTACION.md
 ---
 
 # Precio del proyecto y confianza en el número
@@ -44,7 +43,7 @@ recalcular con los costos actuales.
 Dos E2E verifican tres ventanas PRO6004 sintéticas, cambio de margen, revisión,
 emisión y conservación posterior. También ejercitan una vista sintética de
 500 ventanas, nombres largos y texto al 200 %. Cuarenta y tres unitarias UI
-y 39 integraciones aprueban. [Aceptación](../../redesign/captures/dk2-p04g/aceptacion.md)
+y 39 integraciones aprueban. Aceptación
 conserva capturas, métricas y límites. P04 sigue pendiente de CI/fusión.
 
 ## PDF revisable sin bloquear el borrador · P04e
@@ -161,7 +160,7 @@ La API normaliza la notación Decimal a texto plano en el ejemplo y desglose
 público, sin redondear ni mutar caché/evidencia. La allowlist del estimador no
 agrega campos privados. Regresiones HTTP y de precio público comprueban esta
 frontera. Dos E2E, cinco unitarias UI y 25 integraciones aprueban;
-[aceptación](../../redesign/captures/dk2-p04f/aceptacion.md) conserva capturas y
+aceptación conserva capturas y
 límites. Total/popover de obra y flujo UI de emisión siguen pendientes en P04g.
 
 ## Comportamiento avanzado verificado previamente
@@ -219,6 +218,6 @@ El historial consulta las últimas 100 operaciones por organización y agrupa
 por revisión; identifica actor, campos y emisiones. El catálogo DEMO no
 certifica un fabricante y los históricos incompletos no se reinterpretan.
 Emisión/PDF mantienen sus contratos propios. Véanse
-[aceptación](../../redesign/P07-ACEPTACION.md),
+aceptación,
 [valores](../../decisions/valores-por-defecto.md) y
 [documento sellado](quotation-document.md).

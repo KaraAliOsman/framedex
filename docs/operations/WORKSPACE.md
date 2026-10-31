@@ -1,28 +1,23 @@
 # Mantenimiento del workspace
 
-La limpieza del 12-10-2026 conserva el código y las autoridades del producto.
-La navegación de entrada está en `AGENTS.md` y `docs/wiki/index.md`; el estado
-vigente resumido está en `docs/wiki/state/current-reality.md`.
+El repositorio guarda solo lo actual: código, pruebas, fixtures, migraciones,
+CI y los documentos que describen el producto vigente. La navegación de entrada
+está en `AGENTS.md` y `docs/wiki/index.md`; el plan vigente en
+`docs/dekopen3/PLAN.md`.
 
-Se retiraron 6.979 archivos históricos del checkout y 34.146 temporales locales:
-3,86 GiB en conjunto. Los primeros se recuperan desde Git; los segundos, desde
-la Papelera de Windows. La medición corresponde al workspace, sin vaciar la
-Papelera ni reescribir el historial. El recibo local está en
-`.run/cleanup-2026-10-12.json`.
+La limpieza del 31-10-2026 retiró del checkout la cola v1 (`docs/cola/`), los
+informes de aceptación y capturas por fase (`docs/redesign/`), la investigación
+en bruto (`docs/research/`), informes fechados, evals antiguas y los scripts de
+verificación de una sola vez: unos 3.400 archivos y 460 MB. Todo se recupera
+desde Git en `588e6332`; la síntesis útil sigue en la wiki.
 
 ## Qué conservar
 
-- Motor, goldens, tests, API generada, migraciones, seed, CI y archivos de dependencia.
-- Constitución, PRD, decisiones, fuentes, adjuntos de la cola y wiki. La cola
-  terminada conserva contratos y PR/SHA; no se vuelve a ejecutar como arranque.
-- Guía de revisión, ACTIVACION, aceptación final y sus recibos/evidencia.
+- Motor, goldens, tests, API generada, migraciones, seed, CI y dependencias.
+- Constitución, PRD, decisiones, wiki de producto y fuentes del dueño.
+- Guía de revisión, ACTIVACION, recuperación y operación de IA.
 - Fixtures usados como entrada por herramientas, incluso cuando son PNG o PDF.
 - `.env`, bases/volúmenes, perfiles de navegador y archivos de propiedad del stack.
-
-Las capturas de rondas anteriores se consultan desde el commit anterior a la
-limpieza, enlazado en [el mapa de evidencia](../redesign/captures/README.md).
-Los informes históricos conservan sus resultados y límites. La wiki cronológica
-es append-only; las decisiones anteriores no se borran silenciosamente.
 
 ## Estado local de esta estación Windows
 
@@ -52,32 +47,24 @@ los launchers de la tabla. Las credenciales se leen en memoria desde `.env`.
 
 ## Regla para futuros encargos
 
-1. Guarde capturas exploratorias, trazas, logs y copias de checkout en `.run/`.
-2. Seleccione evidencia que explique el cambio: informe, fuente/ref, límites y
-   las imágenes necesarias. Los PNG/PDF/HTML nuevos de `docs/redesign/captures/`
-   están ignorados; use `git add -f` únicamente para esa selección revisada.
-3. Conserve entradas de regresión en carpetas de fixtures y el informe de la
-   última aceptación. Retire duplicados de cobertura y registros parciales si
-   ya existe el informe completo.
-4. Antes de borrar, resuelva las rutas, compruebe lectores y montajes, y proteja
+1. Guarde capturas, trazas, logs, informes de aceptación y copias de checkout
+   en `.run/`; no se versionan. El PR describe la verificación.
+2. Conserve entradas de regresión en carpetas de fixtures.
+3. Antes de borrar, resuelva las rutas, compruebe lectores y montajes, y proteja
    bases, secretos, perfiles y propiedad. No aplique limpieza global a `.run/`
-   ni podas generales de Docker. Un borrado de una distribución WSL requiere
-   tratar también su registro y sus datos; esta limpieza la conserva.
-5. Actualice los enlaces a archivos retirados hacia un SHA recuperable y deje
-   el resultado medido en la wiki. No reescriba el historial de Git para reducir
-   el tamaño: la reducción corresponde al checkout y a temporales locales.
+   ni podas generales de Docker.
+4. Al retirar un documento, quite o reescriba sus enlaces y deje el SHA
+   recuperable en la wiki. No reescriba el historial de Git.
 
 ## Búsqueda por tarea
 
 `AGENTS.md` y las rutas por dominio de [la wiki](../wiki/index.md) dirigen al
-código, sus pruebas y la especificación pertinente. Lea historia cuando
-resuelva una pregunta concreta; la cola terminada no es un nuevo mandato.
-Las marcas `docs/cola/AGENTS.md` y `docs/redesign/AGENTS.md` señalan ese límite.
+código, sus pruebas y la especificación pertinente. La historia retirada está
+en Git y nunca es un mandato nuevo.
 
 `.rgignore` omite de búsquedas generales el cliente/OpenAPI generado, goldens
-JSON, prompts terminados, capturas, informes históricos, payloads de evals y
-el log cronológico. Conserva visibles código, pruebas, migraciones, PRD, wiki
-de dominio, aceptación global vigente y fixtures. Son exclusiones de búsqueda;
+JSON, payloads de evals y el log cronológico. Conserva visibles código,
+pruebas, migraciones, PRD, wiki de dominio y fixtures. Son exclusiones de búsqueda;
 no cambian el seguimiento de Git ni las entradas de generadores o tests.
 
 Empiece con `rg --files <carpeta-del-dominio>` y búsquedas de símbolo/error

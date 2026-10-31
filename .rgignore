@@ -9,25 +9,6 @@
 # Regression truth: keep test code visible; open payloads for a specific case.
 /engine/tests/golden_*.json
 
-# The v1 mandate is complete. Its scoped marker remains discoverable.
-/docs/cola/**
-!/docs/cola/AGENTS.md
-
-# Dated evidence: current global acceptance and fixtures remain discoverable.
-/docs/redesign/captures/
-/docs/redesign/phase*.md
-/docs/redesign/P??-ACEPTACION.md
-/docs/redesign/D??-ACEPTACION.md
-/docs/redesign/ED?-ACEPTACION.md
-/docs/redesign/P20-ARRANQUE.md
-/docs/redesign/P20-RENDIMIENTO.md
-/docs/redesign/progress.md
-/docs/redesign/evidence-index.md
-/docs/redesign/route-map.md
-/docs/redesign/blocked-inputs.md
-/docs/redesign/decisions.md
+# Dated payloads: open a specific file when a case needs it.
 /docs/ai/evals/*.json
 /docs/wiki/log.md
-
-# Owner-requested functional snapshots: read only for a report/history task.
-/docs/reports/DEKOPEN-FUNCIONALIDAD-*.md

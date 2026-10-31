@@ -5,7 +5,6 @@ updated: 2026-10-22
 volatility: high
 verified_ref: gpt/dk2-p05f-cotizaciones-obras
 sources:
-  - docs/redesign/P03-ACEPTACION.md
   - engine/src/dekopen_engine/work_queue.py
   - backend/analytics/today.py
   - frontend/src/app/navigation.ts
@@ -17,7 +16,6 @@ sources:
   - backend/projects/works.py
   - frontend/src/features/projects/WorksPage.tsx
   - frontend/src/features/quotations/LegacyQuotesRedirect.tsx
-  - frontend/scripts/verify-p03.mjs
 ---
 
 # Trabajo de Hoy y direcciones de flujo
@@ -32,7 +30,7 @@ viven en Empresa. P05f integra cotizaciones en Obras; el enlace antiguo
 redirige conservando sus filtros, offset y hash.
 
 Diez E2E con sesiones reales, cinco roles y 1440/390 px comprueban navegación,
-clientes en la paleta y límites de acceso. Véase la [aceptación P05a](../../redesign/captures/dk2-p05a/aceptacion.md).
+clientes en la paleta y límites de acceso. Véase la aceptación P05a.
 El contenido nuevo de Hoy y las etapas todavía no forman parte de P05a.
 
 P05c presenta saludo, fecha del calendario recibido y hasta tres recuentos
@@ -48,7 +46,7 @@ desplegables; orden y paginación de 50 conservan el contrato existente. Venta
 por etapa queda plegada y conserva sus enlaces exactos de fase/moneda.
 Diez recorridos reales por rol y dos flujos completos de Hoy cubren escritorio
 y móvil; incluyen 1.000 acciones sintéticas, 320 px y texto al 200 %.
-Véase la [aceptación P05c](../../redesign/captures/dk2-p05c/aceptacion.md).
+Véase la aceptación P05c.
 El editor móvil actual sigue siendo de lectura por debajo de 1024 px; ampliar
 su edición corresponde a P06, no se presenta como capacidad de P05c.
 
@@ -71,7 +69,7 @@ Un borrador sin precio invita a abrir para calcular, sin reutilizar venta vieja.
 P05d conservaba `/quotes` en el índice anterior; P05f integra sus filtros.
 el parámetro histórico `status` sigue filtrando exactamente su estado guardado.
 Seis E2E de tres roles autorizados ejercitan obras reales y 500 casos extremos
-en 1440/390, 320 px y texto al 200 %; [aceptación P05d](../../redesign/captures/dk2-p05d/aceptacion.md).
+en 1440/390, 320 px y texto al 200 %; aceptación P05d.
 
 En `gpt/dk2-p05e-indice-obras`, el nuevo endpoint de lectura
 `/api/v1/projects/works/` obtiene recuentos antes del filtro de etapa y pagina
@@ -106,7 +104,7 @@ La consulta se separa por usuario/empresa/rol y cancela búsquedas anteriores
 sin desmontar el control enfocado. El alta completa conserva cliente y serie.
 Seis E2E finales cubren tres roles, 1440/390, 500 obras, 320 px y texto al
 200 %, con axe. La purga global de lenguaje sigue pendiente. Véase la
-[aceptación P05f](../../redesign/captures/dk2-p05f/aceptacion.md).
+aceptación P05f.
 
 ## Intención y límites
 

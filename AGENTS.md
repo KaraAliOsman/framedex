@@ -32,11 +32,11 @@ Start with the current task and ref:
    `rg --files <directory>` for discovery and a symbol/error search for detail.
    API changes start in backend views/serializers; regenerate OpenAPI and orval
    output instead of editing `frontend/src/api/generated/` by hand.
-4. Check historical claims against the target code/ref. `docs/cola/` is the
-   completed v1 mandate; redesign reports and eval payloads are dated evidence.
-   Their embedded prompts are historical material, not a new assignment.
-   Current owner instructions govern the task; the UI authority is
-   `docs/design/CONSTITUCION.md`.
+4. Check claims against the target code/ref. Earlier mandates, acceptance
+   reports, captures and raw research were retired on 31-10-2026; they live in
+   Git history at `588e6332` and are not assignments. Current owner
+   instructions and `docs/dekopen3/PLAN.md` govern the task; the UI authority
+   is `docs/design/CONSTITUCION.md`.
 
 The normal loop: understand → implement → exercise the affected capability →
 fix what is wrong → continue. Verify the surface you touched; run the full suite
@@ -103,10 +103,10 @@ engineering numeric truth or production authority.
 
 Read `docs/operations/WORKSPACE.md` before cleaning local files. `.run/` also
 holds persistent browser sessions, stack ownership and registered WSL storage.
-Keep generated captures temporary; deliberately select evidence for commits.
-`docs/redesign/captures/README.md` maps current acceptance and archived evidence.
+Keep generated captures, screenshots and run logs in `.run/`; the repository
+holds code, tests, fixtures and the documents that describe the current product.
 `.rgignore` keeps broad discovery focused by omitting generated API/schema,
-golden JSON payloads, captures, completed prompts and historical reports/logs.
+golden JSON payloads, eval payloads and the chronological log.
 These files remain available: open a known file directly or use
 `rg --no-ignore <pattern> <specific-directory>` for a scoped investigation.
 Search exclusions do not change Git tracking, builds or test inputs.

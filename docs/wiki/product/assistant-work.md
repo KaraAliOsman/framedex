@@ -9,7 +9,6 @@ sources:
   - backend/ai_gateway/undo_all.py
   - backend/tests/test_ai_request_origins.py
   - frontend/tests/e2e/agent.spec.ts
-  - docs/redesign/P17-ACEPTACION.md
   - backend/tests/integration/test_assistant_presence.py
   - backend/tests/test_assistant_tool_continuity.py
   - frontend/src/features/assistant/useAssistantPresence.test.tsx
@@ -44,7 +43,7 @@ Verificado en la rama (no en main todavía):
 ## Adjuntos compatibles · 18-10-2026 · alcance por implementar
 
 El dueño añade [documentos, imágenes y demás archivos compatibles](../sources/owner-attachments-and-innovation-2026-10-18.md)
-como entrada del popup en Chat/Trabajo. El [contrato actualizado](../../research/2026-10-18-direccion-final/03-copiloto-y-planes.md#adjuntos-multimodales--ampliación-explícita-del-dueño)
+como entrada del popup en Chat/Trabajo. El contrato actualizado
 exige múltiples archivos, preview, persistencia, cobertura real, citas navegables,
 permisos y la misma autoridad de motor/catálogo. Archivo adjunto no equivale a
 dato validado ni autorización de compartir/publicar. La matriz inicial incluye
@@ -54,8 +53,8 @@ Inspección estática del 18-10 en `claude/v1-implementacion`, HEAD `6f78e329`
 más cambios locales: ingestión ya reconoce PDF/XLSX/CSV/imágenes y ciertas rutas
 TXT/EML; preparación multimodal y transporte de imagen existen. Faltan lectores
 de la matriz propuesta y no se acredita un flujo global completo. MiMo documenta
-visión para 2.6 Pro, pero no se probó la cuenta configurada. Ver [fuentes, paths
-y límites](../../research/2026-10-18-innovacion/06-archivos-y-mejoras-con-sentido.md).
+visión para 2.6 Pro, pero no se probó la cuenta configurada. Ver fuentes, paths
+y límites.
 
 La biblioteca entre conversaciones, contradicciones transversales y anotaciones
 visuales son refinamientos recomendados, no capacidades verificadas ni módulos
@@ -66,8 +65,8 @@ nuevos comprometidos. Pruebas de adjuntos: A15–A17 en la campaña final 07.
 El dueño confirma MiMo para todos los planes con IA hasta cambio explícito;
 la diferencia es consumo/créditos. La [fuente reciente](../sources/owner-credits-and-grokbot-2026-10-18.md)
 también precisa que la fidelidad a Grok Bot se centra en el personaje animado,
-con estilos de conversación adaptados cuando encajen. El [contrato de figura,
-gestos y estados](../../research/2026-10-18-direccion-final/06-grok-bot-personaje-y-movimiento.md)
+con estilos de conversación adaptados cuando encajen. El contrato de figura,
+gestos y estados
 documenta observación de demo y análisis REA estático parcial; el lanzamiento
 REA de runtime fue bloqueado por WAF. No se operó el producto privado.
 
@@ -84,7 +83,7 @@ La [corrección final](../sources/owner-final-direction-2026-10-18.md) exige un
 reemplazo del inspector. El usuario trabaja y puede delegar a la IA. Chat/Trabajo,
 historial/espacio propio voluntario y conversación continua al navegar se conservan.
 El dueño confirma **Omitir todo**, ejecución reversible sin pausas y recibo final.
-El [contrato vigente](../../research/2026-10-18-direccion-final/03-copiloto-y-planes.md)
+El contrato vigente
 separa modo, autonomía, permisos, capacidades de plan y destino sellado del job.
 Los efectos externos conservan clic humano y el motor no pierde validación.
 La base manual funciona sin IA, proveedor ni crédito; los planes superiores
@@ -95,14 +94,14 @@ cambios locales de Claude, `/assistant` sí tiene historial. El panel se reasoci
 por contexto; no debe confundirse esa fricción con ausencia de persistencia.
 Se observó un job Completado con ventanas pendientes y obra de cero posiciones.
 El cierre por postcondiciones, hilo persistente y reanudación son trabajo futuro,
-no capacidad acreditada por P17. Ver [evidencia y reproducción](../../research/2026-10-18-revision-profunda/auditoria-dekopen.md).
+no capacidad acreditada por P17. Ver evidencia y reproducción.
 Las afirmaciones posteriores de P17 conservan su ref histórico.
 
 ## Intención posterior del dueño · no implementada
 
 El encargo de investigación del 17-10 pide una IA trabajadora contextual, con
 preferencias guardadas, pocas preguntas y una muestra breve de lo realizado.
-El [contrato propuesto](../../research/2026-10-17-claude/07-ia-como-trabajador.md)
+El contrato propuesto
 separa borradores reversibles autorizados de emisión/envío/compromisos humanos,
 y excluye herramientas de pagos, código y seguridad. La auditoría del ref
 `6f78e329` encuentra varios flujos que preparan enlaces en lugar de ejecutar el
@@ -145,4 +144,4 @@ posiciones del segundo piso, conserva la cocina, restaura los diseños y
 audita ambas decisiones. El Uw sigue Sin dato cuando falta autoridad térmica
 de marco, vidrio y borde; DEMO no certifica rendimiento ni fabricación.
 La matriz oficial tiene 48 vistas sin hallazgos nuevos. Véase la
-[aceptación](../../redesign/P17-ACEPTACION.md) para evidencia, rúbrica y límites.
+aceptación para evidencia, rúbrica y límites.

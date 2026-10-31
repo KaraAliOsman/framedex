@@ -4,7 +4,6 @@ status: active
 updated: 2026-10-10
 volatility: medium
 sources:
-  - docs/redesign/P11-ACEPTACION.md
   - engine/src/dekopen_engine/collections.py
   - backend/projects/payments.py
   - backend/projects/payment_links.py

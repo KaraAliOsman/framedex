@@ -48,10 +48,10 @@ ni sustituyen las invariantes de motor, RLS o clic humano externo.
 
 ## Integración
 
-- [Planes/créditos](../../research/2026-10-18-direccion-final/04-planes-creditos-y-limites.md).
-- [Referencias profesionales](../../research/2026-10-18-direccion-final/05-referencias-profesionales.md).
-- [Personaje y movimiento](../../research/2026-10-18-direccion-final/06-grok-bot-personaje-y-movimiento.md).
-- [Paquete para Claude](../../research/2026-10-18-direccion-final/prompt-maestro.md).
+- Planes/créditos.
+- Referencias profesionales.
+- Personaje y movimiento.
+- Paquete para Claude.
 
 Ninguno de estos documentos acredita implementación, aceptación estética o
 ejecución de las pruebas finales.

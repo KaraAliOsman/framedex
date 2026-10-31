@@ -11,7 +11,6 @@ sources:
   - backend/production/cut_labels.py
   - backend/inventory/sheet_formats.py
   - backend/tests/test_cut_documents_v2.py
-  - docs/redesign/P13-ACEPTACION.md
 ---
 
 # Corte, papel y dirección física

@@ -12,7 +12,6 @@ sources:
   - backend/purchasing/field_purchase.py
   - supabase/migrations/20270125000000_field_work.sql
   - backend/tests/integration/test_field_work.py
-  - docs/redesign/P23-ACEPTACION.md
 ---
 
 # Despacho, terreno y postventa
@@ -61,5 +60,5 @@ aunque la visita se haya agendado antes de esa aprobación.
 
 HTTPS, Storage privado, roles y autoridad real de catálogo se conectan según
 [ACTIVACION](../../operations/ACTIVACION.md). DEMO permanece sintético.
-[Aceptación](../../redesign/P23-ACEPTACION.md) distingue PDFs históricos del
+Aceptación distingue PDFs históricos del
 ensayo, acta final, prueba sin red y límites de revocación de una copia local.

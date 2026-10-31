@@ -88,11 +88,3 @@ tmp/
 *.tmp
 frontend/tsconfig.tsbuildinfo
 
-# Generated visual evidence: retain a deliberate selection with git add -f.
-# Existing tracked acceptance and regression inputs remain versioned.
-docs/redesign/captures/**/*.png
-docs/redesign/captures/**/*.mp4
-docs/redesign/captures/**/*.pdf
-docs/redesign/captures/**/*.html
-docs/redesign/captures/**/coverage.json
-docs/redesign/captures/**/records.partial.json

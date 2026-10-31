@@ -7,7 +7,6 @@ verified_ref: fa3731843dbfbd75d00024e95f4986a3616a8747
 sources:
   - ED2 PR https://github.com/KaraAliOsman/framedex/pull/145, CI 4/4 sobre dd3fe1ffce2c14ba1125442d8a137021d1ba32f2, corrida https://github.com/KaraAliOsman/framedex/actions/runs/38091279743, squash fa3731843dbfbd75d00024e95f4986a3616a8747, 2026-10-10.
   - ED2 implementación 0ab8b7204ac250c0bd8d118fdab041c22b5892b3, navegador, 2026-10-10
-  - docs/redesign/ED2-ACEPTACION.md
   - ED1 PR https://github.com/KaraAliOsman/framedex/pull/137, CI 4/4 sobre ae9292864ad7d8efb9beba9243451fba49d8c04e, squash 7c214c28f2af841f7fe21c6ecf08a0b0045b9c9d, 2026-10-09
   - ED1 autoridad angular 9019282e1ded4b287f4518b09da069bcdee20abc, gate completo y ocho vistas finales, 2026-10-09
   - ED1 corrección de apariencia 3dd2a8bef4c4b05d01fe4598f5b99ea08d283c75, gate completo y ocho vistas, 2026-10-09
@@ -17,8 +16,6 @@ sources:
   - frontend/src/ui/
   - frontend/src/styles/tokens.test.ts
   - frontend/src/i18n/domainLabels.test.ts
-  - docs/redesign/captures/sistema-diseno/aceptacion.md
-  - docs/redesign/ED1-ACEPTACION.md
 ---
 
 # Sistema de diseño convertido en código
@@ -27,12 +24,12 @@ sources:
 
 La [aclaración del dueño](../sources/owner-credits-and-grokbot-2026-10-18.md)
 pide referencias profesionales adicionales y fidelidad al personaje animado
-de Grok Bot. La [matriz de veinte referencias](../../research/2026-10-18-direccion-final/05-referencias-profesionales.md)
+de Grok Bot. La matriz de veinte referencias
 conecta Apple, Pentagram, Adobe, Shapr3D, IBM y sector con jerarquía, selección,
 inspector, documentos y respuesta. Son fuentes DOC/VIS con límites explícitos;
 no nuevas sesiones operadas de esas aplicaciones.
 
-El [contrato del personaje](../../research/2026-10-18-direccion-final/06-grok-bot-personaje-y-movimiento.md)
+El contrato del personaje
 separa figura/movimiento fieles de la composición de chat adaptada. Sus ciclos
 expresivos pueden durar segundos: la regla breve de transiciones UI no los
 limita a 280 ms. Conservar movimiento reducido y suspensión cuando no se ve.
@@ -45,14 +42,14 @@ Tras revisar la implementación de Claude, el dueño vuelve a rechazar su calida
 asistente, controles, estados y superficies no expresan suficiente jerarquía.
 La revisión local del 18-10 sí pudo inspeccionar la app en vivo (`6f78e329` más
 cambios locales de `claude/v1-implementacion`); esto actualiza el límite de acceso
-de la investigación anterior. La [auditoría](../../research/2026-10-18-revision-profunda/auditoria-dekopen.md)
+de la investigación anterior. La auditoría
 vincula cada cambio propuesto con problema, causa y evidencia.
 
 La [corrección posterior](../sources/owner-final-direction-2026-10-18.md) conserva
 Mesa de obra y Estudio como vistas del mismo producto manual, con Mesa como
 inicio recomendado y copiloto opcional en popup global. Sustituye el panel
 acoplado y Centro de encargos como entrada. No acepta los píxeles de los mocks.
-El [contrato final de diseño](../../research/2026-10-18-direccion-final/02-diseno-y-referencias.md)
+El contrato final de diseño
 define anatomías, controles y referencias para construir y revisar en producto.
 No se cambia la Constitución durante esta investigación; el prompt 01 exige
 conciliar sus reglas afectadas durante la implementación.
@@ -61,7 +58,7 @@ conciliar sus reglas afectadas durante la implementación.
 
 Tras rechazar y revertir dos rediseños, el dueño encarga investigación sin código.
 Pide un tema definitivo, claridad de controles, menos texto/jerga y una IA 2D
-viva; considera útiles el logo, turquesa y bases del dibujo/3D. El [plan visual](../../research/2026-10-17-claude/04-direccion-visual-e-interaccion.md)
+viva; considera útiles el logo, turquesa y bases del dibujo/3D. El plan visual
 identifica cambios propuestos a la constitución y aplica principios Apple/Emil
 sin copiar productos. No se modifica la constitución durante la investigación.
 La dirección clara/tokens del plan son propuestas, no aceptación del dueño.
@@ -91,7 +88,7 @@ La matriz ED1 tiene 192 vistas antes y después, con cero hallazgos posteriores.
 La baseline cae de 257 claves/716 ocurrencias a 69/187; de las 466 infracciones
 reales iniciales se eliminan 279. Ningún detector ni umbral se flexibiliza.
 Los recorridos conectan Hoy, editor, emisión real, jefe/operario y MiMo real
-con aplicar/recargar/deshacer. [Aceptación ED1](../../redesign/ED1-ACEPTACION.md)
+con aplicar/recargar/deshacer. Aceptación ED1
 conserva la rúbrica por superficie y los refs de integración.
 
 **Decisiones editoriales ED2 para la ola 3:** las medidas de CNC comparten
@@ -112,7 +109,7 @@ preparación de emisión nombra módulos por ordinal físico; conserva los UUID
 internos y la autoridad de cada hoja. Los ocho alias de tokens sin consumidores
 se eliminan, manteniendo la guarda de variables definidas.
 
-[Aceptación ED2](../../redesign/ED2-ACEPTACION.md) registra la comparación y los
+Aceptación ED2 registra la comparación y los
 recorridos. Estas decisiones son de presentación; no crean valores por defecto
 de catálogo, precios, fabricación, máquina o permisos.
 

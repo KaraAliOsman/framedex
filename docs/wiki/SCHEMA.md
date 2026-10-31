@@ -162,8 +162,8 @@ An agent entering DEKOPEN with no chat context should:
 
 The wiki should reduce rediscovery, not eliminate verification.
 Do not load the entire wiki, every PRD or the full append-only log at startup.
-The completed `docs/cola/` prompts are historical instructions; execution of
-that mandate requires a current owner request. Broad search omits generated
+Earlier mandates and acceptance reports were retired from the checkout on
+31-10-2026 (recoverable at `588e6332`); they are never a new assignment. Broad search omits generated
 payloads and history according to `.rgignore`; use explicit paths when needed.
 
 ## 9. Update discipline

@@ -6,7 +6,6 @@ volatility: low
 sources:
   - owner correction after reviewing three concepts, 2026-10-18
   - owner original PRD attachment b8dca4f1-0c32-4aa3-824c-68bad9f2bf23
-  - docs/research/2026-10-18-direccion-final/README.md
 ---
 
 # Corrección final del dueño: manual, dos vistas y popup
@@ -61,6 +60,6 @@ los importes son referencia. También centra la fidelidad a Grok Bot en el
 personaje animado y pide ampliar referencias profesionales. El paquete fue
 actualizado con esas decisiones; no se implementó producto.
 
-[Dirección y paquete final](../../research/2026-10-18-direccion-final/README.md),
-[prompt maestro](../../research/2026-10-18-direccion-final/prompt-maestro.md) y
+Dirección y paquete final,
+prompt maestro y
 [síntesis](../research/final-direction-2026-10-18.md). No prueban implementación.

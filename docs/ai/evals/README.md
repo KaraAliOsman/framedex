@@ -127,8 +127,8 @@ MOCK es reproducible: se repitieron los 26 casos y se compararon sus verdictos, 
 
 ## Evidencia y aceptación
 
-- [MOCK completo](2026-10-05-mock.json) y [MiMo completo](2026-10-05-mimo.json).
-- [Aceptación, rúbrica y capturas](../../redesign/captures/diagnostico-evals/aceptacion.md).
+- MOCK completo y MiMo completo.
+- Aceptación, rúbrica y capturas.
 - 48 tests de oráculos/observación verifican exactitud, orientación, divisores, rechazo de SKU inventado, aclaración, preparación sin escritura y taxonomía.
 - Se corrigió una omisión de redacción de logs del gate local: las filas S3 «Secret Key» y «Access Key» del CLI también quedan ocultas. El test usa valores sintéticos; ninguna credencial se guarda en el informe.
 - El arnés no introduce pantalla ni modifica API pública; no hay cambios de OpenAPI/orval. No se cambiaron prompts, operaciones, proveedores ni fórmulas. No hay integración nueva en sandbox de producto ni decisión comercial configurable.

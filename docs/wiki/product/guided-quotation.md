@@ -5,11 +5,9 @@ updated: 2026-10-09
 volatility: medium
 verified_ref: 9329e9e3378c58bc2bef3bd9c23d80f613379397
 sources:
-  - docs/cola/prompts/P08-cotizacion-emision.md
   - backend/documents/issuance.py
   - backend/tests/integration/test_guided_quotation.py
   - frontend/tests/e2e/auth.spec.ts, SHOT-10, e841ae29
-  - docs/redesign/P08-ACEPTACION.md
 ---
 
 # Cotización guiada y enlace del documento
