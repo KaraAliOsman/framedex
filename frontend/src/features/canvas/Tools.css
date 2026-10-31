@@ -198,6 +198,31 @@
 .model3d-diag--kit_unknown {
   border-color: var(--theme-danger, var(--theme-border-strong));
 }
+.model3d-vano {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: var(--space-2) 0.5rem;
+  list-style: none;
+  border-bottom: 1px solid var(--theme-border-subtle);
+}
+.model3d-vano li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  align-items: baseline;
+}
+.model3d-vano strong {
+  font-variant-numeric: tabular-nums;
+}
+.model3d-vano span {
+  color: var(--theme-text-muted);
+  font-size: var(--type-dense);
+}
+.model3d-vano .model3d-vano__warning {
+  color: var(--theme-danger);
+  font-weight: 600;
+}
 .model3d-illustrative {
   border-bottom: 1px solid var(--theme-border-subtle);
   color: var(--theme-text-muted);

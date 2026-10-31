@@ -289,6 +289,29 @@ def _live_project(approval: dict[str, object], *, for_update: bool = False) -> d
     )
 
 
+def _portal_opening(index: int, item: dict) -> dict[str, object]:
+    """The sealed site opening as the engine derived it: the measured vano and,
+    per side, the rule's adjustment and clearance. Nothing is recomputed here;
+    revisions sealed before the sides were exposed simply omit them."""
+    result, rule = item['result'], item['rule']
+    width, height = result['width'], result['height']
+    sides = None
+    if all(key in axis for axis in (width, height) for key in ('first', 'second', 'first_adjustment_mm', 'second_adjustment_mm')):
+        def side(axis: dict, which: str) -> dict[str, str]:
+            return {'adjustment_mm': str(axis[f'{which}_adjustment_mm']),
+                    'clearance_mm': str(axis[which]['clearance_mm'])}
+
+        sides = {'left': side(width, 'first'), 'right': side(width, 'second'),
+                 'bottom': side(height, 'first'), 'top': side(height, 'second')}
+    return {'module_index': index + 1,
+            'module_id': (item.get('survey') or {}).get('module_id'),
+            'width_mm': width['opening_mm'], 'height_mm': height['opening_mm'],
+            'rule_name': rule['name'], 'synthetic': rule['synthetic'],
+            'kind': rule.get('kind'),
+            'sides': sides,
+            'warnings': [str(warning) for warning in result.get('warnings') or []]}
+
+
 def _sealed_positions(version: dict[str, object]) -> list[dict[str, object]]:
     """The proposal's position cards — immutable snapshot rows, not live data."""
     snapshot = decoded(version["snapshot_json"])
@@ -317,9 +340,7 @@ def _sealed_positions(version: dict[str, object]) -> list[dict[str, object]]:
             "location_tag": value.get("location_tag"),
             "width_mm": str(value.get("width_mm") or ""),
             "height_mm": str(value.get("height_mm") or ""),
-            "opening_measurements": [{'module_index':index+1,
-                'width_mm':item['result']['width']['opening_mm'],'height_mm':item['result']['height']['opening_mm'],
-                'rule_name':item['rule']['name'],'synthetic':item['rule']['synthetic']}
+            "opening_measurements": [_portal_opening(index, item)
                 for index,item in enumerate((value.get('measurements') or {}).get('measurements') or [])],
             "color_interior": value.get("color_interior"),
             "color_exterior": value.get("color_exterior"),

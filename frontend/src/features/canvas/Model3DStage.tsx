@@ -31,6 +31,7 @@ import {
   wallBoxes,
   type CameraPreset,
 } from "./studioRig3d";
+import type { WallBox } from "./mountedWall";
 
 function tokenColor(token: string, fallback: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(token).trim() || fallback;
@@ -408,6 +409,7 @@ export function Model3DStage({
   clip,
   explode,
   wall,
+  mounted = EMPTY_MOUNTED,
   onPick,
   onExport,
   onError,
@@ -421,6 +423,8 @@ export function Model3DStage({
   clip: boolean;
   explode: boolean;
   wall: boolean;
+  /** Masonry around each module's measured vano, in module-local space. */
+  mounted?: Record<string, WallBox[]>;
   onPick(owner: string): void;
   onExport(capture: () => string): void;
   onError(): void;
@@ -468,6 +472,25 @@ export function Model3DStage({
         ))}
         {scene.couplers.map((solid, i) => renderSolid(solid, `coupler-${i}`))}
         {wall &&
+          Object.keys(mounted).length > 0 &&
+          scene.modules
+            .filter((module) => mounted[module.moduleId])
+            .map((module) => (
+              <group
+                key={`opening-${module.moduleId}`}
+                position={module.position}
+                rotation={[0, module.rotationY, 0]}
+              >
+                {mounted[module.moduleId]!.map((box, index) => (
+                  <mesh key={index} position={box.center}>
+                    <boxGeometry args={box.size} />
+                    <meshStandardMaterial color={studioColor(STUDIO_WALL)} roughness={0.92} />
+                  </mesh>
+                ))}
+              </group>
+            ))}
+        {wall &&
+          Object.keys(mounted).length === 0 &&
           wallBoxes(scene).map((box, index) => (
             <mesh key={index} position={box.center}>
               <boxGeometry args={box.size} />
@@ -493,3 +516,4 @@ export function Model3DStage({
   );
 }
 const EMPTY_STATES: Record<string, LeafPoseState> = {};
+const EMPTY_MOUNTED: Record<string, WallBox[]> = {};

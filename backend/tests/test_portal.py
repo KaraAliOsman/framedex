@@ -778,3 +778,33 @@ def test_list_approvals_exposes_the_view_signal(monkeypatch) -> None:
     assert out[0]["last_viewed_at"] == viewed_at.isoformat()
 
     assert out[0]["link_state"] == "VIEWED"
+
+
+def test_portal_vano_carries_the_engine_sides_without_recomputing():
+    def allowance(clearance):
+        return {"clearance_mm": clearance, "frame_mm": "0.00", "extension_mm": "0.00", "overlap_mm": "0.00"}
+
+    def axis(opening, first, second):
+        return {"opening_mm": opening, "spread_mm": "0.00", "first": allowance(first),
+                "second": allowance(second), "first_adjustment_mm": f"-{first}",
+                "second_adjustment_mm": f"-{second}", "derived_mm": "0.00", "fabrication_mm": "0.00",
+                "deviation_mm": "0.00"}
+
+    item = {"survey": {"module_id": "m1"},
+            "rule": {"name": "En vano", "synthetic": False, "kind": "IN_OPENING"},
+            "result": {"width": axis("1220.00", "10.00", "12.00"), "height": axis("1020.00", "8.00", "5.00"),
+                       "warnings": ["Ancho: la dispersión supera la tolerancia declarada."]}}
+    opening = service._portal_opening(0, item)
+    assert opening["module_id"] == "m1" and opening["width_mm"] == "1220.00"
+    assert opening["sides"] == {
+        "left": {"adjustment_mm": "-10.00", "clearance_mm": "10.00"},
+        "right": {"adjustment_mm": "-12.00", "clearance_mm": "12.00"},
+        "bottom": {"adjustment_mm": "-8.00", "clearance_mm": "8.00"},
+        "top": {"adjustment_mm": "-5.00", "clearance_mm": "5.00"},
+    }
+    assert opening["warnings"] == ["Ancho: la dispersión supera la tolerancia declarada."]
+    # A revision sealed before sides existed keeps its vano and omits them.
+    legacy = {"rule": {"name": "En vano", "synthetic": True},
+              "result": {"width": {"opening_mm": "900.00"}, "height": {"opening_mm": "800.00"}}}
+    assert service._portal_opening(1, legacy)["sides"] is None
+    assert service._portal_opening(1, legacy)["module_index"] == 2

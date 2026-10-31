@@ -5,11 +5,18 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { PortalOpeningKind } from "./portalOpeningKind";
+import type { PortalOpeningSides } from "./portalOpeningSides";
 
 export interface PortalOpening {
   module_index: number;
+  /** @nullable */
+  module_id?: string | null;
   width_mm: string;
   height_mm: string;
   rule_name: string;
   synthetic: boolean;
+  kind?: (typeof PortalOpeningKind)[keyof typeof PortalOpeningKind] | null;
+  sides?: PortalOpeningSides | null;
+  warnings?: string[];
 }

@@ -83,3 +83,11 @@ acceptance reports; read them at `git show 588e6332:docs/wiki/log.md`.
 - Las páginas de la wiki conservan su síntesis; sus fuentes retiradas y este
   log anterior se leen en `588e6332`.
 - Regla nueva: capturas, informes de aceptación y logs viven en `.run/`.
+
+## [2026-10-31] DEKOPEN 3 P15 | 3D en la abertura de obra y vista del cliente
+
+- El 3D coloca la ventana en su abertura medida con los ajustes por lado del
+  motor; muestra holgura y avisos de la regla sellada.
+- Portal: controles para el cliente («Abrir», adentro/afuera, en la abertura);
+  los técnicos quedan en la oficina. Ver `product/physical-3d.md`.
+

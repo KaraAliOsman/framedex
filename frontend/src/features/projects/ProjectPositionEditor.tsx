@@ -70,7 +70,7 @@ import { Icon } from "../../ui/Icon";
 import { usePresentedOptions } from "../canvas/finishReferences";
 import { MeasurementPanel } from "./MeasurementPanel";
 import type { MeasurementRecord } from "./mountingModel";
-import { mountingGeometryChanged } from "./mountingModel";
+import { mountedFromEvidence, mountingGeometryChanged } from "./mountingModel";
 import { actionErrorDetail } from "../errors";
 
 /** Why the work's current revision cannot be edited, by cause (server
@@ -778,6 +778,10 @@ function PositionWorkspace({
     options.data !== undefined && inputs.color !== null && !declaredColors.includes(inputs.color);
   const quantityInvalid = !/^[1-9]\d*$/.test(quantity) || Number(quantity) > 2147483647;
   const mountingChanged = mountingGeometryChanged(inputs.product, inputs.mounting);
+  const mountedOpenings = useMemo(
+    () => (mountingChanged ? [] : mountedFromEvidence(inputs.mounting)),
+    [inputs.mounting, mountingChanged],
+  );
   // Local, cheap check: a bay with neither glass nor panel fill can never
   // evaluate — name it so the disabled Guardar isn't a silent dead end.
   const fillUnassigned = (inputs.product?.assembly.modules ?? []).some((module) =>
@@ -1372,6 +1376,7 @@ function PositionWorkspace({
             Diseño de la ventana
           </h2>
           <AssemblyEditor
+            mounting={mountedOpenings}
             organizationId={orgId}
             couplerSkus={options.data?.coupler_skus ?? []}
             glassSkus={options.data?.glass_skus ?? []}

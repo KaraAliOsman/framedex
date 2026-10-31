@@ -1,7 +1,7 @@
 ---
 type: synthesis
 status: active
-updated: 2026-10-11
+updated: 2026-10-31
 volatility: high
 verified_ref: ff210e7a439b861349d1d602c4137ebe4e65d0c8
 sources:
@@ -46,3 +46,17 @@ Intención del dueño: el cliente reconoce su ventana y su apertura; el 3D no
 contradice la técnica. Evidencia actual: 40 fixtures, 68 pruebas de poses,
 matriz de navegador, bicolor/foliado, recuperación y paridad de render.
 La aceptación registra por separado gates locales, revisión y CI de cierre.
+
+## P15 · Abertura de obra y vista del cliente · 31-10-2026
+
+- Con medición de obra, el muro deja de ser referencia: se abre exactamente en
+  la abertura medida y cada borde se mueve el ajuste por lado que derivó el
+  motor (holgura, marco, ensanche, traslape). La vista no calcula medidas; solo
+  ubica las del motor y muestra la holgura declarada por la regla y sus avisos.
+- El portal entrega la abertura sellada con sus lados (`sides`) y avisos.
+  Revisiones selladas antes los omiten: la abertura se centra y se declara.
+- En el portal la vista es para el cliente: desde adentro, desde afuera,
+  manilla, «Abrir» todas las hojas con su movimiento y «En la abertura».
+  Corte, despiece, lectura técnica y hojas individuales quedan en la oficina.
+- El editor de oficina recibe la misma evidencia mientras el diseño coincide
+  con la medida de fabricación.

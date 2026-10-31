@@ -46622,6 +46622,9 @@ components:
       properties:
         module_index:
           type: integer
+        module_id:
+          type: string
+          nullable: true
         width_mm:
           type: string
         height_mm:
@@ -46630,12 +46633,63 @@ components:
           type: string
         synthetic:
           type: boolean
+        kind:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/PortalOpeningKindEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        sides:
+          allOf:
+          - $ref: '#/components/schemas/PortalOpeningSides'
+          nullable: true
+        warnings:
+          type: array
+          items:
+            type: string
       required:
       - height_mm
       - module_index
       - rule_name
       - synthetic
       - width_mm
+    PortalOpeningKindEnum:
+      enum:
+      - IN_OPENING
+      - SUBFRAME
+      - OVERLAP
+      - RENOVATION
+      type: string
+      description: |-
+        * `IN_OPENING` - IN_OPENING
+        * `SUBFRAME` - SUBFRAME
+        * `OVERLAP` - OVERLAP
+        * `RENOVATION` - RENOVATION
+    PortalOpeningSide:
+      type: object
+      properties:
+        adjustment_mm:
+          type: string
+        clearance_mm:
+          type: string
+      required:
+      - adjustment_mm
+      - clearance_mm
+    PortalOpeningSides:
+      type: object
+      properties:
+        left:
+          $ref: '#/components/schemas/PortalOpeningSide'
+        right:
+          $ref: '#/components/schemas/PortalOpeningSide'
+        top:
+          $ref: '#/components/schemas/PortalOpeningSide'
+        bottom:
+          $ref: '#/components/schemas/PortalOpeningSide'
+      required:
+      - bottom
+      - left
+      - right
+      - top
     PortalOption:
       type: object
       properties:

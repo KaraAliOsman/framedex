@@ -527,6 +527,11 @@ export const domainLabels: Readonly<Record<string, string>> = {
   pack: "Paquete",
   percent: "Porcentaje",
   production: "Producción",
+  // P15 · How a frame sits in its measured vano.
+  IN_OPENING: "Dentro de la abertura con holgura",
+  SUBFRAME: "Con premarco",
+  OVERLAP: "Sobre la abertura o traslapado",
+  RENOVATION: "Renovación sobre marco existente",
   // P14 · Tu interfaz (presentation for one person).
   office: "Oficina",
   workshop: "Taller",
